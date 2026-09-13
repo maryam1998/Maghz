@@ -1,5 +1,5 @@
 // App.jsx
-// نسخه 10.0 — با چرخه‌های زندگی
+// نسخه 11.0 — با یادآوری‌های مخصوص هر طرحواره
 // بدون AI — کاملاً Rule-Based
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -25,6 +25,7 @@ import {
 } from "./LIFE_CYCLES";
 import { mergeAdditions } from "./SCHEMAS_ADDITIONS";
 import { mergeTriggers } from "./TRIGGERS_EXTRA";
+import { getTodayReminders } from "./DAILY_REMINDERS";
 
 /* =========================================================
  * ۰. ثبت برچسب‌ها + اسم ساده
@@ -47,7 +48,6 @@ registerIdLabels(LABELS);
 mergeAdditions(SCHEMAS);
 mergeTriggers(SCHEMAS);
 
-// برچسب‌های موارد جدید (از SCHEMAS_ADDITIONS و TRIGGERS_EXTRA) را هم ثبت کن
 for (const s of SCHEMAS) {
   for (const t of s.triggers) LABELS[t.id] = t.text;
   for (const th of s.automatic_thoughts) LABELS[th.id] = th.text;
@@ -311,7 +311,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
 
   return (
     <Shell title={cycle.categoryLabel} onBack={onBack} showSOS onSOS={onSOS}>
-      {/* عنوان */}
       <Card>
         <h2 style={{ margin: "0 0 10px", fontSize: 18, lineHeight: 1.7 }}>
           {cycle.title}
@@ -321,7 +320,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </div>
       </Card>
 
-      {/* آیا آشناست؟ */}
       {cycle.examples && cycle.examples.length > 0 && (
         <Card style={{ marginTop: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
@@ -337,7 +335,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {/* ریشه کودکی */}
       {cycle.childhood && cycle.childhood.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
@@ -351,7 +348,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {/* چرخه */}
       {cycle.cycle && cycle.cycle.length > 0 && (
         <Card style={{ marginTop: 12 }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>
@@ -367,7 +363,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {/* چرا تکرار می‌شود */}
       {cycle.whyItRepeats && cycle.whyItRepeats.length > 0 && (
         <Card style={{ marginTop: 12, background: "#fef3f2" }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
@@ -381,7 +376,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {/* طرحواره‌های مرتبط */}
       {relatedSchemas.length > 0 && (
         <Card style={{ marginTop: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
@@ -407,7 +401,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {/* حالا چه کار کنی */}
       {cycle.whatToDo && cycle.whatToDo.length > 0 && (
         <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
@@ -421,7 +414,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {/* به خودت این‌ها را بگو */}
       {cycle.selfTalk && cycle.selfTalk.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
@@ -437,7 +429,6 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {/* آزمایش‌های کوچک */}
       {cycle.smallExperiments && cycle.smallExperiments.length > 0 && (
         <Card style={{ marginTop: 12, background: "#fff8e1" }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
@@ -692,7 +683,18 @@ function SOSView({ onBack, onBetter }) {
  * ۷. صفحه خوش‌آمد
  * ========================================================= */
 
-function WelcomeView({ onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSituations, onRelationships, onLifeCycles }) {
+function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSituations, onRelationships, onLifeCycles }) {
+  // استخراج طرحواره‌های فعال کاربر (بالای ۴۰٪)
+  const activeSchemaIds = useMemo(() => {
+    if (!analysis?.all) return null;
+    const list = analysis.all
+      .filter((r) => r.percentage >= 40)
+      .map((r) => r.schemaId);
+    return list.length > 0 ? list : null;
+  }, [analysis]);
+
+  const reminders = getTodayReminders(activeSchemaIds);
+
   return (
     <Shell title="الگوهای من" showSOS onSOS={onSOS}>
       <Card>
@@ -704,10 +706,27 @@ function WelcomeView({ onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSi
         </p>
       </Card>
 
-      {phrase && (
+      {reminders && reminders.length > 0 && (
         <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>یادآوری امروز</div>
-          <div style={{ fontSize: 15, lineHeight: 1.9 }}>{phrase}</div>
+          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 10 }}>
+            {activeSchemaIds ? "یادآوری‌های امروز — مخصوص تو" : "یادآوری‌های امروز"}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {reminders.map((rem, i) => (
+              <div
+                key={i}
+                style={{
+                  fontSize: 14,
+                  lineHeight: 1.9,
+                  padding: "8px 12px",
+                  background: "rgba(255,255,255,.05)",
+                  borderRadius: 8
+                }}
+              >
+                • {rem}
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 
@@ -2212,7 +2231,9 @@ export default function App() {
 
   if (view === "welcome") {
     return (
-      <WelcomeView hasProfile={!!analysis}
+      <WelcomeView
+        analysis={analysis}
+        hasProfile={!!analysis}
         onStart={() => go("ysq")} onSkipToProfile={() => go("profile")}
         phrase={todayPhrase} onSOS={openSOS}
         onSituations={() => go("situations")}
