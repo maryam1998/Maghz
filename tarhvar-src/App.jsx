@@ -1,5 +1,5 @@
 // App.jsx
-// نسخه 11.0 — با یادآوری‌های مخصوص هر طرحواره
+// نسخه 12.0 — با انتخاب چند الگو در پروفایل + الگوی خانوادگی
 // بدون AI — کاملاً Rule-Based
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -168,6 +168,21 @@ function OriginView({ schemaId, onBack, onSOS }) {
           }}>{c}</div>
         ))}
       </Card>
+
+      {origin.familyPatterns && origin.familyPatterns.length > 0 && (
+        <Card style={{ marginTop: 12, background: "#f3e8ff" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
+            👨‍👩‍👧 الگوی خانوادگی
+          </div>
+          {origin.familyPatterns.map((p, i) => (
+            <div key={i} style={{
+              fontSize: 14, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, paddingRight: 12,
+              borderRight: "3px solid #8e44ad"
+            }}>• {p}</div>
+          ))}
+        </Card>
+      )}
 
       <Card style={{ marginTop: 12, background: "#fff8e1" }}>
         <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
@@ -684,7 +699,6 @@ function SOSView({ onBack, onBetter }) {
  * ========================================================= */
 
 function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSituations, onRelationships, onLifeCycles }) {
-  // استخراج طرحواره‌های فعال کاربر (بالای ۴۰٪)
   const activeSchemaIds = useMemo(() => {
     if (!analysis?.all) return null;
     const list = analysis.all
@@ -822,10 +836,16 @@ function YSQView({ onDone, onBack }) {
 }
 
 /* =========================================================
- * ۹. صفحه پروفایل
+ * ۹. صفحه پروفایل — با انتخاب چندگانه
  * ========================================================= */
 
-function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles }) {
+function ProfileView({
+  analysis, onPickSchema, onPickOrigin, onRetake, onBack,
+  onWins, onCalendar, onSOS, onSituations, onRelationships,
+  onLifeCycles, onMultiSelect
+}) {
+  const [selectedIds, setSelectedIds] = useState([]);
+
   if (!analysis) {
     return (
       <Shell title="پروفایل" onBack={onBack}>
@@ -838,9 +858,18 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
   const recSchema = SCHEMAS.find((s) => s.id === recommended?.schemaId);
   const recPlain = recSchema?.name_plain || recommended?.name;
 
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const allActive = [...high, ...medium];
+
   return (
     <Shell title="پروفایل الگوهای من" onBack={onBack}
-      showQuickButton onQuick={() => onPickSchema(recommended?.schemaId)}
+      showQuickButton={selectedIds.length === 0}
+      onQuick={() => onPickSchema(recommended?.schemaId)}
       showSOS onSOS={onSOS}>
 
       <Card style={{ background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
@@ -870,51 +899,169 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
         <button onClick={onRelationships} style={styles.dashBtn}>💞 روابط</button>
       </div>
 
-      <h3 style={{ margin: "22px 0 10px", fontSize: 15 }}>الگوهای فعال</h3>
-      {[...high, ...medium].map((r) => {
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", margin: "22px 0 10px" }}>
+        <h3 style={{ margin: 0, fontSize: 15 }}>الگوهای فعال</h3>
+        {selectedIds.length > 0 && (
+          <span style={{ fontSize: 12, color: "#1a3d2c", fontWeight: 600 }}>
+            {toFa(selectedIds.length)} انتخاب شده
+          </span>
+        )}
+      </div>
+
+      {selectedIds.length === 0 && (
+        <p style={{ fontSize: 12, color: "#666", margin: "0 0 10px", lineHeight: 1.7 }}>
+          می‌توانی چند الگو را با هم انتخاب کنی — محدودیتی نیست.
+        </p>
+      )}
+
+      {allActive.map((r) => {
         const schema = SCHEMAS.find((s) => s.id === r.schemaId);
         const plain = schema?.name_plain || r.name;
+        const isSelected = selectedIds.includes(r.schemaId);
+
         return (
-          <Card key={r.schemaId} style={{ marginBottom: 8, padding: 14 }}>
-            <button onClick={() => onPickSchema(r.schemaId)} style={{
-              display: "block", width: "100%", textAlign: "right",
-              padding: 0, border: "none", background: "transparent",
-              cursor: "pointer", fontFamily: "inherit"
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <Card
+            key={r.schemaId}
+            style={{
+              marginBottom: 8,
+              padding: 14,
+              border: isSelected ? "2px solid #1a3d2c" : "1px solid #f0f0f0",
+              background: isSelected ? "#f0f7f4" : "#fff",
+              transition: "all .15s ease"
+            }}
+          >
+            <button
+              onClick={() => toggleSelect(r.schemaId)}
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "right",
+                padding: 0,
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                fontFamily: "inherit"
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                <div
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    border: isSelected ? "none" : "2px solid #ccc",
+                    background: isSelected ? "#1a3d2c" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                    marginTop: 2
+                  }}
+                >
+                  {isSelected ? "✓" : ""}
+                </div>
+
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
-                    {plain}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
+                        {plain}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#000" }}>
+                        {schema?.name_fa || ""}
+                      </div>
+                    </div>
+                    <span style={{ color: "#000", fontWeight: 700, fontSize: 14, marginTop: 4 }}>
+                      {r.priority.emoji} {toFa(r.percentage)}%
+                    </span>
                   </div>
-                  <div style={{ fontSize: 11, color: "#000" }}>
-                    {schema?.name_fa || ""}
+
+                  <div style={{ marginTop: 10 }}>
+                    <ProgressBar value={r.percentage} color={r.priority.color} />
                   </div>
+
+                  {schema?.one_liner && (
+                    <div style={{ fontSize: 13, color: "#000", marginTop: 10, lineHeight: 1.7 }}>
+                      {schema.one_liner}
+                    </div>
+                  )}
                 </div>
-                <span style={{ color: "#000", fontWeight: 700, fontSize: 14, marginTop: 4 }}>
-                  {r.priority.emoji} {toFa(r.percentage)}%
-                </span>
               </div>
-              <div style={{ marginTop: 10 }}>
-                <ProgressBar value={r.percentage} color={r.priority.color} />
-              </div>
-              {schema?.one_liner && (
-                <div style={{ fontSize: 13, color: "#000", marginTop: 10, lineHeight: 1.7 }}>
-                  {schema.one_liner}
-                </div>
-              )}
             </button>
 
-            <button onClick={() => onPickOrigin(r.schemaId)} style={{
-              marginTop: 12, padding: "10px 12px", borderRadius: 8,
-              border: "1px solid #e5e5e5", background: "#fafafa",
-              cursor: "pointer", fontSize: 13, fontFamily: "inherit",
-              color: "#000", width: "100%", textAlign: "right"
-            }}>
-              🧸 این الگو از کجا آمده؟ + حالا چکار کنم؟
-            </button>
+            <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPickOrigin(r.schemaId);
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  borderRadius: 8,
+                  border: "1px solid #e5e5e5",
+                  background: "#fafafa",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontFamily: "inherit",
+                  color: "#000",
+                  textAlign: "right"
+                }}
+              >
+                🧸 ریشه + راهنما
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPickSchema(r.schemaId);
+                }}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  border: "1px solid #1a3d2c",
+                  background: "#fff",
+                  color: "#1a3d2c",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: "inherit",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                ▶ شروع
+              </button>
+            </div>
           </Card>
         );
       })}
+
+      {selectedIds.length > 0 && (
+        <Card style={{ marginTop: 16, position: "sticky", bottom: 12, background: "#1a3d2c", color: "#fff", border: "none" }}>
+          <div style={{ fontSize: 13, opacity: 0.85, marginBottom: 10 }}>
+            {toFa(selectedIds.length)} الگو انتخاب کردی
+          </div>
+          <button
+            onClick={() => onMultiSelect(selectedIds)}
+            style={{
+              width: "100%",
+              padding: "14px 20px",
+              borderRadius: 12,
+              border: "none",
+              background: "#fff",
+              color: "#1a3d2c",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "inherit"
+            }}
+          >
+            شروع کار روی {toFa(selectedIds.length)} الگو →
+          </button>
+        </Card>
+      )}
 
       {low.length > 0 && (
         <>
@@ -947,6 +1094,53 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
       <p style={{ fontSize: 11, color: "#000", marginTop: 20, lineHeight: 1.8 }}>
         این نتایج یک ارزیابی خودگزارشی است و تشخیص بالینی نیست.
       </p>
+    </Shell>
+  );
+}
+
+/* =========================================================
+ * ۹.۵. صفحه انتخاب چندگانه — کدام را اول شروع کنیم؟
+ * ========================================================= */
+
+function MultiPickView({ schemaIds, onPick, onBack }) {
+  const schemas = schemaIds
+    .map((id) => SCHEMAS.find((s) => s.id === id))
+    .filter(Boolean);
+
+  return (
+    <Shell title="کدام را اول شروع می‌کنی؟" onBack={onBack}>
+      <Card>
+        <p style={{ margin: "0 0 14px", fontSize: 14, color: "#000", lineHeight: 1.9 }}>
+          {toFa(schemas.length)} الگو انتخاب کردی.
+          <br />
+          اول با کدام شروع کنیم؟ بقیه در پروفایل می‌مانند و هر وقت خواستی سراغشان می‌روی.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {schemas.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => onPick(s.id)}
+              style={{
+                padding: "14px 16px",
+                borderRadius: 10,
+                border: "1px solid #e5e5e5",
+                background: "#fff",
+                cursor: "pointer",
+                textAlign: "right",
+                fontFamily: "inherit",
+                fontSize: 14
+              }}
+            >
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>
+                {s.name_plain || s.name_fa}
+              </div>
+              <div style={{ fontSize: 12, color: "#666", lineHeight: 1.6 }}>
+                {s.one_liner || s.short_description}
+              </div>
+            </button>
+          ))}
+        </div>
+      </Card>
     </Shell>
   );
 }
@@ -2165,6 +2359,7 @@ export default function App() {
   const [exerciseRecord, setExerciseRecord] = useState(null);
   const [missionRecord, setMissionRecord] = useState(null);
   const [returnTo, setReturnTo] = useState("welcome");
+  const [multiSelectIds, setMultiSelectIds] = useState(null);
 
   useEffect(() => {
     Promise.all([loadProfile(), hasCheckedInToday()]).then(([p, checkedIn]) => {
@@ -2264,7 +2459,22 @@ export default function App() {
         onRelationships={() => go("relationships")}
         onLifeCycles={() => go("life_cycles")}
         onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
-        onPickOrigin={(id) => openOrigin(id, "profile")} />
+        onPickOrigin={(id) => openOrigin(id, "profile")}
+        onMultiSelect={(ids) => { setMultiSelectIds(ids); go("multi_pick"); }} />
+    );
+  }
+
+  if (view === "multi_pick" && multiSelectIds) {
+    return (
+      <MultiPickView
+        schemaIds={multiSelectIds}
+        onBack={() => go("profile")}
+        onPick={(id) => {
+          setActiveSchemaId(id);
+          setMultiSelectIds(null);
+          go("cycle");
+        }}
+      />
     );
   }
 
