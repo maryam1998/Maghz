@@ -1,0 +1,68 @@
+name: Build & Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # ---------- ۱. دانلود کد ----------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---------- ۲. نصب Node ----------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ---------- ۳. نصب esbuild و React ----------
+      - name: Install build tools
+        run: |
+          npm install --no-save esbuild react@18 react-dom@18
+
+      # ---------- ۴. ساخت باندل شناخت از tarhvar-src/ ----------
+      - name: Build shenakht-bundle.js
+        run: |
+          npx esbuild tarhvar-src/shenakht-entry.jsx \
+            --bundle \
+            --minify \
+            --format=iife \
+            --define:process.env.NODE_ENV='"production"' \
+            --outfile=shenakht-bundle.js
+
+      # ---------- ۵. بررسی سینتکس باندل ----------
+      - name: Verify bundle syntax
+        run: node --check shenakht-bundle.js
+
+      # ---------- ۶. بروزرسانی CACHE_VERSION در sw.js ----------
+      - name: Bump CACHE_VERSION in sw.js
+        run: |
+          NEW_VERSION="${GITHUB_SHA::7}"
+          sed -i "s/const CACHE_VERSION = '[^']*'/const CACHE_VERSION = '${NEW_VERSION}'/" sw.js
+
+      # ---------- ۷. آپلود کل پوشه به عنوان artifact ----------
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      # ---------- ۸. انتشار روی GitHub Pages ----------
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
