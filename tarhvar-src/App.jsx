@@ -1202,20 +1202,96 @@ function ExerciseView({ schemaId, selection, onDone, onBack }) {
 }
 
 /* =========================================================
- * ۱۳. صفحه مأموریت
+ * متادیتای انواع مأموریت
+ * ========================================================= */
+
+const MISSION_TYPE_META = {
+  observe: {
+    icon: "🔍",
+    label: "مشاهده",
+    color: "#3b82f6",
+    bgColor: "#eff6ff",
+    time: "۱ دقیقه",
+    difficulty: 1,
+    why: "فقط می‌خوای ببینی چه اتفاقی می‌افته — بدون قضاوت، بدون واکنش."
+  },
+  action: {
+    icon: "✋",
+    label: "اقدام",
+    color: "#f59e0b",
+    bgColor: "#fffbeb",
+    time: "۲-۳ دقیقه",
+    difficulty: 2,
+    why: "این کار کوچیک، به ذهنت یاد می‌ده که این بار می‌تونه جور دیگه‌ای هم عمل کنه."
+  },
+  write: {
+    icon: "✍️",
+    label: "نوشتن",
+    color: "#a855f7",
+    bgColor: "#faf5ff",
+    time: "۳-۵ دقیقه",
+    difficulty: 2,
+    why: "نوشتن، فکر رو از ذهنت بیرون میاره — تا بتونی ببینیش، نه اینکه توش غرق بشی."
+  },
+  "self-talk": {
+    icon: "💬",
+    label: "خودگویی",
+    color: "#10b981",
+    bgColor: "#ecfdf5",
+    time: "۳۰ ثانیه",
+    difficulty: 1,
+    why: "جمله‌ای که به خودت می‌گی، صدای قدیمی رو کم‌رنگ‌تر می‌کنه."
+  },
+  experiment: {
+    icon: "🧪",
+    label: "آزمایش",
+    color: "#0891b2",
+    bgColor: "#ecfeff",
+    time: "۱۰-۳۰ دقیقه",
+    difficulty: 3,
+    why: "مغز با تجربه یاد می‌گیره، نه با فکر کردن. این یک آزمایش کوچیکه."
+  }
+};
+
+const DEFAULT_MISSION_META = {
+  icon: "🎯",
+  label: "مأموریت",
+  color: "#1a3d2c",
+  bgColor: "#f0f7f4",
+  time: "۱-۲ دقیقه",
+  difficulty: 1,
+  why: "یک قدم کوچیک، خودش یک پیروزیه."
+};
+
+function getMissionMeta(mission) {
+  return MISSION_TYPE_META[mission?.type] || DEFAULT_MISSION_META;
+}
+
+/* =========================================================
+ * ۱۳. صفحه مأموریت — نسخه حرفه‌ای
  * ========================================================= */
 
 function MissionView({ schemaId, onDone, onBack }) {
   const schema = SCHEMAS.find((s) => s.id === schemaId);
   const microMissions = getMicroMissions(schemaId);
   const missions = microMissions.length > 0 ? microMissions : (schema?.real_life_missions || []);
-  const [selectedId, setSelectedId] = useState(missions[0]?.id || null);
 
+  const [selectedId, setSelectedId] = useState(missions[0]?.id || null);
+  const [doneIds, setDoneIds] = useState([]);
+
+  // حالت خالی
   if (missions.length === 0) {
     return (
       <Shell title="مأموریت امروز" onBack={onBack}>
-        <Card><p>مأموریتی تعریف نشده.</p></Card>
-        <div style={{ marginTop: 12 }}>
+        <Card style={{ textAlign: "center", padding: 30 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.9, color: "#000" }}>
+            برای این الگو، مأموریتی تعریف نشده.
+            <br />
+            ولی همین که داری کار می‌کنی، خودش یک قدمه.
+          </p>
+        </Card>
+        <div style={{ marginTop: 16 }}>
           <Btn onClick={() => onDone(null)}>ادامه</Btn>
         </div>
       </Shell>
@@ -1223,60 +1299,335 @@ function MissionView({ schemaId, onDone, onBack }) {
   }
 
   const selected = missions.find((m) => m.id === selectedId) || missions[0];
-  const typeLabels = {
-    observe: { icon: "🔍", label: "مشاهده" },
-    action: { icon: "✋", label: "اقدام" },
-    write: { icon: "✍️", label: "نوشتن" },
-    "self-talk": { icon: "💬", label: "خودگویی" },
-    experiment: { icon: "🧪", label: "آزمایش" }
+  const selectedMeta = getMissionMeta(selected);
+  const progressPct = Math.round((doneIds.length / missions.length) * 100);
+  const isSelectedDone = doneIds.includes(selected.id);
+
+  const toggleDone = (id) => {
+    setDoneIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const shuffle = () => {
+    const remaining = missions.filter((m) => !doneIds.includes(m.id));
+    const pool = remaining.length > 0 ? remaining : missions;
+    const next = pool[Math.floor(Math.random() * pool.length)];
+    setSelectedId(next.id);
   };
 
   return (
     <Shell title="مأموریت امروز" onBack={onBack}>
-      <Card>
-        <p style={{ margin: "0 0 6px", fontSize: 14, color: "#000" }}>
-          یکی را انتخاب کن. هر کدام کمتر از ۱ دقیقه طول می‌کشد.
-        </p>
-        <p style={{ margin: "0 0 16px", fontSize: 12, color: "#000" }}>
-          کوچک‌ترین که می‌توانی.
-        </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {missions.map((m) => {
-            const active = selectedId === m.id;
-            const type = typeLabels[m.type] || { icon: "•", label: "" };
-            return (
-              <button key={m.id} onClick={() => setSelectedId(m.id)} style={{
-                padding: "12px 14px", borderRadius: 10,
-                border: active ? "2px solid #1a3d2c" : "1px solid #e5e5e5",
-                background: active ? "#1a3d2c" : "#fff",
-                color: active ? "#fff" : "#000",
-                fontSize: 14, textAlign: "right",
-                cursor: "pointer", fontFamily: "inherit", lineHeight: 1.7
+      {/* ─── کارت هدر با پیشرفت ─── */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        marginBottom: 12,
+        padding: 18
+      }}>
+        <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 8 }}>
+          {schema?.name_plain || schema?.name_fa}
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, lineHeight: 1.5 }}>
+          یک قدم کوچیک برای امروز
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{
+              height: 6,
+              background: "rgba(255,255,255,.2)",
+              borderRadius: 3,
+              overflow: "hidden"
+            }}>
+              <div style={{
+                height: "100%",
+                width: progressPct + "%",
+                background: "#fff",
+                transition: "width .4s ease",
+                borderRadius: 3
+              }} />
+            </div>
+          </div>
+          <div style={{
+            fontSize: 12,
+            opacity: 0.95,
+            whiteSpace: "nowrap",
+            fontVariantNumeric: "tabular-nums",
+            fontWeight: 600
+          }}>
+            {toFa(doneIds.length)} از {toFa(missions.length)}
+          </div>
+        </div>
+      </Card>
+
+      {/* ─── راهنما ─── */}
+      {doneIds.length === 0 && (
+        <Card style={{ marginBottom: 12, background: "#f6f6f6", padding: 12 }}>
+          <div style={{ fontSize: 12, color: "#000", lineHeight: 1.8 }}>
+            ✨ یکی رو انتخاب کن — هر کدوم کمتر از ۵ دقیقه وقت می‌گیره.
+            <br />
+            لازم نیست کامل انجامش بدی.
+          </div>
+        </Card>
+      )}
+
+      {/* ─── کارت مأموریت انتخاب‌شده ─── */}
+      <Card style={{
+        marginBottom: 16,
+        border: `2px solid ${selectedMeta.color}`,
+        background: selectedMeta.bgColor,
+        padding: 18,
+        transition: "all .25s ease"
+      }}>
+        {/* هدر کارت */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: selectedMeta.color,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+            flexShrink: 0,
+            boxShadow: `0 4px 12px ${selectedMeta.color}33`
+          }}>
+            {selectedMeta.icon}
+          </div>
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: 14,
+              fontWeight: 700,
+              color: "#000",
+              marginBottom: 4
+            }}>
+              {selectedMeta.label}
+            </div>
+            <div style={{
+              fontSize: 11,
+              color: "#555",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap"
+            }}>
+              <span>⏱ {selectedMeta.time}</span>
+              <span style={{ opacity: 0.5 }}>•</span>
+              <span>
+                {"★".repeat(selectedMeta.difficulty)}
+                <span style={{ opacity: 0.3 }}>
+                  {"★".repeat(3 - selectedMeta.difficulty)}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          {/* دکمه انجام شد */}
+          <button
+            onClick={() => toggleDone(selected.id)}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              border: isSelectedDone ? "none" : "2px solid #bbb",
+              background: isSelectedDone ? selectedMeta.color : "#fff",
+              color: "#fff",
+              fontSize: 16,
+              fontWeight: 900,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "inherit",
+              transition: "all .2s ease",
+              flexShrink: 0
+            }}
+            title={isSelectedDone ? "لغو انجام" : "علامت‌گذاری به‌عنوان انجام شده"}
+          >
+            {isSelectedDone ? "✓" : ""}
+          </button>
+        </div>
+
+        {/* متن مأموریت */}
+        <div style={{
+          fontSize: 15,
+          lineHeight: 1.9,
+          color: "#000",
+          fontWeight: 500,
+          marginBottom: 14,
+          paddingBottom: 14,
+          borderBottom: "1px dashed rgba(0,0,0,.12)"
+        }}>
+          {selected.text}
+        </div>
+
+        {/* چرا این مهم است */}
+        <div style={{
+          fontSize: 12,
+          color: "#000",
+          lineHeight: 1.9,
+          opacity: 0.75,
+          display: "flex",
+          gap: 8
+        }}>
+          <span style={{ flexShrink: 0 }}>💡</span>
+          <span style={{ fontStyle: "italic" }}>{selectedMeta.why}</span>
+        </div>
+      </Card>
+
+      {/* ─── لیست همه مأموریت‌ها ─── */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 10
+      }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#000" }}>
+          همه مأموریت‌ها
+        </div>
+        <button
+          onClick={shuffle}
+          style={{
+            background: "#fff",
+            border: "1px solid #e5e5e5",
+            color: "#1a3d2c",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            padding: "6px 12px",
+            borderRadius: 20,
+            fontFamily: "inherit",
+            display: "flex",
+            alignItems: "center",
+            gap: 5
+          }}
+        >
+          🔄 یکی دیگه
+        </button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {missions.map((m, idx) => {
+          const meta = getMissionMeta(m);
+          const isSelected = selectedId === m.id;
+          const isDone = doneIds.includes(m.id);
+
+          return (
+            <button
+              key={`${m.id}_${idx}`}
+              onClick={() => setSelectedId(m.id)}
+              style={{
+                padding: "12px 14px",
+                borderRadius: 10,
+                border: isSelected
+                  ? `2px solid ${meta.color}`
+                  : "1px solid #e5e5e5",
+                background: isSelected ? meta.bgColor : "#fff",
+                cursor: "pointer",
+                textAlign: "right",
+                fontFamily: "inherit",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                transition: "all .15s ease"
+              }}
+            >
+              {/* آیکن */}
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9,
+                background: meta.color,
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 15,
+                flexShrink: 0,
+                opacity: isDone ? 0.5 : 1
               }}>
-                <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 4 }}>
-                  {type.icon} {type.label}
+                {meta.icon}
+              </div>
+
+              {/* متن و متادیتا */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 13,
+                  color: "#000",
+                  lineHeight: 1.7,
+                  marginBottom: 3,
+                  textDecoration: isDone ? "line-through" : "none",
+                  opacity: isDone ? 0.55 : 1
+                }}>
+                  {m.text}
                 </div>
-                {m.text}
-              </button>
-            );
-          })}
-        </div>
-      </Card>
+                <div style={{
+                  fontSize: 10,
+                  color: "#777",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6
+                }}>
+                  <span>{meta.label}</span>
+                  <span style={{ opacity: 0.5 }}>•</span>
+                  <span>⏱ {meta.time}</span>
+                </div>
+              </div>
 
-      <Card style={{ marginTop: 12, background: "#f6f6f6" }}>
-        <div style={{ fontSize: 13, color: "#000", lineHeight: 1.9 }}>
-          لازم نیست کامل انجامش بدهی.
+              {/* تیک */}
+              {isDone && (
+                <div style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  background: meta.color,
+                  color: "#fff",
+                  fontSize: 12,
+                  fontWeight: 900,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0
+                }}>✓</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── یادآوری ─── */}
+      <Card style={{
+        marginTop: 16,
+        background: "#fff8e1",
+        padding: 14,
+        border: "1px solid #ffe0b2"
+      }}>
+        <div style={{
+          fontSize: 12,
+          color: "#000",
+          lineHeight: 1.9,
+          textAlign: "center"
+        }}>
+          🌱 حتی اگر فقط به این مأموریت فکر کنی،
           <br />
-          حتی اگر فقط به آن فکر کنی، همین هم یک قدم است.
+          باز هم یک قدم برداشتی.
         </div>
       </Card>
 
-      <div style={{ marginTop: 16 }}>
-        <Btn onClick={() => onDone(selected)}>انتخاب کردم</Btn>
-        <div style={{ marginTop: 8 }}>
-          <Btn variant="ghost" onClick={() => onDone(null)}>الان نمی‌توانم — رد کن</Btn>
-        </div>
+      {/* ─── دکمه‌های پایین ─── */}
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+        <Btn onClick={() => onDone(selected)}>
+          {isSelectedDone
+            ? "✓ این را انجام دادم — ادامه"
+            : "این یکی رو انتخاب می‌کنم"}
+        </Btn>
+        <Btn variant="ghost" onClick={() => onDone(null)}>
+          الان نمی‌تونم — رد کن
+        </Btn>
       </div>
     </Shell>
   );
