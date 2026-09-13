@@ -112,7 +112,7 @@ function Chip({ children, active, onClick, color = "#1a3d2c" }) {
     <button onClick={onClick} style={{
       padding: "6px 14px", borderRadius: 999,
       border: active ? `2px solid ${color}` : "1px solid #e5e5e5",
-      background: active ? color : "#fff", color: active ? "#fff" : "#555",
+      background: active ? color : "#fff", color: active ? "#fff" : "#000",
       fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap"
     }}>{children}</button>
   );
@@ -138,7 +138,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
 
   return (
     <Shell title={plainName || "ریشه‌ی این الگو"} onBack={onBack} showSOS onSOS={onSOS}>
-      <Card style={{ background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+      <Card style={{ background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
         <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>الگو</div>
         <div style={{ fontSize: 18, fontWeight: 700 }}>
           {plainName || schema?.name_fa}
@@ -149,7 +149,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-        <div style={{ fontSize: 13, lineHeight: 1.9, color: "#1e40af" }}>
+        <div style={{ fontSize: 13, lineHeight: 1.9, color: "#000" }}>
           این توضیح، برای سرزنش کسی نیست.
           <br />
           فقط می‌خواهیم ببینیم این الگو <strong>از کجا</strong> آمده —
@@ -163,17 +163,17 @@ function OriginView({ schemaId, onBack, onSOS }) {
         </div>
         {origin.childhood.map((c, i) => (
           <div key={i} style={{
-            fontSize: 14, lineHeight: 1.9, color: "#555",
+            fontSize: 14, lineHeight: 1.9, color: "#000",
             marginBottom: 10, paddingRight: 12, borderRight: "3px solid #eee"
           }}>{c}</div>
         ))}
       </Card>
 
       <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#e65100" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
           💡 کودکی که بودی، این را یاد گرفت
         </div>
-        <div style={{ fontSize: 15, lineHeight: 1.9, color: "#e65100", fontStyle: "italic" }}>
+        <div style={{ fontSize: 15, lineHeight: 1.9, color: "#000", fontStyle: "italic" }}>
           {origin.whatChildLearned}
         </div>
       </Card>
@@ -184,7 +184,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
         </div>
         {origin.innerVoice.map((v, i) => (
           <div key={i} style={{
-            fontSize: 14, lineHeight: 1.9, color: "#555",
+            fontSize: 14, lineHeight: 1.9, color: "#000",
             marginBottom: 8, padding: "8px 12px", background: "#f6f6f6", borderRadius: 8
           }}>«{v}»</div>
         ))}
@@ -195,24 +195,24 @@ function OriginView({ schemaId, onBack, onSOS }) {
           🕊️ کودکی که بودی، این‌ها را لازم داشت
         </div>
         {origin.whatWasMissing.map((w, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#555", marginBottom: 8 }}>
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
             • {w}
           </div>
         ))}
       </Card>
 
-      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
         <div style={{ fontSize: 14, lineHeight: 2 }}>{origin.gentleReminder}</div>
       </Card>
 
       {nextSteps.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: "#1b5e20" }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: "#000" }}>
             🕊️ حالا باید چکار کنی؟
           </div>
           {nextSteps.map((step, i) => (
             <div key={i} style={{
-              fontSize: 14, lineHeight: 1.9, color: "#1b5e20",
+              fontSize: 14, lineHeight: 1.9, color: "#000",
               marginBottom: 10, paddingRight: 12,
               borderRight: "3px solid #27ae60"
             }}>
@@ -223,7 +223,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
       )}
 
       <Card style={{ marginTop: 12, background: "#f6f6f6" }}>
-        <div style={{ fontSize: 13, color: "#666", lineHeight: 1.9, textAlign: "center" }}>
+        <div style={{ fontSize: 13, color: "#000", lineHeight: 1.9, textAlign: "center" }}>
           این کارها رو یک‌جا نمی‌شه انجام داد.
           <br />
           هر روز یک قدم کوچیک — همین کافیه.
@@ -244,7 +244,7 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
   return (
     <Shell title="چرخه‌های زندگی" onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
-        <p style={{ margin: 0, fontSize: 14, color: "#666", lineHeight: 1.9 }}>
+        <p style={{ margin: 0, fontSize: 14, color: "#000", lineHeight: 1.9 }}>
           این‌ها الگوهای عمیق‌تری هستند که از ترکیب چند طرحواره ساخته می‌شوند.
           <br />
           شاید یکی از این‌ها را در زندگی‌ات دیده باشی.
@@ -269,13 +269,13 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
           border: "1px solid #eee", background: "#fff",
           cursor: "pointer", fontFamily: "inherit"
         }}>
-          <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, color: "#000", marginBottom: 6 }}>
             {cycle.categoryLabel}
           </div>
           <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
             {cycle.title}
           </div>
-          <div style={{ fontSize: 13, color: "#666", lineHeight: 1.7 }}>
+          <div style={{ fontSize: 13, color: "#000", lineHeight: 1.7 }}>
             {cycle.shortDescription}
           </div>
         </button>
@@ -283,7 +283,7 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
 
       {cycles.length === 0 && (
         <Card>
-          <p style={{ color: "#888", fontSize: 14 }}>چرخه‌ای در این دسته پیدا نشد.</p>
+          <p style={{ color: "#000", fontSize: 14 }}>چرخه‌ای در این دسته پیدا نشد.</p>
         </Card>
       )}
     </Shell>
@@ -316,7 +316,7 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         <h2 style={{ margin: "0 0 10px", fontSize: 18, lineHeight: 1.7 }}>
           {cycle.title}
         </h2>
-        <div style={{ fontSize: 14, color: "#555", lineHeight: 1.9 }}>
+        <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
           {cycle.shortDescription}
         </div>
       </Card>
@@ -331,7 +331,7 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
             <div key={i} style={{
               fontSize: 14, lineHeight: 1.9, padding: "8px 0",
               borderBottom: i < cycle.examples.length - 1 ? "1px dashed #eee" : "none",
-              color: "#555"
+              color: "#000"
             }}>«{ex}»</div>
           ))}
         </Card>
@@ -340,11 +340,11 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
       {/* ریشه کودکی */}
       {cycle.childhood && cycle.childhood.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1e40af" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
             🧸 احتمالاً در کودکی این‌ها را تجربه کرده
           </div>
           {cycle.childhood.map((c, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#1e40af", marginBottom: 8 }}>
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
               • {c}
             </div>
           ))}
@@ -361,7 +361,7 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
             <div key={i} style={{
               padding: "10px 12px", background: "#f6f6f6",
               borderRadius: 8, fontSize: 13, lineHeight: 1.7,
-              marginBottom: 6, color: "#444"
+              marginBottom: 6, color: "#000"
             }}>{step}</div>
           ))}
         </Card>
@@ -370,11 +370,11 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
       {/* چرا تکرار می‌شود */}
       {cycle.whyItRepeats && cycle.whyItRepeats.length > 0 && (
         <Card style={{ marginTop: 12, background: "#fef3f2" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#c0392b" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
             🤔 چرا این چرخه تکرار می‌شود؟
           </div>
           {cycle.whyItRepeats.map((w, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#555", marginBottom: 6 }}>
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
               • {w}
             </div>
           ))}
@@ -398,7 +398,7 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
                 <div style={{ fontWeight: 600, marginBottom: 4 }}>
                   {s.name_plain || s.name_fa}
                 </div>
-                <div style={{ fontSize: 12, color: "#888", lineHeight: 1.5 }}>
+                <div style={{ fontSize: 12, color: "#000", lineHeight: 1.5 }}>
                   {s.one_liner || s.short_description}
                 </div>
               </button>
@@ -409,7 +409,7 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
 
       {/* حالا چه کار کنی */}
       {cycle.whatToDo && cycle.whatToDo.length > 0 && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
             🕊️ حالا باید چکار کنی؟
           </div>
@@ -424,12 +424,12 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
       {/* به خودت این‌ها را بگو */}
       {cycle.selfTalk && cycle.selfTalk.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1e40af" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
             🗣️ به خودت این‌ها را بگو
           </div>
           {cycle.selfTalk.map((phrase, i) => (
             <div key={i} style={{
-              fontSize: 14, lineHeight: 1.9, color: "#1e40af",
+              fontSize: 14, lineHeight: 1.9, color: "#000",
               marginBottom: 8, padding: "10px 14px", background: "#fff",
               borderRadius: 8, borderRight: "3px solid #3b82f6"
             }}>«{phrase}»</div>
@@ -440,12 +440,12 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
       {/* آزمایش‌های کوچک */}
       {cycle.smallExperiments && cycle.smallExperiments.length > 0 && (
         <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#e65100" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
             🧪 آزمایش‌های کوچک
           </div>
           {cycle.smallExperiments.map((exp, i) => (
             <div key={i} style={{
-              fontSize: 14, lineHeight: 1.9, color: "#e65100",
+              fontSize: 14, lineHeight: 1.9, color: "#000",
               marginBottom: 10, paddingRight: 12,
               borderRight: "3px solid #f39c12"
             }}>
@@ -456,7 +456,7 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
       )}
 
       <Card style={{ marginTop: 12, background: "#f6f6f6" }}>
-        <div style={{ fontSize: 13, color: "#666", lineHeight: 1.9, textAlign: "center" }}>
+        <div style={{ fontSize: 13, color: "#000", lineHeight: 1.9, textAlign: "center" }}>
           این چرخه یک‌شبه درست نمی‌شه.
           <br />
           ولی هر بار که ببینی‌اش، یک قدم جلوتری.
@@ -494,7 +494,7 @@ function CheckInView({ analysis, onDone, onSkip }) {
     return (
       <Shell title="صبح بخیر">
         <Card>
-          <p style={{ margin: "0 0 6px", fontSize: 14, color: "#888" }}>{prompt}</p>
+          <p style={{ margin: "0 0 6px", fontSize: 14, color: "#000" }}>{prompt}</p>
           <p style={{ margin: "20px 0 16px", fontSize: 16, fontWeight: 600 }}>
             امروز چه احساسی داری؟
           </p>
@@ -527,7 +527,7 @@ function CheckInView({ analysis, onDone, onSkip }) {
           <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 600 }}>
             کدام الگو امروز فعال‌تر است؟
           </p>
-          <p style={{ margin: "0 0 16px", fontSize: 13, color: "#888" }}>
+          <p style={{ margin: "0 0 16px", fontSize: 13, color: "#000" }}>
             فقط الگوهای خودت نشان داده می‌شوند.
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -536,7 +536,7 @@ function CheckInView({ analysis, onDone, onSkip }) {
                 padding: "12px 14px", borderRadius: 10,
                 border: schemaId === s.id ? "2px solid #1a3d2c" : "1px solid #e5e5e5",
                 background: schemaId === s.id ? "#1a3d2c" : "#fff",
-                color: schemaId === s.id ? "#fff" : "#333",
+                color: schemaId === s.id ? "#fff" : "#000",
                 fontSize: 14, textAlign: "right", cursor: "pointer",
                 fontFamily: "inherit", lineHeight: 1.6
               }}>
@@ -566,7 +566,7 @@ function CheckInView({ analysis, onDone, onSkip }) {
     return (
       <Shell title="صبح بخیر" onBack={() => setPhase("schema")}>
         <Card>
-          <div style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>
+          <div style={{ fontSize: 14, color: "#000", marginBottom: 8 }}>
             چیز دیگری می‌خواهی بگویی؟ (اختیاری)
           </div>
           <textarea value={note} onChange={(e) => setNote(e.target.value)}
@@ -677,7 +677,7 @@ function SOSView({ onBack, onBetter }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 320, margin: "0 auto" }}>
             <button onClick={onBetter} style={{
               padding: 14, borderRadius: 12, border: "none",
-              background: "#fff", color: "#1a3d2c",
+              background: "#fff", color: "#000",
               fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit"
             }}>ادامه</button>
           </div>
@@ -697,7 +697,7 @@ function WelcomeView({ onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSi
     <Shell title="الگوهای من" showSOS onSOS={onSOS}>
       <Card>
         <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>چه چیزی در من تکرار می‌شود؟</h2>
-        <p style={{ color: "#666", fontSize: 14, lineHeight: 1.8, margin: 0 }}>
+        <p style={{ color: "#000", fontSize: 14, lineHeight: 1.8, margin: 0 }}>
           اینجا قرار نیست برچسبی به تو بزنیم.
           قرار است با هم ببینیم چه الگویی در تو تکرار می‌شود، کجا فعال می‌شود،
           و چطور می‌توانی این بار جور دیگری پاسخ بدهی.
@@ -705,7 +705,7 @@ function WelcomeView({ onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSi
       </Card>
 
       {phrase && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
           <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>یادآوری امروز</div>
           <div style={{ fontSize: 15, lineHeight: 1.9 }}>{phrase}</div>
         </Card>
@@ -723,8 +723,8 @@ function WelcomeView({ onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSi
       </div>
 
       <Card style={{ marginTop: 24, background: "#f6f6f6" }}>
-        <div style={{ fontSize: 13, color: "#666", lineHeight: 1.9 }}>
-          <strong style={{ color: "#333" }}>این اپ چه چیزی نیست:</strong>
+        <div style={{ fontSize: 13, color: "#000", lineHeight: 1.9 }}>
+          <strong style={{ color: "#000" }}>این اپ چه چیزی نیست:</strong>
           <div>• تشخیص پزشکی نمی‌دهد</div>
           <div>• از AI برای قضاوت درباره تو استفاده نمی‌کند</div>
           <div>• جایگزین درمانگر نیست</div>
@@ -754,7 +754,7 @@ function YSQView({ onDone, onBack }) {
   return (
     <Shell title="ارزیابی" onBack={onBack}>
       <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#000" }}>
           <span>سؤال {toFa(index + 1)} از {toFa(YSQ_QUESTIONS.length)}</span>
           <span>{toFa(check.progress)}%</span>
         </div>
@@ -775,7 +775,7 @@ function YSQView({ onDone, onBack }) {
                 padding: "12px 14px", borderRadius: 10,
                 border: active ? "2px solid #1a3d2c" : "1px solid #e5e5e5",
                 background: active ? "#1a3d2c" : "#fff",
-                color: active ? "#fff" : "#333",
+                color: active ? "#fff" : "#000",
                 fontSize: 14, textAlign: "right",
                 cursor: "pointer", fontFamily: "inherit"
               }}>{l.label}</button>
@@ -824,7 +824,7 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
       showQuickButton onQuick={() => onPickSchema(recommended?.schemaId)}
       showSOS onSOS={onSOS}>
 
-      <Card style={{ background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+      <Card style={{ background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
         <div style={{ fontSize: 12, opacity: 0.7 }}>پیشنهاد شروع</div>
         <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>
           {recPlain}
@@ -867,11 +867,11 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
                   <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
                     {plain}
                   </div>
-                  <div style={{ fontSize: 11, color: "#888" }}>
+                  <div style={{ fontSize: 11, color: "#000" }}>
                     {schema?.name_fa || ""}
                   </div>
                 </div>
-                <span style={{ color: r.priority.color, fontWeight: 700, fontSize: 14, marginTop: 4 }}>
+                <span style={{ color: "#000", fontWeight: 700, fontSize: 14, marginTop: 4 }}>
                   {r.priority.emoji} {toFa(r.percentage)}%
                 </span>
               </div>
@@ -879,7 +879,7 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
                 <ProgressBar value={r.percentage} color={r.priority.color} />
               </div>
               {schema?.one_liner && (
-                <div style={{ fontSize: 13, color: "#666", marginTop: 10, lineHeight: 1.7 }}>
+                <div style={{ fontSize: 13, color: "#000", marginTop: 10, lineHeight: 1.7 }}>
                   {schema.one_liner}
                 </div>
               )}
@@ -889,7 +889,7 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
               marginTop: 12, padding: "10px 12px", borderRadius: 8,
               border: "1px solid #e5e5e5", background: "#fafafa",
               cursor: "pointer", fontSize: 13, fontFamily: "inherit",
-              color: "#555", width: "100%", textAlign: "right"
+              color: "#000", width: "100%", textAlign: "right"
             }}>
               🧸 این الگو از کجا آمده؟ + حالا چکار کنم؟
             </button>
@@ -899,7 +899,7 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
 
       {low.length > 0 && (
         <>
-          <h3 style={{ margin: "22px 0 10px", fontSize: 15, color: "#888" }}>سایر الگوها</h3>
+          <h3 style={{ margin: "22px 0 10px", fontSize: 15, color: "#000" }}>سایر الگوها</h3>
           {low.map((r) => {
             const schema = SCHEMAS.find((s) => s.id === r.schemaId);
             const plain = schema?.name_plain || r.name;
@@ -908,7 +908,7 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
                 <button onClick={() => onPickSchema(r.schemaId)} style={{
                   display: "block", width: "100%", textAlign: "right",
                   padding: 0, border: "none", background: "transparent",
-                  cursor: "pointer", fontSize: 14, color: "#666", fontFamily: "inherit"
+                  cursor: "pointer", fontSize: 14, color: "#000", fontFamily: "inherit"
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span>{plain}</span>
@@ -925,7 +925,7 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
         <Btn variant="ghost" onClick={onRetake}>ارزیابی مجدد</Btn>
       </div>
 
-      <p style={{ fontSize: 11, color: "#999", marginTop: 20, lineHeight: 1.8 }}>
+      <p style={{ fontSize: 11, color: "#000", marginTop: 20, lineHeight: 1.8 }}>
         این نتایج یک ارزیابی خودگزارشی است و تشخیص بالینی نیست.
       </p>
     </Shell>
@@ -987,7 +987,7 @@ function CycleView({ schemaId, onDone, onBack }) {
                 padding: "12px 14px", borderRadius: 10,
                 border: active ? "2px solid #1a3d2c" : "1px solid #e5e5e5",
                 background: active ? "#1a3d2c" : "#fff",
-                color: active ? "#fff" : "#333",
+                color: active ? "#fff" : "#000",
                 fontSize: 14, textAlign: "right",
                 cursor: "pointer", fontFamily: "inherit"
               }}>{it.text}</button>
@@ -1020,7 +1020,7 @@ function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBac
   return (
     <Shell title="الگوی تو" onBack={onBack}>
       <Card>
-        <p style={{ margin: "0 0 16px", color: "#666", fontSize: 14 }}>
+        <p style={{ margin: "0 0 16px", color: "#000", fontSize: 14 }}>
           این چرخه توست. جایی برای قضاوت نیست — فقط شناخت.
         </p>
         {items.map((it, i) => (
@@ -1028,14 +1028,14 @@ function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBac
             display: "flex", gap: 12, padding: "10px 0",
             borderBottom: i < items.length - 1 ? "1px dashed #eee" : "none"
           }}>
-            <div style={{ width: 90, color: "#888", fontSize: 13 }}>{it.label}</div>
+            <div style={{ width: 90, color: "#000", fontSize: 13 }}>{it.label}</div>
             <div style={{ flex: 1, fontWeight: 500 }}>{it.value}</div>
           </div>
         ))}
       </Card>
 
       {phrase && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
           <div style={{ fontSize: 14, lineHeight: 1.9 }}>{phrase}</div>
         </Card>
       )}
@@ -1108,10 +1108,10 @@ function MissionView({ schemaId, onDone, onBack }) {
   return (
     <Shell title="مأموریت امروز" onBack={onBack}>
       <Card>
-        <p style={{ margin: "0 0 6px", fontSize: 14, color: "#666" }}>
+        <p style={{ margin: "0 0 6px", fontSize: 14, color: "#000" }}>
           یکی را انتخاب کن. هر کدام کمتر از ۱ دقیقه طول می‌کشد.
         </p>
-        <p style={{ margin: "0 0 16px", fontSize: 12, color: "#999" }}>
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: "#000" }}>
           کوچک‌ترین که می‌توانی.
         </p>
 
@@ -1124,7 +1124,7 @@ function MissionView({ schemaId, onDone, onBack }) {
                 padding: "12px 14px", borderRadius: 10,
                 border: active ? "2px solid #1a3d2c" : "1px solid #e5e5e5",
                 background: active ? "#1a3d2c" : "#fff",
-                color: active ? "#fff" : "#333",
+                color: active ? "#fff" : "#000",
                 fontSize: 14, textAlign: "right",
                 cursor: "pointer", fontFamily: "inherit", lineHeight: 1.7
               }}>
@@ -1139,7 +1139,7 @@ function MissionView({ schemaId, onDone, onBack }) {
       </Card>
 
       <Card style={{ marginTop: 12, background: "#f6f6f6" }}>
-        <div style={{ fontSize: 13, color: "#555", lineHeight: 1.9 }}>
+        <div style={{ fontSize: 13, color: "#000", lineHeight: 1.9 }}>
           لازم نیست کامل انجامش بدهی.
           <br />
           حتی اگر فقط به آن فکر کنی، همین هم یک قدم است.
@@ -1167,15 +1167,15 @@ function LogResultView({ schemaId, selection, onDone, onBack }) {
   const replacement = getReplacementResponse(schemaId, selection.behaviorId);
 
   const options = [
-    { id: "old", label: "واکنش قدیمی را انجام دادم", color: "#e74c3c", emoji: "🔴" },
-    { id: "paused", label: "مکث کردم", color: "#f39c12", emoji: "🟡" },
-    { id: "new", label: "پاسخ جدید را امتحان کردم", color: "#27ae60", emoji: "🟢" }
+    { id: "old", label: "واکنش قدیمی را انجام دادم", color: "#000", emoji: "🔴" },
+    { id: "paused", label: "مکث کردم", color: "#000", emoji: "🟡" },
+    { id: "new", label: "پاسخ جدید را امتحان کردم", color: "#000", emoji: "🟢" }
   ];
 
   return (
     <Shell title="چطور پیش رفت؟" onBack={onBack}>
       <Card>
-        <p style={{ margin: "0 0 8px", fontSize: 14, color: "#666" }}>
+        <p style={{ margin: "0 0 8px", fontSize: 14, color: "#000" }}>
           وقتی این الگو فعال شد، چه اتفاقی افتاد؟
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1186,7 +1186,7 @@ function LogResultView({ schemaId, selection, onDone, onBack }) {
                 padding: "12px 14px", borderRadius: 10,
                 border: active ? `2px solid ${o.color}` : "1px solid #e5e5e5",
                 background: active ? o.color : "#fff",
-                color: active ? "#fff" : "#333",
+                color: active ? "#fff" : "#000",
                 fontSize: 14, textAlign: "right",
                 cursor: "pointer", fontFamily: "inherit"
               }}>{o.emoji} {o.label}</button>
@@ -1197,21 +1197,21 @@ function LogResultView({ schemaId, selection, onDone, onBack }) {
 
       {reaction === "new" && (
         <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-          <div style={{ fontSize: 14, color: "#1b5e20", lineHeight: 1.9 }}>
+          <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
             ⭐ این یک لحظه‌ی برد است. در «لحظه‌های من» ذخیره می‌شود.
           </div>
         </Card>
       )}
       {reaction === "paused" && (
         <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-          <div style={{ fontSize: 14, color: "#e65100", lineHeight: 1.9 }}>
+          <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
             ⭐ همین مکث کردن، خودش یک برد است. ثبت می‌شود.
           </div>
         </Card>
       )}
       {replacement && selection.behaviorId && (
         <Card style={{ marginTop: 12, background: "#f6f6f6" }}>
-          <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: "#000", marginBottom: 4 }}>
             پاسخ جایگزینی که تمرین کردی:
           </div>
           <div style={{ fontSize: 14, fontWeight: 500 }}>{replacement}</div>
@@ -1228,7 +1228,7 @@ function LogResultView({ schemaId, selection, onDone, onBack }) {
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 13, color: "#666", marginBottom: 6 }}>
+        <div style={{ fontSize: 13, color: "#000", marginBottom: 6 }}>
           یادداشت (اختیاری)
         </div>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
@@ -1256,7 +1256,7 @@ function WinsView({ onBack, onSOS }) {
   if (!wins) {
     return (
       <Shell title="لحظه‌های من" onBack={onBack} showSOS onSOS={onSOS}>
-        <p style={{ color: "#888" }}>در حال بارگذاری...</p>
+        <p style={{ color: "#000" }}>در حال بارگذاری...</p>
       </Shell>
     );
   }
@@ -1287,7 +1287,7 @@ function WinsView({ onBack, onSOS }) {
 
   return (
     <Shell title="لحظه‌های من" onBack={onBack} showSOS onSOS={onSOS}>
-      <Card style={{ background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff", marginBottom: 12 }}>
+      <Card style={{ background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff", marginBottom: 12 }}>
         <div style={{ fontSize: 12, opacity: 0.7 }}>مجموع لحظه‌های برد</div>
         <div style={{ fontSize: 32, fontWeight: 700, marginTop: 4 }}>
           {toFa(wins.length)}
@@ -1307,11 +1307,11 @@ function WinsView({ onBack, onSOS }) {
                 <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>
                   {describeWin(w)}
                 </div>
-                <div style={{ fontSize: 12, color: "#888" }}>
+                <div style={{ fontSize: 12, color: "#000" }}>
                   {schema?.name_plain || schema?.name_fa || "—"} • {formatDate(w.createdAt)}
                 </div>
                 {w.notes && (
-                  <div style={{ fontSize: 13, color: "#555", marginTop: 6, lineHeight: 1.7 }}>
+                  <div style={{ fontSize: 13, color: "#000", marginTop: 6, lineHeight: 1.7 }}>
                     {w.notes}
                   </div>
                 )}
@@ -1335,7 +1335,7 @@ function CalendarView({ onBack, onSOS }) {
   if (!data) {
     return (
       <Shell title="تقویم" onBack={onBack} showSOS onSOS={onSOS}>
-        <p style={{ color: "#888" }}>در حال بارگذاری...</p>
+        <p style={{ color: "#000" }}>در حال بارگذاری...</p>
       </Shell>
     );
   }
@@ -1346,7 +1346,7 @@ function CalendarView({ onBack, onSOS }) {
   return (
     <Shell title="تقویم ۳۰ روز اخیر" onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
-        <div style={{ fontSize: 13, color: "#666", marginBottom: 14, lineHeight: 1.9 }}>
+        <div style={{ fontSize: 13, color: "#000", marginBottom: 14, lineHeight: 1.9 }}>
           هر خانه یک روز است. رنگ نشان می‌دهد حالت چطور بود.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
@@ -1357,7 +1357,7 @@ function CalendarView({ onBack, onSOS }) {
               display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center",
               position: "relative",
-              color: d.mood === "none" ? "#aaa" : "#fff",
+              color: d.mood === "none" ? "#000" : "#fff",
               fontSize: 11, fontWeight: 600
             }}>
               <div>{toFa(d.dayNumber)}</div>
@@ -1372,7 +1372,7 @@ function CalendarView({ onBack, onSOS }) {
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap", fontSize: 12, color: "#666" }}>
+        <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap", fontSize: 12, color: "#000" }}>
           {Object.entries(moodLabels).map(([k, label]) => (
             <div key={k} style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <span style={{
@@ -1399,7 +1399,7 @@ function SituationsView({ onBack, onPickSituation, onSOS }) {
   return (
     <Shell title="موقعیت‌های من" onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
-        <p style={{ margin: 0, fontSize: 14, color: "#666", lineHeight: 1.9 }}>
+        <p style={{ margin: 0, fontSize: 14, color: "#000", lineHeight: 1.9 }}>
           این حسی که الان داری، مربوط به کدام موقعیت است؟
         </p>
       </Card>
@@ -1423,12 +1423,12 @@ function SituationsView({ onBack, onPickSituation, onSOS }) {
           cursor: "pointer", fontFamily: "inherit"
         }}>
           <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6 }}>{s.title}</div>
-          <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>{s.categoryLabel}</div>
+          <div style={{ fontSize: 12, color: "#000", marginTop: 4 }}>{s.categoryLabel}</div>
         </button>
       ))}
 
       {situations.length === 0 && (
-        <Card><p style={{ color: "#888", fontSize: 14 }}>موقعیتی در این دسته پیدا نشد.</p></Card>
+        <Card><p style={{ color: "#000", fontSize: 14 }}>موقعیتی در این دسته پیدا نشد.</p></Card>
       )}
     </Shell>
   );
@@ -1457,7 +1457,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
     <Shell title="موقعیت" onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
         <h2 style={{ margin: "0 0 8px", fontSize: 18, lineHeight: 1.7 }}>{situation.title}</h2>
-        <div style={{ fontSize: 12, color: "#888" }}>{situation.categoryLabel}</div>
+        <div style={{ fontSize: 12, color: "#000" }}>{situation.categoryLabel}</div>
       </Card>
 
       <Card style={{ marginTop: 12 }}>
@@ -1468,7 +1468,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
           <div key={i} style={{
             fontSize: 14, lineHeight: 1.9, padding: "8px 0",
             borderBottom: i < situation.examples.length - 1 ? "1px dashed #eee" : "none",
-            color: "#555"
+            color: "#000"
           }}>«{ex}»</div>
         ))}
       </Card>
@@ -1481,7 +1481,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
           <div key={i} style={{
             padding: "10px 12px", background: "#f6f6f6",
             borderRadius: 8, fontSize: 13, lineHeight: 1.7,
-            marginBottom: 6, color: "#444"
+            marginBottom: 6, color: "#000"
           }}>{step}</div>
         ))}
       </Card>
@@ -1501,7 +1501,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
               <div style={{ fontWeight: 600, marginBottom: 4 }}>
                 {s.name_plain || s.name_fa}
               </div>
-              <div style={{ fontSize: 12, color: "#888", lineHeight: 1.5 }}>
+              <div style={{ fontSize: 12, color: "#000", lineHeight: 1.5 }}>
                 {s.one_liner || s.short_description}
               </div>
             </button>
@@ -1509,7 +1509,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
         </div>
       </Card>
 
-      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
         <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>چه کار کنی؟</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {situation.whatToDo.map((tip, i) => (
@@ -1522,7 +1522,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
 
       {situation.selfTalk && situation.selfTalk.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1e40af" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
             🗣️ به خودت این‌ها را بگو
           </div>
           {situation.selfTalk.map((phrase, i) => (
@@ -1531,7 +1531,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
               style={{
                 fontSize: 14,
                 lineHeight: 1.9,
-                color: "#1e40af",
+                color: "#000",
                 marginBottom: 8,
                 padding: "10px 14px",
                 background: "#fff",
@@ -1577,12 +1577,12 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
   return (
     <Shell title="روابط من" onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
-        <p style={{ margin: 0, fontSize: 14, color: "#666", lineHeight: 1.9 }}>
+        <p style={{ margin: 0, fontSize: 14, color: "#000", lineHeight: 1.9 }}>
           چطور با دیگران برخورد کنم؟ چرا بعضی روابط تکرار می‌شوند؟
         </p>
       </Card>
 
-      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
         <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>
           💬 چطور با طرف مقابل برخورد کنم؟
         </div>
@@ -1613,7 +1613,7 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
       <h3 style={{ margin: "22px 0 8px", fontSize: 15 }}>
         🔁 چرا بعضی روابط تکرار می‌شوند؟
       </h3>
-      <p style={{ margin: "0 0 12px", fontSize: 13, color: "#888", lineHeight: 1.8 }}>
+      <p style={{ margin: "0 0 12px", fontSize: 13, color: "#000", lineHeight: 1.8 }}>
         این‌ها ترکیب‌های رایج‌اند. روی هر کدام بزن تا بفهمی چرا همیشه شبیه هم‌اند.
       </p>
 
@@ -1624,11 +1624,11 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
           border: "1px solid #eee", background: "#fff",
           cursor: "pointer", fontFamily: "inherit"
         }}>
-          <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>{p.shortName}</div>
+          <div style={{ fontSize: 11, color: "#000", marginBottom: 6 }}>{p.shortName}</div>
           <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
             {p.boxTitle || p.title}
           </div>
-          <div style={{ fontSize: 13, color: "#666", lineHeight: 1.7 }}>
+          <div style={{ fontSize: 13, color: "#000", lineHeight: 1.7 }}>
             {p.boxDescription}
           </div>
         </button>
@@ -1660,25 +1660,25 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
     <Shell title={pattern.shortName} onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
         <h2 style={{ margin: "0 0 8px", fontSize: 18, lineHeight: 1.7 }}>{pattern.title}</h2>
-        <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: "#000", marginBottom: 12 }}>
           {schemas.map((s) => s.name_plain || s.name_fa).join(" + ")}
         </div>
-        <div style={{ fontSize: 14, lineHeight: 1.9, color: "#555" }}>
+        <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>
           {pattern.boxDescription}
         </div>
       </Card>
 
       {pattern.childhood && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1e40af" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
             🧸 احتمالاً در کودکی این‌ها را تجربه کرده
           </div>
           {Array.isArray(pattern.childhood) ? pattern.childhood.map((c, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#1e40af", marginBottom: 8 }}>
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
               • {c}
             </div>
           )) : (
-            <div style={{ fontSize: 14, lineHeight: 1.9, color: "#1e40af" }}>
+            <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>
               {pattern.childhood}
             </div>
           )}
@@ -1690,7 +1690,7 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>
             📖 در زندگی واقعی چطور است؟
           </div>
-          <div style={{ fontSize: 14, lineHeight: 1.9, color: "#555" }}>{pattern.realLife}</div>
+          <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>{pattern.realLife}</div>
         </Card>
       )}
 
@@ -1698,44 +1698,44 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
         <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>
           🔁 معمولاً چطور پیش می‌رود؟
         </div>
-        <div style={{ fontSize: 14, lineHeight: 1.9, color: "#555" }}>{pattern.typical}</div>
+        <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>{pattern.typical}</div>
       </Card>
 
       <Card style={{ marginTop: 12, background: "#fef3f2" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#c0392b" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
           ⚠️ چالش‌های این رابطه
         </div>
         {pattern.challenges.map((c, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#555", marginBottom: 6 }}>
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
             • {c}
           </div>
         ))}
       </Card>
 
       <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#1b5e20" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
           ✅ چه چیزی کمک می‌کند
         </div>
         {pattern.whatHelps.map((h, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#1b5e20", marginBottom: 6 }}>
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
             ✓ {h}
           </div>
         ))}
       </Card>
 
       <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#e65100" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
           ❌ چه چیزی اوضاع را بدتر می‌کند
         </div>
         {pattern.whatHurts.map((h, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#e65100", marginBottom: 6 }}>
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
             ✕ {h}
           </div>
         ))}
       </Card>
 
       {pattern.whatToDoNow && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
             🕊️ حالا باید چکار کرد
           </div>
@@ -1771,8 +1771,8 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
     <Shell title={plain || guide.name} onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
         <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>{plain || guide.name}</h2>
-        <div style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>{guide.name}</div>
-        <div style={{ fontSize: 14, color: "#555", lineHeight: 1.9 }}>
+        <div style={{ fontSize: 12, color: "#000", marginBottom: 12 }}>{guide.name}</div>
+        <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
           {guide.plainDescription}
         </div>
       </Card>
@@ -1782,7 +1782,7 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
             📖 در زندگی واقعی
           </div>
-          <div style={{ fontSize: 14, color: "#555", lineHeight: 1.9 }}>
+          <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
             {guide.example}
           </div>
         </Card>
@@ -1790,39 +1790,39 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
 
       {guide.childhood && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#1e40af" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
             🧸 احتمالاً در کودکی این‌ها را تجربه کرده
           </div>
           {guide.childhood.map((c, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#1e40af", marginBottom: 8 }}>
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
               • {c}
             </div>
           ))}
         </Card>
       )}
 
-      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
         <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>🌟 قاعده طلایی</div>
         <div style={{ fontSize: 16, lineHeight: 1.9, fontWeight: 600 }}>{guide.goldenRule}</div>
       </Card>
 
       <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#1b5e20" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
           ✅ این کارها را بکن
         </div>
         {guide.doThis.map((d, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#1b5e20", marginBottom: 8 }}>
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
             • {d}
           </div>
         ))}
       </Card>
 
       <Card style={{ marginTop: 12, background: "#fef3f2" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#c0392b" }}>
+        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
           ❌ این کارها را نکن
         </div>
         {guide.dontDoThis.map((d, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#c0392b", marginBottom: 8 }}>
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
             • {d}
           </div>
         ))}
@@ -1830,11 +1830,11 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
 
       {guide.whatToDoNow && (
         <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#e65100" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
             🕊️ حالا باید چکار کرد
           </div>
           {guide.whatToDoNow.map((w, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#e65100", marginBottom: 8 }}>
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
               • {w}
             </div>
           ))}
@@ -1852,7 +1852,7 @@ function BreakCycleView({ onBack, onSOS }) {
   return (
     <Shell title="چطور چرخه را بشکنم" onBack={onBack} showSOS onSOS={onSOS}>
       <Card>
-        <p style={{ margin: 0, fontSize: 14, color: "#666", lineHeight: 1.9 }}>
+        <p style={{ margin: 0, fontSize: 14, color: "#000", lineHeight: 1.9 }}>
           هر بار که این ۶ قدم را طی کنی، مغزت یاد می‌گیرد که لازم نیست همیشه
           واکنش قدیمی را اجرا کند.
         </p>
@@ -1869,13 +1869,13 @@ function BreakCycleView({ onBack, onSOS }) {
             }}>{toFa(s.num)}</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{s.title}</div>
-              <div style={{ fontSize: 14, color: "#555", lineHeight: 1.8 }}>{s.desc}</div>
+              <div style={{ fontSize: 14, color: "#000", lineHeight: 1.8 }}>{s.desc}</div>
             </div>
           </div>
         </Card>
       ))}
 
-      <Card style={{ marginTop: 16, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+      <Card style={{ marginTop: 16, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
         <div style={{ fontSize: 14, lineHeight: 1.9, textAlign: "center" }}>
           تغییر با ۱۰۰ بار تکرار می‌آید، نه با یک بار موفقیت.
         </div>
@@ -1895,7 +1895,7 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
   if (!summary) {
     return (
       <Shell title="پیشرفت" onBack={onBack} showQuickButton onQuick={onQuick} showSOS onSOS={onSOS}>
-        <p style={{ color: "#888" }}>در حال بارگذاری...</p>
+        <p style={{ color: "#000" }}>در حال بارگذاری...</p>
       </Shell>
     );
   }
@@ -1907,15 +1907,15 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
       <Card>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
-            <div style={{ fontSize: 12, color: "#888" }}>فعال شدن الگو</div>
+            <div style={{ fontSize: 12, color: "#000" }}>فعال شدن الگو</div>
             <div style={{ fontSize: 28, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
               {toFa(total)}
             </div>
           </div>
           {streak > 0 && (
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 12, color: "#888" }}>روز پیوسته</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#e67e22" }}>
+              <div style={{ fontSize: 12, color: "#000" }}>روز پیوسته</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#000" }}>
                 {toFa(streak)}
               </div>
             </div>
@@ -1929,10 +1929,10 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
             background: "#fff8e1", cursor: "pointer",
             textAlign: "right", fontFamily: "inherit"
           }}>
-            <span style={{ fontWeight: 600, fontSize: 14, color: "#e65100" }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: "#000" }}>
               ⭐ {toFa(winsCount)} لحظه‌ی برد
             </span>
-            <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "#000", marginTop: 2 }}>
               ببین چه کردی →
             </div>
           </button>
@@ -1980,9 +1980,9 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
             این هفته در مقایسه با هفته قبل
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontSize: 13 }}>
-            <div style={{ color: "#888" }}></div>
-            <div style={{ textAlign: "center", color: "#888", fontSize: 12 }}>هفته قبل</div>
-            <div style={{ textAlign: "center", color: "#888", fontSize: 12 }}>این هفته</div>
+            <div style={{ color: "#000" }}></div>
+            <div style={{ textAlign: "center", color: "#000", fontSize: 12 }}>هفته قبل</div>
+            <div style={{ textAlign: "center", color: "#000", fontSize: 12 }}>این هفته</div>
 
             <div>فعال شدن</div>
             <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
@@ -1993,18 +1993,18 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
             </div>
 
             <div>واکنش قدیمی</div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#e74c3c" }}>
+            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000" }}>
               {toFa(weekly.lastWeek.old)}
             </div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#e74c3c", fontWeight: 600 }}>
+            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000", fontWeight: 600 }}>
               {toFa(weekly.thisWeek.old)}
             </div>
 
             <div>پاسخ جدید</div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#27ae60" }}>
+            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000" }}>
               {toFa(weekly.lastWeek.new)}
             </div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#27ae60", fontWeight: 600 }}>
+            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000", fontWeight: 600 }}>
               {toFa(weekly.thisWeek.new)}
             </div>
           </div>
@@ -2012,7 +2012,7 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
       )}
 
       {insights.length > 0 && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #123a34 0%, #1f9384 52%, #2bbfab 100%)", color: "#fff" }}>
+        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
             چه چیزی در حال تغییر است؟
           </div>
@@ -2076,7 +2076,7 @@ function QuickCheckView({ profiles, onDone, onBack }) {
           <p style={{ fontSize: 16, lineHeight: 1.9, margin: "0 0 20px" }}>
             ۱۰ ثانیه هیچ کاری نکن.<br />نفس بکش.
           </p>
-          <p style={{ fontSize: 14, color: "#666", lineHeight: 1.9 }}>
+          <p style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
             الان چه چیزی را واقعاً می‌دانم؟<br />
             و چه چیزی را فقط حدس می‌زنم؟
           </p>
@@ -2096,13 +2096,13 @@ function QuickCheckView({ profiles, onDone, onBack }) {
             این بار می‌خواهی همان واکنش قبلی را تکرار کنی یا امتحان جدیدی داشته باشی؟
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <button onClick={() => save("old")} style={{ ...styles.quickOptBtn, borderColor: "#e74c3c", color: "#e74c3c" }}>
+            <button onClick={() => save("old")} style={{ ...styles.quickOptBtn, borderColor: "#e74c3c", color: "#000" }}>
               واکنش قدیمی
             </button>
-            <button onClick={() => save("new")} style={{ ...styles.quickOptBtn, background: "#27ae60", color: "#fff", borderColor: "#27ae60" }}>
+            <button onClick={() => save("new")} style={{ ...styles.quickOptBtn, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff", borderColor: "#178a7c" }}>
               امتحان جدید
             </button>
-            <button onClick={() => save("paused")} style={{ ...styles.quickOptBtn, borderColor: "#f39c12", color: "#f39c12" }}>
+            <button onClick={() => save("paused")} style={{ ...styles.quickOptBtn, borderColor: "#f39c12", color: "#000" }}>
               فقط مکث می‌کنم
             </button>
           </div>
@@ -2401,7 +2401,7 @@ const styles = {
   app: {
     minHeight: "100vh", background: "#fafafa",
     fontFamily: "system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif",
-    color: "#222", paddingBottom: 80, position: "relative"
+    color: "#000", paddingBottom: 80, position: "relative"
   },
   header: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -2419,7 +2419,7 @@ const styles = {
   sosHeaderBtn: {
     width: 40, height: 32, borderRadius: 8,
     border: "1px solid #e74c3c", background: "#fff",
-    color: "#e74c3c", fontSize: 12, fontWeight: 700,
+    color: "#000", fontSize: 12, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit"
   },
   main: { maxWidth: 520, margin: "0 auto", padding: 16 },
@@ -2432,7 +2432,7 @@ const styles = {
     border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit"
   },
   btnPrimary: { background: "#1a3d2c", color: "#fff" },
-  btnGhost: { background: "#fff", color: "#333", border: "1px solid #e5e5e5" },
+  btnGhost: { background: "#fff", color: "#000", border: "1px solid #e5e5e5" },
   btnDanger: { background: "#e74c3c", color: "#fff" },
   quickBtn: {
     position: "fixed", bottom: 20, left: "50%",
@@ -2465,7 +2465,7 @@ const styles = {
   },
   sosFull: {
     minHeight: "100vh",
-    background: "linear-gradient(180deg, #123a34 0%, #1f9384 55%, #2bbfab 100%)",
+    background: "linear-gradient(180deg, #0a3d38 0%, #0f5b53 55%, #178a7c 100%)",
     color: "#fff",
     fontFamily: "system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif"
   },

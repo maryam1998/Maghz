@@ -122,12 +122,12 @@ function ExerciseShell({ title, subtitle, children, footer, dir = "rtl" }) {
         padding: 20,
         background: "#fafafa",
         borderRadius: 16,
-        color: "#222"
+        color: "#000"
       }}
     >
       <h2 style={{ margin: "0 0 6px", fontSize: 20 }}>{title}</h2>
       {subtitle && (
-        <p style={{ margin: "0 0 16px", color: "#666", fontSize: 14 }}>{subtitle}</p>
+        <p style={{ margin: "0 0 16px", color: "#000", fontSize: 14 }}>{subtitle}</p>
       )}
       {children}
       {footer && <div style={{ marginTop: 20 }}>{footer}</div>}
@@ -168,7 +168,7 @@ function GhostButton({ children, onClick }) {
         borderRadius: 12,
         border: "1px solid #ddd",
         background: "#fff",
-        color: "#333",
+        color: "#000",
         fontSize: 14,
         cursor: "pointer",
         marginTop: 8,
@@ -249,7 +249,7 @@ function TwoColumnExercise({ exercise, state, setState }) {
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#666",
+                  color: "#000",
                   fontSize: 12,
                   cursor: "pointer",
                   padding: 0,
@@ -276,7 +276,7 @@ function TwoColumnExercise({ exercise, state, setState }) {
                   borderRadius: 10,
                   border: state.answer === ans ? "2px solid #111" : "1px solid #ddd",
                   background: state.answer === ans ? "#111" : "#fff",
-                  color: state.answer === ans ? "#fff" : "#333",
+                  color: state.answer === ans ? "#fff" : "#000",
                   cursor: "pointer",
                   fontSize: 14,
                   fontFamily: "inherit"
@@ -296,7 +296,7 @@ function TwoColumnExercise({ exercise, state, setState }) {
             padding: 12,
             background: "#eef7ee",
             borderRadius: 10,
-            color: "#1b5e20",
+            color: "#000",
             fontSize: 14
           }}
         >
@@ -350,7 +350,7 @@ function ThreeColumnExercise({ exercise, state, setState }) {
               style={{
                 background: "none",
                 border: "none",
-                color: "#666",
+                color: "#000",
                 fontSize: 12,
                 cursor: "pointer",
                 padding: 0,
@@ -394,7 +394,7 @@ function TimerExercise({ exercise, state, setState }) {
   return (
     <div style={{ textAlign: "center" }}>
       {exercise.description && (
-        <p style={{ color: "#666", fontSize: 14, marginBottom: 16 }}>
+        <p style={{ color: "#000", fontSize: 14, marginBottom: 16 }}>
           {exercise.description}
         </p>
       )}
@@ -448,7 +448,7 @@ function TimerExercise({ exercise, state, setState }) {
               borderRadius: 10,
               border: "1px solid #111",
               background: state.running ? "#fff" : "#111",
-              color: state.running ? "#111" : "#fff",
+              color: state.running ? "#000" : "#fff",
               cursor: "pointer",
               fontSize: 14,
               fontFamily: "inherit"
@@ -485,7 +485,7 @@ function TimerExercise({ exercise, state, setState }) {
             padding: 14,
             background: "#eef7ee",
             borderRadius: 10,
-            color: "#1b5e20",
+            color: "#000",
             fontSize: 14
           }}
         >
@@ -518,7 +518,7 @@ function SingleChoiceExercise({ exercise, state, setState }) {
               borderRadius: 10,
               border: state.choice === opt ? "2px solid #111" : "1px solid #ddd",
               background: state.choice === opt ? "#111" : "#fff",
-              color: state.choice === opt ? "#fff" : "#333",
+              color: state.choice === opt ? "#fff" : "#000",
               cursor: "pointer",
               fontSize: 14,
               textAlign: "right",
@@ -603,7 +603,7 @@ function ListExercise({ exercise, state, setState }) {
           key={i}
           style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}
         >
-          <span style={{ color: "#888", fontSize: 13, minWidth: 18 }}>{i + 1}.</span>
+          <span style={{ color: "#000", fontSize: 13, minWidth: 18 }}>{i + 1}.</span>
           <input
             type="text"
             value={item}
@@ -624,7 +624,7 @@ function ListExercise({ exercise, state, setState }) {
         style={{
           background: "none",
           border: "none",
-          color: "#666",
+          color: "#000",
           fontSize: 13,
           cursor: "pointer",
           padding: 0,
@@ -662,7 +662,7 @@ function ExerciseRendererInner({ exercise, onComplete, onSkip }) {
   if (!typeMeta) {
     return (
       <ExerciseShell title="تمرین ناشناخته">
-        <p style={{ color: "#c00" }}>
+        <p style={{ color: "#000" }}>
           نوع تمرین پشتیبانی نمی‌شود: {exercise?.type}
         </p>
       </ExerciseShell>
