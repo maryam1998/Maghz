@@ -116,7 +116,7 @@ function ExerciseShell({ title, subtitle, children, footer, dir = "rtl" }) {
     <div
       dir={dir}
       style={{
-        fontFamily: "system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif",
+        fontFamily: "'Vazirmatn', Tahoma, sans-serif",
         maxWidth: 520,
         margin: "0 auto",
         padding: 20,

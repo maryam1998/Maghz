@@ -2546,7 +2546,7 @@ export default function App() {
 const styles = {
   app: {
     minHeight: "100vh", background: "#fafafa",
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif",
+    fontFamily: "'Vazirmatn', Tahoma, sans-serif",
     color: "#000", paddingBottom: 80, position: "relative"
   },
   header: {
@@ -2581,7 +2581,7 @@ const styles = {
   btnGhost: { background: "#fff", color: "#000", border: "1px solid #e5e5e5" },
   btnDanger: { background: "#e74c3c", color: "#fff" },
   quickBtn: {
-    position: "fixed", bottom: 20, left: "50%",
+    position: "fixed", bottom: 84, left: "50%",
     transform: "translateX(-50%)",
     padding: "14px 24px", borderRadius: 999,
     background: "#1a3d2c", color: "#fff", border: "none",
@@ -2613,7 +2613,7 @@ const styles = {
     minHeight: "100vh",
     background: "linear-gradient(180deg, #0a3d38 0%, #0f5b53 55%, #178a7c 100%)",
     color: "#fff",
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif"
+    fontFamily: "'Vazirmatn', Tahoma, sans-serif"
   },
   breathCircle: {
     width: 200, height: 200, borderRadius: "50%",
