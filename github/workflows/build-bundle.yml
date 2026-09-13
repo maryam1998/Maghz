@@ -1,1 +1,41 @@
+name: Build shenakht bundle
 
+# هر بار که سورس‌های تب «شناخت» تغییر کنند، این workflow خودکار
+# shenakht-bundle.js را دوباره می‌سازد و کامیت می‌کند.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tarhvar-src/**"
+      - "package.json"
+      - ".github/workflows/build-bundle.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: چک‌اوت ریپو
+        uses: actions/checkout@v4
+
+      - name: نصب Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: نصب پکیج‌ها
+        run: npm install
+
+      - name: ساخت باندل
+        run: npm run build
+
+      - name: کامیت باندل جدید (در صورت تغییر)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add shenakht-bundle.js
+          git diff --cached --quiet && echo "تغییری در باندل نبود" || git commit -m "chore: rebuild shenakht-bundle.js [skip ci]"
+          git push
