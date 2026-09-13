@@ -2,6 +2,10 @@
 <html dir="rtl" lang="fa">
 <head>
 <meta charset="UTF-8">
+<!-- تب «شناخت» یک باندل ری‌اکت حدود ۱ مگابایتی داره؛ preload می‌کنیم تا دانلودش همون اول
+     (موازی با پارس شدن بقیه‌ی HTML) شروع بشه، نه وقتی که پارسر تازه به تگ اسکریپت پایین صفحه می‌رسه.
+     این باعث می‌شه وقتی کاربر روی تب «شناخت» می‌زنه، دیگه منتظر دانلود نمونه/قفل نکنه. -->
+<link rel="preload" as="script" href="shenakht-bundle.js">
 <!-- ===== دوستان هم‌فرکانسی: اتصال به Supabase برای اشتراک‌گذاری عمومی شکرگذاری‌ها ===== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -7533,6 +7537,7 @@ updateCartBadge();
   var btnMap = document.getElementById("tab-btn-map");
   var btnGrat = document.getElementById("tab-btn-grat");
   var shenakhtMounted = false;
+  var shenakhtWaitTimer = null;
 
   function clearActive(){
     gratRoot.classList.remove("active");
@@ -7542,12 +7547,32 @@ updateCartBadge();
     btnMap.classList.remove("active");
     btnGrat.classList.remove("active");
   }
-  function showShenakht(){
-    clearActive();
-    if(!shenakhtMounted && window.ShenakhtApp){
+  /* باندل شناخت (~۱ مگابایت) با defer لود می‌شه؛ اگه کاربر زودتر از آماده‌شدنش روی تب بزنه،
+     به‌جای این‌که صفحه خالی/قفل به‌نظر برسه، یه پیام «در حال بارگذاری» نشون می‌دیم و
+     به‌محض آماده شدن window.ShenakhtApp، اپ رو mount می‌کنیم. */
+  function mountShenakhtWhenReady(){
+    if (shenakhtMounted) return;
+    if (window.ShenakhtApp){
       window.ShenakhtApp.mount(shenakhtRoot);
       shenakhtMounted = true;
+      return;
     }
+    if (!shenakhtWaitTimer){
+      shenakhtRoot.innerHTML = '<div style="width:100%;text-align:center;padding:60px 16px;font-family:Vazirmatn,Tahoma,sans-serif;font-size:14px;color:#8b8fa8;">در حال بارگذاری…</div>';
+      shenakhtWaitTimer = setInterval(function(){
+        if (window.ShenakhtApp){
+          clearInterval(shenakhtWaitTimer);
+          shenakhtWaitTimer = null;
+          shenakhtRoot.innerHTML = '';
+          window.ShenakhtApp.mount(shenakhtRoot);
+          shenakhtMounted = true;
+        }
+      }, 150);
+    }
+  }
+  function showShenakht(){
+    clearActive();
+    mountShenakhtWhenReady();
     shenakhtRoot.classList.add("active");
     btnShenakht.classList.add("active");
   }
