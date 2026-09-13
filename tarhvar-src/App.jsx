@@ -256,49 +256,180 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
   const [category, setCategory] = useState("all");
   const cycles = getLifeCyclesByCategory(category);
 
+  const catColors = {
+    work: "#3b82f6",
+    relationship: "#ec4899",
+    family: "#f59e0b",
+    social: "#8b5cf6",
+    self: "#10b981",
+    health: "#ef4444"
+  };
+
+  const featured = cycles.slice(0, 2);
+
   return (
     <Shell title="چرخه‌های زندگی" onBack={onBack} showSOS onSOS={onSOS}>
-      <Card>
-        <p style={{ margin: 0, fontSize: 14, color: "#000", lineHeight: 1.9 }}>
-          این‌ها الگوهای عمیق‌تری هستند که از ترکیب چند طرحواره ساخته می‌شوند.
-          <br />
-          شاید یکی از این‌ها را در زندگی‌ات دیده باشی.
-        </p>
+
+      {/* ─── Hero ─── */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 22,
+        marginBottom: 14
+      }}>
+        <div style={{ fontSize: 36, marginBottom: 10 }}>🔄</div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, lineHeight: 1.5 }}>
+          الگوهایی که در زندگی تکرار می‌شن
+        </div>
+        <div style={{ fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
+          این‌ها از ترکیب چند طرحواره ساخته می‌شن و
+          در موقعیت‌های واقعی زندگی خودشون رو نشون می‌دن.
+        </div>
       </Card>
 
+      {/* ─── دسته‌بندی ─── */}
       <div style={{
-        display: "flex", gap: 6, marginTop: 12, marginBottom: 12,
-        overflowX: "auto", paddingBottom: 4
+        display: "flex",
+        gap: 6,
+        overflowX: "auto",
+        paddingBottom: 8,
+        marginBottom: 12
       }}>
         {LIFE_CYCLE_CATEGORIES.map((c) => (
-          <Chip key={c.id} active={category === c.id} onClick={() => setCategory(c.id)}>
-            {c.emoji} {c.label}
-          </Chip>
+          <button
+            key={c.id}
+            onClick={() => setCategory(c.id)}
+            style={{
+              flexShrink: 0,
+              padding: "8px 14px",
+              borderRadius: 20,
+              border: "none",
+              background: category === c.id ? "#1a3d2c" : "#fff",
+              color: category === c.id ? "#fff" : "#000",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              border: category === c.id ? "none" : "1px solid #e5e5e5",
+              transition: "all .15s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            <span>{c.emoji}</span>
+            <span>{c.label}</span>
+          </button>
         ))}
       </div>
 
-      {cycles.map((cycle) => (
-        <button key={cycle.id} onClick={() => onPickCycle(cycle.id)} style={{
-          display: "block", width: "100%", textAlign: "right",
-          padding: 16, marginBottom: 10, borderRadius: 12,
-          border: "1px solid #eee", background: "#fff",
-          cursor: "pointer", fontFamily: "inherit"
-        }}>
-          <div style={{ fontSize: 11, color: "#000", marginBottom: 6 }}>
-            {cycle.categoryLabel}
-          </div>
-          <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
-            {cycle.title}
-          </div>
-          <div style={{ fontSize: 13, color: "#000", lineHeight: 1.7 }}>
-            {cycle.shortDescription}
-          </div>
-        </button>
-      ))}
-
+      {/* ─── لیست ─── */}
       {cycles.length === 0 && (
-        <Card>
-          <p style={{ color: "#000", fontSize: 14 }}>چرخه‌ای در این دسته پیدا نشد.</p>
+        <Card style={{ textAlign: "center", padding: 30 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+          <p style={{ margin: 0, fontSize: 13, color: "#666" }}>
+            چرخه‌ای در این دسته پیدا نشد.
+          </p>
+        </Card>
+      )}
+
+      {cycles.map((cycle) => {
+        const color = catColors[cycle.category] || "#1a3d2c";
+        return (
+          <button key={cycle.id} onClick={() => onPickCycle(cycle.id)} style={{
+            display: "block",
+            width: "100%",
+            textAlign: "right",
+            padding: 18,
+            marginBottom: 10,
+            borderRadius: 14,
+            border: "1px solid #f0f0f0",
+            background: "#fff",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            position: "relative",
+            overflow: "hidden",
+            transition: "all .15s ease"
+          }}>
+            {/* نوار رنگی کنار */}
+            <div style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              width: 4,
+              height: "100%",
+              background: color
+            }} />
+
+            {/* دسته */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 10
+            }}>
+              <span style={{
+                fontSize: 10,
+                padding: "3px 10px",
+                borderRadius: 20,
+                background: color + "15",
+                color: color,
+                fontWeight: 700
+              }}>
+                {cycle.categoryLabel}
+              </span>
+            </div>
+
+            {/* عنوان */}
+            <div style={{
+              fontSize: 15,
+              fontWeight: 700,
+              lineHeight: 1.6,
+              color: "#000",
+              marginBottom: 8
+            }}>
+              {cycle.title}
+            </div>
+
+            {/* توضیح */}
+            <div style={{
+              fontSize: 12,
+              color: "#666",
+              lineHeight: 1.8
+            }}>
+              {cycle.shortDescription}
+            </div>
+
+            {/* نمایش فلش */}
+            <div style={{
+              marginTop: 12,
+              fontSize: 11,
+              color: color,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 4
+            }}>
+              <span>مشاهده کامل</span>
+              <span>←</span>
+            </div>
+          </button>
+        );
+      })}
+
+      {/* ─── پیام پایانی ─── */}
+      {cycles.length > 0 && (
+        <Card style={{
+          marginTop: 12,
+          background: "#f6f6f6",
+          padding: 16,
+          textAlign: "center"
+        }}>
+          <div style={{ fontSize: 12, color: "#000", lineHeight: 1.9 }}>
+            هر بار که چرخه‌ای رو ببینی،
+            <br />
+            یک قدم ازش فاصله گرفتی.
+          </div>
         </Card>
       )}
     </Shell>
@@ -708,59 +839,203 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, o
   }, [analysis]);
 
   const reminders = getTodayReminders(activeSchemaIds);
+  const activeCount = activeSchemaIds ? activeSchemaIds.length : 0;
+
+  const actions = [
+    { id: "life", icon: "🔄", title: "چرخه‌های زندگی", desc: "الگوهای عمیق‌تر", onClick: onLifeCycles, color: "#8b5cf6" },
+    { id: "sit",  icon: "🔍", title: "حس الان من",     desc: "موقعیت‌های واقعی", onClick: onSituations, color: "#0ea5e9" },
+    { id: "rel",  icon: "💞", title: "روابط من",       desc: "چطور برخورد کنم؟", onClick: onRelationships, color: "#ec4899" }
+  ];
 
   return (
     <Shell title="الگوهای من" showSOS onSOS={onSOS}>
-      <Card>
-        <h2 style={{ margin: "0 0 8px", fontSize: 22 }}>چه چیزی در من تکرار می‌شود؟</h2>
-        <p style={{ color: "#000", fontSize: 14, lineHeight: 1.8, margin: 0 }}>
-          اینجا قرار نیست برچسبی به تو بزنیم.
-          قرار است با هم ببینیم چه الگویی در تو تکرار می‌شود، کجا فعال می‌شود،
-          و چطور می‌توانی این بار جور دیگری پاسخ بدهی.
-        </p>
+
+      {/* ─── Hero ─── */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 24,
+        marginBottom: 12,
+        position: "relative",
+        overflow: "hidden"
+      }}>
+        <div style={{
+          position: "absolute",
+          top: -40, left: -40,
+          width: 140, height: 140,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,.05)"
+        }} />
+        <div style={{
+          position: "absolute",
+          bottom: -60, right: -20,
+          width: 100, height: 100,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,.04)"
+        }} />
+
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 8, letterSpacing: 1 }}>
+            شناخت الگوهای تکرارشونده
+          </div>
+          <h2 style={{ margin: "0 0 12px", fontSize: 24, lineHeight: 1.5, fontWeight: 700 }}>
+            چه چیزی در من
+            <br />
+            تکرار می‌شود؟
+          </h2>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
+            اینجا قرار نیست برچسبی به تو بزنیم. با هم می‌بینیم کجا فعال می‌شوی و چطور می‌توانی این بار جور دیگری پاسخ بدهی.
+          </p>
+        </div>
       </Card>
 
+      {/* ─── یادآوری‌های امروز ─── */}
       {reminders && reminders.length > 0 && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-          <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 10 }}>
-            {activeSchemaIds ? "یادآوری‌های امروز — مخصوص تو" : "یادآوری‌های امروز"}
+        <Card style={{
+          marginBottom: 12,
+          background: "#fff8e1",
+          border: "1px solid #fde68a",
+          padding: 16
+        }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 12
+          }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: "#f59e0b",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 14
+            }}>💡</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#000" }}>
+                یادآوری‌های امروز
+              </div>
+              {activeCount > 0 && (
+                <div style={{ fontSize: 11, color: "#92400e" }}>
+                  بر اساس {toFa(activeCount)} الگوی فعال تو
+                </div>
+              )}
+            </div>
           </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {reminders.map((rem, i) => (
-              <div
-                key={i}
-                style={{
-                  fontSize: 14,
-                  lineHeight: 1.9,
-                  padding: "8px 12px",
-                  background: "rgba(255,255,255,.05)",
-                  borderRadius: 8
-                }}
-              >
-                • {rem}
+            {reminders.slice(0, 3).map((rem, i) => (
+              <div key={i} style={{
+                fontSize: 13,
+                lineHeight: 1.9,
+                color: "#000",
+                padding: "10px 12px",
+                background: "rgba(255,255,255,.6)",
+                borderRadius: 8,
+                borderRight: "3px solid #f59e0b"
+              }}>
+                {rem}
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+      {/* ─── دکمه اصلی ─── */}
+      <div style={{ marginBottom: 16 }}>
         {hasProfile ? (
-          <Btn onClick={onSkipToProfile}>پروفایل من</Btn>
+          <button onClick={onSkipToProfile} style={{
+            width: "100%",
+            padding: "18px 20px",
+            borderRadius: 14,
+            border: "none",
+            background: "#1a3d2c",
+            color: "#fff",
+            fontSize: 16,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0 6px 20px rgba(26,61,44,.2)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 22 }}>🧭</span>
+              <span>پروفایل الگوهای من</span>
+            </div>
+            <span style={{ opacity: 0.6 }}>←</span>
+          </button>
         ) : (
-          <Btn onClick={onStart}>شروع ارزیابی</Btn>
+          <button onClick={onStart} style={{
+            width: "100%",
+            padding: "18px 20px",
+            borderRadius: 14,
+            border: "none",
+            background: "#1a3d2c",
+            color: "#fff",
+            fontSize: 16,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0 6px 20px rgba(26,61,44,.2)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 22 }}>✨</span>
+              <span>شروع ارزیابی</span>
+            </div>
+            <span style={{ opacity: 0.6 }}>←</span>
+          </button>
         )}
-        <Btn variant="ghost" onClick={onLifeCycles}>🔄 چرخه‌های زندگی</Btn>
-        <Btn variant="ghost" onClick={onSituations}>🔍 من الان این حس را دارم</Btn>
-        <Btn variant="ghost" onClick={onRelationships}>💞 چطور با دیگران برخورد کنم</Btn>
       </div>
 
-      <Card style={{ marginTop: 24, background: "#f6f6f6" }}>
-        <div style={{ fontSize: 13, color: "#000", lineHeight: 1.9 }}>
-          <strong style={{ color: "#000" }}>این اپ چه چیزی نیست:</strong>
-          <div>• تشخیص پزشکی نمی‌دهد</div>
-          <div>• از AI برای قضاوت درباره تو استفاده نمی‌کند</div>
-          <div>• جایگزین درمانگر نیست</div>
+      {/* ─── اکشن‌های سریع ─── */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#000", marginBottom: 8, paddingRight: 4 }}>
+        کاوش کن
+      </div>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 8,
+        marginBottom: 20
+      }}>
+        {actions.map((a) => (
+          <button key={a.id} onClick={a.onClick} style={{
+            padding: 16,
+            borderRadius: 14,
+            border: "1px solid #e5e5e5",
+            background: "#fff",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            textAlign: "right",
+            transition: "all .15s ease"
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 12,
+              background: a.color + "15",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 20, marginBottom: 12
+            }}>{a.icon}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#000", marginBottom: 3 }}>
+              {a.title}
+            </div>
+            <div style={{ fontSize: 11, color: "#666", lineHeight: 1.5 }}>
+              {a.desc}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* ─── فوت‌نوت ─── */}
+      <Card style={{ background: "#f6f6f6", padding: 14 }}>
+        <div style={{ fontSize: 11, color: "#000", lineHeight: 1.9 }}>
+          <strong style={{ display: "block", marginBottom: 6 }}>این اپ چه چیزی نیست:</strong>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, opacity: 0.75 }}>
+            <span>• تشخیص پزشکی نمی‌دهد</span>
+            <span>• از AI برای قضاوت استفاده نمی‌کند</span>
+            <span>• جایگزین درمانگر نیست</span>
+          </div>
         </div>
       </Card>
     </Shell>
@@ -846,7 +1121,12 @@ function ProfileView({
   if (!analysis) {
     return (
       <Shell title="پروفایل" onBack={onBack}>
-        <Card><p>هنوز ارزیابی‌ای انجام نشده.</p></Card>
+        <Card style={{ textAlign: "center", padding: 30 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.9 }}>
+            هنوز ارزیابی‌ای انجام نشده.
+          </p>
+        </Card>
       </Shell>
     );
   }
@@ -854,104 +1134,374 @@ function ProfileView({
   const { high, medium, low, recommended } = analysis;
   const recSchema = SCHEMAS.find((s) => s.id === recommended?.schemaId);
   const recPlain = recSchema?.name_plain || recommended?.name;
+  const allActive = [...high, ...medium];
+
+  const quickActions = [
+    { id: "wins",     icon: "⭐", title: "لحظه‌های من",  onClick: onWins,       color: "#f59e0b" },
+    { id: "cal",      icon: "📅", title: "تقویم",         onClick: onCalendar,   color: "#3b82f6" },
+    { id: "sit",      icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
+    { id: "life",     icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
+    { id: "rel",      icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" }
+  ];
 
   return (
     <Shell title="پروفایل الگوهای من" onBack={onBack}
       showQuickButton onQuick={() => onPickSchema(recommended?.schemaId)}
       showSOS onSOS={onSOS}>
 
-      <Card style={{ background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-        <div style={{ fontSize: 12, opacity: 0.7 }}>پیشنهاد شروع</div>
-        <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>
-          {recPlain}
-        </div>
-        {recSchema && (
-          <div style={{ fontSize: 12, opacity: 0.6, marginTop: 4 }}>
-            {recSchema.name_fa}
+      {/* ─── Hero با پیشنهاد ─── */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 22,
+        marginBottom: 12,
+        position: "relative",
+        overflow: "hidden"
+      }}>
+        <div style={{
+          position: "absolute",
+          top: -30, left: -30,
+          width: 120, height: 120,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,.06)"
+        }} />
+
+        <div style={{ position: "relative" }}>
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 11,
+            padding: "4px 10px",
+            background: "rgba(255,255,255,.15)",
+            borderRadius: 20,
+            marginBottom: 12
+          }}>
+            <span>{recommended?.priority?.emoji}</span>
+            <span>پیشنهاد شروع</span>
           </div>
-        )}
-        <div style={{ fontSize: 13, opacity: 0.8, marginTop: 6 }}>
-          {toFa(recommended?.percentage || 0)}% — اولویت {recommended?.priority?.label}
+
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4, lineHeight: 1.4 }}>
+            {recPlain}
+          </div>
+
+          {recSchema && (
+            <div style={{ fontSize: 11, opacity: 0.6, marginBottom: 12 }}>
+              {recSchema.name_fa}
+            </div>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                height: 6,
+                background: "rgba(255,255,255,.2)",
+                borderRadius: 3,
+                overflow: "hidden"
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: (recommended?.percentage || 0) + "%",
+                  background: "#fff",
+                  borderRadius: 3,
+                  transition: "width .6s ease"
+                }} />
+              </div>
+            </div>
+            <span style={{
+              fontSize: 14,
+              fontWeight: 700,
+              fontVariantNumeric: "tabular-nums"
+            }}>
+              {toFa(recommended?.percentage || 0)}%
+            </span>
+          </div>
+
+          <button
+            onClick={() => onPickSchema(recommended?.schemaId)}
+            style={{
+              marginTop: 16,
+              width: "100%",
+              padding: "12px 16px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,.3)",
+              background: "rgba(255,255,255,.1)",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between"
+            }}
+          >
+            <span>شروع کار روی این الگو</span>
+            <span style={{ opacity: 0.7 }}>←</span>
+          </button>
         </div>
       </Card>
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <button onClick={onWins} style={styles.dashBtn}>⭐ لحظه‌های من</button>
-        <button onClick={onCalendar} style={styles.dashBtn}>📅 تقویم</button>
-      </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button onClick={onSituations} style={styles.dashBtn}>🔍 موقعیت‌ها</button>
-        <button onClick={onLifeCycles} style={styles.dashBtn}>🔄 چرخه‌های زندگی</button>
-      </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button onClick={onRelationships} style={styles.dashBtn}>💞 روابط</button>
+      {/* ─── آمار کلی ─── */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: 8,
+        marginBottom: 16
+      }}>
+        <div style={{
+          padding: 14,
+          borderRadius: 12,
+          background: "#fef2f2",
+          border: "1px solid #fecaca",
+          textAlign: "center"
+        }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#dc2626", fontVariantNumeric: "tabular-nums" }}>
+            {toFa(high.length)}
+          </div>
+          <div style={{ fontSize: 11, color: "#991b1b", marginTop: 4 }}>بالا</div>
+        </div>
+        <div style={{
+          padding: 14,
+          borderRadius: 12,
+          background: "#fffbeb",
+          border: "1px solid #fde68a",
+          textAlign: "center"
+        }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#d97706", fontVariantNumeric: "tabular-nums" }}>
+            {toFa(medium.length)}
+          </div>
+          <div style={{ fontSize: 11, color: "#92400e", marginTop: 4 }}>متوسط</div>
+        </div>
+        <div style={{
+          padding: 14,
+          borderRadius: 12,
+          background: "#ecfdf5",
+          border: "1px solid #a7f3d0",
+          textAlign: "center"
+        }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#059669", fontVariantNumeric: "tabular-nums" }}>
+            {toFa(low.length)}
+          </div>
+          <div style={{ fontSize: 11, color: "#065f46", marginTop: 4 }}>پایین</div>
+        </div>
       </div>
 
-      <h3 style={{ margin: "22px 0 10px", fontSize: 15 }}>الگوهای فعال</h3>
-      {[...high, ...medium].map((r) => {
+      {/* ─── اکشن‌های سریع ─── */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#000", marginBottom: 8, paddingRight: 4 }}>
+        دسترسی سریع
+      </div>
+      <div style={{
+        display: "flex",
+        gap: 8,
+        overflowX: "auto",
+        paddingBottom: 4,
+        marginBottom: 20
+      }}>
+        {quickActions.map((a) => (
+          <button key={a.id} onClick={a.onClick} style={{
+            flexShrink: 0,
+            padding: "12px 16px",
+            borderRadius: 12,
+            border: "1px solid #e5e5e5",
+            background: "#fff",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#000"
+          }}>
+            <span style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: a.color + "15",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 14
+            }}>{a.icon}</span>
+            <span style={{ whiteSpace: "nowrap" }}>{a.title}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ─── الگوهای فعال ─── */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        marginBottom: 10
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#000" }}>
+          الگوهای فعال
+        </div>
+        <span style={{ fontSize: 11, color: "#666" }}>
+          {toFa(allActive.length)} الگو
+        </span>
+      </div>
+
+      {allActive.length === 0 && (
+        <Card style={{ textAlign: "center", padding: 24, marginBottom: 12 }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🌱</div>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, color: "#000" }}>
+            در حال حاضر الگوی فعالی نداری.
+          </p>
+        </Card>
+      )}
+
+      {allActive.map((r) => {
         const schema = SCHEMAS.find((s) => s.id === r.schemaId);
         const plain = schema?.name_plain || r.name;
+
         return (
-          <Card key={r.schemaId} style={{ marginBottom: 8, padding: 14 }}>
+          <div key={r.schemaId} style={{
+            marginBottom: 10,
+            borderRadius: 14,
+            background: "#fff",
+            border: "1px solid #f0f0f0",
+            overflow: "hidden",
+            transition: "all .15s ease"
+          }}>
             <button onClick={() => onPickSchema(r.schemaId)} style={{
               display: "block", width: "100%", textAlign: "right",
-              padding: 0, border: "none", background: "transparent",
+              padding: 16, border: "none", background: "transparent",
               cursor: "pointer", fontFamily: "inherit"
             }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
-                    {plain}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <div style={{
+                  width: 4,
+                  height: 44,
+                  borderRadius: 2,
+                  background: r.priority.color,
+                  flexShrink: 0
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: "#000", marginBottom: 3 }}>
+                        {plain}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#999" }}>
+                        {schema?.name_fa || ""}
+                      </div>
+                    </div>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "4px 10px",
+                      borderRadius: 20,
+                      background: r.priority.color + "15",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: r.priority.color,
+                      fontVariantNumeric: "tabular-nums"
+                    }}>
+                      <span>{r.priority.emoji}</span>
+                      <span>{toFa(r.percentage)}%</span>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11, color: "#000" }}>
-                    {schema?.name_fa || ""}
+
+                  <div style={{
+                    height: 4,
+                    background: "#f0f0f0",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    marginBottom: 10
+                  }}>
+                    <div style={{
+                      height: "100%",
+                      width: r.percentage + "%",
+                      background: r.priority.color,
+                      transition: "width .4s ease"
+                    }} />
                   </div>
+
+                  {schema?.one_liner && (
+                    <div style={{ fontSize: 12, color: "#555", lineHeight: 1.7 }}>
+                      {schema.one_liner}
+                    </div>
+                  )}
                 </div>
-                <span style={{ color: "#000", fontWeight: 700, fontSize: 14, marginTop: 4 }}>
-                  {r.priority.emoji} {toFa(r.percentage)}%
-                </span>
               </div>
-              <div style={{ marginTop: 10 }}>
-                <ProgressBar value={r.percentage} color={r.priority.color} />
-              </div>
-              {schema?.one_liner && (
-                <div style={{ fontSize: 13, color: "#000", marginTop: 10, lineHeight: 1.7 }}>
-                  {schema.one_liner}
-                </div>
-              )}
             </button>
 
-            <button onClick={() => onPickOrigin(r.schemaId)} style={{
-              marginTop: 12, padding: "10px 12px", borderRadius: 8,
-              border: "1px solid #e5e5e5", background: "#fafafa",
-              cursor: "pointer", fontSize: 13, fontFamily: "inherit",
-              color: "#000", width: "100%", textAlign: "right"
+            <div style={{
+              display: "flex",
+              borderTop: "1px solid #f0f0f0"
             }}>
-              🧸 این الگو از کجا آمده؟ + حالا چکار کنم؟
-            </button>
-          </Card>
+              <button onClick={() => onPickOrigin(r.schemaId)} style={{
+                flex: 1,
+                padding: "12px",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 12,
+                color: "#666",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6
+              }}>
+                🧸 ریشه و راهنما
+              </button>
+              <div style={{ width: 1, background: "#f0f0f0" }} />
+              <button onClick={() => onPickSchema(r.schemaId)} style={{
+                flex: 1,
+                padding: "12px",
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 12,
+                color: "#1a3d2c",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6
+              }}>
+                ▶ شروع کار
+              </button>
+            </div>
+          </div>
         );
       })}
 
+      {/* ─── سایر الگوها ─── */}
       {low.length > 0 && (
         <>
-          <h3 style={{ margin: "22px 0 10px", fontSize: 15, color: "#000" }}>سایر الگوها</h3>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#666", margin: "22px 0 10px", paddingRight: 4 }}>
+            سایر الگوها
+          </div>
           {low.map((r) => {
             const schema = SCHEMAS.find((s) => s.id === r.schemaId);
             const plain = schema?.name_plain || r.name;
             return (
-              <Card key={r.schemaId} style={{ marginBottom: 6, padding: 12, background: "#fafafa" }}>
-                <button onClick={() => onPickSchema(r.schemaId)} style={{
-                  display: "block", width: "100%", textAlign: "right",
-                  padding: 0, border: "none", background: "transparent",
-                  cursor: "pointer", fontSize: 14, color: "#000", fontFamily: "inherit"
+              <button key={r.schemaId} onClick={() => onPickSchema(r.schemaId)} style={{
+                display: "flex",
+                width: "100%",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 14px",
+                marginBottom: 6,
+                borderRadius: 10,
+                border: "1px solid #f0f0f0",
+                background: "#fafafa",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textAlign: "right"
+              }}>
+                <span style={{ fontSize: 13, color: "#000" }}>{plain}</span>
+                <span style={{
+                  fontSize: 11,
+                  color: "#999",
+                  fontVariantNumeric: "tabular-nums"
                 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>{plain}</span>
-                    <span>{toFa(r.percentage)}%</span>
-                  </div>
-                </button>
-              </Card>
+                  {toFa(r.percentage)}%
+                </span>
+              </button>
             );
           })}
         </>
@@ -961,7 +1511,7 @@ function ProfileView({
         <Btn variant="ghost" onClick={onRetake}>ارزیابی مجدد</Btn>
       </div>
 
-      <p style={{ fontSize: 11, color: "#000", marginTop: 20, lineHeight: 1.8 }}>
+      <p style={{ fontSize: 10, color: "#999", marginTop: 20, lineHeight: 1.8, textAlign: "center" }}>
         این نتایج یک ارزیابی خودگزارشی است و تشخیص بالینی نیست.
       </p>
     </Shell>
@@ -1094,56 +1644,149 @@ function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBac
   const findMany = (list, ids) =>
     (ids || []).map((id) => (list || []).find((x) => x.id === id)).filter(Boolean);
 
-  const items = [
-    { label: "محرک‌ها",       values: findMany(schema.triggers,            selection.triggerIds) },
-    { label: "فکرهای خودکار", values: findMany(schema.automatic_thoughts, selection.thoughtIds) },
-    { label: "احساس‌ها",       values: findMany(schema.emotional_signals,  selection.emotionIds) },
-    { label: "واکنش‌های قدیمی", values: findMany(schema.behavioral_patterns, selection.behaviorIds) }
+  const sections = [
+    { key: "trigger",  label: "محرک‌ها",        icon: "⚡",  color: "#f59e0b", values: findMany(schema.triggers,            selection.triggerIds) },
+    { key: "thought",  label: "فکرهای خودکار", icon: "💭",  color: "#8b5cf6", values: findMany(schema.automatic_thoughts, selection.thoughtIds) },
+    { key: "emotion",  label: "احساس‌ها",       icon: "💧",  color: "#3b82f6", values: findMany(schema.emotional_signals,  selection.emotionIds) },
+    { key: "behavior", label: "واکنش‌های قدیمی", icon: "🔁", color: "#ef4444", values: findMany(schema.behavioral_patterns, selection.behaviorIds) }
   ];
 
   const phrases = getCompassionatePhrases(schemaId);
   const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+  const totalItems = sections.reduce((s, sec) => s + sec.values.length, 0);
 
   return (
     <Shell title="الگوی تو" onBack={onBack}>
-      <Card>
-        <p style={{ margin: "0 0 16px", color: "#000", fontSize: 14 }}>
-          این چرخه توست. جایی برای قضاوت نیست — فقط شناخت.
-        </p>
-        {items.map((it, i) => (
-          <div key={i} style={{
-            padding: "12px 0",
-            borderBottom: i < items.length - 1 ? "1px dashed #eee" : "none"
-          }}>
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>
-              {it.label} ({toFa(it.values.length)})
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {it.values.map((v) => (
-                <span key={v.id} style={{
-                  fontSize: 13,
-                  padding: "6px 12px",
-                  background: "#f3f3f3",
-                  borderRadius: 8,
-                  color: "#000"
-                }}>
-                  {v.text}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+
+      {/* ─── Hero ─── */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 22,
+        marginBottom: 16,
+        textAlign: "center"
+      }}>
+        <div style={{ fontSize: 44, marginBottom: 8 }}>🧩</div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+          چرخه‌ی تو
+        </div>
+        <div style={{ fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
+          {toFa(totalItems)} بخش از این الگو رو شناختی
+          <br />
+          این شناخت، اولین قدم شکستنه
+        </div>
       </Card>
 
+      {/* ─── بخش‌ها ─── */}
+      {sections.map((sec, idx) => {
+        if (sec.values.length === 0) return null;
+
+        return (
+          <div key={sec.key} style={{ marginBottom: 12 }}>
+            {/* هدر بخش */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 8,
+              paddingRight: 4
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 10,
+                background: sec.color + "15",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 16
+              }}>
+                {sec.icon}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#000" }}>
+                  {sec.label}
+                </div>
+              </div>
+              <div style={{
+                fontSize: 11,
+                color: sec.color,
+                fontWeight: 700,
+                background: sec.color + "15",
+                padding: "3px 10px",
+                borderRadius: 20,
+                fontVariantNumeric: "tabular-nums"
+              }}>
+                {toFa(sec.values.length)}
+              </div>
+            </div>
+
+            {/* آیتم‌ها */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {sec.values.map((v) => (
+                <div key={v.id} style={{
+                  fontSize: 12,
+                  padding: "8px 14px",
+                  background: "#fff",
+                  border: `1px solid ${sec.color}30`,
+                  borderRadius: 20,
+                  color: "#000",
+                  lineHeight: 1.6,
+                  fontWeight: 500
+                }}>
+                  {v.text}
+                </div>
+              ))}
+            </div>
+
+            {/* خط جداکننده */}
+            {idx < sections.length - 1 && (
+              <div style={{
+                marginTop: 16,
+                height: 1,
+                background: "linear-gradient(to left, transparent, #e5e5e5, transparent)"
+              }} />
+            )}
+          </div>
+        );
+      })}
+
+      {/* ─── جمله همدلانه ─── */}
       {phrase && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-          <div style={{ fontSize: 14, lineHeight: 1.9 }}>{phrase}</div>
+        <Card style={{
+          marginTop: 20,
+          background: "#eef4ff",
+          border: "1px solid #bfdbfe",
+          padding: 18,
+          textAlign: "center"
+        }}>
+          <div style={{ fontSize: 24, marginBottom: 8 }}>💙</div>
+          <div style={{ fontSize: 14, lineHeight: 2, color: "#000", fontStyle: "italic" }}>
+            {phrase}
+          </div>
         </Card>
       )}
 
-      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-        <Btn onClick={onContinue}>بعدی — بیایید این چرخه را بشکنیم</Btn>
-        <Btn variant="ghost" onClick={onViewOrigin}>🧸 این الگو از کجا آمده؟</Btn>
+      {/* ─── CTA ─── */}
+      <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
+        <button onClick={onContinue} style={{
+          width: "100%",
+          padding: "16px 20px",
+          borderRadius: 12,
+          border: "none",
+          background: "#1a3d2c",
+          color: "#fff",
+          fontSize: 15,
+          fontWeight: 700,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          boxShadow: "0 6px 20px rgba(26,61,44,.2)"
+        }}>
+          <span>بعدی — بیا این چرخه رو بشکنیم</span>
+          <span style={{ opacity: 0.6 }}>←</span>
+        </button>
+        <Btn variant="ghost" onClick={onViewOrigin}>
+          🧸 این الگو از کجا آمده؟
+        </Btn>
       </div>
     </Shell>
   );
@@ -1186,20 +1829,78 @@ function ExerciseView({ schemaId, selection, onDone, onBack }) {
   if (!exercise) {
     return (
       <Shell title="تمرین" onBack={onBack}>
-        <Card><p>برای این ترکیب، تمرینی تعریف نشده.</p></Card>
-        <div style={{ marginTop: 12 }}>
-          <Btn onClick={onDone}>ادامه</Btn>
+        <Card style={{ textAlign: "center", padding: 30 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
+          <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 600 }}>
+            برای این ترکیب، تمرین اختصاصی تعریف نشده.
+          </p>
+          <p style={{ margin: 0, fontSize: 13, color: "#666", lineHeight: 1.8 }}>
+            ولی همین که چرخه رو شناختی، خودش یک قدمه.
+          </p>
+        </Card>
+        <div style={{ marginTop: 16 }}>
+          <Btn onClick={() => onDone(null)}>ادامه</Btn>
         </div>
       </Shell>
     );
   }
 
+  const typeLabel = EXERCISE_TYPE_LABELS[exercise.type] || { icon: "🎯", label: "تمرین", color: "#1a3d2c" };
+
   return (
     <Shell title="تمرین" onBack={onBack}>
+
+      {/* ─── هدر تمرین ─── */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 18,
+        marginBottom: 16
+      }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 10
+        }}>
+          <div style={{
+            width: 44, height: 44,
+            borderRadius: 12,
+            background: "rgba(255,255,255,.15)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 22
+          }}>
+            {typeLabel.icon}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 3 }}>
+              {typeLabel.label}
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.5 }}>
+              یک تمرین کوچیک
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, lineHeight: 1.9, opacity: 0.85 }}>
+          این تمرین به تو کمک می‌کنه این بار جور دیگه‌ای پاسخ بدی.
+        </div>
+      </Card>
+
+      {/* ─── رندرر تمرین ─── */}
       <ExerciseRenderer exercise={exercise} onComplete={(record) => onDone(record)} onSkip={onDone} />
     </Shell>
   );
 }
+
+const EXERCISE_TYPE_LABELS = {
+  two_column:    { icon: "⚖️", label: "تحلیل دو ستونه" },
+  three_column:  { icon: "🔬", label: "بررسی شواهد" },
+  timer:         { icon: "⏱️", label: "مکث زمان‌دار" },
+  single_choice: { icon: "🎯", label: "انتخاب" },
+  single_input:  { icon: "✍️", label: "نوشتن" },
+  reflection:    { icon: "💭", label: "تأمل" },
+  list:          { icon: "📝", label: "فهرست" }
+};
 
 /* =========================================================
  * متادیتای انواع مأموریت
@@ -2038,6 +2739,8 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
  * ========================================================= */
 
 function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuide, onSOS }) {
+  const [tab, setTab] = useState("respond");
+
   const userSchemas = useMemo(() => {
     if (!analysis?.all) return [];
     return analysis.all.filter((r) => r.percentage >= 40);
@@ -2055,63 +2758,198 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
 
   return (
     <Shell title="روابط من" onBack={onBack} showSOS onSOS={onSOS}>
-      <Card>
-        <p style={{ margin: 0, fontSize: 14, color: "#000", lineHeight: 1.9 }}>
-          چطور با دیگران برخورد کنم؟ چرا بعضی روابط تکرار می‌شوند؟
-        </p>
-      </Card>
 
-      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>
-          💬 چطور با طرف مقابل برخورد کنم؟
+      {/* ─── Hero ─── */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 22,
+        marginBottom: 14,
+        textAlign: "center"
+      }}>
+        <div style={{ fontSize: 44, marginBottom: 8 }}>💞</div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
+          چطور با دیگران برخورد کنم؟
         </div>
-        <div style={{ fontSize: 13, lineHeight: 1.9, opacity: 0.85, marginBottom: 4 }}>
-          اگر طرف مقابلت این الگو را دارد، روی اسمش بزن تا ببینی چطور رفتار کنی.
-        </div>
-        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-          {SCHEMAS.map((s) => {
-            const guide = HOW_TO_RESPOND[s.id];
-            const plain = s.name_plain || guide?.plainName;
-            return (
-              <button key={s.id} onClick={() => onPickResponseGuide(s.id)} style={{
-                padding: "12px 14px", borderRadius: 10,
-                border: "1px solid rgba(255,255,255,.2)",
-                background: "transparent", color: "#fff",
-                cursor: "pointer", textAlign: "right", fontFamily: "inherit"
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>
-                  {plain || s.name_fa}
-                </div>
-                <div style={{ fontSize: 11, opacity: 0.6 }}>{s.name_fa}</div>
-              </button>
-            );
-          })}
+        <div style={{ fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
+          چرا بعضی روابط تکرار می‌شن؟
+          <br />
+          چطور می‌تونم بهتر عمل کنم؟
         </div>
       </Card>
 
-      <h3 style={{ margin: "22px 0 8px", fontSize: 15 }}>
-        🔁 چرا بعضی روابط تکرار می‌شوند؟
-      </h3>
-      <p style={{ margin: "0 0 12px", fontSize: 13, color: "#000", lineHeight: 1.8 }}>
-        این‌ها ترکیب‌های رایج‌اند. روی هر کدام بزن تا بفهمی چرا همیشه شبیه هم‌اند.
-      </p>
-
-      {relevantPatterns.map((p) => (
-        <button key={p.id} onClick={() => onPickPattern(p.id)} style={{
-          display: "block", width: "100%", textAlign: "right",
-          padding: 16, marginBottom: 10, borderRadius: 12,
-          border: "1px solid #eee", background: "#fff",
-          cursor: "pointer", fontFamily: "inherit"
-        }}>
-          <div style={{ fontSize: 11, color: "#000", marginBottom: 6 }}>{p.shortName}</div>
-          <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 8 }}>
-            {p.boxTitle || p.title}
-          </div>
-          <div style={{ fontSize: 13, color: "#000", lineHeight: 1.7 }}>
-            {p.boxDescription}
-          </div>
+      {/* ─── تب‌ها ─── */}
+      <div style={{
+        display: "flex",
+        gap: 6,
+        padding: 4,
+        background: "#f0f0f0",
+        borderRadius: 12,
+        marginBottom: 16
+      }}>
+        <button
+          onClick={() => setTab("respond")}
+          style={{
+            flex: 1,
+            padding: "10px 12px",
+            borderRadius: 9,
+            border: "none",
+            background: tab === "respond" ? "#fff" : "transparent",
+            color: tab === "respond" ? "#1a3d2c" : "#666",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            transition: "all .15s ease",
+            boxShadow: tab === "respond" ? "0 2px 6px rgba(0,0,0,.06)" : "none"
+          }}
+        >
+          💬 چطور برخورد کنم؟
         </button>
-      ))}
+        <button
+          onClick={() => setTab("why")}
+          style={{
+            flex: 1,
+            padding: "10px 12px",
+            borderRadius: 9,
+            border: "none",
+            background: tab === "why" ? "#fff" : "transparent",
+            color: tab === "why" ? "#1a3d2c" : "#666",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            transition: "all .15s ease",
+            boxShadow: tab === "why" ? "0 2px 6px rgba(0,0,0,.06)" : "none"
+          }}
+        >
+          🔁 چرا تکرار می‌شوند؟
+        </button>
+      </div>
+
+      {/* ─── محتوای تب ─── */}
+      {tab === "respond" && (
+        <>
+          <div style={{
+            fontSize: 12,
+            color: "#666",
+            lineHeight: 1.9,
+            marginBottom: 12,
+            padding: "0 4px"
+          }}>
+            اگر کسی که تو زندگیت هست، این الگو را دارد — روی اسمش بزن تا ببینی چطور رفتار کنی.
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {SCHEMAS.map((s) => {
+              const guide = HOW_TO_RESPOND[s.id];
+              const plain = s.name_plain || guide?.plainName || s.name_fa;
+              return (
+                <button key={s.id} onClick={() => onPickResponseGuide(s.id)} style={{
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  border: "1px solid #f0f0f0",
+                  background: "#fff",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  textAlign: "right",
+                  transition: "all .15s ease"
+                }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    background: "#f0f7f4",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 16,
+                    flexShrink: 0
+                  }}>💡</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#000", marginBottom: 2 }}>
+                      {plain}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#999" }}>
+                      {s.name_fa}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 16, color: "#ccc" }}>←</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {tab === "why" && (
+        <>
+          <div style={{
+            fontSize: 12,
+            color: "#666",
+            lineHeight: 1.9,
+            marginBottom: 12,
+            padding: "0 4px"
+          }}>
+            این‌ها ترکیب‌های رایج‌اند. روی هر کدام بزن تا بفهمی چرا همیشه شبیه هم‌اند.
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {relevantPatterns.map((p, idx) => (
+              <button key={p.id} onClick={() => onPickPattern(p.id)} style={{
+                padding: 18,
+                borderRadius: 14,
+                border: "1px solid #f0f0f0",
+                background: "#fff",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textAlign: "right",
+                position: "relative",
+                overflow: "hidden",
+                transition: "all .15s ease"
+              }}>
+                <div style={{
+                  position: "absolute",
+                  top: 0, right: 0,
+                  width: 4,
+                  height: "100%",
+                  background: idx % 2 === 0 ? "#8b5cf6" : "#ec4899"
+                }} />
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <span style={{
+                    fontSize: 10,
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    background: "#f0f0f0",
+                    color: "#666",
+                    fontWeight: 600
+                  }}>
+                    {p.shortName}
+                  </span>
+                </div>
+
+                <div style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  lineHeight: 1.6,
+                  color: "#000",
+                  marginBottom: 8
+                }}>
+                  {p.boxTitle || p.title}
+                </div>
+
+                <div style={{
+                  fontSize: 12,
+                  color: "#666",
+                  lineHeight: 1.8
+                }}>
+                  {p.boxDescription}
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </Shell>
   );
 }
