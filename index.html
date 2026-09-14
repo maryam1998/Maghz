@@ -1799,7 +1799,7 @@ html[data-theme="dark"] .np-emotion-row button{
   border-radius:50%;
   background:radial-gradient(circle at 50% 50%, rgba(43,191,171,0.05), transparent 65%);
   border:1px dashed var(--line, var(--panel-border));
-  overflow:visible;
+  overflow:hidden;
 }
 
 .nothing-core{
@@ -1838,7 +1838,10 @@ html[data-theme="dark"] .np-emotion-row button{
   position:absolute;
   top:50%; left:50%;
   transform:translate(-50%,-50%);
+  display:flex; align-items:center; justify-content:center;
   border-radius:50%;
+  font-size:11px; font-weight:700;
+  color:var(--muted, #7c8b87);
   background:rgba(94,200,240,0.04);
   border:1px solid rgba(94,200,240,0.22);
   transition:opacity .8s ease, transform 1s cubic-bezier(.5,0,.85,1), filter .8s ease;
@@ -1855,25 +1858,6 @@ html[data-theme="dark"] .np-emotion-row button{
   transform:translate(-50%,-50%) scale(1.6);
   filter:blur(6px);
 }
-
-/* هر لایه یک برچسب مستقل داره که دقیقاً روی لبه‌ی همون حلقه، در یک زاویه‌ی
-   اختصاصی می‌شینه — نه وسط صحنه — تا پنج تا روی هم نیفتن و هرکدوم جدا خونده بشه. */
-.nothing-layer-label{
-  position:absolute;
-  top:50%; left:50%;
-  font-size:11px; font-weight:700;
-  color:var(--emerald-700, #0f5b53);
-  background:var(--surface, #f7f6f1);
-  padding:3px 8px;
-  border-radius:999px;
-  border:1px solid rgba(94,200,240,0.35);
-  white-space:nowrap;
-}
-.nothing-layer[data-nothing="body"]  .nothing-layer-label{ transform:translate(-50%,-50%) rotate(-90deg)  translate(75px)    rotate(90deg); }
-.nothing-layer[data-nothing="one"]   .nothing-layer-label{ transform:translate(-50%,-50%) rotate(-18deg)  translate(92.5px)  rotate(18deg); }
-.nothing-layer[data-nothing="thing"] .nothing-layer-label{ transform:translate(-50%,-50%) rotate(54deg)   translate(107.5px) rotate(-54deg); }
-.nothing-layer[data-nothing="where"] .nothing-layer-label{ transform:translate(-50%,-50%) rotate(126deg)  translate(120px)   rotate(-126deg); }
-.nothing-layer[data-nothing="time"]  .nothing-layer-label{ transform:translate(-50%,-50%) rotate(198deg)  translate(130px)   rotate(-198deg); }
 
 .nothing-steps{ display:flex; flex-direction:column; gap:6px; margin:0 0 4px; }
 .nothing-step{
@@ -5479,11 +5463,11 @@ body.bg-mode-image #grat-root{background:transparent;}
             <div class="nothing-core-dot"></div>
             <span class="nothing-core-label">آگاهی خالص</span>
           </div>
-          <div class="nothing-layer" data-nothing="body"><span class="nothing-layer-label">بدن</span></div>
-          <div class="nothing-layer" data-nothing="one"><span class="nothing-layer-label">هویت</span></div>
-          <div class="nothing-layer" data-nothing="thing"><span class="nothing-layer-label">اشیا</span></div>
-          <div class="nothing-layer" data-nothing="where"><span class="nothing-layer-label">مکان</span></div>
-          <div class="nothing-layer" data-nothing="time"><span class="nothing-layer-label">زمان</span></div>
+          <div class="nothing-layer" data-nothing="body">بدن</div>
+          <div class="nothing-layer" data-nothing="one">هویت</div>
+          <div class="nothing-layer" data-nothing="thing">اشیا</div>
+          <div class="nothing-layer" data-nothing="where">مکان</div>
+          <div class="nothing-layer" data-nothing="time">زمان</div>
         </div>
 
         <!-- پنج مرحله‌ی رهاسازی -->
