@@ -50,6 +50,22 @@
       var active = state.futureTextVersions.filter(function(v){ return !v.endDate; })[0];
       state.activeFutureVersionId = active ? active.id : null;
     }
+
+    if (!Array.isArray(state.dpSeedVersions)) state.dpSeedVersions = [];
+    if (!state.dpSeedVersions.length) {
+      state.dpSeedVersions.push({
+        id: 'seed_' + Date.now(),
+        text: '',
+        images: [],
+        startDate: dpTodayKey(),
+        endDate: null
+      });
+    }
+    if (!state.activeSeedVersionId) {
+      var activeSeed = state.dpSeedVersions.filter(function(v){ return !v.endDate; })[0];
+      state.activeSeedVersionId = activeSeed ? activeSeed.id : state.dpSeedVersions[0].id;
+    }
+
     try { if (typeof saveState === 'function') saveState(); } catch(e){}
     return true;
   }
@@ -58,6 +74,13 @@
     if (!state.activeFutureVersionId) return null;
     return state.futureTextVersions.filter(function(v){
       return v.id === state.activeFutureVersionId;
+    })[0] || null;
+  }
+
+  function getActiveSeedVersion(){
+    if (!state.activeSeedVersionId) return null;
+    return state.dpSeedVersions.filter(function(v){
+      return v.id === state.activeSeedVersionId;
     })[0] || null;
   }
 
@@ -375,7 +398,7 @@
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
             '<span class="dp-step-num">۳</span>' +
-            '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها</span>' +
+            '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها (به خداوند معجزه‌ها متصل شو)</span>' +
           '</div>' +
 
           '<div class="dp-why-box">' +
@@ -417,9 +440,9 @@
 
           '<div class="dp-why-box">' +
             '<span class="dp-def-chip">📖 <b>انتخاب واقعیت:</b> با خواسته‌ات هم‌فرکانس شو و از میان امکان‌های پیش‌رو، آینده‌ای را که می‌خواهی انتخاب کن.</span>' +
-            'اینجا چیزی که می‌خوای رو می‌نویسی — ولی جوری که انگار <b>همین حالا بهش رسیدی</b>. ' +
-            'با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن. ' +
-            'وقتی هر روز این رو می‌خونی، ذهنت باور می‌کنه که این آینده واقعاً مال توئه.' +
+            'با جمله‌ی «بسیار خوشحال و سپاسگزارم، حالا که...» شروع کن. ' +
+            'خواسته‌ات را بنویس؛ اما طوری بنویس که انگار همین حالا به آن رسیده‌ای و در حال تجربه کردنش هستی. ' +
+            'وقتی هر روز این متن را می‌خوانی، توجهت را به آن آینده و احساسی که می‌خواهی تجربه کنی برمی‌گردانی.' +
           '</div>' +
 
           '<div class="dp-step-content" style="margin-top:12px;">' +
@@ -494,9 +517,15 @@
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
               'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای؛ هر تعداد عکس که دوست داری از آن صحنه اضافه کن — محدودیتی نیست.' +
             '</div>' +
+            '<textarea id="seed-text-input" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;" placeholder="توضیح این تصویرسازی (اختیاری)..."></textarea>' +
             '<label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>' +
             '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
             '<div class="visual-gallery" id="visual-gallery" style="margin-top:10px;"></div>' +
+            '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
+              '<button type="button" id="new-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">🌱 بذر جدید (آرشیو کن)</button>' +
+              '<button type="button" id="archive-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="seed-archive-count">۰</span>)</button>' +
+            '</div>' +
+            '<div id="seed-archive-box" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
           '</div>' +
         '</div>' +
 
@@ -733,8 +762,140 @@
   }
 
   /* =====================================================================
-     پیشرفت
+     کاشتن بذر — آرشیو متن و تصاویر
      ===================================================================== */
+  var SEED_ARCHIVE_OPEN = false;
+
+  function fileToDataURL(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(){ resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderSeedSection(){
+    var v = getActiveSeedVersion();
+    var textInput = document.getElementById('seed-text-input');
+    if (textInput && document.activeElement !== textInput) textInput.value = v ? (v.text || '') : '';
+    renderSeedGallery();
+    var archiveCount = document.getElementById('seed-archive-count');
+    if (archiveCount) archiveCount.textContent = toFa((state.dpSeedVersions || []).length);
+    renderSeedArchiveBox();
+  }
+
+  function renderSeedGallery(){
+    var gallery = document.getElementById('visual-gallery');
+    if (!gallery) return;
+    var v = getActiveSeedVersion();
+    var images = (v && v.images) ? v.images : [];
+    if (!images.length){
+      gallery.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">هنوز عکسی اضافه نکردی.</div>';
+      return;
+    }
+    var html = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    images.forEach(function(src, idx){
+      html += '<div style="position:relative;width:72px;height:72px;">' +
+        '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--line);">' +
+        '<button type="button" data-remove-image="' + idx + '" style="position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:#c0392b;color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1;">×</button>' +
+      '</div>';
+    });
+    html += '</div>';
+    gallery.innerHTML = html;
+  }
+
+  function handleVisualImages(fileList){
+    var v = getActiveSeedVersion();
+    if (!v) return;
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    Promise.all(files.map(fileToDataURL)).then(function(dataUrls){
+      if (!Array.isArray(v.images)) v.images = [];
+      dataUrls.forEach(function(u){ v.images.push(u); });
+      try { saveState(); } catch(e){}
+      renderSeedGallery();
+      if (typeof toast === 'function') toast('عکس اضافه شد ✓');
+    }).catch(function(){
+      if (typeof toast === 'function') toast('مشکلی در بارگذاری عکس پیش اومد');
+    });
+  }
+  window.handleVisualImages = handleVisualImages;
+
+  function removeSeedImage(idx){
+    var v = getActiveSeedVersion();
+    if (!v || !Array.isArray(v.images)) return;
+    v.images.splice(idx, 1);
+    try { saveState(); } catch(e){}
+    renderSeedGallery();
+  }
+
+  function saveSeedText(text){
+    var v = getActiveSeedVersion();
+    if (!v) return;
+    v.text = text;
+    try { saveState(); } catch(e){}
+  }
+
+  function archiveSeedVersion(){
+    var v = getActiveSeedVersion();
+    if (v && !((v.text || '').trim()) && !(v.images || []).length){
+      if (typeof toast === 'function') toast('اول متن یا عکسی اضافه کن');
+      return;
+    }
+    if (v) v.endDate = dpTodayKey();
+    var newV = { id: 'seed_' + Date.now(), text: '', images: [], startDate: dpTodayKey(), endDate: null };
+    if (!Array.isArray(state.dpSeedVersions)) state.dpSeedVersions = [];
+    state.dpSeedVersions.push(newV);
+    state.activeSeedVersionId = newV.id;
+    try { saveState(); } catch(e){}
+    renderSeedSection();
+    if (typeof toast === 'function') toast('بذر قبلی آرشیو شد — بذر تازه شروع کن 🌱');
+  }
+
+  function toggleSeedArchive(){ SEED_ARCHIVE_OPEN = !SEED_ARCHIVE_OPEN; renderSeedArchiveBox(); }
+
+  function activateSeedVersion(id){
+    var versions = state.dpSeedVersions || [];
+    var chosen = versions.filter(function(v){ return v.id === id; })[0];
+    if (!chosen) return;
+    versions.forEach(function(v){ if (v.id !== id && !v.endDate) v.endDate = dpTodayKey(); });
+    chosen.endDate = null;
+    state.activeSeedVersionId = chosen.id;
+    try { saveState(); } catch(e){}
+    renderSeedSection();
+    if (typeof toast === 'function') toast('این بذر فعال شد ✓');
+  }
+
+  function renderSeedArchiveBox(){
+    var box = document.getElementById('seed-archive-box');
+    if (!box) return;
+    if (!SEED_ARCHIVE_OPEN){ box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    var versions = state.dpSeedVersions || [];
+    if (!versions.length){
+      box.innerHTML = '<div style="text-align:center;font-size:11.5px;color:var(--muted);padding:10px;">هنوز بذری ذخیره نشده.</div>';
+      return;
+    }
+    var html = '<div style="font-size:11px;font-weight:800;margin-bottom:8px;color:var(--ink);">📚 همه‌ی بذرهای تو</div>';
+    versions.slice().reverse().forEach(function(v, idx){
+      var realIdx = versions.length - 1 - idx;
+      var isActive = v.id === state.activeSeedVersionId;
+      var end = v.endDate || 'اکنون';
+      var imgs = v.images || [];
+      html += '<div style="padding:9px;border-radius:10px;margin-bottom:6px;border:1px solid ' + (isActive ? 'var(--emerald-500)' : 'var(--line)') + ';background:' + (isActive ? 'rgba(43,191,171,.06)' : 'var(--card)') + ';">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+          '<span style="font-size:11px;font-weight:800;color:var(--ink);">بذر ' + toFa(realIdx + 1) + (isActive ? ' • فعال' : '') + '</span>' +
+          '<span style="font-size:9.5px;color:var(--muted);">' + toFa(imgs.length) + ' عکس</span>' +
+        '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-bottom:6px;">' + v.startDate + ' تا ' + end + '</div>' +
+        (v.text ? '<div style="font-size:11px;color:var(--ink-soft);line-height:1.6;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-style:italic;margin-bottom:6px;">«' + escapeHtml(v.text.length > 100 ? v.text.slice(0, 100) + '...' : v.text) + '»</div>' : '') +
+        (imgs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' + imgs.slice(0, 6).map(function(src){ return '<img src="' + src + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">'; }).join('') + '</div>' : '') +
+        (isActive ? '' : '<button type="button" class="btn tiny" data-activate-seed="' + v.id + '" style="width:100%;font-size:10.5px;padding:6px;">فعال کردن</button>') +
+      '</div>';
+    });
+    box.innerHTML = html;
+  }
   function dpGetTodaySteps(){
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
     var k = dpTodayKey();
@@ -986,6 +1147,7 @@
     window.renderBeliefsView = function(){
       try { original.apply(this, arguments); } catch(e){}
       try { renderFutureText(); } catch(e){}
+      try { renderSeedSection(); } catch(e){}
       try { dpRenderProgress(); } catch(e){}
       try { renderOurNeuralPathways(); } catch(e){}
     };
@@ -1034,6 +1196,13 @@
       var actBtn = t.closest('[data-activate-version]');
       if (actBtn){ activateVersion(actBtn.dataset.activateVersion); return; }
 
+      if (t.id === 'new-seed-btn'){ archiveSeedVersion(); return; }
+      if (t.id === 'archive-seed-btn'){ toggleSeedArchive(); return; }
+      var actSeedBtn = t.closest('[data-activate-seed]');
+      if (actSeedBtn){ activateSeedVersion(actSeedBtn.dataset.activateSeed); return; }
+      var removeImgBtn = t.closest('[data-remove-image]');
+      if (removeImgBtn){ removeSeedImage(parseInt(removeImgBtn.dataset.removeImage, 10)); return; }
+
       if (t.id === 'dp-complete-btn'){
         var quality = getTodayEmotionQualityFor('dispenza');
         var done = dpGetTodaySteps();
@@ -1076,6 +1245,9 @@
         state.dispenzaPossibilities[key] = e.target.value;
         try { saveState(); } catch(e2){}
       }
+      if (id === 'seed-text-input'){
+        saveSeedText(e.target.value);
+      }
     });
 
     document.addEventListener('change', function(e){
@@ -1109,6 +1281,7 @@
     wireEvents();
     dpRestorePossibilities();
     try { renderFutureText(); } catch(e){}
+    try { renderSeedSection(); } catch(e){}
     try { dpRenderProgress(); } catch(e){}
     try { renderOurNeuralPathways(); } catch(e){}
     var bv = document.getElementById('view-beliefs');
