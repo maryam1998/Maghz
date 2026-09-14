@@ -2697,4 +2697,1190 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
                 width: 26, height: 26, borderRadius: "50%",
                 background: "#1a3d2c", color: "#fff",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 
+                fontSize: 12, fontWeight: 700, flexShrink: 0
+              }}>{toFa(i + 1)}</div>
+              <div style={{
+                flex: 1, padding: "10px 12px", background: "#f6f6f6",
+                borderRadius: 8, fontSize: 13, lineHeight: 1.7, color: "#000"
+              }}>{step}</div>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {mainOrigin?.whatChildLearned && (
+        <Card style={{ marginBottom: 12, background: "#eef4ff", border: "1px solid #bfdbfe" }}>
+          <SectionTitle icon="🧸" title="این الگو از کجا آمد؟" color="#1e40af" />
+          <div style={{
+            fontSize: 14, lineHeight: 1.95, color: "#000",
+            fontStyle: "italic", padding: "10px 12px",
+            background: "#fff", borderRadius: 8,
+            borderRight: "3px solid #3b82f6"
+          }}>{mainOrigin.whatChildLearned}</div>
+        </Card>
+      )}
+
+      {relatedSchemas.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🔗" title="این موقعیت با این الگوها گره خورده" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {relatedSchemas.map((s, idx) => (
+              <button key={s.id} onClick={() => onPickSchema(s.id)} style={{
+                padding: "12px 14px", borderRadius: 10,
+                border: idx === 0 ? "2px solid #1a3d2c" : "1px solid #e5e5e5",
+                background: idx === 0 ? "#f0f7f4" : "#fafafa",
+                cursor: "pointer", textAlign: "right",
+                fontFamily: "inherit", fontSize: 14
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <div style={{ fontWeight: 700, color: "#000" }}>
+                    {s.name_plain || s.name_fa}
+                  </div>
+                  {idx === 0 && (
+                    <span style={{
+                      fontSize: 9, padding: "2px 6px", borderRadius: 20,
+                      background: "#1a3d2c", color: "#fff", fontWeight: 700
+                    }}>اصلی</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: "#666", lineHeight: 1.5 }}>
+                  {s.one_liner || s.short_description}
+                </div>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {allThoughts.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🧠" title="چه فکرهایی از ذهنت می‌گذرد؟" />
+          <div style={{ fontSize: 12, color: "#666", marginBottom: 10, fontStyle: "italic" }}>
+            این‌ها جملاتی هستند که در این موقعیت، ذهنت بهت می‌گه:
+          </div>
+          {allThoughts.slice(0, 5).map((t, i) => (
+            <div key={i} style={{
+              fontSize: 13, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, padding: "10px 12px",
+              background: "#f3e8ff", borderRadius: 8,
+              borderRight: "3px solid #8b5cf6"
+            }}>«{t.text}»</div>
+          ))}
+        </Card>
+      )}
+
+      {allEmotions.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="💧" title="چه احساسی بالا میاد؟" />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {allEmotions.slice(0, 10).map((e, i) => (
+              <div key={i} style={{
+                fontSize: 12, padding: "7px 12px",
+                background: "#fce7f3", color: "#831843",
+                borderRadius: 20, fontWeight: 500
+              }}>{e.text}</div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {stages.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 12,
+              background: "linear-gradient(135deg, #0a3d38, #178a7c)",
+              color: "#fff", display: "flex",
+              alignItems: "center", justifyContent: "center", fontSize: 18
+            }}>🚀</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#000" }}>
+                مراحل مواجهه با این موقعیت
+              </div>
+              <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>
+                {toFa(stages.length)} قدم — یکی‌یکی، نه یک‌جا
+              </div>
+            </div>
+          </div>
+          {stages.map((stage) => (
+            <Card key={stage.n} style={{
+              marginBottom: 8, padding: 14,
+              borderRight: `4px solid ${stage.color}`,
+              background: "#fff"
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: stage.color, color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 700, flexShrink: 0
+                }}>{toFa(stage.n)}</div>
+                <div style={{ flex: 1, fontSize: 14, lineHeight: 1.9, color: "#000" }}>
+                  {stage.fullText}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {situation.selfTalk?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#f3e8ff" }}>
+          <SectionTitle icon="🗣️" title="به خودت این‌ها را بگو" color="#6b21a8" />
+          {situation.selfTalk.map((phrase, i) => (
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, padding: "10px 14px",
+              background: "#fff", borderRadius: 8,
+              borderRight: "3px solid #8b5cf6", fontStyle: "italic"
+            }}>«{phrase}»</div>
+          ))}
+        </Card>
+      )}
+
+      <Card style={{
+        marginBottom: 12,
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff", padding: 20
+      }}>
+        <div style={{ fontSize: 24, marginBottom: 10 }}>💙</div>
+        <div style={{ fontSize: 14, lineHeight: 2, opacity: 0.95 }}>{compassionNote}</div>
+      </Card>
+
+      <div style={{ marginTop: 16 }}>
+        <Btn onClick={() => onPickSchema(relatedSchemas[0]?.id)}>
+          کار روی {relatedSchemas[0]?.name_plain || "این الگو"}
+        </Btn>
+      </div>
+    </Shell>
+  );
+}
+
+/* =========================================================
+ * Relationships List
+ * ========================================================= */
+
+function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuide, onSOS }) {
+  const [tab, setTab] = useState("respond");
+
+  const userSchemas = useMemo(() => {
+    if (!analysis?.all) return [];
+    return analysis.all.filter((r) => r.percentage >= 40);
+  }, [analysis]);
+
+  const relevantPatterns = useMemo(() => {
+    if (userSchemas.length === 0) return ATTRACTION_PATTERNS;
+    const ids = userSchemas.map((s) => s.schemaId);
+    return ATTRACTION_PATTERNS
+      .filter((p) => p.schemas.some((sid) => ids.includes(sid)))
+      .concat(ATTRACTION_PATTERNS.filter((p) => !p.schemas.some((sid) => ids.includes(sid))));
+  }, [userSchemas]);
+
+  const prioritySchemas = useMemo(() => {
+    if (!analysis?.all) return SCHEMAS;
+    const activeIds = new Set(userSchemas.map((s) => s.schemaId));
+    return [...SCHEMAS.filter((s) => activeIds.has(s.id)), ...SCHEMAS.filter((s) => !activeIds.has(s.id))];
+  }, [analysis, userSchemas]);
+
+  return (
+    <Shell title="روابط من" onBack={onBack} showSOS onSOS={onSOS}>
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff", padding: 24, marginBottom: 14, textAlign: "center"
+      }}>
+        <div style={{ fontSize: 44, marginBottom: 10 }}>💞</div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>روابط من</div>
+        <div style={{ fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
+          چرا بعضی روابط تکرار می‌شن؟<br />چطور بهتر برخورد کنم؟
+        </div>
+      </Card>
+
+      <div style={{
+        display: "flex", gap: 6, padding: 4,
+        background: "#f0f0f0", borderRadius: 14, marginBottom: 16
+      }}>
+        {[
+          { id: "respond", label: "💬 چطور برخورد کنم؟" },
+          { id: "why", label: "🔁 چرا تکرار می‌شوند؟" }
+        ].map((t) => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            flex: 1, padding: "12px 12px", borderRadius: 10, border: "none",
+            background: tab === t.id ? "#fff" : "transparent",
+            color: tab === t.id ? "#1a3d2c" : "#666",
+            fontSize: 12, fontWeight: 700, cursor: "pointer",
+            fontFamily: "inherit", boxShadow: tab === t.id ? "0 2px 8px rgba(0,0,0,.08)" : "none"
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {tab === "respond" && (
+        <>
+          <Card style={{ marginBottom: 14, background: "#eef4ff", border: "1px solid #bfdbfe", padding: 14 }}>
+            <div style={{ fontSize: 12, color: "#1e40af", lineHeight: 1.9 }}>
+              💡 اگر کسی که تو زندگیت هست، این الگو را دارد — روی اسمش بزن تا ببینی چطور رفتار کنی.
+            </div>
+          </Card>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {prioritySchemas.map((s) => {
+              const guide = HOW_TO_RESPOND[s.id];
+              const plain = s.name_plain || guide?.plainName || s.name_fa;
+              const isActive = userSchemas.some((u) => u.schemaId === s.id);
+              return (
+                <button key={s.id} onClick={() => onPickResponseGuide(s.id)} style={{
+                  padding: "14px 16px", borderRadius: 12,
+                  border: isActive ? "2px solid #1a3d2c" : "1px solid #f0f0f0",
+                  background: isActive ? "#f0f7f4" : "#fff",
+                  cursor: "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: 12, textAlign: "right"
+                }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 11,
+                    background: isActive ? "#1a3d2c" : "#f0f7f4",
+                    color: isActive ? "#fff" : "#1a3d2c",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 18, flexShrink: 0
+                  }}>💡</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 700, color: "#000" }}>{plain}</div>
+                      {isActive && (
+                        <span style={{
+                          fontSize: 9, padding: "2px 6px", borderRadius: 20,
+                          background: "#1a3d2c", color: "#fff", fontWeight: 700
+                        }}>فعال</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#999" }}>{s.name_fa}</div>
+                  </div>
+                  <span style={{ fontSize: 16, color: "#ccc" }}>←</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {tab === "why" && (
+        <>
+          <Card style={{ marginBottom: 14, background: "#fef3c7", border: "1px solid #fde68a", padding: 14 }}>
+            <div style={{ fontSize: 12, color: "#92400e", lineHeight: 1.9 }}>
+              🔁 این‌ها ترکیب‌های رایج روابط‌اند. روی هرکدوم بزن تا بفهمی چرا همیشه شبیه هم‌اند.
+            </div>
+          </Card>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {relevantPatterns.map((p, idx) => {
+              const colors = ["#8b5cf6", "#ec4899", "#f59e0b", "#0ea5e9", "#10b981"];
+              const color = colors[idx % colors.length];
+              return (
+                <button key={p.id} onClick={() => onPickPattern(p.id)} style={{
+                  padding: 18, borderRadius: 14,
+                  border: "1px solid #f0f0f0", background: "#fff",
+                  cursor: "pointer", fontFamily: "inherit",
+                  textAlign: "right", position: "relative", overflow: "hidden"
+                }}>
+                  <div style={{
+                    position: "absolute", top: 0, right: 0,
+                    width: 4, height: "100%", background: color
+                  }} />
+                  <div style={{
+                    display: "inline-block", fontSize: 10, padding: "4px 10px",
+                    borderRadius: 20, background: color + "15",
+                    color: color, fontWeight: 700, marginBottom: 10
+                  }}>{p.shortName}</div>
+                  <div style={{
+                    fontSize: 15, fontWeight: 700, lineHeight: 1.6,
+                    color: "#000", marginBottom: 8
+                  }}>{p.boxTitle || p.title}</div>
+                  <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, marginBottom: 12 }}>
+                    {p.boxDescription}
+                  </div>
+                  <div style={{
+                    fontSize: 11, color: color, fontWeight: 700,
+                    display: "flex", alignItems: "center", gap: 4
+                  }}>
+                    <span>مشاهده کامل</span>
+                    <span>←</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </Shell>
+  );
+}
+
+/* =========================================================
+ * Relationship Detail — عمیق
+ * ========================================================= */
+
+function RelationshipDetailView({ patternId, onBack, onPickSchema, onSOS }) {
+  const pattern = ATTRACTION_PATTERNS.find((p) => p.id === patternId);
+
+  if (!pattern) {
+    return (
+      <Shell title="خطا" onBack={onBack} showSOS onSOS={onSOS}>
+        <Card><p>الگو پیدا نشد.</p></Card>
+      </Shell>
+    );
+  }
+
+  const schemas = pattern.schemas.map((id) => SCHEMAS.find((s) => s.id === id)).filter(Boolean);
+
+  const allThoughts = [];
+  const allEmotions = [];
+  for (const s of schemas) {
+    for (const t of s.automatic_thoughts || []) {
+      if (!allThoughts.find((x) => x.id === t.id)) allThoughts.push(t);
+    }
+    for (const e of s.emotional_signals || []) {
+      if (!allEmotions.find((x) => x.id === e.id)) allEmotions.push(e);
+    }
+  }
+
+  const compassionatePhrases = schemas[0] ? getCompassionatePhrases(schemas[0].id) : [];
+  const compassionNote = compassionatePhrases[0] || "این الگو، گناه تو نیست — بخشی از یادگیری قدیمیه.";
+
+  const stages = (pattern.whatToDoNow || []).map((step, idx) => ({
+    n: idx + 1,
+    fullText: step,
+    color: STAGE_COLORS[idx + 1] || "#1a3d2c"
+  }));
+
+  return (
+    <Shell title={pattern.shortName || "الگوی رابطه"} onBack={onBack} showSOS onSOS={onSOS}>
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff", padding: 22, marginBottom: 14
+      }}>
+        <div style={{
+          fontSize: 10, padding: "4px 10px", borderRadius: 20,
+          background: "rgba(255,255,255,.15)",
+          display: "inline-block", marginBottom: 10
+        }}>{pattern.shortName}</div>
+        <h2 style={{ margin: "0 0 12px", fontSize: 19, lineHeight: 1.6, fontWeight: 700 }}>
+          {pattern.title}
+        </h2>
+        <div style={{ fontSize: 13, opacity: 0.85, lineHeight: 1.9 }}>
+          {pattern.boxDescription}
+        </div>
+      </Card>
+
+      {schemas.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🔗" title="این الگو از ترکیب این طرحواره‌ها ساخته شده" />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {schemas.map((s) => (
+              <button key={s.id} onClick={() => onPickSchema(s.id)} style={{
+                fontSize: 12, padding: "8px 14px",
+                background: "#f0f7f4", color: "#1a3d2c",
+                borderRadius: 20, fontWeight: 600,
+                border: "1px solid #a7f3d0", cursor: "pointer",
+                fontFamily: "inherit"
+              }}>{s.name_plain || s.name_fa} ←</button>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {pattern.childhood && (
+        <Card style={{ marginBottom: 12, background: "#eef4ff", border: "1px solid #bfdbfe" }}>
+          <SectionTitle icon="🧸" title="این الگو از کجا آمد؟" color="#1e40af" />
+          {Array.isArray(pattern.childhood) ? pattern.childhood.map((c, i) => (
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, paddingRight: 10, borderRight: "3px solid #3b82f6"
+            }}>• {c}</div>
+          )) : (
+            <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>{pattern.childhood}</div>
+          )}
+        </Card>
+      )}
+
+      {pattern.realLife && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="📖" title="در زندگی واقعی چطور دیده می‌شه؟" />
+          <div style={{
+            fontSize: 14, lineHeight: 1.95, color: "#000",
+            padding: "12px 14px", background: "#fafafa",
+            borderRadius: 8, borderRight: "3px solid #e5e5e5"
+          }}>{pattern.realLife}</div>
+        </Card>
+      )}
+
+      {pattern.typical && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🔄" title="معمولاً چطور پیش می‌ره؟" />
+          <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>{pattern.typical}</div>
+        </Card>
+      )}
+
+      {allThoughts.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🧠" title="چه فکرهایی رد و بدل می‌شه؟" />
+          {allThoughts.slice(0, 4).map((t, i) => (
+            <div key={i} style={{
+              fontSize: 13, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, padding: "10px 12px",
+              background: "#f3e8ff", borderRadius: 8,
+              borderRight: "3px solid #8b5cf6"
+            }}>«{t.text}»</div>
+          ))}
+        </Card>
+      )}
+
+      {allEmotions.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="💧" title="چه احساساتی شکل می‌گیره؟" />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {allEmotions.slice(0, 10).map((e, i) => (
+              <div key={i} style={{
+                fontSize: 12, padding: "7px 12px",
+                background: "#fce7f3", color: "#831843",
+                borderRadius: 20, fontWeight: 500
+              }}>{e.text}</div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {pattern.challenges?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#fef2f2", border: "1px solid #fecaca" }}>
+          <SectionTitle icon="⚠️" title="چالش‌های این رابطه" color="#991b1b" />
+          {pattern.challenges.map((c, i) => (
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 6, paddingRight: 10, borderRight: "3px solid #ef4444"
+            }}>• {c}</div>
+          ))}
+        </Card>
+      )}
+
+      {pattern.whatHelps?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+          <SectionTitle icon="✅" title="چه چیزی کمک می‌کند" color="#065f46" />
+          {pattern.whatHelps.map((h, i) => (
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 6, paddingRight: 10, borderRight: "3px solid #10b981"
+            }}>✓ {h}</div>
+          ))}
+        </Card>
+      )}
+
+      {pattern.whatHurts?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#fffbeb", border: "1px solid #fde68a" }}>
+          <SectionTitle icon="❌" title="چه چیزی اوضاع را بدتر می‌کند" color="#92400e" />
+          {pattern.whatHurts.map((h, i) => (
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 6, paddingRight: 10, borderRight: "3px solid #f59e0b"
+            }}>✕ {h}</div>
+          ))}
+        </Card>
+      )}
+
+      {stages.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 12,
+              background: "linear-gradient(135deg, #0a3d38, #178a7c)",
+              color: "#fff", display: "flex",
+              alignItems: "center", justifyContent: "center", fontSize: 18
+            }}>🚀</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#000" }}>
+                مراحل شکستن این چرخه
+              </div>
+              <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>
+                {toFa(stages.length)} قدم — یکی‌یکی، نه یک‌جا
+              </div>
+            </div>
+          </div>
+          {stages.map((stage) => (
+            <Card key={stage.n} style={{
+              marginBottom: 8, padding: 14,
+              borderRight: `4px solid ${stage.color}`,
+              background: "#fff"
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: stage.color, color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 700, flexShrink: 0
+                }}>{toFa(stage.n)}</div>
+                <div style={{ flex: 1, fontSize: 14, lineHeight: 1.9, color: "#000" }}>
+                  {stage.fullText}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Card style={{
+        marginBottom: 12,
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff", padding: 20
+      }}>
+        <div style={{ fontSize: 24, marginBottom: 10 }}>💙</div>
+        <div style={{ fontSize: 14, lineHeight: 2, opacity: 0.95 }}>{compassionNote}</div>
+      </Card>
+
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+        {schemas[0] && (
+          <Btn onClick={() => onPickSchema(schemas[0].id)}>
+            کار روی {schemas[0].name_plain || schemas[0].name_fa}
+          </Btn>
+        )}
+      </div>
+    </Shell>
+  );
+}
+
+/* =========================================================
+ * Response Guide
+ * ========================================================= */
+
+function ResponseGuideView({ schemaId, onBack, onSOS }) {
+  const guide = getResponseGuide(schemaId);
+  const schema = SCHEMAS.find((s) => s.id === schemaId);
+  const plain = schema?.name_plain || guide?.plainName;
+
+  if (!guide) {
+    return (
+      <Shell title="خطا" onBack={onBack} showSOS onSOS={onSOS}>
+        <Card><p>راهنمایی پیدا نشد.</p></Card>
+      </Shell>
+    );
+  }
+
+  return (
+    <Shell title={plain || guide.name} onBack={onBack} showSOS onSOS={onSOS}>
+      <Card>
+        <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>{plain || guide.name}</h2>
+        <div style={{ fontSize: 12, color: "#000", marginBottom: 12 }}>{guide.name}</div>
+        <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>{guide.plainDescription}</div>
+      </Card>
+
+      {guide.example && (
+        <Card style={{ marginTop: 12 }}>
+          <SectionTitle icon="📖" title="در زندگی واقعی" />
+          <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>{guide.example}</div>
+        </Card>
+      )}
+
+      {guide.childhood && (
+        <Card style={{ marginTop: 12, background: "#eef4ff" }}>
+          <SectionTitle icon="🧸" title="احتمالاً در کودکی این‌ها را تجربه کرده" color="#1e40af" />
+          {guide.childhood.map((c, i) => (
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
+              • {c}
+            </div>
+          ))}
+        </Card>
+      )}
+
+      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
+        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>🌟 قاعده طلایی</div>
+        <div style={{ fontSize: 16, lineHeight: 1.9, fontWeight: 600 }}>{guide.goldenRule}</div>
+      </Card>
+
+      <Card style={{ marginTop: 12, background: "#eef7ee" }}>
+        <SectionTitle icon="✅" title="این کارها را بکن" color="#065f46" />
+        {guide.doThis.map((d, i) => (
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
+            • {d}
+          </div>
+        ))}
+      </Card>
+
+      <Card style={{ marginTop: 12, background: "#fef3f2" }}>
+        <SectionTitle icon="❌" title="این کارها را نکن" color="#991b1b" />
+        {guide.dontDoThis.map((d, i) => (
+          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
+            • {d}
+          </div>
+        ))}
+      </Card>
+
+      {guide.whatToDoNow && (
+        <Card style={{ marginTop: 12, background: "#fff8e1" }}>
+          <SectionTitle icon="🕊️" title="حالا باید چکار کرد" color="#92400e" />
+          {guide.whatToDoNow.map((w, i) => (
+            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
+              • {w}
+            </div>
+          ))}
+        </Card>
+      )}
+    </Shell>
+  );
+}
+
+/* =========================================================
+ * Progress
+ * ========================================================= */
+
+function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) {
+  const [summary, setSummary] = useState(null);
+  useEffect(() => { buildProgressSummary(schemaId).then(setSummary); }, [schemaId]);
+
+  if (!summary) {
+    return (
+      <Shell title="پیشرفت" onBack={onBack} showQuickButton onQuick={onQuick} showSOS onSOS={onSOS}>
+        <p style={{ color: "#000" }}>در حال بارگذاری...</p>
+      </Shell>
+    );
+  }
+
+  const { reactions, total, streak, insights, winsCount } = summary;
+
+  return (
+    <Shell title="پیشرفت" onBack={onBack} showQuickButton onQuick={onQuick} showSOS onSOS={onSOS}>
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div>
+            <div style={{ fontSize: 12, color: "#000" }}>فعال شدن الگو</div>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{toFa(total)}</div>
+          </div>
+          {streak > 0 && (
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 12, color: "#000" }}>روز پیوسته</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#000" }}>{toFa(streak)}</div>
+            </div>
+          )}
+        </div>
+        {winsCount > 0 && (
+          <button onClick={onWins} style={{
+            marginTop: 14, width: "100%", padding: 12,
+            borderRadius: 10, border: "1px solid #ffe0b2",
+            background: "#fff8e1", cursor: "pointer",
+            textAlign: "right", fontFamily: "inherit"
+          }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: "#000" }}>
+              ⭐ {toFa(winsCount)} لحظه‌ی برد
+            </span>
+            <div style={{ fontSize: 12, color: "#000", marginTop: 2 }}>ببین چه کردی →</div>
+          </button>
+        )}
+      </Card>
+
+      <Card style={{ marginTop: 12 }}>
+        {[
+          { label: "واکنش قدیمی", value: reactions.old,    color: "#e74c3c" },
+          { label: "مکث",          value: reactions.paused, color: "#f39c12" },
+          { label: "پاسخ جدید",    value: reactions.new,    color: "#27ae60" }
+        ].map((r, i) => (
+          <div key={i} style={{ marginBottom: i < 2 ? 12 : 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+              <span>{r.label}</span>
+              <span>{toFa(r.value)}</span>
+            </div>
+            <div style={{ marginTop: 4 }}>
+              <ProgressBar value={r.value} max={Math.max(10, total)} color={r.color} />
+            </div>
+          </div>
+        ))}
+      </Card>
+
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <button onClick={onCalendar} style={styles.dashBtn}>📅 تقویم</button>
+        <button onClick={onWins} style={styles.dashBtn}>⭐ لحظه‌های من</button>
+      </div>
+
+      {insights.length > 0 && (
+        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
+            چه چیزی در حال تغییر است؟
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {insights.map((ins, i) => (
+              <div key={i} style={{ fontSize: 14, lineHeight: 1.8, opacity: 0.95 }}>
+                • {ins.text}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <div style={{ marginTop: 16 }}>
+        <Btn onClick={onQuick}>⚡ همین الان فعال شد</Btn>
+      </div>
+    </Shell>
+  );
+}
+
+/* =========================================================
+ * Quick
+ * ========================================================= */
+
+function QuickCheckView({ profiles, onDone, onBack }) {
+  const [phase, setPhase] = useState("choose");
+  const [pickedSchema, setPickedSchema] = useState(profiles[0]?.schemaId || null);
+
+  const save = async (reaction) => {
+    await recordCycle({ schemaId: pickedSchema, reactionType: reaction, notes: "ثبت سریع" });
+    setPhase("saved");
+  };
+
+  if (phase === "choose") {
+    return (
+      <Shell title="همین الان فعال شد" onBack={onBack}>
+        <Card>
+          <p style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 600 }}>
+            کدام الگو فعال شد؟
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {profiles.map((p) => (
+              <button key={p.schemaId} onClick={() => {
+                setPickedSchema(p.schemaId);
+                setPhase("breathe");
+              }} style={styles.quickOptBtn}>{p.name}</button>
+            ))}
+          </div>
+        </Card>
+      </Shell>
+    );
+  }
+
+  if (phase === "breathe") {
+    return (
+      <Shell title="مکث" onBack={onBack}>
+        <Card style={{ textAlign: "center", padding: 30 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>⏸️</div>
+          <p style={{ fontSize: 16, lineHeight: 1.9, margin: "0 0 20px" }}>
+            ۱۰ ثانیه هیچ کاری نکن.<br />نفس بکش.
+          </p>
+          <p style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
+            الان چه چیزی را واقعاً می‌دانم؟<br />و چه چیزی را فقط حدس می‌زنم؟
+          </p>
+        </Card>
+        <div style={{ marginTop: 16 }}>
+          <Btn onClick={() => setPhase("action")}>ادامه</Btn>
+        </div>
+      </Shell>
+    );
+  }
+
+  if (phase === "action") {
+    return (
+      <Shell title="انتخاب" onBack={onBack}>
+        <Card>
+          <p style={{ margin: "0 0 14px", fontSize: 15 }}>
+            این بار می‌خواهی همان واکنش قبلی را تکرار کنی یا امتحان جدیدی داشته باشی؟
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <button onClick={() => save("old")} style={{ ...styles.quickOptBtn, borderColor: "#e74c3c", color: "#000" }}>
+              واکنش قدیمی
+            </button>
+            <button onClick={() => save("new")} style={{
+              ...styles.quickOptBtn,
+              background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+              color: "#fff", borderColor: "#178a7c"
+            }}>امتحان جدید</button>
+            <button onClick={() => save("paused")} style={{ ...styles.quickOptBtn, borderColor: "#f39c12", color: "#000" }}>
+              فقط مکث می‌کنم
+            </button>
+          </div>
+        </Card>
+      </Shell>
+    );
+  }
+
+  if (phase === "saved") {
+    return (
+      <Shell title="ثبت شد" onBack={onDone}>
+        <Card style={{ textAlign: "center", padding: 30 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>✓</div>
+          <p style={{ fontSize: 16, lineHeight: 1.9 }}>ثبت شد. این خودش یک قدم است.</p>
+        </Card>
+        <div style={{ marginTop: 16 }}>
+          <Btn onClick={onDone}>بازگشت</Btn>
+        </div>
+      </Shell>
+    );
+  }
+
+  return null;
+}
+
+/* =========================================================
+ * Break Cycle
+ * ========================================================= */
+
+function BreakCycleView({ onBack, onSOS }) {
+  return (
+    <Shell title="چطور چرخه را بشکنم" onBack={onBack} showSOS onSOS={onSOS}>
+      <Card>
+        <p style={{ margin: 0, fontSize: 14, color: "#000", lineHeight: 1.9 }}>
+          هر بار که این ۶ قدم را طی کنی، مغزت یاد می‌گیرد که لازم نیست همیشه واکنش قدیمی را اجرا کند.
+        </p>
+      </Card>
+      {BREAK_CYCLE_GUIDE.steps.map((s) => (
+        <Card key={s.num} style={{ marginTop: 12 }}>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "#1a3d2c", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: 700, fontSize: 16, flexShrink: 0
+            }}>{toFa(s.num)}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{s.title}</div>
+              <div style={{ fontSize: 14, color: "#000", lineHeight: 1.8 }}>{s.desc}</div>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </Shell>
+  );
+}
+
+/* =========================================================
+ * App
+ * ========================================================= */
+
+export default function App() {
+  const [view, setView] = useState("loading");
+  const [analysis, setAnalysis] = useState(null);
+  const [activeSchemaId, setActiveSchemaId] = useState(null);
+  const [activeSituationId, setActiveSituationId] = useState(null);
+  const [activePatternId, setActivePatternId] = useState(null);
+  const [activeGuideSchemaId, setActiveGuideSchemaId] = useState(null);
+  const [activeLifeCycleId, setActiveLifeCycleId] = useState(null);
+  const [originSchemaId, setOriginSchemaId] = useState(null);
+  const [returnFromOrigin, setReturnFromOrigin] = useState("profile");
+  const [selection, setSelection] = useState(null);
+  const [exerciseRecord, setExerciseRecord] = useState(null);
+  const [missionRecord, setMissionRecord] = useState(null);
+  const [returnTo, setReturnTo] = useState("welcome");
+
+  useEffect(() => {
+    Promise.all([loadProfile(), hasCheckedInToday()]).then(([p, checkedIn]) => {
+      if (p) setAnalysis(p);
+      if (!checkedIn) setView("checkin");
+      else setView(p ? "profile" : "welcome");
+    });
+  }, []);
+
+  const profiles = useMemo(() => {
+    if (!analysis) return [];
+    return [...analysis.high, ...analysis.medium].map((r) => {
+      const schema = SCHEMAS.find((s) => s.id === r.schemaId);
+      return { schemaId: r.schemaId, name: schema?.name_plain || r.name };
+    });
+  }, [analysis]);
+
+  const go = (v) => setView(v);
+  const openSOS = () => { setReturnTo(view); go("sos"); };
+  const openOrigin = (schemaId, from) => {
+    setOriginSchemaId(schemaId);
+    setReturnFromOrigin(from);
+    go("origin");
+  };
+
+  if (view === "loading") {
+    return (
+      <div style={styles.app}>
+        <p style={{ textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>
+      </div>
+    );
+  }
+
+  if (view === "checkin") {
+    return (
+      <CheckInView analysis={analysis}
+        onDone={() => go(analysis ? "profile" : "welcome")}
+        onSkip={() => go(analysis ? "profile" : "welcome")} />
+    );
+  }
+
+  if (view === "sos") {
+    return <SOSView onBack={() => go(returnTo)} onBetter={() => go(returnTo)} />;
+  }
+
+  if (view === "welcome") {
+    return (
+      <WelcomeView
+        analysis={analysis}
+        hasProfile={!!analysis}
+        onStart={() => go("ysq")} onSkipToProfile={() => go("profile")}
+        onSOS={openSOS}
+        onSituations={() => go("situations")}
+        onRelationships={() => go("relationships")}
+        onLifeCycles={() => go("life_cycles")} />
+    );
+  }
+
+  if (view === "ysq") {
+    return (
+      <YSQView onBack={() => go("welcome")}
+        onDone={async (answers, result) => {
+          const payload = buildResultPayload(answers);
+          console.log("YSQ payload:", payload);
+          await saveProfile(result);
+          setAnalysis(result);
+          go("profile");
+        }} />
+    );
+  }
+
+  if (view === "profile") {
+    return (
+      <ProfileView analysis={analysis}
+        onBack={() => go("welcome")} onRetake={() => go("ysq")}
+        onWins={() => go("wins")} onCalendar={() => go("calendar")}
+        onSOS={openSOS} onSituations={() => go("situations")}
+        onRelationships={() => go("relationships")}
+        onLifeCycles={() => go("life_cycles")}
+        onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
+        onPickOrigin={(id) => openOrigin(id, "profile")} />
+    );
+  }
+
+  if (view === "origin" && originSchemaId) {
+    return <OriginView schemaId={originSchemaId}
+      onBack={() => go(returnFromOrigin)} onSOS={openSOS} />;
+  }
+
+  if (view === "life_cycles") {
+    return (
+      <LifeCyclesView
+        onBack={() => go(analysis ? "profile" : "welcome")}
+        onSOS={openSOS}
+        onPickCycle={(id) => { setActiveLifeCycleId(id); go("life_cycle_detail"); }} />
+    );
+  }
+
+  if (view === "life_cycle_detail" && activeLifeCycleId) {
+    return (
+      <LifeCycleDetailView
+        cycleId={activeLifeCycleId}
+        onBack={() => go("life_cycles")}
+        onSOS={openSOS}
+        onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }} />
+    );
+  }
+
+  if (view === "cycle" && activeSchemaId) {
+    return (
+      <CycleView schemaId={activeSchemaId}
+        onBack={() => go("profile")}
+        onDone={(sel) => { setSelection(sel); go("cycle_summary"); }} />
+    );
+  }
+
+  if (view === "cycle_summary" && selection) {
+    return (
+      <CycleSummaryView schemaId={activeSchemaId} selection={selection}
+        onBack={() => go("cycle")} onContinue={() => go("exercise")}
+        onViewOrigin={() => openOrigin(activeSchemaId, "cycle_summary")} />
+    );
+  }
+
+  if (view === "exercise") {
+    return (
+      <ExerciseView schemaId={activeSchemaId} selection={selection}
+        onBack={() => go("cycle_summary")}
+        onDone={(record) => { setExerciseRecord(record || null); go("mission"); }} />
+    );
+  }
+
+  if (view === "mission") {
+    return (
+      <MissionView schemaId={activeSchemaId}
+        onBack={() => go("exercise")}
+        onDone={(mission) => { setMissionRecord(mission); go("log"); }} />
+    );
+  }
+
+  if (view === "log") {
+    return (
+      <LogResultView schemaId={activeSchemaId} selection={selection}
+        onBack={() => go("mission")}
+        onDone={async (log) => {
+          const primaryTriggerId  = (selection.triggerIds  || [])[0] || null;
+          const primaryThoughtId  = (selection.thoughtIds  || [])[0] || null;
+          const primaryEmotionId  = (selection.emotionIds  || [])[0] || null;
+          const primaryBehaviorId = (selection.behaviorIds || [])[0] || null;
+          await recordCycle({
+            schemaId: activeSchemaId,
+            triggerId: primaryTriggerId, thoughtId: primaryThoughtId,
+            emotionId: primaryEmotionId, behaviorId: primaryBehaviorId,
+            triggerIds: selection.triggerIds, thoughtIds: selection.thoughtIds,
+            emotionIds: selection.emotionIds, behaviorIds: selection.behaviorIds,
+            ...log,
+            exerciseId: exerciseRecord?.exerciseId || null,
+            exerciseResult: exerciseRecord?.result || null,
+            missionId: missionRecord?.id || null
+          });
+          go("progress");
+        }} />
+    );
+  }
+
+  if (view === "progress") {
+    return (
+      <ProgressView schemaId={activeSchemaId}
+        onBack={() => go("profile")} onQuick={() => go("quick")}
+        onWins={() => go("wins")} onCalendar={() => go("calendar")}
+        onSOS={openSOS} />
+    );
+  }
+
+  if (view === "wins") {
+    return <WinsView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
+  }
+
+  if (view === "calendar") {
+    return <CalendarView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
+  }
+
+  if (view === "situations") {
+    return (
+      <SituationsView onBack={() => go(analysis ? "profile" : "welcome")}
+        onSOS={openSOS}
+        onPickSituation={(id) => { setActiveSituationId(id); go("situation_detail"); }} />
+    );
+  }
+
+  if (view === "situation_detail" && activeSituationId) {
+    return (
+      <SituationDetailView situationId={activeSituationId}
+        onBack={() => go("situations")} onSOS={openSOS}
+        onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }} />
+    );
+  }
+
+  if (view === "relationships") {
+    return (
+      <RelationshipsView analysis={analysis}
+        onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS}
+        onPickPattern={(id) => { setActivePatternId(id); go("relationship_detail"); }}
+        onPickResponseGuide={(id) => { setActiveGuideSchemaId(id); go("response_guide"); }} />
+    );
+  }
+
+  if (view === "relationship_detail" && activePatternId) {
+    return (
+      <RelationshipDetailView patternId={activePatternId}
+        onBack={() => go("relationships")}
+        onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
+        onSOS={openSOS} />
+    );
+  }
+
+  if (view === "response_guide" && activeGuideSchemaId) {
+    return (
+      <ResponseGuideView schemaId={activeGuideSchemaId}
+        onBack={() => go("relationships")} onSOS={openSOS} />
+    );
+  }
+
+  if (view === "break_cycle") {
+    return <BreakCycleView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
+  }
+
+  if (view === "quick") {
+    return (
+      <QuickCheckView
+        profiles={profiles.length ? profiles : SCHEMAS.slice(0, 5).map((s) => ({
+          schemaId: s.id, name: s.name_plain || s.name_fa
+        }))}
+        onBack={() => go("welcome")}
+        onDone={() => go("progress")} />
+    );
+  }
+
+  return <p style={{ padding: 20 }}>وضعیت ناشناخته: {view}</p>;
+}
+
+/* =========================================================
+ * استایل‌ها
+ * ========================================================= */
+
+const styles = {
+  app: {
+    minHeight: "100vh", background: "#fafafa",
+    fontFamily: "'Vazirmatn', Tahoma, sans-serif",
+    color: "#000", paddingBottom: 80, position: "relative"
+  },
+  header: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "14px 16px", background: "#fff",
+    borderBottom: "1px solid #eee", position: "sticky", top: 0, zIndex: 10
+  },
+  headerTitle: { fontWeight: 700, fontSize: 15 },
+  backBtn: {
+    width: 32, height: 32, borderRadius: "50%",
+    border: "1px solid #eee", background: "#fff",
+    fontSize: 16, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "inherit"
+  },
+  sosHeaderBtn: {
+    width: 40, height: 32, borderRadius: 8,
+    border: "1px solid #e74c3c", background: "#fff",
+    color: "#000", fontSize: 12, fontWeight: 700,
+    cursor: "pointer", fontFamily: "inherit"
+  },
+  main: { maxWidth: 520, margin: "0 auto", padding: 16 },
+  card: {
+    padding: 16, borderRadius: 14,
+    background: "#fff", border: "1px solid #f0f0f0"
+  },
+  btn: {
+    width: "100%", padding: "14px 20px", borderRadius: 12,
+    border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit"
+  },
+  btnPrimary: { background: "#1a3d2c", color: "#fff" },
+  btnGhost: { background: "#fff", color: "#000", border: "1px solid #e5e5e5" },
+  btnDanger: { background: "#e74c3c", color: "#fff" },
+  quickBtn: {
+    position: "fixed", bottom: 84, left: "50%",
+    transform: "translateX(-50%)",
+    padding: "14px 24px", borderRadius: 999,
+    background: "#1a3d2c", color: "#fff", border: "none",
+    fontSize: 14, fontWeight: 600, cursor: "pointer",
+    boxShadow: "0 6px 20px rgba(0,0,0,.2)", fontFamily: "inherit"
+  },
+  textarea: {
+    width: "100%", padding: 10, borderRadius: 8,
+    border: "1px solid #ddd", fontFamily: "inherit",
+    fontSize: 13, resize: "vertical", boxSizing: "border-box"
+  },
+  moodBtn: {
+    display: "flex", alignItems: "center", gap: 14,
+    padding: "14px 18px", borderRadius: 12,
+    border: "1px solid #e5e5e5", background: "#fff",
+    cursor: "pointer", fontFamily: "inherit", fontSize: 15
+  },
+  dashBtn: {
+    flex: 1, padding: 14, borderRadius: 12,
+    border: "1px solid #e5e5e5", background: "#fff",
+    fontSize: 14, cursor: "pointer", fontFamily: "inherit", fontWeight: 600
+  },
+  quickOptBtn: {
+    padding: "12px 14px", borderRadius: 10,
+    border: "1px solid #e5e5e5", background: "#fff",
+    fontSize: 14, textAlign: "right", cursor: "pointer", fontFamily: "inherit"
+  },
+  sosFull: {
+    minHeight: "100vh",
+    background: "linear-gradient(180deg, #0a3d38 0%, #0f5b53 55%, #178a7c 100%)",
+    color: "#fff",
+    fontFamily: "'Vazirmatn', Tahoma, sans-serif"
+  },
+  breathCircle: {
+    width: 200, height: 200, borderRadius: "50%",
+    border: "2px solid rgba(255,255,255,.2)",
+    margin: "0 auto",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    background: "rgba(255,255,255,.05)", transition: "all 1s ease"
+  },
+  breathInner: { textAlign: "center" }
+};
