@@ -1,5 +1,5 @@
 /* =====================================================================
-   beliefs-patch.js — نسخه‌ی نهایی و تمیز
+   beliefs-patch.js — نسخه‌ی بازطراحی‌شده، تمیز و کامل
    ===================================================================== */
 (function(){
   'use strict';
@@ -29,7 +29,7 @@
   }
 
   /* =====================================================================
-     مقداردهی state
+     state
      ===================================================================== */
   function ensureState(){
     if (typeof state === 'undefined' || !state) return false;
@@ -82,7 +82,7 @@
   window.getTodayEmotionQualityFor = getTodayEmotionQualityFor;
 
   /* =====================================================================
-     راهنما — ساده و روشن
+     راهنما
      ===================================================================== */
   function injectHelpSection(){
     var helpOverlay = document.getElementById('help-modal-overlay');
@@ -116,16 +116,10 @@
         '<h3>💡 «خواستن» یا «باور داشتن»؟</h3>' +
         '<p>این مهم‌ترین نکته‌ی این اپ است.</p>' +
         '<ul>' +
-          '<li><b>وقتی «می‌خواهی»:</b> دلت می‌گوید «این را ندارم، کاش داشتم». این حالت، بدنت را مضطرب می‌کند و مغزت را می‌بندد. چون مدام به «نداشتن» فکر می‌کنی.</li>' +
-          '<li><b>وقتی «باور داری»:</b> دلت می‌گوید «من این هستم، حالا چه چیزهای خوبی ممکن است؟». این حالت، بدنت را آرام می‌کند و مغزت را باز می‌کند تا فرصت‌های تازه را ببیند.</li>' +
+          '<li><b>وقتی «می‌خواهی»:</b> دلت می‌گوید «این را ندارم، کاش داشتم». این حالت، بدنت را مضطرب می‌کند و مغزت را می‌بندد.</li>' +
+          '<li><b>وقتی «باور داری»:</b> دلت می‌گوید «من این هستم، حالا چه چیزهای خوبی ممکن است؟». این حالت بدنت را آرام می‌کند و مغزت را باز می‌کند.</li>' +
         '</ul>' +
         '<p>به همین دلیل در تمرین‌ها به‌جای «آرزو کردن»، از تو یک سوال می‌پرسیم: «اگر ترس نبود، چه می‌کردم؟» این سوال، جواب‌های تازه به ذهنت می‌آورد.</p>' +
-      '</div>' +
-
-      '<div class="help-section">' +
-        '<h3>🌑 «خالی شدن» چیست؟</h3>' +
-        '<p>قبل از اینکه ذهن بتواند چیز جدیدی بسازد، باید از فکرهای قدیمی خالی شود. در مرحله‌ی «خالی شدن»، توجهت را از بدن، از خودت، از اشیا، از مکان و از زمان برمی‌داری. وقتی همه‌ی این‌ها را رها کردی، یک فضای خالی می‌ماند — و در این فضای خالی، می‌توانی چیز جدیدی بسازی.</p>' +
-        '<p>این کار ترسناک نیست — فقط چند دقیقه سکوت است. مهم‌ترین اثرش این است که فکرهای تکراری و مزاحم را برای مدتی خاموش می‌کند.</p>' +
       '</div>' +
 
       '<div class="help-section">' +
@@ -137,9 +131,6 @@
           '<li><b>شب:</b> قبل از خواب، دوباره همین را تکرار کن.</li>' +
           '<li>هر روز، حداقل یک خط شکرگذاری بنویس.</li>' +
         '</ol>' +
-        '<p style="margin-top:10px;background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;">' +
-          '<b>یادت باشه:</b> اگر یک روز نتوانستی، خودت را سرزنش نکن. روز بعد ادامه بده. تداوم مهم‌تر از کامل بودن است.' +
-        '</p>' +
       '</div>' +
 
       '<div class="help-section">' +
@@ -173,7 +164,7 @@
     var html = '' +
       /* ============ کارت ۱ — متن آینده ============ */
       '<div class="belief-flow-card" data-new-card="1">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
           '<div class="bf-head" style="margin:0;">📜 متن آینده‌ی من</div>' +
           '<span id="future-active-badge" style="font-size:10px;color:var(--muted);background:var(--surface-2);padding:3px 8px;border-radius:20px;">—</span>' +
         '</div>' +
@@ -195,12 +186,12 @@
 
         '<div id="future-archive-box" style="display:none;margin-bottom:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
 
-        '<div style="padding-top:10px;border-top:1px dashed var(--line);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-            '<span style="font-size:11.5px;font-weight:700;">📅 پیشرفت روزانه</span>' +
-            '<span style="font-size:10.5px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از ۹۰ • <span id="future-days-left">۹۰ مانده</span></span>' +
+        '<div style="padding-top:12px;border-top:1px dashed var(--line);">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+            '<span style="font-size:12px;font-weight:700;">📅 پیشرفت روزانه</span>' +
+            '<span style="font-size:11px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از ۹۰ • <span id="future-days-left">۹۰ مانده</span></span>' +
           '</div>' +
-          '<div class="tb-bar" style="margin:0 0 10px;height:4px;"><div class="tb-bar-fill" id="future-progress-bar" style="width:0%;"></div></div>' +
+          '<div class="tb-bar" style="margin:0 0 12px;height:5px;"><div class="tb-bar-fill" id="future-progress-bar" style="width:0%;"></div></div>' +
           '<div id="future-mini-cal" class="mini-cal-grid"></div>' +
         '</div>' +
       '</div>' +
@@ -211,31 +202,52 @@
           '<div class="bf-head" style="margin:0;">🌌 تمرین روزانه</div>' +
           '<span id="dp-session-count" style="font-size:10.5px;color:var(--muted);">۰ جلسه</span>' +
         '</div>' +
-        '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 12px;">' +
-          '۶ مرحله. هر کدام را جدا انجام بده. با تپ روی عنوان، جزئیات باز می‌شود.' +
+        '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">' +
+          'شش مرحله. هر کدام را جدا تیک بزن. دکمه‌ی ثبت پایین همیشه فعاله.' +
         '</p>' +
 
         // تایمر
-        '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border-radius:12px;padding:8px 12px;margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border-radius:12px;padding:8px 12px;margin-bottom:16px;">' +
           '<span style="font-size:11.5px;font-weight:700;">⏱️ زمان تمرین</span>' +
           '<span id="dp-timer-display" style="font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;">۱۵:۰۰</span>' +
           '<button type="button" id="dp-timer-btn" class="btn tiny" style="padding:4px 12px;font-size:11px;">شروع</button>' +
         '</div>' +
 
-        /* مرحله ۱ */
-        stepHeader(1, 'آرام شدن') +
-        '<div class="dp-step-body" id="step-body-1" style="display:none;">' +
-          whyBox('قبل از هر چیز، بدنت باید آرام شود. اگر مضطرب باشی، مغزت نمی‌تواند چیز تازه‌ای بسازد.') +
-          '<div class="dp-step-content">سه نفس ۴-۷-۸ بکش (۴ ثانیه دم، ۷ نگه‌دار، ۸ بازدم). بعد یک شکرگذاری کوچک بگو — چیزی که همین حالا برایش سپاسگزاری.</div>' +
-        '</div>' +
+        /* ---------- مرحله ۱ — آرام شدن ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="1">○</button>' +
+            '<span class="dp-step-num">۱</span>' +
+            '<span class="dp-step-title">آرام شدن</span>' +
+          '</div>' +
+          '<div class="dp-why-box">' +
+            'وقتی مضطربی یا ذهنت شلوغه، مغزت در حالت «مبارزه یا فرار» گیر می‌کنه و نمی‌تونه چیز تازه‌ای بسازه. ' +
+            'با آرام کردن بدنت، یک موج آلفا در مغزت می‌سازی — این بهترین حالت مغز برای یادگیری و ساختن مسیرهای تازه‌ست.' +
+          '</div>' +
+          '<div class="dp-step-content">' +
+            'سه نفس ۴-۷-۸ بکش: ۴ ثانیه دم، ۷ ثانیه نگه‌دار، ۸ ثانیه بازدم. ' +
+            'بعد یک شکرگذاری کوچک بگو — چیزی که همین حالا برایش سپاسگزاری.' +
+          '</div>' +
         '</div>' +
 
-        /* مرحله ۲ — خالی شدن */
-        stepHeader(2, 'خالی شدن') +
-        '<div class="dp-step-body" id="step-body-2" style="display:none;">' +
-          whyBox('فکرهای تکراری، جلوی ساخت مسیر تازه را می‌گیرند. با خالی شدن، برای چند لحظه سکوت می‌سازی — و در آن سکوت، ذهنت آماده‌ی چیز تازه می‌شود.') +
-          '<div class="dp-step-content">توجهت را یکی‌یکی از این پنج لایه برمی‌داری. لازم نیست همه را کامل انجام دهی — هر کدام که برایت آسان‌تر است، همان را شروع کن.</div>' +
-          '<div class="nothing-stage" id="nothing-stage" style="margin:14px auto 0;max-width:200px;height:200px;display:block;">' +
+        /* ---------- مرحله ۲ — خالی شدن ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="2">○</button>' +
+            '<span class="dp-step-num">۲</span>' +
+            '<span class="dp-step-title">خالی شدن</span>' +
+            '<button type="button" id="nothing-sound-toggle" class="nothing-sound-btn" onclick="toggleNothingSound()" style="margin-inline-start:auto;" title="قطع/وصل صدا">🔔</button>' +
+          '</div>' +
+          '<div class="dp-why-box">' +
+            'مغزت روزی هزاران فکر تکراری تولید می‌کنه که همه از یک مدار قدیمی میان. ' +
+            'تا وقتی اون مدار فعاله، مسیر تازه نمی‌تونه ساخته بشه. ' +
+            'با خالی شدن، اون مدار رو برای چند لحظه خاموش می‌کنی — و ذهنت آماده‌ی چیز تازه می‌شه.' +
+          '</div>' +
+          '<div class="dp-step-content" style="text-align:center;">' +
+            'توجهت را از این پنج لایه برمی‌داری. لازم نیست همه را کامل انجام دهی — هر کدام که برایت آسان‌تر است، همان را شروع کن.' +
+          '</div>' +
+
+          '<div class="nothing-stage" id="nothing-stage" style="margin:16px auto 0;max-width:220px;height:220px;">' +
             '<div class="nothing-core" id="nothing-core">' +
               '<div class="nothing-core-ring"></div>' +
               '<div class="nothing-core-dot"></div>' +
@@ -247,99 +259,177 @@
             '<div class="nothing-layer" data-nothing="where">مکان</div>' +
             '<div class="nothing-layer" data-nothing="time">زمان</div>' +
           '</div>' +
-          '<div class="nothing-steps" id="nothing-steps" style="margin:12px auto 0;max-width:280px;">' +
+
+          '<div class="nothing-steps" id="nothing-steps" style="margin:14px auto 0;max-width:300px;">' +
             '<button type="button" class="nothing-step" data-nothing-step="body"><span class="nothing-step-num">۱</span><span class="nothing-step-txt"><b>No body</b> — از بدن</span><span class="nothing-step-check">○</span></button>' +
             '<button type="button" class="nothing-step" data-nothing-step="one"><span class="nothing-step-num">۲</span><span class="nothing-step-txt"><b>No one</b> — از هویت</span><span class="nothing-step-check">○</span></button>' +
             '<button type="button" class="nothing-step" data-nothing-step="thing"><span class="nothing-step-num">۳</span><span class="nothing-step-txt"><b>No thing</b> — از اشیا</span><span class="nothing-step-check">○</span></button>' +
             '<button type="button" class="nothing-step" data-nothing-step="where"><span class="nothing-step-num">۴</span><span class="nothing-step-txt"><b>No where</b> — از مکان</span><span class="nothing-step-check">○</span></button>' +
             '<button type="button" class="nothing-step" data-nothing-step="time"><span class="nothing-step-num">۵</span><span class="nothing-step-txt"><b>No time</b> — از زمان</span><span class="nothing-step-check">○</span></button>' +
           '</div>' +
-          '<div class="nothing-final" id="nothing-final" style="text-align:center;margin-top:10px;"><span class="nothing-final-pulse"></span>Pure consciousness</div>' +
+          '<div class="nothing-final" id="nothing-final" style="text-align:center;margin-top:12px;"><span class="nothing-final-pulse"></span>Pure consciousness</div>' +
           '<div style="text-align:center;margin-top:8px;">' +
             '<button type="button" class="nothing-reset" onclick="resetNothingPractice()">↺ شروع دوباره</button>' +
           '</div>' +
         '</div>' +
-        '</div>' +
 
-        /* مرحله ۳ — سوال پرسیدن */
-        stepHeader(3, 'سوال پرسیدن') +
-        '<div class="dp-step-body" id="step-body-3" style="display:none;">' +
-          whyBox('بعد از اینکه از فکرهای قدیمی خالی شدی، حالا وقتِ کاشتن است. به‌جای آرزو کردن، یک سوال می‌پرسی. سوال، مغزت را باز می‌کند تا فرصت‌های تازه ببیند.') +
-          '<div class="dp-step-content" style="display:flex;flex-direction:column;gap:8px;">' +
-            '<div>' +
-              '<label style="font-size:11.5px;display:block;margin-bottom:4px;">اگر ترس نبود، چه می‌کردم؟</label>' +
-              '<textarea id="dp-possibility-fear" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: اولین قدم را همین امروز برمی‌داشتم..."></textarea>' +
-            '</div>' +
-            '<div>' +
-              '<label style="font-size:11.5px;display:block;margin-bottom:4px;">اگر پول نبود، چه می‌کردم؟</label>' +
-              '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: با همان چیزی که دارم شروع می‌کردم..."></textarea>' +
-            '</div>' +
-            '<div>' +
-              '<label style="font-size:11.5px;display:block;margin-bottom:4px;">اگر تأیید دیگران نبود، چه می‌کردم؟</label>' +
-              '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: همان کاری را می‌کردم که قلبم می‌گفت..."></textarea>' +
+        /* ---------- مرحله ۳ — سوال پرسیدن ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
+            '<span class="dp-step-num">۳</span>' +
+            '<span class="dp-step-title">سوال پرسیدن</span>' +
+          '</div>' +
+          '<div class="dp-why-box">' +
+            'این مرحله، جای «آرزو کردن» نیست — جای <b>سوال پرسیدن</b> است. ' +
+            'فرقش چیه؟ «آرزو» مغزت رو در حالت کمبود نگه می‌داره و فقط به «نداشتن» فکر می‌کنه. ' +
+            'اما «سوال»، یک مسیر جستجو در مغزت فعال می‌کنه. ' +
+            'دقیقاً به همین دلیله که وقتی یک سوال از خودت می‌پرسی، بعداً در طول روز جواب‌هاش خودبه‌خود به ذهنت می‌آن. ' +
+            'مغزت دنبال جواب می‌گرده — حتی وقتی آگاهانه بهش فکر نمی‌کنی.' +
+          '</div>' +
+          '<div class="dp-step-content">' +
+            'این سه سوال را از خودت بپرس و جواب‌ها را بنویس. هر جواب، یک احتمال تازه است — نه یک آرزو.' +
+          '</div>' +
+
+          // جمع‌شونده برای کادرها
+          '<div class="dp-toggle-wrap" style="margin-top:10px;">' +
+            '<button type="button" class="dp-toggle-btn" data-toggle-box="dp-possibilities">' +
+              '<span>✍️ نوشتن جواب‌ها</span>' +
+              '<span class="dp-toggle-arrow">▾</span>' +
+            '</button>' +
+            '<div id="dp-possibilities" class="dp-toggle-body" style="display:none;">' +
+              '<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">' +
+                '<div>' +
+                  '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۱. اگر ترس نبود، چه می‌کردم؟</label>' +
+                  '<textarea id="dp-possibility-fear" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: اولین قدم را همین امروز برمی‌داشتم..."></textarea>' +
+                '</div>' +
+                '<div>' +
+                  '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۲. اگر پول نبود، چه می‌کردم؟</label>' +
+                  '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: با همان چیزی که دارم شروع می‌کردم..."></textarea>' +
+                '</div>' +
+                '<div>' +
+                  '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۳. اگر تأیید دیگران نبود، چه می‌کردم؟</label>' +
+                  '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: همان کاری را می‌کردم که قلبم می‌گفت..."></textarea>' +
+                '</div>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
+
+        /* ---------- مرحله ۴ — متن آینده ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
+            '<span class="dp-step-num">۴</span>' +
+            '<span class="dp-step-title">متن آینده‌ات را بخوان</span>' +
+          '</div>' +
+          '<div class="dp-why-box">' +
+            'مغزت نمی‌تونه فرق بین «اتفاق واقعی» و «تجسم زنده» رو تشخیص بده. ' +
+            'وقتی متن آینده‌ات رو با صدای بلند می‌خونی، مغزت مثل اینه که داری اون صحنه رو زندگی می‌کنی. ' +
+            'هر بار که این کار رو بکنی، یک مسیر جدید در مغزت پررنگ‌تر می‌شه — انگار داری راهی رو که تا حالا نرفته‌ای، هموار می‌کنی.' +
+          '</div>' +
+          '<div class="dp-step-content">' +
+            '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">متن فعال تو:</div>' +
+            '<div id="dp-seeit-text" style="padding:12px 14px;background:var(--card);border:1px dashed var(--gold-300);border-radius:10px;font-size:12.5px;line-height:1.9;font-style:italic;color:var(--ink);max-height:160px;overflow-y:auto;white-space:pre-wrap;"></div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;">با صدای بلند بخوان. اگر دوست داری چشم‌هایت را ببند و خودت را داخل صحنه ببین.</div>' +
+          '</div>' +
         '</div>' +
 
-        /* مرحله ۴ — ماموریت به مغز (RAS) */
-        stepHeader(4, 'ماموریت به مغز') +
-        '<div class="dp-step-body" id="step-body-4" style="display:none;">' +
-          whyBox('مغزت یک فیلتر توجه دارد به نام RAS. اگر به او ماموریت بدهی، در طول روز خودبه‌خود دنبال نشانه‌های آن ماموریت می‌گردد. حالا وقتِ دادن این ماموریت است.') +
-          '<div class="dp-step-content" style="display:flex;flex-direction:column;gap:8px;">' +
-            '<div style="padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;">' +
-              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
-                '<span style="font-size:16px;">👁️</span>' +
-                '<span style="font-size:12px;font-weight:700;">ماموریت چشم</span>' +
+        /* ---------- مرحله ۵ — حسش کن و تبدیل شو ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
+            '<span class="dp-step-num">۵</span>' +
+            '<span class="dp-step-title">حسش کن و تبدیل شو</span>' +
+          '</div>' +
+          '<div class="dp-why-box">' +
+            'این مهم‌ترین مرحله‌ست. پژوهش‌ها نشون داده مغز، اطلاعاتی رو که با احساس قوی همراه باشه، چند برابر سریع‌تر ثبت می‌کنه. ' +
+            'فقط فکر کردن کافی نیست — باید حسِ رسیدن رو تجربه کنی. ' +
+            'وقتی خودت رو در حالتی که خواستی می‌بینی و حسش می‌کنی، مغزت باور جدید رو مثل یک واقعیت ثبت می‌کنه. ' +
+            'و هویت، بالاترین سطح تغییره: وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با اون هویت هم‌راستا می‌شن.' +
+          '</div>' +
+
+          // تصویرسازی
+          '<div class="dp-step-content">' +
+            '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🖼️ تصویرسازی</div>' +
+            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
+              'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای. اگر بخواهی، عکس‌هایی از آن صحنه اضافه کن تا ذهنت راحت‌تر ببیند.' +
+            '</div>' +
+            '<label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>' +
+            '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
+            '<div class="visual-gallery" id="visual-gallery" style="margin-top:10px;"></div>' +
+          '</div>' +
+
+          // ثبت حس
+          '<div class="dp-step-content" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
+            '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">💗 حسِ حالا</div>' +
+            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
+              'حس رسیدن را در بدنت فراخوانی کن. کدام احساس را داری؟ هرچه حس قوی‌تر باشد، مسیر تازه ضخیم‌تر می‌شود.' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+              '<button type="button" class="btn tiny" onclick="openEmotionCapture(\'dispenza\',\'after\',\'تمرین روزانه\')">💗 ثبت حس</button>' +
+              '<span id="dp-emotion-feedback" style="font-size:11px;color:var(--muted);"></span>' +
+            '</div>' +
+          '</div>' +
+
+          // تأییدیه
+          '<div class="dp-step-content" style="margin-top:14px;">' +
+            '<div style="padding:14px;background:linear-gradient(135deg,rgba(43,191,171,.12),rgba(94,200,240,.06));border-radius:12px;text-align:center;font-size:14px;font-weight:800;color:var(--emerald-700);">' +
+              '«من همین حالا همینم.»' +
+            '</div>' +
+            '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;">' +
+              'این جمله را در دلت تکرار کن. و چند لحظه در همان حس بمان.' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        /* ---------- مرحله ۶ — ماموریت به مغز ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="6">○</button>' +
+            '<span class="dp-step-num">۶</span>' +
+            '<span class="dp-step-title">ماموریت به مغز</span>' +
+          '</div>' +
+          '<div class="dp-why-box">' +
+            'مغزت یک فیلتر توجه داره به نام RAS (سیستم فعال‌سازی شبکه‌ای). ' +
+            'این فیلتر هر لحظه میلیون‌ها اطلاعات رو غربال می‌کنه و فقط اون‌هایی رو به آگاهی تو می‌رسونه که با هدف‌های فعلی‌ات هم‌خونی داشته باشن. ' +
+            'وقتی به مغزت ماموریت می‌دی، در طول روز خودبه‌خود دنبال نشانه‌های اون ماموریت می‌گرده — حتی وقتی آگاهانه بهش فکر نمی‌کنی.' +
+          '</div>' +
+
+          '<div class="dp-step-content">' +
+            '<div style="font-size:12px;font-weight:700;margin-bottom:10px;">دو ماموریت برای ۲۴ ساعت آینده:</div>' +
+
+            '<div style="padding:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;">' +
+              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+                '<span style="font-size:18px;">👁️</span>' +
+                '<span style="font-size:12.5px;font-weight:800;">ماموریت چشم</span>' +
               '</div>' +
-              '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">در ۲۴ ساعت آینده، به‌جای غرق شدن در فکرها، حواست به نشانه‌ها باشد. وقتی یکی دیدی، همان‌جا نگه‌دار و نگاهش کن.</div>' +
-              '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;">' +
+              '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:10px;">' +
+                'به‌جای غرق شدن در فکرها، حواست به نشانه‌ها باشد. ' +
+                'نشانه می‌تواند یک جمله در یک کتاب باشد، یک آدم جدید، یک فرصت کوچک، یا حتی یک ایده‌ی ناگهانی. ' +
+                'وقتی یکی دیدی، همان‌جا نگه‌دار و نگاهش کن.' +
+              '</div>' +
+              '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;">' +
                 '<input type="checkbox" data-ras="see" style="width:16px;height:16px;accent-color:var(--emerald-500);">' +
                 '<span>نشانه دیدم</span>' +
               '</label>' +
             '</div>' +
-            '<div style="padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;">' +
-              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
-                '<span style="font-size:16px;">💗</span>' +
-                '<span style="font-size:12px;font-weight:700;">ماموریت حس</span>' +
+
+            '<div style="padding:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;">' +
+              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+                '<span style="font-size:18px;">💗</span>' +
+                '<span style="font-size:12.5px;font-weight:800;">ماموریت حس</span>' +
               '</div>' +
-              '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:8px;">وقتی نشانه را دیدی، چند لحظه حسش کن. همون حسی که داری وقتی به هدفت رسیدی. این حس، مسیر را در مغزت قفل می‌کند.</div>' +
-              '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;">' +
+              '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:10px;">' +
+                'وقتی نشانه را دیدی، چند لحظه حسش کن — همون حسی که داری وقتی به هدفت رسیدی. ' +
+                'این حس کوتاه، مسیر تازه را در مغزت قفل می‌کند.' +
+              '</div>' +
+              '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;">' +
                 '<input type="checkbox" data-ras="feel" style="width:16px;height:16px;accent-color:var(--emerald-500);">' +
                 '<span>حسش کردم</span>' +
               '</label>' +
             '</div>' +
           '</div>' +
-        '</div>' +
-        '</div>' +
-
-        /* مرحله ۵ — متن آینده */
-        stepHeader(5, 'متن آینده‌ات را بخوان') +
-        '<div class="dp-step-body" id="step-body-5" style="display:none;">' +
-          whyBox('مغز، چیزهایی را که تکرار می‌کنی باور می‌کند. وقتی متن آینده‌ات را هر روز با صدای بلند می‌خوانی، ذهنت کم‌کم باور می‌کند که آن آدم جدید تو هستی.') +
-          '<div class="dp-step-content">' +
-            '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">متن فعال تو:</div>' +
-            '<div id="dp-seeit-text" style="padding:12px 14px;background:var(--card);border:1px dashed var(--gold-300);border-radius:10px;font-size:12.5px;line-height:1.9;font-style:italic;color:var(--ink);max-height:130px;overflow-y:auto;white-space:pre-wrap;"></div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;">با صدای بلند بخوان. اگر دوست داری چشم‌هایت را ببند و خودت را داخل صحنه ببین.</div>' +
-          '</div>' +
-        '</div>' +
-        '</div>' +
-
-        /* مرحله ۶ — حسش کن و تبدیل شو */
-        stepHeader(6, 'حسش کن و تبدیل شو') +
-        '<div class="dp-step-body" id="step-body-6" style="display:none;">' +
-          whyBox('این مهم‌ترین مرحله است. اگر فقط فکر کنی ولی حس نکنی، مسیر تازه ساخته نمی‌شود. حس، چسبِ مسیر عصبی است. هویت، بالاترین سطح تغییر است. وقتی خودت را «کسی که به هدفش رسیده» می‌بینی، رفتارهایت خودبه‌خود با آن هویت هم‌راستا می‌شوند.') +
-          '<div class="dp-step-content">' +
-            '<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">حس رسیدن را در بدنت فراخوانی کن. کدام احساس را داری؟</div>' +
-            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">' +
-              '<button type="button" class="btn tiny" onclick="openEmotionCapture(\'dispenza\',\'after\',\'تمرین روزانه\')">💗 ثبت حس</button>' +
-              '<span id="dp-emotion-feedback" style="font-size:11px;color:var(--muted);"></span>' +
-            '</div>' +
-            '<div style="padding:14px;background:linear-gradient(135deg,rgba(43,191,171,.12),rgba(94,200,240,.06));border-radius:12px;text-align:center;font-size:14px;font-weight:800;color:var(--emerald-700);">' +
-              '«من همین حالا همینم.»' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
         '</div>' +
 
         /* موسیقی */
@@ -379,39 +469,30 @@
       var st = document.createElement('style');
       st.id = 'mini-cal-style';
       st.textContent =
-        '.mini-cal-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:240px;margin:0 auto;}' +
-        '.mini-cal-day{aspect-ratio:1;border-radius:3px;background:var(--surface-2);}' +
-        '.mini-cal-day.done{background:var(--emerald-500);}' +
+        /* تقویم — ۱۰ ستون، سلول‌های بزرگ‌تر */
+        '.mini-cal-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;width:100%;}' +
+        '.mini-cal-day{aspect-ratio:1;border-radius:6px;background:var(--surface-2);border:1px solid transparent;transition:.15s;}' +
+        '.mini-cal-day.done{background:var(--emerald-500);border-color:var(--emerald-700);}' +
         '.mini-cal-day.today{outline:2px solid var(--gold-500);outline-offset:1px;}' +
-        '.mini-cal-day.future{opacity:.25;}' +
+        '.mini-cal-day.future{opacity:.28;}' +
         '.mini-cal-day.empty{background:transparent;}' +
-        '.dp-step{margin-bottom:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;}' +
-        '.dp-step-head{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}' +
-        '.dp-step-num{width:24px;height:24px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;flex:none;}' +
-        '.dp-step-title{font-size:12.5px;font-weight:700;color:var(--ink);flex:1;}' +
-        '.dp-check-btn{width:26px;height:26px;border-radius:50%;border:1.8px solid var(--line);background:var(--card);color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.15s;}' +
+        /* مراحل */
+        '.dp-step{margin-bottom:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;}' +
+        '.dp-step-head{display:flex;align-items:center;gap:10px;}' +
+        '.dp-step-num{width:26px;height:26px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none;}' +
+        '.dp-step-title{font-size:13px;font-weight:700;color:var(--ink);flex:1;}' +
+        '.dp-check-btn{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.15s;}' +
         '.dp-check-btn.done{background:var(--emerald-500);border-color:var(--emerald-500);color:#fff;}' +
-        '.dp-expand-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.15s;}' +
-        '.dp-expand-btn.open{transform:rotate(180deg);}' +
-        '.dp-why-box{margin-top:10px;padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;font-size:11.5px;color:var(--ink-soft);line-height:1.75;}' +
-        '.dp-step-content{margin-top:10px;font-size:12.5px;color:var(--ink-soft);line-height:1.75;}';
+        '.dp-why-box{margin-top:12px;padding:11px 13px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;font-size:11.5px;color:var(--ink-soft);line-height:1.8;}' +
+        '.dp-step-content{margin-top:12px;font-size:12.5px;color:var(--ink-soft);line-height:1.8;}' +
+        /* دکمه‌ی جمع‌شونده */
+        '.dp-toggle-wrap{margin-top:10px;}' +
+        '.dp-toggle-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}' +
+        '.dp-toggle-btn:hover{background:var(--surface-2);}' +
+        '.dp-toggle-arrow{transition:transform .2s;font-size:11px;}' +
+        '.dp-toggle-btn.open .dp-toggle-arrow{transform:rotate(180deg);}';
       document.head.appendChild(st);
     }
-  }
-
-  function stepHeader(num, title){
-    return '' +
-      '<div class="dp-step" data-step="' + num + '">' +
-        '<div class="dp-step-head">' +
-          '<button type="button" class="dp-check-btn" data-dp-check="' + num + '">○</button>' +
-          '<span class="dp-step-num">' + toFa(num) + '</span>' +
-          '<span class="dp-step-title" data-toggle-target="step-body-' + num + '">' + title + '</span>' +
-          '<button type="button" class="dp-expand-btn" data-toggle-target="step-body-' + num + '">▾</button>' +
-        '</div>';
-  }
-
-  function whyBox(text){
-    return '<div class="dp-why-box">' + text + '</div>';
   }
 
   /* =====================================================================
@@ -506,7 +587,7 @@
   }
 
   /* =====================================================================
-     پیشرفت پروتکل
+     پیشرفت
      ===================================================================== */
   function dpGetTodaySteps(){
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
@@ -550,7 +631,6 @@
       else em.textContent = '✓ ثبت شد';
     }
 
-    // RAS checkboxes
     var todayRec = (state.rasMission && state.rasMission[dpTodayKey()]) || {};
     document.querySelectorAll('input[data-ras]').forEach(function(cb){
       cb.checked = !!todayRec[cb.dataset.ras];
@@ -619,20 +699,11 @@
     var input = document.getElementById('future-editor-input');
     if (!input) return;
     var newText = (input.value || '').trim();
-    if (!newText){
-      if (typeof toast === 'function') toast('متن نمی‌تونه خالی باشه');
-      return;
-    }
+    if (!newText){ if (typeof toast === 'function') toast('متن نمی‌تونه خالی باشه'); return; }
     var v = getActiveVersion();
     if (v && newText === v.text){ closeFutureEditor(); return; }
     if (v) v.endDate = dpTodayKey();
-    var newV = {
-      id: 'v_' + Date.now(),
-      text: newText,
-      startDate: dpTodayKey(),
-      endDate: null,
-      readDays: []
-    };
+    var newV = { id: 'v_' + Date.now(), text: newText, startDate: dpTodayKey(), endDate: null, readDays: [] };
     if (!Array.isArray(state.futureTextVersions)) state.futureTextVersions = [];
     state.futureTextVersions.push(newV);
     state.activeFutureVersionId = newV.id;
@@ -643,9 +714,7 @@
     closeFutureEditor();
     renderFutureText();
     dpRenderProgress();
-    if (typeof toast === 'function'){
-      toast(v ? 'نسخه‌ی جدید ثبت شد 📚' : 'متن آینده‌ات ثبت شد ✨');
-    }
+    if (typeof toast === 'function') toast(v ? 'نسخه‌ی جدید ثبت شد 📚' : 'متن آینده‌ات ثبت شد ✨');
   }
   function toggleArchive(){
     ARCHIVE_OPEN = !ARCHIVE_OPEN;
@@ -688,7 +757,7 @@
   }
   function wrapRenderBeliefsView(){
     if (typeof window.renderBeliefsView !== 'function') return;
-    if (window.renderBeliefsView.__patchedV4) return;
+    if (window.renderBeliefsView.__patchedV5) return;
     var original = window.renderBeliefsView;
     window.renderBeliefsView = function(){
       try { original.apply(this, arguments); } catch(e){}
@@ -696,7 +765,7 @@
       try { dpRenderProgress(); } catch(e){}
       try { renderOurNeuralPathways(); } catch(e){}
     };
-    window.renderBeliefsView.__patchedV4 = true;
+    window.renderBeliefsView.__patchedV5 = true;
   }
 
   /* =====================================================================
@@ -720,27 +789,24 @@
         return;
       }
 
-      // باز/بسته کردن مرحله
-      var toggleTarget = t.closest('[data-toggle-target]');
-      if (toggleTarget){
-        var targetId = toggleTarget.dataset.toggleTarget;
-        var body = document.getElementById(targetId);
+      // دکمه‌ی جمع‌شونده
+      var toggleBtn = t.closest('.dp-toggle-btn');
+      if (toggleBtn){
+        var bodyId = toggleBtn.dataset.toggleBox;
+        var body = document.getElementById(bodyId);
         if (body){
           var isOpen = body.style.display !== 'none';
           body.style.display = isOpen ? 'none' : 'block';
-          var expandBtn = toggleTarget.parentElement.querySelector('.dp-expand-btn');
-          if (expandBtn) expandBtn.classList.toggle('open', !isOpen);
+          toggleBtn.classList.toggle('open', !isOpen);
         }
         return;
       }
 
       // تایمر
       if (t.id === 'dp-timer-btn'){ dpStartTimer(); return; }
-      // ویرایش
       if (t.id === 'edit-future-btn'){ openFutureEditor(); return; }
       if (t.id === 'future-save-btn'){ saveFutureText(); return; }
       if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
-      // آرشیو
       if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
       var actBtn = t.closest('[data-activate-version]');
       if (actBtn){ activateVersion(actBtn.dataset.activateVersion); return; }
@@ -783,7 +849,6 @@
       }
     });
 
-    // ذخیره امکان‌ها
     document.addEventListener('input', function(e){
       if (!e.target) return;
       var id = e.target.id;
@@ -795,7 +860,6 @@
       }
     });
 
-    // RAS checkbox
     document.addEventListener('change', function(e){
       if (!e.target || !e.target.dataset || !e.target.dataset.ras) return;
       var dk = dpTodayKey();
