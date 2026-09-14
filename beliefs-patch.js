@@ -1,14 +1,11 @@
 /* =====================================================================
-   beliefs-patch.js — نسخه‌ی بازطراحی‌شده، تمیز و کامل
+   beliefs-patch.js — نسخه‌ی نهایی
    ===================================================================== */
 (function(){
   'use strict';
 
   var ARCHIVE_OPEN = false;
 
-  /* =====================================================================
-     ابزارها
-     ===================================================================== */
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -28,9 +25,6 @@
     return new Date(p[0], p[1]-1, p[2]);
   }
 
-  /* =====================================================================
-     state
-     ===================================================================== */
   function ensureState(){
     if (typeof state === 'undefined' || !state) return false;
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
@@ -107,17 +101,17 @@
 
       '<div class="help-section">' +
         '<h3>🧠 سه اصلی که باید بدانی</h3>' +
-        '<p><b>۱. مغزت قابل تغییر است.</b> تا آخر عمر می‌تواند خودش را بازسازی کند. هر رفتاری را که تکرار کنی، در مغزت مثل یک راه جدید ساخته می‌شود. این راه هر بار که تکرار شود، پهن‌تر می‌شود — تا یک روز بدون تلاش، خودکار می‌شود.</p>' +
+        '<p><b>۱. ذهنت قابل تغییر است.</b> هر رفتاری را که تکرار کنی، مثل یک راه جدید در ذهنت ساخته می‌شود. این راه هر بار که تکرار شود، پهن‌تر می‌شود — تا یک روز بدون تلاش، خودکار می‌شود.</p>' +
         '<p><b>۲. احساس، چسبِ راه است.</b> اگر کاری را با احساس قوی انجام دهی، راهش سریع‌تر ساخته می‌شود. برای همین در تمرین‌ها فقط فکر نمی‌کنیم — حس رسیدن را هم تجربه می‌کنیم.</p>' +
-        '<p><b>۳. ۹۰ روز، زمان تغییر است.</b> پژوهش‌ها نشان می‌دهد برای اینکه یک عادت یا باور جدید در مغز جا بیفتد، به‌طور میانگین ۶۶ تا ۹۰ روز تمرین روزانه لازم است.</p>' +
+        '<p><b>۳. ۹۰ روز، زمان تغییر است.</b> برای اینکه یک عادت یا باور جدید جا بیفتد، به‌طور میانگین ۶۶ تا ۹۰ روز تمرین روزانه لازم است.</p>' +
       '</div>' +
 
       '<div class="help-section">' +
         '<h3>💡 «خواستن» یا «باور داشتن»؟</h3>' +
         '<p>این مهم‌ترین نکته‌ی این اپ است.</p>' +
         '<ul>' +
-          '<li><b>وقتی «می‌خواهی»:</b> دلت می‌گوید «این را ندارم، کاش داشتم». این حالت، بدنت را مضطرب می‌کند و مغزت را می‌بندد.</li>' +
-          '<li><b>وقتی «باور داری»:</b> دلت می‌گوید «من این هستم، حالا چه چیزهای خوبی ممکن است؟». این حالت بدنت را آرام می‌کند و مغزت را باز می‌کند.</li>' +
+          '<li><b>وقتی «می‌خواهی»:</b> دلت می‌گوید «این را ندارم، کاش داشتم». این حالت، بدنت را مضطرب می‌کند و ذهنت را می‌بندد.</li>' +
+          '<li><b>وقتی «باور داری»:</b> دلت می‌گوید «من این هستم، حالا چه چیزهای خوبی ممکن است؟». این حالت بدنت را آرام می‌کند و ذهنت را باز می‌کند.</li>' +
         '</ul>' +
         '<p>به همین دلیل در تمرین‌ها به‌جای «آرزو کردن»، از تو یک سوال می‌پرسیم: «اگر ترس نبود، چه می‌کردم؟» این سوال، جواب‌های تازه به ذهنت می‌آورد.</p>' +
       '</div>' +
@@ -148,7 +142,6 @@
     var beliefView = document.getElementById('view-beliefs');
     if (!beliefView) return;
 
-    // حذف کارت‌های قدیمی
     var cards = beliefView.querySelectorAll('.belief-flow-card');
     for (var i = 0; i < cards.length; i++){
       if (cards[i].parentNode) cards[i].parentNode.removeChild(cards[i]);
@@ -162,48 +155,13 @@
     if (!topbar) return;
 
     var html = '' +
-      /* ============ کارت ۱ — متن آینده ============ */
-      '<div class="belief-flow-card" data-new-card="1">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
-          '<div class="bf-head" style="margin:0;">📜 متن آینده‌ی من</div>' +
-          '<span id="future-active-badge" style="font-size:10px;color:var(--muted);background:var(--surface-2);padding:3px 8px;border-radius:20px;">—</span>' +
-        '</div>' +
-
-        '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;min-height:70px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
-
-        '<div id="future-editor" style="display:none;margin-bottom:10px;">' +
-          '<textarea id="future-editor-input" rows="4" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:vertical;outline:none;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
-          '<div style="display:flex;gap:6px;margin-top:8px;">' +
-            '<button type="button" id="future-save-btn" class="btn gold" style="flex:1;font-size:12.5px;padding:10px;">💾 ذخیره</button>' +
-            '<button type="button" id="future-cancel-btn" class="btn" style="flex:1;font-size:12.5px;padding:10px;">لغو</button>' +
-          '</div>' +
-        '</div>' +
-
-        '<div id="future-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">' +
-          '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:90px;">✏️ ویرایش</button>' +
-          '<button type="button" id="archive-future-btn" class="btn tiny" style="flex:1;min-width:90px;">📚 آرشیو (<span id="archive-count">۰</span>)</button>' +
-        '</div>' +
-
-        '<div id="future-archive-box" style="display:none;margin-bottom:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
-
-        '<div style="padding-top:12px;border-top:1px dashed var(--line);">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-            '<span style="font-size:12px;font-weight:700;">📅 پیشرفت روزانه</span>' +
-            '<span style="font-size:11px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از ۹۰ • <span id="future-days-left">۹۰ مانده</span></span>' +
-          '</div>' +
-          '<div class="tb-bar" style="margin:0 0 12px;height:5px;"><div class="tb-bar-fill" id="future-progress-bar" style="width:0%;"></div></div>' +
-          '<div id="future-mini-cal" class="mini-cal-grid"></div>' +
-        '</div>' +
-      '</div>' +
-
-      /* ============ کارت ۲ — تمرین روزانه ============ */
-      '<div class="belief-flow-card" id="dispenza-protocol-card" data-new-card="1" style="margin-top:14px;">' +
+      '<div class="belief-flow-card" id="dispenza-protocol-card" data-new-card="1">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
           '<div class="bf-head" style="margin:0;">🌌 تمرین روزانه</div>' +
           '<span id="dp-session-count" style="font-size:10.5px;color:var(--muted);">۰ جلسه</span>' +
         '</div>' +
         '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">' +
-          'شش مرحله. هر کدام را جدا تیک بزن. دکمه‌ی ثبت پایین همیشه فعاله.' +
+          'شش مرحله. هر کدام را جدا تیک بزن.' +
         '</p>' +
 
         // تایمر
@@ -221,8 +179,8 @@
             '<span class="dp-step-title">آرام شدن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'وقتی مضطربی یا ذهنت شلوغه، مغزت در حالت «مبارزه یا فرار» گیر می‌کنه و نمی‌تونه چیز تازه‌ای بسازه. ' +
-            'با آرام کردن بدنت، یک موج آلفا در مغزت می‌سازی — این بهترین حالت مغز برای یادگیری و ساختن مسیرهای تازه‌ست.' +
+            'وقتی مضطربی یا ذهنت شلوغه، نمی‌تونی روی چیز تازه تمرکز کنی. ' +
+            'با چند نفس عمیق، بدنت آرام می‌شه و ذهنت آماده‌ی تمرین می‌شه.' +
           '</div>' +
           '<div class="dp-step-content">' +
             'سه نفس ۴-۷-۸ بکش: ۴ ثانیه دم، ۷ ثانیه نگه‌دار، ۸ ثانیه بازدم. ' +
@@ -239,9 +197,9 @@
             '<button type="button" id="nothing-sound-toggle" class="nothing-sound-btn" onclick="toggleNothingSound()" style="margin-inline-start:auto;" title="قطع/وصل صدا">🔔</button>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'مغزت روزی هزاران فکر تکراری تولید می‌کنه که همه از یک مدار قدیمی میان. ' +
-            'تا وقتی اون مدار فعاله، مسیر تازه نمی‌تونه ساخته بشه. ' +
-            'با خالی شدن، اون مدار رو برای چند لحظه خاموش می‌کنی — و ذهنت آماده‌ی چیز تازه می‌شه.' +
+            'ذهنت روزانه پر از فکرهای تکراری می‌شه — همه از یک الگوی قدیمی. ' +
+            'تا وقتی این فکرها هستن، جای فکرهای تازه نیست. ' +
+            'با خالی شدن، برای چند لحظه از این الگو فاصله می‌گیری — و فضا باز می‌شه.' +
           '</div>' +
           '<div class="dp-step-content" style="text-align:center;">' +
             'توجهت را از این پنج لایه برمی‌داری. لازم نیست همه را کامل انجام دهی — هر کدام که برایت آسان‌تر است، همان را شروع کن.' +
@@ -273,50 +231,38 @@
           '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۳ — سوال پرسیدن ---------- */
+        /* ---------- مرحله ۳ — سوال پرسیدن (با آیکون بازشونده کنار عنوان) ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
             '<span class="dp-step-num">۳</span>' +
             '<span class="dp-step-title">سوال پرسیدن</span>' +
+            '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="نوشتن جواب‌ها">▾</button>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'این مرحله، جای «آرزو کردن» نیست — جای <b>سوال پرسیدن</b> است. ' +
-            'فرقش چیه؟ «آرزو» مغزت رو در حالت کمبود نگه می‌داره و فقط به «نداشتن» فکر می‌کنه. ' +
-            'اما «سوال»، یک مسیر جستجو در مغزت فعال می‌کنه. ' +
-            'دقیقاً به همین دلیله که وقتی یک سوال از خودت می‌پرسی، بعداً در طول روز جواب‌هاش خودبه‌خود به ذهنت می‌آن. ' +
-            'مغزت دنبال جواب می‌گرده — حتی وقتی آگاهانه بهش فکر نمی‌کنی.' +
-          '</div>' +
-          '<div class="dp-step-content">' +
-            'این سه سوال را از خودت بپرس و جواب‌ها را بنویس. هر جواب، یک احتمال تازه است — نه یک آرزو.' +
+            'به‌جای اینکه بگی «کاش این را داشتم» — که فقط حالت رو بدتر می‌کنه — یک سوال می‌پرسی. ' +
+            'سوال، ذهنت رو باز می‌کنه تا دنبال جواب بگرده. حتی وقتی بهش فکر نمی‌کنی، ذهنت مشغول جستجو می‌شه.' +
           '</div>' +
 
-          // جمع‌شونده برای کادرها
-          '<div class="dp-toggle-wrap" style="margin-top:10px;">' +
-            '<button type="button" class="dp-toggle-btn" data-toggle-box="dp-possibilities">' +
-              '<span>✍️ نوشتن جواب‌ها</span>' +
-              '<span class="dp-toggle-arrow">▾</span>' +
-            '</button>' +
-            '<div id="dp-possibilities" class="dp-toggle-body" style="display:none;">' +
-              '<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">' +
-                '<div>' +
-                  '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۱. اگر ترس نبود، چه می‌کردم؟</label>' +
-                  '<textarea id="dp-possibility-fear" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: اولین قدم را همین امروز برمی‌داشتم..."></textarea>' +
-                '</div>' +
-                '<div>' +
-                  '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۲. اگر پول نبود، چه می‌کردم؟</label>' +
-                  '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: با همان چیزی که دارم شروع می‌کردم..."></textarea>' +
-                '</div>' +
-                '<div>' +
-                  '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۳. اگر تأیید دیگران نبود، چه می‌کردم؟</label>' +
-                  '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: همان کاری را می‌کردم که قلبم می‌گفت..."></textarea>' +
-                '</div>' +
+          '<div id="dp-possibilities" class="dp-toggle-body" style="display:none;margin-top:12px;">' +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
+              '<div>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۱. اگر ترس نبود، چه می‌کردم؟</label>' +
+                '<textarea id="dp-possibility-fear" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: اولین قدم را همین امروز برمی‌داشتم..."></textarea>' +
+              '</div>' +
+              '<div>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۲. اگر پول نبود، چه می‌کردم؟</label>' +
+                '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: با همان چیزی که دارم شروع می‌کردم..."></textarea>' +
+              '</div>' +
+              '<div>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۳. اگر تأیید دیگران نبود، چه می‌کردم؟</label>' +
+                '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: همان کاری را می‌کردم که قلبم می‌گفت..."></textarea>' +
               '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۴ — متن آینده ---------- */
+        /* ---------- مرحله ۴ — متن آینده + تقویم ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
@@ -324,14 +270,37 @@
             '<span class="dp-step-title">متن آینده‌ات را بخوان</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'مغزت نمی‌تونه فرق بین «اتفاق واقعی» و «تجسم زنده» رو تشخیص بده. ' +
-            'وقتی متن آینده‌ات رو با صدای بلند می‌خونی، مغزت مثل اینه که داری اون صحنه رو زندگی می‌کنی. ' +
-            'هر بار که این کار رو بکنی، یک مسیر جدید در مغزت پررنگ‌تر می‌شه — انگار داری راهی رو که تا حالا نرفته‌ای، هموار می‌کنی.' +
+            'متن آینده‌ات، روایتی از زندگیه که می‌خوای داشته باشی. ' +
+            'وقتی هر روز می‌خونیش، کم‌کم باورت می‌شه که این آینده واقعاً مال توئه. ' +
+            'هر بار که می‌خونی، انگار داری اون صحنه رو زندگی می‌کنی.' +
           '</div>' +
+
           '<div class="dp-step-content">' +
-            '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">متن فعال تو:</div>' +
-            '<div id="dp-seeit-text" style="padding:12px 14px;background:var(--card);border:1px dashed var(--gold-300);border-radius:10px;font-size:12.5px;line-height:1.9;font-style:italic;color:var(--ink);max-height:160px;overflow-y:auto;white-space:pre-wrap;"></div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;">با صدای بلند بخوان. اگر دوست داری چشم‌هایت را ببند و خودت را داخل صحنه ببین.</div>' +
+            '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;min-height:60px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
+
+            '<div id="future-editor" style="display:none;margin-bottom:10px;">' +
+              '<textarea id="future-editor-input" rows="4" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:vertical;outline:none;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
+              '<div style="display:flex;gap:6px;margin-top:8px;">' +
+                '<button type="button" id="future-save-btn" class="btn gold" style="flex:1;font-size:12.5px;padding:10px;">💾 ذخیره</button>' +
+                '<button type="button" id="future-cancel-btn" class="btn" style="flex:1;font-size:12.5px;padding:10px;">لغو</button>' +
+              '</div>' +
+            '</div>' +
+
+            '<div id="future-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">' +
+              '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:90px;">✏️ ویرایش</button>' +
+              '<button type="button" id="archive-future-btn" class="btn tiny" style="flex:1;min-width:90px;">📚 آرشیو (<span id="archive-count">۰</span>)</button>' +
+            '</div>' +
+
+            '<div id="future-archive-box" style="display:none;margin-bottom:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
+
+            '<div style="padding-top:12px;border-top:1px dashed var(--line);">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                '<span style="font-size:11.5px;font-weight:700;">📅 پیشرفت روزانه</span>' +
+                '<span style="font-size:10.5px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از ۹۰</span>' +
+              '</div>' +
+              '<div class="tb-bar" style="margin:0 0 10px;height:4px;"><div class="tb-bar-fill" id="future-progress-bar" style="width:0%;"></div></div>' +
+              '<div id="future-mini-cal" class="mini-cal-grid"></div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
 
@@ -343,28 +312,25 @@
             '<span class="dp-step-title">حسش کن و تبدیل شو</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'این مهم‌ترین مرحله‌ست. پژوهش‌ها نشون داده مغز، اطلاعاتی رو که با احساس قوی همراه باشه، چند برابر سریع‌تر ثبت می‌کنه. ' +
             'فقط فکر کردن کافی نیست — باید حسِ رسیدن رو تجربه کنی. ' +
-            'وقتی خودت رو در حالتی که خواستی می‌بینی و حسش می‌کنی، مغزت باور جدید رو مثل یک واقعیت ثبت می‌کنه. ' +
-            'و هویت، بالاترین سطح تغییره: وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با اون هویت هم‌راستا می‌شن.' +
+            'وقتی خودت رو در حالتی که خواستی می‌بینی و حسش می‌کنی، باورت قوی‌تر می‌شه. ' +
+            'و وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با اون هویت هم‌راستا می‌شن.' +
           '</div>' +
 
-          // تصویرسازی
           '<div class="dp-step-content">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🖼️ تصویرسازی</div>' +
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
-              'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای. اگر بخواهی، عکس‌هایی از آن صحنه اضافه کن تا ذهنت راحت‌تر ببیند.' +
+              'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای. اگر بخواهی، عکس‌هایی از آن صحنه اضافه کن.' +
             '</div>' +
             '<label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>' +
             '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
             '<div class="visual-gallery" id="visual-gallery" style="margin-top:10px;"></div>' +
           '</div>' +
 
-          // ثبت حس
           '<div class="dp-step-content" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">💗 حسِ حالا</div>' +
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
-              'حس رسیدن را در بدنت فراخوانی کن. کدام احساس را داری؟ هرچه حس قوی‌تر باشد، مسیر تازه ضخیم‌تر می‌شود.' +
+              'حس رسیدن را در بدنت فراخوانی کن. کدام احساس را داری؟' +
             '</div>' +
             '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
               '<button type="button" class="btn tiny" onclick="openEmotionCapture(\'dispenza\',\'after\',\'تمرین روزانه\')">💗 ثبت حس</button>' +
@@ -372,28 +338,33 @@
             '</div>' +
           '</div>' +
 
-          // تأییدیه
           '<div class="dp-step-content" style="margin-top:14px;">' +
             '<div style="padding:14px;background:linear-gradient(135deg,rgba(43,191,171,.12),rgba(94,200,240,.06));border-radius:12px;text-align:center;font-size:14px;font-weight:800;color:var(--emerald-700);">' +
               '«من همین حالا همینم.»' +
             '</div>' +
             '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;">' +
-              'این جمله را در دلت تکرار کن. و چند لحظه در همان حس بمان.' +
+              'این جمله را در دلت تکرار کن و چند لحظه در همان حس بمان.' +
             '</div>' +
           '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۶ — ماموریت به مغز ---------- */
-        '<div class="dp-step">' +
+        /* ---------- مدار عصبی (بدون تیک) ---------- */
+        '<div style="margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);">' +
+          '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی این تمرین</div>' +
+          '<div class="neural-card" id="np-dispenza-mount"></div>' +
+        '</div>' +
+
+        /* ---------- مرحله ۶ — ماموریت به ذهن ---------- */
+        '<div class="dp-step" style="margin-top:18px;">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="6">○</button>' +
             '<span class="dp-step-num">۶</span>' +
-            '<span class="dp-step-title">ماموریت به مغز</span>' +
+            '<span class="dp-step-title">ماموریت به ذهن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'مغزت یک فیلتر توجه داره به نام RAS (سیستم فعال‌سازی شبکه‌ای). ' +
-            'این فیلتر هر لحظه میلیون‌ها اطلاعات رو غربال می‌کنه و فقط اون‌هایی رو به آگاهی تو می‌رسونه که با هدف‌های فعلی‌ات هم‌خونی داشته باشن. ' +
-            'وقتی به مغزت ماموریت می‌دی، در طول روز خودبه‌خود دنبال نشانه‌های اون ماموریت می‌گرده — حتی وقتی آگاهانه بهش فکر نمی‌کنی.' +
+            'ذهنت هر لحظه هزاران چیز رو فیلتر می‌کنه. ' +
+            'وقتی بهش ماموریت بدی، در طول روز خودبه‌خود دنبال نشانه‌های اون ماموریت می‌گرده — ' +
+            'حتی وقتی آگاهانه بهش فکر نمی‌کنی.' +
           '</div>' +
 
           '<div class="dp-step-content">' +
@@ -406,8 +377,7 @@
               '</div>' +
               '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:10px;">' +
                 'به‌جای غرق شدن در فکرها، حواست به نشانه‌ها باشد. ' +
-                'نشانه می‌تواند یک جمله در یک کتاب باشد، یک آدم جدید، یک فرصت کوچک، یا حتی یک ایده‌ی ناگهانی. ' +
-                'وقتی یکی دیدی، همان‌جا نگه‌دار و نگاهش کن.' +
+                'نشانه می‌تواند یک جمله در یک کتاب باشد، یک آدم جدید، یک فرصت کوچک، یا حتی یک ایده‌ی ناگهانی.' +
               '</div>' +
               '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;">' +
                 '<input type="checkbox" data-ras="see" style="width:16px;height:16px;accent-color:var(--emerald-500);">' +
@@ -422,7 +392,7 @@
               '</div>' +
               '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:10px;">' +
                 'وقتی نشانه را دیدی، چند لحظه حسش کن — همون حسی که داری وقتی به هدفت رسیدی. ' +
-                'این حس کوتاه، مسیر تازه را در مغزت قفل می‌کند.' +
+                'این حس کوتاه، مسیر تازه را محکم‌تر می‌کند.' +
               '</div>' +
               '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;">' +
                 '<input type="checkbox" data-ras="feel" style="width:16px;height:16px;accent-color:var(--emerald-500);">' +
@@ -447,15 +417,9 @@
         '<div id="dp-progress-hint" style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;">' +
           '۰ از ۶ مرحله' +
         '</div>' +
-
-        /* مدار عصبی */
-        '<div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);">' +
-          '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی این تمرین</div>' +
-          '<div class="neural-card" id="np-dispenza-mount"></div>' +
-        '</div>' +
       '</div>' +
 
-      /* عناصر مخفی برای سازگاری */
+      /* عناصر مخفی */
       '<textarea id="b-future-text" style="display:none;"></textarea>' +
       '<textarea id="b-visual-note" style="display:none;"></textarea>' +
       '<textarea id="b-tracking" style="display:none;"></textarea>' +
@@ -464,18 +428,16 @@
 
     topbar.insertAdjacentHTML('afterend', html);
 
-    // استایل‌ها
     if (!document.getElementById('mini-cal-style')){
       var st = document.createElement('style');
       st.id = 'mini-cal-style';
       st.textContent =
-        /* تقویم — ۱۰ ستون، سلول‌های بزرگ‌تر */
-        '.mini-cal-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;width:100%;}' +
-        '.mini-cal-day{aspect-ratio:1;border-radius:6px;background:var(--surface-2);border:1px solid transparent;transition:.15s;}' +
-        '.mini-cal-day.done{background:var(--emerald-500);border-color:var(--emerald-700);}' +
-        '.mini-cal-day.today{outline:2px solid var(--gold-500);outline-offset:1px;}' +
-        '.mini-cal-day.future{opacity:.28;}' +
-        '.mini-cal-day.empty{background:transparent;}' +
+        /* تقویم کوچک‌تر و کاربرپسند */
+        '.mini-cal-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:100%;}' +
+        '.mini-cal-day{aspect-ratio:1;border-radius:4px;background:var(--surface-2);}' +
+        '.mini-cal-day.done{background:var(--emerald-500);}' +
+        '.mini-cal-day.today{outline:1.5px solid var(--gold-500);outline-offset:0;}' +
+        '.mini-cal-day.future{opacity:.25;}' +
         /* مراحل */
         '.dp-step{margin-bottom:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;}' +
         '.dp-step-head{display:flex;align-items:center;gap:10px;}' +
@@ -485,12 +447,9 @@
         '.dp-check-btn.done{background:var(--emerald-500);border-color:var(--emerald-500);color:#fff;}' +
         '.dp-why-box{margin-top:12px;padding:11px 13px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;font-size:11.5px;color:var(--ink-soft);line-height:1.8;}' +
         '.dp-step-content{margin-top:12px;font-size:12.5px;color:var(--ink-soft);line-height:1.8;}' +
-        /* دکمه‌ی جمع‌شونده */
-        '.dp-toggle-wrap{margin-top:10px;}' +
-        '.dp-toggle-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}' +
-        '.dp-toggle-btn:hover{background:var(--surface-2);}' +
-        '.dp-toggle-arrow{transition:transform .2s;font-size:11px;}' +
-        '.dp-toggle-btn.open .dp-toggle-arrow{transform:rotate(180deg);}';
+        /* آیکون بازشونده کنار عنوان */
+        '.dp-expand-icon{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.2s;}' +
+        '.dp-expand-icon.open{transform:rotate(180deg);background:var(--emerald-100);color:var(--emerald-700);border-color:var(--emerald-500);}';
       document.head.appendChild(st);
     }
   }
@@ -501,7 +460,6 @@
   function renderFutureText(){
     var v = getActiveVersion();
     var display = document.getElementById('future-display');
-    var activeBadge = document.getElementById('future-active-badge');
     var archiveCount = document.getElementById('archive-count');
     var seeitText = document.getElementById('dp-seeit-text');
 
@@ -512,15 +470,9 @@
         display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز متن آینده‌ای ننوشتی.<br><span style="font-size:11px;">روی «✏️ ویرایش» بزن تا شروع کنی.</span></div>';
       }
     }
-    if (activeBadge){
-      var versions = state.futureTextVersions || [];
-      var activeIdx = versions.findIndex(function(x){ return x.id === state.activeFutureVersionId; });
-      if (activeIdx === -1) activeBadge.textContent = '—';
-      else activeBadge.textContent = 'نسخه ' + toFa(activeIdx + 1);
-    }
     if (seeitText){
       if (v && v.text) seeitText.innerHTML = '«' + escapeHtml(v.text) + '»';
-      else seeitText.innerHTML = '<span style="color:var(--muted);font-style:normal;font-size:11.5px;">اول متن آینده‌ات را در کارت بالا بنویس.</span>';
+      else seeitText.innerHTML = '<span style="color:var(--muted);font-style:normal;font-size:11.5px;">اول متن آینده‌ات را بنویس.</span>';
     }
     if (archiveCount) archiveCount.textContent = toFa((state.futureTextVersions || []).length);
     renderMiniCal();
@@ -614,12 +566,9 @@
     var v = getActiveVersion();
     var readDays = v && v.readDays ? v.readDays.length : 0;
     var doneCount = Math.min(readDays, 90);
-    var left = Math.max(0, 90 - doneCount);
     var numEl = document.getElementById('future-day-num');
-    var leftEl = document.getElementById('future-days-left');
     var pbar = document.getElementById('future-progress-bar');
     if (numEl) numEl.textContent = toFa(doneCount);
-    if (leftEl) leftEl.textContent = left > 0 ? toFa(left) + ' مانده' : '🎉 تکمیل';
     if (pbar) pbar.style.width = (doneCount / 90 * 100) + '%';
 
     var em = document.getElementById('dp-emotion-feedback');
@@ -757,7 +706,7 @@
   }
   function wrapRenderBeliefsView(){
     if (typeof window.renderBeliefsView !== 'function') return;
-    if (window.renderBeliefsView.__patchedV5) return;
+    if (window.renderBeliefsView.__patchedV6) return;
     var original = window.renderBeliefsView;
     window.renderBeliefsView = function(){
       try { original.apply(this, arguments); } catch(e){}
@@ -765,7 +714,7 @@
       try { dpRenderProgress(); } catch(e){}
       try { renderOurNeuralPathways(); } catch(e){}
     };
-    window.renderBeliefsView.__patchedV5 = true;
+    window.renderBeliefsView.__patchedV6 = true;
   }
 
   /* =====================================================================
@@ -789,20 +738,19 @@
         return;
       }
 
-      // دکمه‌ی جمع‌شونده
-      var toggleBtn = t.closest('.dp-toggle-btn');
-      if (toggleBtn){
-        var bodyId = toggleBtn.dataset.toggleBox;
+      // آیکون بازشونده کنار عنوان
+      var expandIcon = t.closest('.dp-expand-icon');
+      if (expandIcon){
+        var bodyId = expandIcon.dataset.toggleBox;
         var body = document.getElementById(bodyId);
         if (body){
           var isOpen = body.style.display !== 'none';
           body.style.display = isOpen ? 'none' : 'block';
-          toggleBtn.classList.toggle('open', !isOpen);
+          expandIcon.classList.toggle('open', !isOpen);
         }
         return;
       }
 
-      // تایمر
       if (t.id === 'dp-timer-btn'){ dpStartTimer(); return; }
       if (t.id === 'edit-future-btn'){ openFutureEditor(); return; }
       if (t.id === 'future-save-btn'){ saveFutureText(); return; }
@@ -811,7 +759,6 @@
       var actBtn = t.closest('[data-activate-version]');
       if (actBtn){ activateVersion(actBtn.dataset.activateVersion); return; }
 
-      // دکمه نهایی
       if (t.id === 'dp-complete-btn'){
         var quality = getTodayEmotionQualityFor('dispenza');
         var done = dpGetTodaySteps();
