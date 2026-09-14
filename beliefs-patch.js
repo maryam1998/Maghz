@@ -1,5 +1,5 @@
 /* =====================================================================
-   beliefs-patch.js — نسخه‌ی نهایی
+   beliefs-patch.js — نسخه‌ی نهایی با توضیحات کامل پنج لایه
    ===================================================================== */
 (function(){
   'use strict';
@@ -76,7 +76,7 @@
   window.getTodayEmotionQualityFor = getTodayEmotionQualityFor;
 
   /* =====================================================================
-     راهنما
+     راهنما — با توضیحات دقیق پنج لایه
      ===================================================================== */
   function injectHelpSection(){
     var helpOverlay = document.getElementById('help-modal-overlay');
@@ -95,35 +95,98 @@
         '<ul>' +
           '<li>اهدافت را روی نقشه می‌بینی و مسیر رسیدن به آن‌ها را ترسیم می‌کنی.</li>' +
           '<li>هر روز شکرگذاری می‌کنی تا ذهنت یاد بگیرد چیزهای خوب زندگی‌ات را ببیند.</li>' +
-          '<li>با یک تمرین روزانه، باورهای محدودکننده را با باورهای تازه عوض می‌کنی.</li>' +
+          '<li>با یک تمرین روزانه بر اساس آموزه‌های جو دیسپنزا، زندگی‌ات را از درون تغییر می‌دهی.</li>' +
         '</ul>' +
       '</div>' +
 
       '<div class="help-section">' +
-        '<h3>🧠 سه اصلی که باید بدانی</h3>' +
-        '<p><b>۱. ذهنت قابل تغییر است.</b> هر رفتاری را که تکرار کنی، مثل یک راه جدید در ذهنت ساخته می‌شود. این راه هر بار که تکرار شود، پهن‌تر می‌شود — تا یک روز بدون تلاش، خودکار می‌شود.</p>' +
-        '<p><b>۲. احساس، چسبِ راه است.</b> اگر کاری را با احساس قوی انجام دهی، راهش سریع‌تر ساخته می‌شود. برای همین در تمرین‌ها فقط فکر نمی‌کنیم — حس رسیدن را هم تجربه می‌کنیم.</p>' +
-        '<p><b>۳. ۹۰ روز، زمان تغییر است.</b> برای اینکه یک عادت یا باور جدید جا بیفتد، به‌طور میانگین ۶۶ تا ۹۰ روز تمرین روزانه لازم است.</p>' +
+        '<h3>🌌 قلمرو ممکن‌ها چیست؟</h3>' +
+        '<p>' +
+          'جو دیسپنزا می‌گوید فراتر از دنیای فیزیکی، میدانی نامرئی از انرژی، اطلاعات و آگاهی وجود دارد ' +
+          'که فراتر از مکان و زمان عمل می‌کند. به این میدان، <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b> می‌گویند.' +
+        '</p>' +
+        '<p>' +
+          'در این قلمرو، همه‌ی احتمالات از قبل به‌صورت «موج» وجود دارند — از سلامتی و ثروت تا هر تجربه‌ای که بتوانی تصور کنی. ' +
+          'واقعیت فیزیکی فعلی تو، فقط یکی از بی‌نهایت احتمالی است که در این میدان وجود دارد.' +
+        '</p>' +
+        '<p style="background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;">' +
+          '<b>نکته‌ی کلیدی:</b> تو در این تمرین‌ها چیز جدیدی «خلق» نمی‌کنی — فقط خودت را با یکی از احتمالاتی که از قبل در میدان وجود دارد، هم‌راستا می‌کنی.' +
+        '</p>' +
       '</div>' +
 
       '<div class="help-section">' +
-        '<h3>💡 «خواستن» یا «باور داشتن»؟</h3>' +
-        '<p>این مهم‌ترین نکته‌ی این اپ است.</p>' +
-        '<ul>' +
-          '<li><b>وقتی «می‌خواهی»:</b> دلت می‌گوید «این را ندارم، کاش داشتم». این حالت، بدنت را مضطرب می‌کند و ذهنت را می‌بندد.</li>' +
-          '<li><b>وقتی «باور داری»:</b> دلت می‌گوید «من این هستم، حالا چه چیزهای خوبی ممکن است؟». این حالت بدنت را آرام می‌کند و ذهنت را باز می‌کند.</li>' +
-        '</ul>' +
-        '<p>به همین دلیل در تمرین‌ها به‌جای «آرزو کردن»، از تو یک سوال می‌پرسیم: «اگر ترس نبود، چه می‌کردم؟» این سوال، جواب‌های تازه به ذهنت می‌آورد.</p>' +
+        '<h3>🕳️ «هیچ شدن» یعنی چه؟</h3>' +
+        '<p>' +
+          'عبارت «No body, no one, no thing, no where, in no time» در مدیتیشن‌های جو دیسپنزا یعنی: ' +
+          '<b>بدون بدن، بدون شخص، بدون چیز، بدون مکان، در هیچ زمانی</b>.' +
+        '</p>' +
+        '<p>' +
+          'اما این‌ها نه به معنای فیزیکی، بلکه به معنای <b>رها کردن هویت‌های شرطی‌شده</b> است. ' +
+          'یعنی تو دیگر خودت را با این چیزها تعریف نمی‌کنی:' +
+        '</p>' +
+
+        '<div style="display:flex;flex-direction:column;gap:8px;margin:10px 0;">' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+            '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">🫀 No body / بی‌بدن</div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من بدنم نیستم. توجه از بدن، دردها و حواس جسمی جدا می‌شود.</div>' +
+          '</div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+            '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">👤 No one / هیچ‌کس</div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من آن شخصیت، اسم، نقش، گذشته و داستان‌هایم نیستم. «هیچ‌کس» بودن یعنی رها شدن از «منِ» ساخته‌شده.</div>' +
+          '</div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+            '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📦 No thing / هیچ‌چیز</div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من هیچ‌چیز نیستم. وابستگی به اشیاء، دارایی‌ها و شرایط بیرونی رها می‌شود.</div>' +
+          '</div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+            '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📍 No where / هیچ‌جا</div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من در مکان خاصی نیستم. آگاهی به اینجا و آنجا گره نخورده است.</div>' +
+          '</div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+            '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">⏳ In no time / در هیچ زمانی</div>' +
+            '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من در زمان نیستم. گذشته و آینده رها می‌شوند و فقط حالِ بی‌زمان می‌ماند.</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<p style="background:rgba(244,197,66,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #f4c542;margin-top:12px;">' +
+          '<b>نکته‌ی مهم:</b> نتیجه‌ی این حالت، تبدیل شدن به <b>آگاهی محض</b> است — یک فضای خالی و بی‌تعریف. ' +
+          'این «هیچ» منفی نیست؛ مثل صفحه‌ی سفید یا فضاست که همه‌چیز را در خودش جا می‌دهد.' +
+        '</p>' +
+
+        '<p style="margin-top:12px;">' +
+          'دیسپنزا می‌گوید اول باید این‌طور «هیچ» شوی تا از «منِ قدیمی» و از جای «کمبود» به میدان کوانتومی سیگنال نفرستی. ' +
+          'در آن سکوت و خالی بودن، به قلمرو ممکن‌ها وصل می‌شوی و از جای «کلیت» و «فراوانی» می‌توانی واقعیت دلخواهت را خلق کنی.' +
+        '</p>' +
+
+        '<p style="font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.8;">' +
+          '⚡ این یک تمرین مدیتیشن است، نه یک باور دائمی. ' +
+          'بعد از تمرین به بدن، هویت و زندگی برمی‌گردی — اما با آگاهی تازه.' +
+        '</p>' +
       '</div>' +
 
       '<div class="help-section">' +
-        '<h3>📅 چطور هر روز تمرین کنم؟</h3>' +
+        '<h3>🔗 پیوند «هیچ شدن» و «درخواست از قلمرو ممکن‌ها»</h3>' +
+        '<p>' +
+          'در این چارچوب، «درخواست» به معنای التماس از یک نیروی بیرونی یا انتظار معجزه نیست. ' +
+          'درخواست واقعی، فرستادن یک سیگنال مشخص به میدان است — اما این سیگنال فقط وقتی فرستاده می‌شود ' +
+          'که تو «هیچ» شده باشی.' +
+        '</p>' +
+        '<p>' +
+          'وقتی «هیچ» می‌شوی، دیگر از جای «کمبود» یا «نیاز» درخواست نمی‌کنی — ' +
+          'از جای <b>کلیت</b> و <b>فراوانی</b> خلق می‌کنی. ' +
+          'در واقع، درخواست نمی‌کنی که چیزی به تو داده شود؛ ' +
+          'خودت را با فرکانس آن واقعیتِ ممکن در میدان هم‌راستا می‌کنی.' +
+        '</p>' +
+      '</div>' +
+
+      '<div class="help-section">' +
+        '<h3>🧘 پنج مرحله‌ی عملی این فرآیند</h3>' +
         '<ol style="padding-inline-start:20px;line-height:2;font-size:12.5px;color:var(--text-dim);">' +
-          '<li><b>صبح:</b> بعد از بیدار شدن و نوشیدن آب، برو تب «باورها».</li>' +
-          '<li>متن آینده‌ات را یک بار با صدای بلند بخوان.</li>' +
-          '<li>تمرین ۶ مرحله‌ای را انجام بده — حدود ۱۵ دقیقه.</li>' +
-          '<li><b>شب:</b> قبل از خواب، دوباره همین را تکرار کن.</li>' +
-          '<li>هر روز، حداقل یک خط شکرگذاری بنویس.</li>' +
+          '<li><b>رهاسازی (Relaxation):</b> بدن را عمیقاً آرام می‌کنی تا از حالت «بقا» خارج شوی.</li>' +
+          '<li><b>هیچ شدن (Becoming Nothing):</b> توجه را از بدن، محیط و هویت «من» برمی‌داری و به آگاهی محض اجازه می‌دهی گسترش یابد.</li>' +
+          '<li><b>اتصال (Connection):</b> در این حالت خالی، آگاهی‌ات را به قلمرو ممکن‌ها وصل می‌کنی.</li>' +
+          '<li><b>کاشتن بذر (Seeding):</b> در همان حالت هیچ‌بودن، تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری — بدون احساس نیاز یا کمبود.</li>' +
+          '<li><b>احساس فراوانی (Embodying):</b> احساس آن واقعیت را در بدن خودت ایجاد می‌کنی — شادی، سلامتی، آرامش — تا فرکانست با آن هماهنگ شود.</li>' +
         '</ol>' +
       '</div>' +
 
@@ -148,14 +211,27 @@
     }
     ['streak-box','streak-history','help-open-btn'].forEach(function(cls){
       var els = beliefView.querySelectorAll('.' + cls);
-      for (var j = 0; j < els.length; j++) if (els[j].parentNode) els[j].parentNode.removeChild(els[j]);
+      for (var j = 0; j < els.length; j++) els[j].parentNode.removeChild(els[j]);
     });
 
     var topbar = beliefView.querySelector('.topbar');
     if (!topbar) return;
 
     var html = '' +
-      '<div class="belief-flow-card" id="dispenza-protocol-card" data-new-card="1">' +
+      /* ---------- یادداشت مفهومی ---------- */
+      '<div class="belief-flow-card" data-new-card="1" style="background:linear-gradient(135deg,rgba(43,191,171,.08),rgba(94,200,240,.05));border-color:rgba(43,191,171,.3);">' +
+        '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🌌 قلمرو ممکن‌ها</div>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">' +
+          'فراتر از دنیای فیزیکی، میدانی از همه‌ی احتمالات وجود دارد — ' +
+          'به آن <b>قلمرو ممکن‌ها</b> می‌گویند. در این میدان، هر واقعیتی که بتوانی تصور کنی، از قبل وجود دارد.' +
+        '</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;">' +
+          'برای اتصال به این میدان، اول باید از هویت گذشته و از حس «کمبود» خالی شوی. ' +
+          'این همان مرحله‌ی <b>«هیچ شدن»</b> است. بعد از آن، بذر واقعیت دلخواهت را از جای کامل‌بودن می‌کاری — نه از جای آرزو.' +
+        '</p>' +
+      '</div>' +
+
+      '<div class="belief-flow-card" id="dispenza-protocol-card" data-new-card="1" style="margin-top:14px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
           '<div class="bf-head" style="margin:0;">🌌 تمرین روزانه</div>' +
           '<span id="dp-session-count" style="font-size:10.5px;color:var(--muted);">۰ جلسه</span>' +
@@ -171,38 +247,54 @@
           '<button type="button" id="dp-timer-btn" class="btn tiny" style="padding:4px 12px;font-size:11px;">شروع</button>' +
         '</div>' +
 
-        /* ---------- مرحله ۱ — آرام شدن ---------- */
+        /* ---------- مرحله ۱ — رهاسازی ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="1">○</button>' +
             '<span class="dp-step-num">۱</span>' +
-            '<span class="dp-step-title">آرام شدن</span>' +
+            '<span class="dp-step-title">رهاسازی — آرام شدن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'وقتی مضطربی یا ذهنت شلوغه، نمی‌تونی روی چیز تازه تمرکز کنی. ' +
-            'با چند نفس عمیق، بدنت آرام می‌شه و ذهنت آماده‌ی تمرین می‌شه.' +
+            'وقتی ذهنت شلوغه و بدنت در حالت اضطراب، نمی‌تونی به میدان وصل شوی. ' +
+            'با آرام کردن بدنت، از حالت «بقا» خارج می‌شی و ذهنت آماده‌ی تمرین می‌شه.' +
           '</div>' +
-          '<div class="dp-step-content">' +
-            'سه نفس ۴-۷-۸ بکش: ۴ ثانیه دم، ۷ ثانیه نگه‌دار، ۸ ثانیه بازدم. ' +
-            'بعد یک شکرگذاری کوچک بگو — چیزی که همین حالا برایش سپاسگزاری.' +
+
+          '<div class="breath-wrap">' +
+            '<div class="breath-circle" id="breath-circle">' +
+              '<div class="breath-inner">' +
+                '<div class="breath-phase" id="breath-phase-text">آماده</div>' +
+                '<div class="breath-counter" id="breath-counter-text">۴-۷-۸</div>' +
+              '</div>' +
+              '<svg class="breath-progress" viewBox="0 0 100 100">' +
+                '<circle cx="50" cy="50" r="46" stroke="rgba(255,255,255,0.1)" stroke-width="3" fill="none"/>' +
+                '<circle id="breath-progress-circle" cx="50" cy="50" r="46" stroke="var(--emerald-500)" stroke-width="3" fill="none" stroke-dasharray="289" stroke-dashoffset="289" stroke-linecap="round" transform="rotate(-90 50 50)"/>' +
+              '</svg>' +
+            '</div>' +
+            '<div class="breath-controls">' +
+              '<button type="button" id="breath-start-btn" class="btn tiny" style="padding:6px 14px;font-size:11.5px;">▶ شروع تنفس</button>' +
+              '<span style="font-size:11px;color:var(--muted);">۴ ثانیه دم • ۷ نگه‌دار • ۸ بازدم</span>' +
+            '</div>' +
           '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۲ — خالی شدن ---------- */
+        /* ---------- مرحله ۲ — هیچ شدن ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="2">○</button>' +
             '<span class="dp-step-num">۲</span>' +
-            '<span class="dp-step-title">خالی شدن</span>' +
+            '<span class="dp-step-title">هیچ شدن</span>' +
             '<button type="button" id="nothing-sound-toggle" class="nothing-sound-btn" onclick="toggleNothingSound()" style="margin-inline-start:auto;" title="قطع/وصل صدا">🔔</button>' +
           '</div>' +
+
           '<div class="dp-why-box">' +
-            'ذهنت روزانه پر از فکرهای تکراری می‌شه — همه از یک الگوی قدیمی. ' +
-            'تا وقتی این فکرها هستن، جای فکرهای تازه نیست. ' +
-            'با خالی شدن، برای چند لحظه از این الگو فاصله می‌گیری — و فضا باز می‌شه.' +
+            'وقتی خودت را با نام، شغل، بدن، داستان‌های گذشته و نگرانی‌های آینده تعریف می‌کنی، ' +
+            'سیگنالی از «گذشته» به میدان می‌فرستی — و همان الگوهای تکراری را دریافت می‌کنی. ' +
+            '«هیچ شدن» یعنی رها کردن این هویت‌های شرطی‌شده، تا به آگاهی محض تبدیل شوی.' +
           '</div>' +
-          '<div class="dp-step-content" style="text-align:center;">' +
-            'توجهت را از این پنج لایه برمی‌داری. لازم نیست همه را کامل انجام دهی — هر کدام که برایت آسان‌تر است، همان را شروع کن.' +
+
+          // پنج لایه — به صورت تمیز و خیلی خلاصه روی صفحه
+          '<div class="dp-step-content" style="margin-top:12px;">' +
+            '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink);">پنج لایه را یکی‌یکی رها کن:</div>' +
           '</div>' +
 
           '<div class="nothing-stage" id="nothing-stage" style="margin:16px auto 0;max-width:220px;height:220px;">' +
@@ -218,68 +310,132 @@
             '<div class="nothing-layer" data-nothing="time">زمان</div>' +
           '</div>' +
 
-          '<div class="nothing-steps" id="nothing-steps" style="margin:14px auto 0;max-width:300px;">' +
-            '<button type="button" class="nothing-step" data-nothing-step="body"><span class="nothing-step-num">۱</span><span class="nothing-step-txt"><b>No body</b> — از بدن</span><span class="nothing-step-check">○</span></button>' +
-            '<button type="button" class="nothing-step" data-nothing-step="one"><span class="nothing-step-num">۲</span><span class="nothing-step-txt"><b>No one</b> — از هویت</span><span class="nothing-step-check">○</span></button>' +
-            '<button type="button" class="nothing-step" data-nothing-step="thing"><span class="nothing-step-num">۳</span><span class="nothing-step-txt"><b>No thing</b> — از اشیا</span><span class="nothing-step-check">○</span></button>' +
-            '<button type="button" class="nothing-step" data-nothing-step="where"><span class="nothing-step-num">۴</span><span class="nothing-step-txt"><b>No where</b> — از مکان</span><span class="nothing-step-check">○</span></button>' +
-            '<button type="button" class="nothing-step" data-nothing-step="time"><span class="nothing-step-num">۵</span><span class="nothing-step-txt"><b>No time</b> — از زمان</span><span class="nothing-step-check">○</span></button>' +
+          // پنج مرحله با توضیح کوتاه
+          '<div class="nothing-steps" id="nothing-steps" style="margin:14px auto 0;max-width:340px;">' +
+            '<button type="button" class="nothing-step" data-nothing-step="body">' +
+              '<span class="nothing-step-num">۱</span>' +
+              '<span class="nothing-step-txt"><b>No body</b><br><span style="font-size:10.5px;color:var(--muted);">من بدنم نیستم. توجه از بدن و حواس جسمی جدا می‌شود.</span></span>' +
+              '<span class="nothing-step-check">○</span>' +
+            '</button>' +
+            '<button type="button" class="nothing-step" data-nothing-step="one">' +
+              '<span class="nothing-step-num">۲</span>' +
+              '<span class="nothing-step-txt"><b>No one</b><br><span style="font-size:10.5px;color:var(--muted);">من شخصیت، اسم، نقش و داستان‌هایم نیستم.</span></span>' +
+              '<span class="nothing-step-check">○</span>' +
+            '</button>' +
+            '<button type="button" class="nothing-step" data-nothing-step="thing">' +
+              '<span class="nothing-step-num">۳</span>' +
+              '<span class="nothing-step-txt"><b>No thing</b><br><span style="font-size:10.5px;color:var(--muted);">وابستگی به اشیاء و دارایی‌ها رها می‌شود.</span></span>' +
+              '<span class="nothing-step-check">○</span>' +
+            '</button>' +
+            '<button type="button" class="nothing-step" data-nothing-step="where">' +
+              '<span class="nothing-step-num">۴</span>' +
+              '<span class="nothing-step-txt"><b>No where</b><br><span style="font-size:10.5px;color:var(--muted);">آگاهی به اینجا و آنجا گره نخورده است.</span></span>' +
+              '<span class="nothing-step-check">○</span>' +
+            '</button>' +
+            '<button type="button" class="nothing-step" data-nothing-step="time">' +
+              '<span class="nothing-step-num">۵</span>' +
+              '<span class="nothing-step-txt"><b>In no time</b><br><span style="font-size:10.5px;color:var(--muted);">گذشته و آینده رها می‌شوند. فقط حالِ بی‌زمان می‌ماند.</span></span>' +
+              '<span class="nothing-step-check">○</span>' +
+            '</button>' +
           '</div>' +
-          '<div class="nothing-final" id="nothing-final" style="text-align:center;margin-top:12px;"><span class="nothing-final-pulse"></span>Pure consciousness</div>' +
+
+          '<div class="nothing-final" id="nothing-final" style="text-align:center;margin-top:12px;"><span class="nothing-final-pulse"></span>Pure consciousness — آگاهی خالص</div>' +
+
+          '<div class="dp-step-content" style="margin-top:14px;padding:10px 12px;background:rgba(244,197,66,.08);border-right:3px solid var(--gold-500);border-radius:8px;">' +
+            '<div style="font-size:11px;color:var(--ink-soft);line-height:1.75;">' +
+              'این «هیچ» منفی نیست — مثل صفحه‌ی سفید یا فضاست که همه‌چیز را در خودش جا می‌دهد. ' +
+              'این یک تمرین مدیتیشن است، نه یک باور دائمی. بعد از تمرین به بدن، هویت و زندگی برمی‌گردی — اما با آگاهی تازه.' +
+            '</div>' +
+          '</div>' +
+
           '<div style="text-align:center;margin-top:8px;">' +
             '<button type="button" class="nothing-reset" onclick="resetNothingPractice()">↺ شروع دوباره</button>' +
           '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۳ — سوال پرسیدن (با آیکون بازشونده کنار عنوان) ---------- */
+        /* ---------- مرحله ۳ — اتصال به قلمرو ممکن‌ها ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
             '<span class="dp-step-num">۳</span>' +
-            '<span class="dp-step-title">سوال پرسیدن</span>' +
-            '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="نوشتن جواب‌ها">▾</button>' +
+            '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها</span>' +
+            '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="کاشتن بذر">▾</button>' +
           '</div>' +
+
           '<div class="dp-why-box">' +
-            'به‌جای اینکه بگی «کاش این را داشتم» — که فقط حالت رو بدتر می‌کنه — یک سوال می‌پرسی. ' +
-            'سوال، ذهنت رو باز می‌کنه تا دنبال جواب بگرده. حتی وقتی بهش فکر نمی‌کنی، ذهنت مشغول جستجو می‌شه.' +
+            'الان که از هویتِ گذشته و از جای «کمبود» خالی شدی، دیگه به‌عنوان «کسی که چیزی نداره» درخواست نمی‌کنی. ' +
+            'به‌عنوان <b>آگاهی خالص</b>، خودت را به قلمرو ممکن‌ها وصل می‌کنی — ' +
+            'میدانی که همه‌ی احتمالات از قبل در آن وجود دارند. ' +
+            'در این میدان، چیزی «درخواست» نمی‌کنی؛ فقط بذرِ واقعیتی که می‌خواهی را می‌کاری — ' +
+            'به‌عنوان حقیقتی که از قبل وجود دارد.' +
+          '</div>' +
+
+          '<div class="dp-step-content" style="margin-top:12px;">' +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
+              '<div style="padding:10px 12px;background:rgba(94,200,240,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۱. پل زدن</div>' +
+                '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">' +
+                  'در این خالی بودن، آگاهی‌ات را به میدانِ بی‌نهایت امکانات وصل کن. ' +
+                  'حس کن که این میدان همه‌جا هست — و تو هم بخشی از آنی.' +
+                '</div>' +
+              '</div>' +
+              '<div style="padding:10px 12px;background:rgba(94,200,240,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۲. دیدن از جای کلیت</div>' +
+                '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">' +
+                  'نه از جای «نداشتن» — از جای «کامل بودن». ' +
+                  'آن واقعیتی که می‌خواهی، از قبل در این میدان وجود دارد. ' +
+                  'خودت را با فرکانس آن هم‌راستا کن.' +
+                '</div>' +
+              '</div>' +
+              '<div style="padding:10px 12px;background:rgba(94,200,240,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
+                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۳. کاشتن بذر</div>' +
+                '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">' +
+                  'یک تصویر واضح از واقعیتِ دلخواهت — نه به‌عنوان آرزو، بلکه به‌عنوان چیزی که الان هست — ' +
+                  'در ذهنت می‌کاری. و رها می‌کنی. میدان بقیه‌اش را انجام می‌دهد.' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
           '</div>' +
 
           '<div id="dp-possibilities" class="dp-toggle-body" style="display:none;margin-top:12px;">' +
+            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
+              'بذری که امروز می‌کاری رو این‌جا بنویس. با «همین حالا...» شروع کن — نه با «آرزو می‌کنم» یا «کاش».' +
+            '</div>' +
             '<div style="display:flex;flex-direction:column;gap:10px;">' +
               '<div>' +
-                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۱. اگر ترس نبود، چه می‌کردم؟</label>' +
-                '<textarea id="dp-possibility-fear" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: اولین قدم را همین امروز برمی‌داشتم..."></textarea>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">بذر اصلی امروز:</label>' +
+                '<textarea id="dp-possibility-fear" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="همین حالا من..."></textarea>' +
               '</div>' +
               '<div>' +
-                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۲. اگر پول نبود، چه می‌کردم؟</label>' +
-                '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: با همان چیزی که دارم شروع می‌کردم..."></textarea>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">چطور حسش می‌کنم اگر همین حالا حقیقت داشت؟</label>' +
+                '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="حس می‌کنم که..."></textarea>' +
               '</div>' +
               '<div>' +
-                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">۳. اگر تأیید دیگران نبود، چه می‌کردم؟</label>' +
-                '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="مثلاً: همان کاری را می‌کردم که قلبم می‌گفت..."></textarea>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">چه چیزی را رها می‌کنم؟</label>' +
+                '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="رها می‌کنم..."></textarea>' +
               '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۴ — متن آینده + تقویم ---------- */
+        /* ---------- مرحله ۴ — خواندن خواسته ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
             '<span class="dp-step-num">۴</span>' +
-            '<span class="dp-step-title">متن آینده‌ات را بخوان</span>' +
+            '<span class="dp-step-title">خواسته‌ات را بخوان</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            'متن آینده‌ات، روایتی از زندگیه که می‌خوای داشته باشی. ' +
-            'وقتی هر روز می‌خونیش، کم‌کم باورت می‌شه که این آینده واقعاً مال توئه. ' +
-            'هر بار که می‌خونی، انگار داری اون صحنه رو زندگی می‌کنی.' +
+            'اینجا چیزی که می‌خوای رو می‌نویسی — ولی جوری که انگار <b>همین حالا بهش رسیدی</b>. ' +
+            'با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن. ' +
+            'وقتی هر روز این رو می‌خونی، ذهنت باور می‌کنه که این آینده واقعاً مال توئه.' +
           '</div>' +
 
           '<div class="dp-step-content">' +
             '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;min-height:60px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
 
             '<div id="future-editor" style="display:none;margin-bottom:10px;">' +
-              '<textarea id="future-editor-input" rows="4" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:vertical;outline:none;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
+              '<textarea id="future-editor-input" rows="5" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:vertical;outline:none;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
               '<div style="display:flex;gap:6px;margin-top:8px;">' +
                 '<button type="button" id="future-save-btn" class="btn gold" style="flex:1;font-size:12.5px;padding:10px;">💾 ذخیره</button>' +
                 '<button type="button" id="future-cancel-btn" class="btn" style="flex:1;font-size:12.5px;padding:10px;">لغو</button>' +
@@ -287,9 +443,13 @@
             '</div>' +
 
             '<div id="future-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">' +
-              '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:90px;">✏️ ویرایش</button>' +
-              '<button type="button" id="archive-future-btn" class="btn tiny" style="flex:1;min-width:90px;">📚 آرشیو (<span id="archive-count">۰</span>)</button>' +
+              '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:80px;">✏️ ویرایش</button>' +
+              '<button type="button" id="archive-future-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="archive-count">۰</span>)</button>' +
             '</div>' +
+
+            '<button type="button" id="future-register-btn" style="width:100%;padding:12px;font-size:13px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(15,91,83,.18);margin-bottom:12px;">' +
+              '✅ امروز خواندم — ثبت کن' +
+            '</button>' +
 
             '<div id="future-archive-box" style="display:none;margin-bottom:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
 
@@ -339,16 +499,20 @@
           '</div>' +
 
           '<div class="dp-step-content" style="margin-top:14px;">' +
-            '<div style="padding:14px;background:linear-gradient(135deg,rgba(43,191,171,.12),rgba(94,200,240,.06));border-radius:12px;text-align:center;font-size:14px;font-weight:800;color:var(--emerald-700);">' +
-              '«من همین حالا همینم.»' +
+            '<div style="padding:16px;background:linear-gradient(135deg,rgba(43,191,171,.12),rgba(94,200,240,.06));border-radius:14px;text-align:center;">' +
+              '<div style="font-size:11px;color:var(--emerald-700);font-weight:700;margin-bottom:6px;letter-spacing:.5px;">تأییدیه‌ی نهایی</div>' +
+              '<div style="font-size:15px;font-weight:800;color:var(--emerald-700);line-height:1.8;">' +
+                '«من همین حالا همان کسی هستم که می‌خواستم باشم.<br>' +
+                'همه‌چیز در وجود من کامل است.»' +
+              '</div>' +
             '</div>' +
-            '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px;">' +
-              'این جمله را در دلت تکرار کن و چند لحظه در همان حس بمان.' +
+            '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7;">' +
+              'این جمله را در دلت سه بار تکرار کن و چند لحظه در همان حس بمان.' +
             '</div>' +
           '</div>' +
         '</div>' +
 
-        /* ---------- مدار عصبی (بدون تیک) ---------- */
+        /* ---------- مدار عصبی ---------- */
         '<div style="margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);">' +
           '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی این تمرین</div>' +
           '<div class="neural-card" id="np-dispenza-mount"></div>' +
@@ -391,8 +555,7 @@
                 '<span style="font-size:12.5px;font-weight:800;">ماموریت حس</span>' +
               '</div>' +
               '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:10px;">' +
-                'وقتی نشانه را دیدی، چند لحظه حسش کن — همون حسی که داری وقتی به هدفت رسیدی. ' +
-                'این حس کوتاه، مسیر تازه را محکم‌تر می‌کند.' +
+                'وقتی نشانه را دیدی، چند لحظه حسش کن — همون حسی که داری وقتی به هدفت رسیدی.' +
               '</div>' +
               '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;">' +
                 '<input type="checkbox" data-ras="feel" style="width:16px;height:16px;accent-color:var(--emerald-500);">' +
@@ -428,17 +591,15 @@
 
     topbar.insertAdjacentHTML('afterend', html);
 
-    if (!document.getElementById('mini-cal-style')){
+    if (!document.getElementById('beliefs-patch-style')){
       var st = document.createElement('style');
-      st.id = 'mini-cal-style';
+      st.id = 'beliefs-patch-style';
       st.textContent =
-        /* تقویم کوچک‌تر و کاربرپسند */
         '.mini-cal-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:100%;}' +
         '.mini-cal-day{aspect-ratio:1;border-radius:4px;background:var(--surface-2);}' +
         '.mini-cal-day.done{background:var(--emerald-500);}' +
         '.mini-cal-day.today{outline:1.5px solid var(--gold-500);outline-offset:0;}' +
         '.mini-cal-day.future{opacity:.25;}' +
-        /* مراحل */
         '.dp-step{margin-bottom:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;}' +
         '.dp-step-head{display:flex;align-items:center;gap:10px;}' +
         '.dp-step-num{width:26px;height:26px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none;}' +
@@ -447,9 +608,22 @@
         '.dp-check-btn.done{background:var(--emerald-500);border-color:var(--emerald-500);color:#fff;}' +
         '.dp-why-box{margin-top:12px;padding:11px 13px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;font-size:11.5px;color:var(--ink-soft);line-height:1.8;}' +
         '.dp-step-content{margin-top:12px;font-size:12.5px;color:var(--ink-soft);line-height:1.8;}' +
-        /* آیکون بازشونده کنار عنوان */
         '.dp-expand-icon{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.2s;}' +
-        '.dp-expand-icon.open{transform:rotate(180deg);background:var(--emerald-100);color:var(--emerald-700);border-color:var(--emerald-500);}';
+        '.dp-expand-icon.open{transform:rotate(180deg);background:var(--emerald-100);color:var(--emerald-700);border-color:var(--emerald-500);}' +
+        '.breath-wrap{display:flex;flex-direction:column;align-items:center;margin-top:16px;gap:14px;}' +
+        '.breath-circle{position:relative;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle, rgba(43,191,171,.08), transparent 70%);display:flex;align-items:center;justify-content:center;transition:transform .3s ease;}' +
+        '.breath-circle.inhale{transform:scale(1.12);}' +
+        '.breath-circle.exhale{transform:scale(0.92);}' +
+        '.breath-inner{position:relative;text-align:center;z-index:2;}' +
+        '.breath-phase{font-size:12.5px;font-weight:800;color:var(--emerald-700);margin-bottom:2px;}' +
+        '.breath-counter{font-size:22px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;}' +
+        '.breath-progress{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}' +
+        '.breath-progress circle{transition:stroke-dashoffset .95s linear;}' +
+        '.breath-controls{display:flex;flex-direction:column;align-items:center;gap:6px;}' +
+        /* Nothing steps با توضیح دو خطی */
+        '.nothing-step{padding:10px 12px;text-align:right;align-items:flex-start;}' +
+        '.nothing-step-txt{line-height:1.5;}' +
+        '.nothing-step-num{margin-top:2px;}';
       document.head.appendChild(st);
     }
   }
@@ -461,18 +635,12 @@
     var v = getActiveVersion();
     var display = document.getElementById('future-display');
     var archiveCount = document.getElementById('archive-count');
-    var seeitText = document.getElementById('dp-seeit-text');
-
     if (display){
       if (v && v.text && v.text.trim()){
         display.innerHTML = '«' + escapeHtml(v.text) + '»';
       } else {
-        display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز متن آینده‌ای ننوشتی.<br><span style="font-size:11px;">روی «✏️ ویرایش» بزن تا شروع کنی.</span></div>';
+        display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز متن خواسته‌ای ننوشتی.<br><span style="font-size:11px;">روی «✏️ ویرایش» بزن تا شروع کنی.</span></div>';
       }
-    }
-    if (seeitText){
-      if (v && v.text) seeitText.innerHTML = '«' + escapeHtml(v.text) + '»';
-      else seeitText.innerHTML = '<span style="color:var(--muted);font-style:normal;font-size:11.5px;">اول متن آینده‌ات را بنویس.</span>';
     }
     if (archiveCount) archiveCount.textContent = toFa((state.futureTextVersions || []).length);
     renderMiniCal();
@@ -621,6 +789,78 @@
   }
 
   /* =====================================================================
+     دایره تنفس
+     ===================================================================== */
+  var breathTimer = null;
+  var breathPhase = 'idle';
+
+  function setBreathUI(phase, count){
+    var circle = document.getElementById('breath-circle');
+    var phaseEl = document.getElementById('breath-phase-text');
+    var counterEl = document.getElementById('breath-counter-text');
+    var prog = document.getElementById('breath-progress-circle');
+    if (!circle || !phaseEl || !counterEl || !prog) return;
+    circle.classList.remove('inhale', 'exhale');
+    var labels = { idle:'آماده', inhale:'دم', hold:'نگه‌دار', exhale:'بازدم' };
+    phaseEl.textContent = labels[phase] || '';
+    if (phase === 'idle'){ counterEl.textContent = '۴-۷-۸'; prog.style.strokeDashoffset = 289; return; }
+    counterEl.textContent = toFa(count);
+    if (phase === 'inhale'){
+      circle.classList.add('inhale');
+      var p = 1 - (count / 4);
+      prog.style.strokeDashoffset = 289 * (1 - p);
+    } else if (phase === 'hold'){
+      var p2 = 1 - (count / 7);
+      prog.style.strokeDashoffset = 289 * (1 - p2);
+    } else if (phase === 'exhale'){
+      circle.classList.add('exhale');
+      var p3 = count / 8;
+      prog.style.strokeDashoffset = 289 * p3;
+    }
+  }
+
+  function runBreathCycle(){
+    breathPhase = 'inhale';
+    var cnt = 4;
+    setBreathUI('inhale', cnt);
+    breathTimer = setInterval(function(){
+      cnt--;
+      if (cnt <= 0){
+        clearInterval(breathTimer); breathTimer = null;
+        var h = 7;
+        setBreathUI('hold', h);
+        breathTimer = setInterval(function(){
+          h--;
+          if (h <= 0){
+            clearInterval(breathTimer); breathTimer = null;
+            var e = 8;
+            setBreathUI('exhale', e);
+            breathTimer = setInterval(function(){
+              e--;
+              if (e <= 0){
+                clearInterval(breathTimer); breathTimer = null;
+                runBreathCycle();
+              } else setBreathUI('exhale', e);
+            }, 1000);
+          } else setBreathUI('hold', h);
+        }, 1000);
+      } else setBreathUI('inhale', cnt);
+    }, 1000);
+  }
+
+  function startBreathing(){
+    var btn = document.getElementById('breath-start-btn');
+    if (breathTimer){
+      clearInterval(breathTimer); breathTimer = null;
+      breathPhase = 'idle'; setBreathUI('idle', 0);
+      if (btn) btn.textContent = '▶ شروع تنفس';
+      return;
+    }
+    if (btn) btn.textContent = '⏸ توقف تنفس';
+    runBreathCycle();
+  }
+
+  /* =====================================================================
      ویرایش و آرشیو
      ===================================================================== */
   function openFutureEditor(){
@@ -663,12 +903,9 @@
     closeFutureEditor();
     renderFutureText();
     dpRenderProgress();
-    if (typeof toast === 'function') toast(v ? 'نسخه‌ی جدید ثبت شد 📚' : 'متن آینده‌ات ثبت شد ✨');
+    if (typeof toast === 'function') toast(v ? 'نسخه‌ی جدید ثبت شد 📚' : 'متن خواسته‌ات ثبت شد ✨');
   }
-  function toggleArchive(){
-    ARCHIVE_OPEN = !ARCHIVE_OPEN;
-    renderArchiveBox();
-  }
+  function toggleArchive(){ ARCHIVE_OPEN = !ARCHIVE_OPEN; renderArchiveBox(); }
   function activateVersion(id){
     var versions = state.futureTextVersions || [];
     var chosen = versions.filter(function(v){ return v.id === id; })[0];
@@ -680,9 +917,25 @@
     state.futureStartDate = chosen.startDate;
     state.futureReadDays = chosen.readDays || [];
     try { saveState(); } catch(e){}
-    renderFutureText();
-    dpRenderProgress();
+    renderFutureText(); dpRenderProgress();
     if (typeof toast === 'function') toast('نسخه فعال شد ✓');
+  }
+
+  function registerTodayRead(){
+    var dk = dpTodayKey();
+    var v = getActiveVersion();
+    if (!v || !v.text){ if (typeof toast === 'function') toast('اول متن خواسته‌ات را بنویس'); return; }
+    if (!Array.isArray(v.readDays)) v.readDays = [];
+    if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
+    if (!state.futureReadDays) state.futureReadDays = [];
+    if (state.futureReadDays.indexOf(dk) === -1) state.futureReadDays.push(dk);
+    if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
+    if (state.dispenzaReadDays.indexOf(dk) === -1) state.dispenzaReadDays.push(dk);
+    var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
+    if (dn && typeof neuralAddFiber === 'function') neuralAddFiber(dn, {calendarLinked:false});
+    try { saveState(); } catch(e){}
+    renderFutureText(); dpRenderProgress(); renderOurNeuralPathways();
+    if (typeof toast === 'function') toast('✓ امروز ثبت شد — یک مسیر عصبی تازه ساخت شد');
   }
 
   /* =====================================================================
@@ -706,7 +959,7 @@
   }
   function wrapRenderBeliefsView(){
     if (typeof window.renderBeliefsView !== 'function') return;
-    if (window.renderBeliefsView.__patchedV6) return;
+    if (window.renderBeliefsView.__patchedV9) return;
     var original = window.renderBeliefsView;
     window.renderBeliefsView = function(){
       try { original.apply(this, arguments); } catch(e){}
@@ -714,7 +967,7 @@
       try { dpRenderProgress(); } catch(e){}
       try { renderOurNeuralPathways(); } catch(e){}
     };
-    window.renderBeliefsView.__patchedV6 = true;
+    window.renderBeliefsView.__patchedV9 = true;
   }
 
   /* =====================================================================
@@ -725,7 +978,6 @@
       var t = e.target;
       if (!t || !t.closest) return;
 
-      // تیک مرحله
       var checkBtn = t.closest('.dp-check-btn[data-dp-check]');
       if (checkBtn){
         e.stopPropagation();
@@ -738,7 +990,6 @@
         return;
       }
 
-      // آیکون بازشونده کنار عنوان
       var expandIcon = t.closest('.dp-expand-icon');
       if (expandIcon){
         var bodyId = expandIcon.dataset.toggleBox;
@@ -751,11 +1002,13 @@
         return;
       }
 
+      if (t.id === 'breath-start-btn'){ startBreathing(); return; }
       if (t.id === 'dp-timer-btn'){ dpStartTimer(); return; }
       if (t.id === 'edit-future-btn'){ openFutureEditor(); return; }
       if (t.id === 'future-save-btn'){ saveFutureText(); return; }
       if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
       if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
+      if (t.id === 'future-register-btn'){ registerTodayRead(); return; }
       var actBtn = t.closest('[data-activate-version]');
       if (actBtn){ activateVersion(actBtn.dataset.activateVersion); return; }
 
@@ -765,10 +1018,8 @@
         var count = done.length;
         var fibers = 1;
         var msg = 'ثبت شد — یک مسیر تازه 🧠';
-        if (count === 0){
-          fibers = 0;
-          msg = 'اول حداقل یک مرحله را تیک بزن';
-        } else if (count === 6 && quality !== null){
+        if (count === 0){ fibers = 0; msg = 'اول حداقل یک مرحله را تیک بزن'; }
+        else if (count === 6 && quality !== null){
           if (quality >= 500){ fibers = 2; msg = '🔥 همه مراحل + حس پرقدرت — دو مسیر ساخته شد!'; }
           else if (quality < 200){ fibers = 0; msg = '⚠️ حس ضعیف — دفعه‌ی بعد عمیق‌تر'; }
         }
@@ -789,9 +1040,7 @@
         if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
         state.dispenzaDailyProgress[dk] = [];
         try { saveState(); } catch(e2){}
-        dpRenderProgress();
-        renderFutureText();
-        renderOurNeuralPathways();
+        dpRenderProgress(); renderFutureText(); renderOurNeuralPathways();
         if (typeof toast === 'function') toast(msg);
       }
     });
