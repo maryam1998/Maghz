@@ -261,8 +261,16 @@
           '<span id="dp-session-count" style="font-size:10.5px;color:var(--muted);">۰ جلسه</span>' +
         '</div>' +
         '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">' +
-          'هفت مرحله. هر کدام را جدا تیک بزن.' +
+          'شش مرحله. هر کدام را جدا تیک بزن.' +
         '</p>' +
+
+        /* موسیقی — قبل از شروع تمرین */
+        '<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);">' +
+          '<div style="font-size:11px;font-weight:700;margin-bottom:8px;">🎵 موسیقی مدیتیشن (اختیاری)</div>' +
+          '<label class="visual-upload-btn" for="meditation-audio-input" style="font-size:11px;padding:6px 12px;">+ افزودن موسیقی</label>' +
+          '<input type="file" id="meditation-audio-input" accept="audio/*" style="display:none" onchange="handleMeditationAudio(this.files)">' +
+          '<div id="meditation-audio-wrap"></div>' +
+        '</div>' +
 
         // تایمر
         '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border-radius:12px;padding:8px 12px;margin-bottom:16px;">' +
@@ -383,7 +391,7 @@
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
             '<span class="dp-step-num">۳</span>' +
-            '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها (به خداوند معجزه‌ها متصل شو)</span>' +
+            '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها</span>' +
           '</div>' +
 
           '<div class="dp-why-box">' +
@@ -491,11 +499,6 @@
             '<span class="dp-step-num">۵</span>' +
             '<span class="dp-step-title">کاشتن بذر</span>' +
           '</div>' +
-          '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> در همان حالت هیچ‌بودن، تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری — بدون احساس نیاز یا کمبود.</span>' +
-            'فقط فکر کردن کافی نیست — باید حسِ رسیدن رو تجربه کنی. ' +
-            'وقتی خودت رو در حالتی که خواستی می‌بینی و حسش می‌کنی، باورت قوی‌تر می‌شه.' +
-          '</div>' +
 
           '<div class="dp-step-content">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🖼️ تصویرسازی</div>' +
@@ -557,12 +560,19 @@
           '<div class="neural-card" id="np-dispenza-mount"></div>' +
         '</div>' +
 
-        /* ---------- مرحله ۷ — ماموریت به ذهن ---------- */
-        '<div class="dp-step" style="margin-top:18px;">' +
+        /* دکمه نهایی */
+        '<button type="button" id="dp-complete-btn" style="width:100%;margin-top:16px;padding:14px;font-size:13.5px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px rgba(15,91,83,.2);">' +
+          '✨ ثبت جلسه‌ی امروز' +
+        '</button>' +
+        '<div id="dp-progress-hint" style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;">' +
+          '۰ از ۶ مرحله' +
+        '</div>' +
+
+        /* ---------- ماموریت به ذهن (تمرین اضافه — بعد از ثبت جلسه) ---------- */
+        '<div class="dp-step dp-bonus-step" style="margin-top:18px;">' +
           '<div class="dp-step-head">' +
-            '<button type="button" class="dp-check-btn" data-dp-check="7">○</button>' +
-            '<span class="dp-step-num">۷</span>' +
-            '<span class="dp-step-title">ماموریت به ذهن</span>' +
+            '<span style="font-size:16px;">🎯</span>' +
+            '<span class="dp-step-title">ماموریت به ذهن <span style="font-size:10px;font-weight:600;color:var(--muted);">(تمرین اضافه)</span></span>' +
           '</div>' +
           '<div class="dp-why-box">' +
             'ذهنت هر لحظه هزاران چیز رو فیلتر می‌کنه. ' +
@@ -602,22 +612,6 @@
               '</label>' +
             '</div>' +
           '</div>' +
-        '</div>' +
-
-        /* موسیقی */
-        '<div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);">' +
-          '<div style="font-size:11px;font-weight:700;margin-bottom:8px;">🎵 موسیقی مدیتیشن (اختیاری)</div>' +
-          '<label class="visual-upload-btn" for="meditation-audio-input" style="font-size:11px;padding:6px 12px;">+ افزودن موسیقی</label>' +
-          '<input type="file" id="meditation-audio-input" accept="audio/*" style="display:none" onchange="handleMeditationAudio(this.files)">' +
-          '<div id="meditation-audio-wrap"></div>' +
-        '</div>' +
-
-        /* دکمه نهایی */
-        '<button type="button" id="dp-complete-btn" style="width:100%;margin-top:16px;padding:14px;font-size:13.5px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px rgba(15,91,83,.2);">' +
-          '✨ ثبت جلسه‌ی امروز' +
-        '</button>' +
-        '<div id="dp-progress-hint" style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;">' +
-          '۰ از ۷ مرحله' +
         '</div>' +
       '</div>' +
 
@@ -857,7 +851,7 @@
       el.classList.toggle('done', isDone);
     });
     var hint = document.getElementById('dp-progress-hint');
-    if (hint) hint.textContent = toFa(done.length) + ' از ۷ مرحله';
+    if (hint) hint.textContent = toFa(done.length) + ' از ۶ مرحله';
 
     var totalDays = Math.min((state.dispenzaReadDays || []).length, 90);
     var countEl = document.getElementById('dp-session-count');
@@ -1153,7 +1147,7 @@
         var fibers = 1;
         var msg = 'ثبت شد — یک مسیر تازه 🧠';
         if (count === 0){ fibers = 0; msg = 'اول حداقل یک مرحله را تیک بزن'; }
-        else if (count === 7 && quality !== null){
+        else if (count === 6 && quality !== null){
           if (quality >= 500){ fibers = 2; msg = '🔥 همه مراحل + حس پرقدرت — دو مسیر ساخته شد!'; }
           else if (quality < 200){ fibers = 0; msg = '⚠️ حس ضعیف — دفعه‌ی بعد عمیق‌تر'; }
         }
