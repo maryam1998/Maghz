@@ -2112,6 +2112,11 @@ body.bg-mode-image #grat-root{background:transparent;}
     <symbol id="ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M4 12.5l5 5L20 6.5"/>
     </symbol>
+    <symbol id="ico-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.7"/>
+      <path d="M3 4v4.5h4.5"/>
+      <path d="M12 8v4.5l3 2"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -4971,6 +4976,16 @@ body.bg-mode-image #grat-root{background:transparent;}
         const txt = document.getElementById('cal-day-note').value.trim();
         if (txt) node.logs[key] = txt; else delete node.logs[key];
         syncCalLogToBranch(node, key, txt);
+        // همین که تمرین واقعاً توی تقویم ثبت شد، مسیر عصبی همین شاخه/هدف هم
+        // خودکار (بدون نیاز به زدن دکمه‌ی جدا) با همون روز همگام و وصل می‌شه —
+        // دقیقاً همون کاری که toggleRoutineLog برای نوار هفتگی روی نقشه انجام می‌ده.
+        const parts = key.split('-').map(Number);
+        if (parts.length===3 && !parts.some(isNaN)){
+          const g = toGregorianCal(parts[0], parts[1], parts[2]);
+          const gKey = g.gy+'-'+g.gm+'-'+g.gd;
+          const nn = ensureNodeNeural(node);
+          if (txt) nn.logs[gKey] = true; else delete nn.logs[gKey];
+        }
         scheduleMapSave();
         render();
         renderCalBody();
@@ -5165,9 +5180,10 @@ body.bg-mode-image #grat-root{background:transparent;}
   <section class="view" id="view-store">
     <div class="topbar bordered">
       <button class="icon-btn" onclick="goto('home')">‹</button>
-      <div>
+      <div style="flex:1;">
         <h1>بازی فراوانی</h1>
       </div>
+      <button class="icon-btn" onclick="goto('shop-history')" title="تاریخچه خریدها"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-history"/></svg></button>
     </div>
     <div class="custom-box">
       <div class="lbl">🛍️ خرید مورد دلخواه</div>
@@ -5213,6 +5229,27 @@ body.bg-mode-image #grat-root{background:transparent;}
       <div class="summary-line total"><span>مبلغ قابل پرداخت</span><span id="cart-total">۰</span></div>
     </div>
     <button class="primary-btn" id="cart-checkout-btn" onclick="goto('pay')" disabled>ادامه به درگاه پرداخت</button>
+  </section>
+
+  <!-- ============ SHOP PURCHASE HISTORY ============ -->
+  <section class="view" id="view-shop-history">
+    <div class="topbar bordered">
+      <button class="icon-btn" onclick="goto('store')">‹</button>
+      <div>
+        <h1>تاریخچه خریدها</h1>
+        <div class="sub">هر خریدی که ثبت کردی، دقیقاً با تاریخ و ساعتش</div>
+      </div>
+    </div>
+
+    <div class="hist-total">
+      <div class="l1">مجموع خریدهای ثبت‌شده در بازی فراوانی</div>
+      <div class="l2" id="shop-hist-total">۰</div>
+    </div>
+
+    <div id="shop-history-list" style="margin-top:8px;"></div>
+    <div id="shop-history-empty" class="empty-hint" style="display:none;">
+      هنوز هیچ خریدی ثبت نشده 🌱<br>از فروشگاه بازی فراوانی چیزی اضافه کن
+    </div>
   </section>
 
   <!-- ============ PAYMENT ============ -->
@@ -6202,6 +6239,7 @@ function goto(view){
   var __gr = document.getElementById('grat-root'); if (__gr) __gr.scrollTop = 0;
   if(view==='home') renderHome();
   if(view==='store'){ renderPendingList(); renderCart(); renderShopNeural(); }
+  if(view==='shop-history') renderShopHistory();
   if(view==='pay') renderPay();
   if(view==='history') renderHistory();
   if(view==='beliefs') renderBeliefsView();
@@ -6681,6 +6719,39 @@ function renderHistory(){
         <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">${g.shared ? '🌍' : '🔒'}</button>
       </div>` : ''}
       ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : `<span class="badge-manual">شکرگذاری</span>`}`;
+    list.appendChild(row);
+  });
+}
+
+/* ---------------- تاریخچه خریدهای فروشگاه (بازی فراوانی) ---------------- */
+function renderShopHistory(){
+  if(ensureSetup()) return;
+  const list = document.getElementById('shop-history-list');
+  const empty = document.getElementById('shop-history-empty');
+  list.innerHTML = '';
+  document.getElementById('shop-hist-total').textContent = formatMoney(spentToman());
+  const records = state.history || [];
+  if(records.length===0){
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+  [...records].reverse().forEach(r=>{
+    const firstItem = r.items && r.items[0] ? r.items[0] : null;
+    const itemCount = (r.items||[]).reduce((s,it)=>s+it.qty,0);
+    const title = firstItem
+      ? (r.items.length>1 ? `${firstItem.name} و ${(r.items.length-1).toLocaleString('fa-IR')} مورد دیگر` : firstItem.name)
+      : 'خرید';
+    const row = document.createElement('div');
+    row.className = 'tx-item';
+    row.onclick = ()=>{ showReceipt(r); goto('receipt'); };
+    row.innerHTML = `
+      <div class="ic">${firstItem ? iconOrImage(firstItem) : '🛍️'}</div>
+      <div class="mid">
+        <div class="t1">${escapeHtml(title)}</div>
+        <div class="t2">${r.day} ${r.date} - ${r.time} · ${itemCount.toLocaleString('fa-IR')} قلم</div>
+      </div>
+      <div class="amt">${formatMoney(r.total)}</div>`;
     list.appendChild(row);
   });
 }
