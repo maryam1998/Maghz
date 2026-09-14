@@ -51,19 +51,11 @@
       state.activeFutureVersionId = active ? active.id : null;
     }
 
-    if (!Array.isArray(state.dpSeedVersions)) state.dpSeedVersions = [];
-    if (!state.dpSeedVersions.length) {
-      state.dpSeedVersions.push({
-        id: 'seed_' + Date.now(),
-        text: '',
-        images: [],
-        startDate: dpTodayKey(),
-        endDate: null
-      });
-    }
-    if (!state.activeSeedVersionId) {
-      var activeSeed = state.dpSeedVersions.filter(function(v){ return !v.endDate; })[0];
-      state.activeSeedVersionId = activeSeed ? activeSeed.id : state.dpSeedVersions[0].id;
+    if (!Array.isArray(state.dpSeedArchive)) state.dpSeedArchive = [];
+    if (typeof defaultCurrentBelief === 'function'){
+      if (!state.currentBelief) state.currentBelief = defaultCurrentBelief();
+      if (!Array.isArray(state.currentBelief.visualImages)) state.currentBelief.visualImages = [];
+      if (typeof state.currentBelief.visualNote !== 'string') state.currentBelief.visualNote = '';
     }
 
     try { if (typeof saveState === 'function') saveState(); } catch(e){}
@@ -74,13 +66,6 @@
     if (!state.activeFutureVersionId) return null;
     return state.futureTextVersions.filter(function(v){
       return v.id === state.activeFutureVersionId;
-    })[0] || null;
-  }
-
-  function getActiveSeedVersion(){
-    if (!state.activeSeedVersionId) return null;
-    return state.dpSeedVersions.filter(function(v){
-      return v.id === state.activeSeedVersionId;
     })[0] || null;
   }
 
@@ -763,108 +748,71 @@
 
   /* =====================================================================
      کاشتن بذر — آرشیو متن و تصاویر
+     (روی فیلدهای واقعی برنامه کار می‌کند: state.currentBelief.visualNote
+      و state.currentBelief.visualImages — آپلود/حذف عکس و رندر گالری همان
+      توابع اصلی برنامه‌اند: handleVisualImages / removeVisualImage / renderVisualGallery)
      ===================================================================== */
   var SEED_ARCHIVE_OPEN = false;
 
-  function fileToDataURL(file){
-    return new Promise(function(resolve, reject){
-      var reader = new FileReader();
-      reader.onload = function(){ resolve(reader.result); };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
   function renderSeedSection(){
-    var v = getActiveSeedVersion();
+    if (!state.currentBelief) return;
     var textInput = document.getElementById('seed-text-input');
-    if (textInput && document.activeElement !== textInput) textInput.value = v ? (v.text || '') : '';
-    renderSeedGallery();
+    if (textInput && document.activeElement !== textInput){
+      textInput.value = state.currentBelief.visualNote || '';
+    }
     var archiveCount = document.getElementById('seed-archive-count');
-    if (archiveCount) archiveCount.textContent = toFa((state.dpSeedVersions || []).length);
+    if (archiveCount) archiveCount.textContent = toFa((state.dpSeedArchive || []).length);
     renderSeedArchiveBox();
   }
 
-  function renderSeedGallery(){
-    var gallery = document.getElementById('visual-gallery');
-    if (!gallery) return;
-    var v = getActiveSeedVersion();
-    var images = (v && v.images) ? v.images : [];
-    if (!images.length){
-      gallery.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0;">هنوز عکسی اضافه نکردی.</div>';
-      return;
-    }
-    var html = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
-    images.forEach(function(src, idx){
-      html += '<div style="position:relative;width:72px;height:72px;">' +
-        '<img src="' + src + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px;border:1px solid var(--line);">' +
-        '<button type="button" data-remove-image="' + idx + '" style="position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:#c0392b;color:#fff;border:none;font-size:11px;cursor:pointer;line-height:1;">×</button>' +
-      '</div>';
-    });
-    html += '</div>';
-    gallery.innerHTML = html;
-  }
-
-  function handleVisualImages(fileList){
-    var v = getActiveSeedVersion();
-    if (!v) return;
-    var files = Array.prototype.slice.call(fileList || []);
-    if (!files.length) return;
-    Promise.all(files.map(fileToDataURL)).then(function(dataUrls){
-      if (!Array.isArray(v.images)) v.images = [];
-      dataUrls.forEach(function(u){ v.images.push(u); });
+  function onSeedTextInput(value){
+    if (typeof updateBeliefField === 'function'){
+      updateBeliefField('visualNote', value);
+    } else if (state.currentBelief) {
+      state.currentBelief.visualNote = value;
       try { saveState(); } catch(e){}
-      renderSeedGallery();
-      if (typeof toast === 'function') toast('عکس اضافه شد ✓');
-    }).catch(function(){
-      if (typeof toast === 'function') toast('مشکلی در بارگذاری عکس پیش اومد');
-    });
-  }
-  window.handleVisualImages = handleVisualImages;
-
-  function removeSeedImage(idx){
-    var v = getActiveSeedVersion();
-    if (!v || !Array.isArray(v.images)) return;
-    v.images.splice(idx, 1);
-    try { saveState(); } catch(e){}
-    renderSeedGallery();
-  }
-
-  function saveSeedText(text){
-    var v = getActiveSeedVersion();
-    if (!v) return;
-    v.text = text;
-    try { saveState(); } catch(e){}
+    }
   }
 
   function archiveSeedVersion(){
-    var v = getActiveSeedVersion();
-    if (v && !((v.text || '').trim()) && !(v.images || []).length){
+    var cb = state.currentBelief;
+    if (!cb) return;
+    var text = (cb.visualNote || '').trim();
+    var images = (cb.visualImages || []).slice();
+    if (!text && !images.length){
       if (typeof toast === 'function') toast('اول متن یا عکسی اضافه کن');
       return;
     }
-    if (v) v.endDate = dpTodayKey();
-    var newV = { id: 'seed_' + Date.now(), text: '', images: [], startDate: dpTodayKey(), endDate: null };
-    if (!Array.isArray(state.dpSeedVersions)) state.dpSeedVersions = [];
-    state.dpSeedVersions.push(newV);
-    state.activeSeedVersionId = newV.id;
+    if (!Array.isArray(state.dpSeedArchive)) state.dpSeedArchive = [];
+    state.dpSeedArchive.push({ id: 'seed_' + Date.now(), text: text, images: images, date: dpTodayKey() });
+    cb.visualNote = '';
+    cb.visualImages = [];
     try { saveState(); } catch(e){}
+    var textInput = document.getElementById('seed-text-input');
+    if (textInput) textInput.value = '';
+    if (typeof renderVisualGallery === 'function'){ try { renderVisualGallery(); } catch(e){} }
     renderSeedSection();
     if (typeof toast === 'function') toast('بذر قبلی آرشیو شد — بذر تازه شروع کن 🌱');
   }
 
   function toggleSeedArchive(){ SEED_ARCHIVE_OPEN = !SEED_ARCHIVE_OPEN; renderSeedArchiveBox(); }
 
-  function activateSeedVersion(id){
-    var versions = state.dpSeedVersions || [];
-    var chosen = versions.filter(function(v){ return v.id === id; })[0];
-    if (!chosen) return;
-    versions.forEach(function(v){ if (v.id !== id && !v.endDate) v.endDate = dpTodayKey(); });
-    chosen.endDate = null;
-    state.activeSeedVersionId = chosen.id;
+  function restoreSeedFromArchive(id){
+    var items = state.dpSeedArchive || [];
+    var item = items.filter(function(v){ return v.id === id; })[0];
+    var cb = state.currentBelief;
+    if (!item || !cb) return;
+    cb.visualNote = item.text || '';
+    if (!Array.isArray(cb.visualImages)) cb.visualImages = [];
+    (item.images || []).forEach(function(img){
+      cb.visualImages.push({ id: Date.now() + Math.random(), src: img.src });
+    });
     try { saveState(); } catch(e){}
+    var textInput = document.getElementById('seed-text-input');
+    if (textInput) textInput.value = cb.visualNote;
+    if (typeof renderVisualGallery === 'function'){ try { renderVisualGallery(); } catch(e){} }
     renderSeedSection();
-    if (typeof toast === 'function') toast('این بذر فعال شد ✓');
+    if (typeof toast === 'function') toast('بذر بازگردانی شد ✓');
   }
 
   function renderSeedArchiveBox(){
@@ -872,26 +820,23 @@
     if (!box) return;
     if (!SEED_ARCHIVE_OPEN){ box.style.display = 'none'; return; }
     box.style.display = 'block';
-    var versions = state.dpSeedVersions || [];
-    if (!versions.length){
-      box.innerHTML = '<div style="text-align:center;font-size:11.5px;color:var(--muted);padding:10px;">هنوز بذری ذخیره نشده.</div>';
+    var items = state.dpSeedArchive || [];
+    if (!items.length){
+      box.innerHTML = '<div style="text-align:center;font-size:11.5px;color:var(--muted);padding:10px;">هنوز بذری آرشیو نشده.</div>';
       return;
     }
-    var html = '<div style="font-size:11px;font-weight:800;margin-bottom:8px;color:var(--ink);">📚 همه‌ی بذرهای تو</div>';
-    versions.slice().reverse().forEach(function(v, idx){
-      var realIdx = versions.length - 1 - idx;
-      var isActive = v.id === state.activeSeedVersionId;
-      var end = v.endDate || 'اکنون';
+    var html = '<div style="font-size:11px;font-weight:800;margin-bottom:8px;color:var(--ink);">📚 بذرهای آرشیو شده</div>';
+    items.slice().reverse().forEach(function(v, idx){
+      var realIdx = items.length - 1 - idx;
       var imgs = v.images || [];
-      html += '<div style="padding:9px;border-radius:10px;margin-bottom:6px;border:1px solid ' + (isActive ? 'var(--emerald-500)' : 'var(--line)') + ';background:' + (isActive ? 'rgba(43,191,171,.06)' : 'var(--card)') + ';">' +
+      html += '<div style="padding:9px;border-radius:10px;margin-bottom:6px;border:1px solid var(--line);background:var(--card);">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
-          '<span style="font-size:11px;font-weight:800;color:var(--ink);">بذر ' + toFa(realIdx + 1) + (isActive ? ' • فعال' : '') + '</span>' +
-          '<span style="font-size:9.5px;color:var(--muted);">' + toFa(imgs.length) + ' عکس</span>' +
+          '<span style="font-size:11px;font-weight:800;color:var(--ink);">بذر ' + toFa(realIdx + 1) + '</span>' +
+          '<span style="font-size:9.5px;color:var(--muted);">' + v.date + ' • ' + toFa(imgs.length) + ' عکس</span>' +
         '</div>' +
-        '<div style="font-size:10px;color:var(--muted);margin-bottom:6px;">' + v.startDate + ' تا ' + end + '</div>' +
         (v.text ? '<div style="font-size:11px;color:var(--ink-soft);line-height:1.6;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-style:italic;margin-bottom:6px;">«' + escapeHtml(v.text.length > 100 ? v.text.slice(0, 100) + '...' : v.text) + '»</div>' : '') +
-        (imgs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' + imgs.slice(0, 6).map(function(src){ return '<img src="' + src + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">'; }).join('') + '</div>' : '') +
-        (isActive ? '' : '<button type="button" class="btn tiny" data-activate-seed="' + v.id + '" style="width:100%;font-size:10.5px;padding:6px;">فعال کردن</button>') +
+        (imgs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' + imgs.slice(0, 6).map(function(img){ return '<img src="' + img.src + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">'; }).join('') + '</div>' : '') +
+        '<button type="button" class="btn tiny" data-restore-seed="' + v.id + '" style="width:100%;font-size:10.5px;padding:6px;">بازگردانی</button>' +
       '</div>';
     });
     box.innerHTML = html;
@@ -1198,10 +1143,8 @@
 
       if (t.id === 'new-seed-btn'){ archiveSeedVersion(); return; }
       if (t.id === 'archive-seed-btn'){ toggleSeedArchive(); return; }
-      var actSeedBtn = t.closest('[data-activate-seed]');
-      if (actSeedBtn){ activateSeedVersion(actSeedBtn.dataset.activateSeed); return; }
-      var removeImgBtn = t.closest('[data-remove-image]');
-      if (removeImgBtn){ removeSeedImage(parseInt(removeImgBtn.dataset.removeImage, 10)); return; }
+      var restoreSeedBtn = t.closest('[data-restore-seed]');
+      if (restoreSeedBtn){ restoreSeedFromArchive(restoreSeedBtn.dataset.restoreSeed); return; }
 
       if (t.id === 'dp-complete-btn'){
         var quality = getTodayEmotionQualityFor('dispenza');
@@ -1246,7 +1189,7 @@
         try { saveState(); } catch(e2){}
       }
       if (id === 'seed-text-input'){
-        saveSeedText(e.target.value);
+        onSeedTextInput(e.target.value);
       }
     });
 
