@@ -253,7 +253,7 @@
           '<span id="dp-session-count" style="font-size:10.5px;color:var(--muted);">۰ جلسه</span>' +
         '</div>' +
         '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">' +
-          'پنج مرحله. هر کدام را جدا تیک بزن.' +
+          'هفت مرحله. هر کدام را جدا تیک بزن.' +
         '</p>' +
 
         // تایمر
@@ -271,9 +271,8 @@
             '<span class="dp-step-title">رهاسازی — آرام شدن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>رهاسازی (Relaxation):</b> بدن را عمیقاً آرام می‌کنی تا از حالت «بقا» خارج شوی.</span>' +
-            'وقتی ذهنت شلوغه و بدنت در حالت اضطراب، نمی‌تونی به میدان وصل شوی. ' +
-            'با آرام کردن بدنت، از حالت «بقا» خارج می‌شی و ذهنت آماده‌ی تمرین می‌شه.' +
+            '<span class="dp-def-chip">📖 <b>رهاسازی (Relaxation):</b> بدنت را عمیقاً آرام کن تا از حالت آماده‌باش و تنش فاصله بگیری.</span>' +
+            'وقتی بدن آرام می‌شود، توجه از فشارها و افکار روزمره فاصله می‌گیرد و ذهن برای تمرکز، تجسم و تجربه‌ی درونی آماده‌تر می‌شود.' +
           '</div>' +
 
           '<div class="breath-wrap">' +
@@ -377,7 +376,6 @@
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
             '<span class="dp-step-num">۳</span>' +
             '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها</span>' +
-            '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="یادداشت بذر امروز">▾</button>' +
           '</div>' +
 
           '<div class="dp-why-box">' +
@@ -404,21 +402,27 @@
                   'خودت را با فرکانس آن هم‌راستا کن.' +
                 '</div>' +
               '</div>' +
-              '<div style="padding:10px 12px;background:rgba(94,200,240,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
-                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۳. انتخاب واقعیت</div>' +
-                '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">' +
-                  'با خواسته‌ات هم‌فرکانس شو و از میان امکان‌های پیش‌رو، آینده‌ای را که می‌خواهی انتخاب کن.' +
-                '</div>' +
-              '</div>' +
             '</div>' +
           '</div>' +
+        '</div>' +
 
-          '<div class="dp-step-content" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
-            '<div class="dp-why-box" style="margin-top:0;margin-bottom:12px;">' +
-              'اینجا چیزی که می‌خوای رو می‌نویسی — ولی جوری که انگار <b>همین حالا بهش رسیدی</b>. ' +
-              'با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن. ' +
-              'وقتی هر روز این رو می‌خونی، ذهنت باور می‌کنه که این آینده واقعاً مال توئه.' +
-            '</div>' +
+        /* ---------- مرحله ۴ — انتخاب واقعیت ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
+            '<span class="dp-step-num">۴</span>' +
+            '<span class="dp-step-title">انتخاب واقعیت</span>' +
+            '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="یادداشت بذر امروز">▾</button>' +
+          '</div>' +
+
+          '<div class="dp-why-box">' +
+            '<span class="dp-def-chip">📖 <b>انتخاب واقعیت:</b> با خواسته‌ات هم‌فرکانس شو و از میان امکان‌های پیش‌رو، آینده‌ای را که می‌خواهی انتخاب کن.</span>' +
+            'اینجا چیزی که می‌خوای رو می‌نویسی — ولی جوری که انگار <b>همین حالا بهش رسیدی</b>. ' +
+            'با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن. ' +
+            'وقتی هر روز این رو می‌خونی، ذهنت باور می‌کنه که این آینده واقعاً مال توئه.' +
+          '</div>' +
+
+          '<div class="dp-step-content" style="margin-top:12px;">' +
 
             '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;min-height:60px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
 
@@ -472,22 +476,21 @@
           '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۴ — حسش کن و تبدیل شو ---------- */
+        /* ---------- مرحله ۵ — کاشتن بذر ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
-            '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
-            '<span class="dp-step-num">۴</span>' +
-            '<span class="dp-step-title">حسش کن و تبدیل شو</span>' +
+            '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
+            '<span class="dp-step-num">۵</span>' +
+            '<span class="dp-step-title">کاشتن بذر</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
+            '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> در همان حالت هیچ‌بودن، تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری — بدون احساس نیاز یا کمبود.</span>' +
             'فقط فکر کردن کافی نیست — باید حسِ رسیدن رو تجربه کنی. ' +
-            'وقتی خودت رو در حالتی که خواستی می‌بینی و حسش می‌کنی، باورت قوی‌تر می‌شه. ' +
-            'و وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با اون هویت هم‌راستا می‌شن.' +
+            'وقتی خودت رو در حالتی که خواستی می‌بینی و حسش می‌کنی، باورت قوی‌تر می‌شه.' +
           '</div>' +
 
           '<div class="dp-step-content">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🖼️ تصویرسازی</div>' +
-            '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> در همان حالت هیچ‌بودن، تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری — بدون احساس نیاز یا کمبود.</span>' +
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
               'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای؛ هر تعداد عکس که دوست داری از آن صحنه اضافه کن — محدودیتی نیست.' +
             '</div>' +
@@ -495,10 +498,22 @@
             '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
             '<div class="visual-gallery" id="visual-gallery" style="margin-top:10px;"></div>' +
           '</div>' +
+        '</div>' +
 
-          '<div class="dp-step-content" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
+        /* ---------- مرحله ۶ — احساس فراوانی ---------- */
+        '<div class="dp-step">' +
+          '<div class="dp-step-head">' +
+            '<button type="button" class="dp-check-btn" data-dp-check="6">○</button>' +
+            '<span class="dp-step-num">۶</span>' +
+            '<span class="dp-step-title">احساس فراوانی</span>' +
+          '</div>' +
+          '<div class="dp-why-box">' +
+            '<span class="dp-def-chip">📖 <b>احساس فراوانی (Embodying):</b> احساس آن واقعیت را در بدن خودت ایجاد کن — شادی، سلامتی، آرامش — تا فرکانست با آن هماهنگ شود.</span>' +
+            'و وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با اون هویت هم‌راستا می‌شن.' +
+          '</div>' +
+
+          '<div class="dp-step-content">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">💗 حسِ حالا</div>' +
-            '<span class="dp-def-chip">📖 <b>احساس فراوانی (Embodying):</b> احساس آن واقعیت را در بدن خودت ایجاد می‌کنی — شادی، سلامتی، آرامش — تا فرکانست با آن هماهنگ شود.</span>' +
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
               'حس رسیدن را در بدنت فراخوانی کن. کدام احساس را داری؟' +
             '</div>' +
@@ -528,11 +543,11 @@
           '<div class="neural-card" id="np-dispenza-mount"></div>' +
         '</div>' +
 
-        /* ---------- مرحله ۵ — ماموریت به ذهن ---------- */
+        /* ---------- مرحله ۷ — ماموریت به ذهن ---------- */
         '<div class="dp-step" style="margin-top:18px;">' +
           '<div class="dp-step-head">' +
-            '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
-            '<span class="dp-step-num">۵</span>' +
+            '<button type="button" class="dp-check-btn" data-dp-check="7">○</button>' +
+            '<span class="dp-step-num">۷</span>' +
             '<span class="dp-step-title">ماموریت به ذهن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
@@ -588,7 +603,7 @@
           '✨ ثبت جلسه‌ی امروز' +
         '</button>' +
         '<div id="dp-progress-hint" style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;">' +
-          '۰ از ۵ مرحله' +
+          '۰ از ۷ مرحله' +
         '</div>' +
       '</div>' +
 
@@ -736,7 +751,7 @@
       el.classList.toggle('done', isDone);
     });
     var hint = document.getElementById('dp-progress-hint');
-    if (hint) hint.textContent = toFa(done.length) + ' از ۵ مرحله';
+    if (hint) hint.textContent = toFa(done.length) + ' از ۷ مرحله';
 
     var totalDays = Math.min((state.dispenzaReadDays || []).length, 90);
     var countEl = document.getElementById('dp-session-count');
@@ -1026,7 +1041,7 @@
         var fibers = 1;
         var msg = 'ثبت شد — یک مسیر تازه 🧠';
         if (count === 0){ fibers = 0; msg = 'اول حداقل یک مرحله را تیک بزن'; }
-        else if (count === 5 && quality !== null){
+        else if (count === 7 && quality !== null){
           if (quality >= 500){ fibers = 2; msg = '🔥 همه مراحل + حس پرقدرت — دو مسیر ساخته شد!'; }
           else if (quality < 200){ fibers = 0; msg = '⚠️ حس ضعیف — دفعه‌ی بعد عمیق‌تر'; }
         }
