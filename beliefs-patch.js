@@ -255,6 +255,7 @@
             '<span class="dp-step-title">رهاسازی — آرام شدن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
+            '<span class="dp-def-chip">📖 <b>رهاسازی (Relaxation):</b> بدن را عمیقاً آرام می‌کنی تا از حالت «بقا» خارج شوی.</span>' +
             'وقتی ذهنت شلوغه و بدنت در حالت اضطراب، نمی‌تونی به میدان وصل شوی. ' +
             'با آرام کردن بدنت، از حالت «بقا» خارج می‌شی و ذهنت آماده‌ی تمرین می‌شه.' +
           '</div>' +
@@ -263,7 +264,7 @@
             '<div class="breath-circle" id="breath-circle">' +
               '<div class="breath-inner">' +
                 '<div class="breath-phase" id="breath-phase-text">آماده</div>' +
-                '<div class="breath-counter" id="breath-counter-text">۴-۷-۸</div>' +
+                '<div class="breath-hint" id="breath-hint-text">برای شروع دکمه را بزن</div>' +
               '</div>' +
               '<svg class="breath-progress" viewBox="0 0 100 100">' +
                 '<circle cx="50" cy="50" r="46" stroke="rgba(255,255,255,0.1)" stroke-width="3" fill="none"/>' +
@@ -287,6 +288,7 @@
           '</div>' +
 
           '<div class="dp-why-box">' +
+            '<span class="dp-def-chip">📖 <b>هیچ شدن (Becoming Nothing):</b> توجه را از بدن، محیط و هویت «من» برمی‌داری و به آگاهی محض اجازه می‌دهی گسترش یابد.</span>' +
             'وقتی خودت را با نام، شغل، بدن، داستان‌های گذشته و نگرانی‌های آینده تعریف می‌کنی، ' +
             'سیگنالی از «گذشته» به میدان می‌فرستی — و همان الگوهای تکراری را دریافت می‌کنی. ' +
             '«هیچ شدن» یعنی رها کردن این هویت‌های شرطی‌شده، تا به آگاهی محض تبدیل شوی.' +
@@ -314,27 +316,27 @@
           '<div class="nothing-steps" id="nothing-steps" style="margin:14px auto 0;max-width:340px;">' +
             '<button type="button" class="nothing-step" data-nothing-step="body">' +
               '<span class="nothing-step-num">۱</span>' +
-              '<span class="nothing-step-txt"><b>No body</b><br><span style="font-size:10.5px;color:var(--muted);">من بدنم نیستم. توجه از بدن و حواس جسمی جدا می‌شود.</span></span>' +
+              '<span class="nothing-step-txt"><b>No body</b><br><span style="font-size:10.5px;color:var(--muted);">من بدنم نیستم. توجه از بدن، دردها و حواس جسمی جدا می‌شود.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="one">' +
               '<span class="nothing-step-num">۲</span>' +
-              '<span class="nothing-step-txt"><b>No one</b><br><span style="font-size:10.5px;color:var(--muted);">من شخصیت، اسم، نقش و داستان‌هایم نیستم.</span></span>' +
+              '<span class="nothing-step-txt"><b>No one</b><br><span style="font-size:10.5px;color:var(--muted);">من آن شخصیت، اسم، نقش، گذشته و داستان‌هایم نیستم. «هیچ‌کس» بودن یعنی رها شدن از «منِ» ساخته‌شده.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="thing">' +
               '<span class="nothing-step-num">۳</span>' +
-              '<span class="nothing-step-txt"><b>No thing</b><br><span style="font-size:10.5px;color:var(--muted);">وابستگی به اشیاء و دارایی‌ها رها می‌شود.</span></span>' +
+              '<span class="nothing-step-txt"><b>No thing</b><br><span style="font-size:10.5px;color:var(--muted);">من هیچ‌چیز نیستم. وابستگی به اشیاء، دارایی‌ها و شرایط بیرونی رها می‌شود.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="where">' +
               '<span class="nothing-step-num">۴</span>' +
-              '<span class="nothing-step-txt"><b>No where</b><br><span style="font-size:10.5px;color:var(--muted);">آگاهی به اینجا و آنجا گره نخورده است.</span></span>' +
+              '<span class="nothing-step-txt"><b>No where</b><br><span style="font-size:10.5px;color:var(--muted);">من در مکان خاصی نیستم. آگاهی به اینجا و آنجا گره نخورده است.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="time">' +
               '<span class="nothing-step-num">۵</span>' +
-              '<span class="nothing-step-txt"><b>In no time</b><br><span style="font-size:10.5px;color:var(--muted);">گذشته و آینده رها می‌شوند. فقط حالِ بی‌زمان می‌ماند.</span></span>' +
+              '<span class="nothing-step-txt"><b>In no time</b><br><span style="font-size:10.5px;color:var(--muted);">من در زمان نیستم. گذشته و آینده رها می‌شوند و فقط حالِ بی‌زمان می‌ماند.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
           '</div>' +
@@ -363,6 +365,7 @@
           '</div>' +
 
           '<div class="dp-why-box">' +
+            '<span class="dp-def-chip">📖 <b>اتصال (Connection):</b> در این حالت خالی، آگاهی‌ات را به قلمرو ممکن‌ها وصل می‌کنی.</span>' +
             'الان که از هویتِ گذشته و از جای «کمبود» خالی شدی، دیگه به‌عنوان «کسی که چیزی نداره» درخواست نمی‌کنی. ' +
             'به‌عنوان <b>آگاهی خالص</b>، خودت را به قلمرو ممکن‌ها وصل می‌کنی — ' +
             'میدانی که همه‌ی احتمالات از قبل در آن وجود دارند. ' +
@@ -479,6 +482,7 @@
 
           '<div class="dp-step-content">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🖼️ تصویرسازی</div>' +
+            '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> در همان حالت هیچ‌بودن، تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری — بدون احساس نیاز یا کمبود.</span>' +
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
               'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای. اگر بخواهی، عکس‌هایی از آن صحنه اضافه کن.' +
             '</div>' +
@@ -489,6 +493,7 @@
 
           '<div class="dp-step-content" style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">💗 حسِ حالا</div>' +
+            '<span class="dp-def-chip">📖 <b>احساس فراوانی (Embodying):</b> احساس آن واقعیت را در بدن خودت ایجاد می‌کنی — شادی، سلامتی، آرامش — تا فرکانست با آن هماهنگ شود.</span>' +
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
               'حس رسیدن را در بدنت فراخوانی کن. کدام احساس را داری؟' +
             '</div>' +
@@ -607,18 +612,19 @@
         '.dp-check-btn{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.15s;}' +
         '.dp-check-btn.done{background:var(--emerald-500);border-color:var(--emerald-500);color:#fff;}' +
         '.dp-why-box{margin-top:12px;padding:11px 13px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;font-size:11.5px;color:var(--ink-soft);line-height:1.8;}' +
+        '.dp-def-chip{display:block;font-size:11px;font-weight:700;color:var(--emerald-700,#0f5b53);background:rgba(244,197,66,.14);border:1px solid rgba(244,197,66,.4);border-radius:8px;padding:6px 9px;margin-bottom:8px;line-height:1.75;}' +
         '.dp-step-content{margin-top:12px;font-size:12.5px;color:var(--ink-soft);line-height:1.8;}' +
         '.dp-expand-icon{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.2s;}' +
         '.dp-expand-icon.open{transform:rotate(180deg);background:var(--emerald-100);color:var(--emerald-700);border-color:var(--emerald-500);}' +
         '.breath-wrap{display:flex;flex-direction:column;align-items:center;margin-top:16px;gap:14px;}' +
-        '.breath-circle{position:relative;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle, rgba(43,191,171,.08), transparent 70%);display:flex;align-items:center;justify-content:center;transition:transform .3s ease;}' +
-        '.breath-circle.inhale{transform:scale(1.12);}' +
-        '.breath-circle.exhale{transform:scale(0.92);}' +
+        '.breath-circle{position:relative;width:172px;height:172px;border-radius:50%;background:radial-gradient(circle, rgba(43,191,171,.10), transparent 72%);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out;will-change:transform;}' +
+        '.breath-circle.inhale{transform:scale(1.14);transition-timing-function:ease-out;}' +
+        '.breath-circle.exhale{transform:scale(0.90);transition-timing-function:ease-in;}' +
         '.breath-inner{position:relative;text-align:center;z-index:2;}' +
-        '.breath-phase{font-size:12.5px;font-weight:800;color:var(--emerald-700);margin-bottom:2px;}' +
-        '.breath-counter{font-size:22px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;}' +
+        '.breath-phase{font-size:16px;font-weight:800;color:var(--emerald-700);margin-bottom:4px;letter-spacing:.3px;transition:opacity .5s ease;}' +
+        '.breath-hint{font-size:11px;color:var(--muted);transition:opacity .5s ease;}' +
         '.breath-progress{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}' +
-        '.breath-progress circle{transition:stroke-dashoffset .95s linear;}' +
+        '.breath-progress circle{transition:stroke-dashoffset 4s linear;}' +
         '.breath-controls{display:flex;flex-direction:column;align-items:center;gap:6px;}' +
         /* Nothing steps با توضیح دو خطی */
         '.nothing-step{padding:10px 12px;text-align:right;align-items:flex-start;}' +
@@ -794,64 +800,60 @@
   var breathTimer = null;
   var breathPhase = 'idle';
 
-  function setBreathUI(phase, count){
+  // به‌جای شمارش معکوس عددی، هر فاز فقط یک‌بار در ابتدایش UI را تنظیم می‌کند
+  // و انیمیشن (اندازه‌ی دایره + حلقه‌ی پیشرفت) به آرامی و پیوسته در طول کل مدت آن فاز اجرا می‌شود.
+  function setBreathUI(phase, seconds){
     var circle = document.getElementById('breath-circle');
     var phaseEl = document.getElementById('breath-phase-text');
-    var counterEl = document.getElementById('breath-counter-text');
+    var hintEl = document.getElementById('breath-hint-text');
     var prog = document.getElementById('breath-progress-circle');
-    if (!circle || !phaseEl || !counterEl || !prog) return;
+    if (!circle || !phaseEl || !hintEl || !prog) return;
     circle.classList.remove('inhale', 'exhale');
+
     var labels = { idle:'آماده', inhale:'دم', hold:'نگه‌دار', exhale:'بازدم' };
+    var hints  = { idle:'برای شروع دکمه را بزن', inhale:'به‌آرامی نفس بکش', hold:'نفس را نگه‌ دار', exhale:'به‌آرامی رها کن' };
     phaseEl.textContent = labels[phase] || '';
-    if (phase === 'idle'){ counterEl.textContent = '۴-۷-۸'; prog.style.strokeDashoffset = 289; return; }
-    counterEl.textContent = toFa(count);
+    hintEl.textContent = hints[phase] || '';
+
+    var dur = (phase === 'idle') ? .6 : seconds;
+    circle.style.transitionDuration = dur + 's';
+    prog.style.transitionDuration = dur + 's';
+
+    if (phase === 'idle'){
+      prog.style.strokeDashoffset = 289;
+      return;
+    }
     if (phase === 'inhale'){
       circle.classList.add('inhale');
-      var p = 1 - (count / 4);
-      prog.style.strokeDashoffset = 289 * (1 - p);
+      prog.style.strokeDashoffset = 0;       // حلقه در طول ۴ ثانیه‌ی دم، به‌آرامی کامل می‌شود
     } else if (phase === 'hold'){
-      var p2 = 1 - (count / 7);
-      prog.style.strokeDashoffset = 289 * (1 - p2);
+      prog.style.strokeDashoffset = 0;       // حلقه کامل و دایره در همان اندازه‌ی دم می‌ماند
     } else if (phase === 'exhale'){
       circle.classList.add('exhale');
-      var p3 = count / 8;
-      prog.style.strokeDashoffset = 289 * p3;
+      prog.style.strokeDashoffset = 289;     // حلقه در طول ۸ ثانیه‌ی بازدم، به‌آرامی خالی می‌شود
     }
   }
 
   function runBreathCycle(){
     breathPhase = 'inhale';
-    var cnt = 4;
-    setBreathUI('inhale', cnt);
-    breathTimer = setInterval(function(){
-      cnt--;
-      if (cnt <= 0){
-        clearInterval(breathTimer); breathTimer = null;
-        var h = 7;
-        setBreathUI('hold', h);
-        breathTimer = setInterval(function(){
-          h--;
-          if (h <= 0){
-            clearInterval(breathTimer); breathTimer = null;
-            var e = 8;
-            setBreathUI('exhale', e);
-            breathTimer = setInterval(function(){
-              e--;
-              if (e <= 0){
-                clearInterval(breathTimer); breathTimer = null;
-                runBreathCycle();
-              } else setBreathUI('exhale', e);
-            }, 1000);
-          } else setBreathUI('hold', h);
-        }, 1000);
-      } else setBreathUI('inhale', cnt);
-    }, 1000);
+    setBreathUI('inhale', 4);
+    breathTimer = setTimeout(function(){
+      breathPhase = 'hold';
+      setBreathUI('hold', 7);
+      breathTimer = setTimeout(function(){
+        breathPhase = 'exhale';
+        setBreathUI('exhale', 8);
+        breathTimer = setTimeout(function(){
+          runBreathCycle();
+        }, 8000);
+      }, 7000);
+    }, 4000);
   }
 
   function startBreathing(){
     var btn = document.getElementById('breath-start-btn');
     if (breathTimer){
-      clearInterval(breathTimer); breathTimer = null;
+      clearTimeout(breathTimer); breathTimer = null;
       breathPhase = 'idle'; setBreathUI('idle', 0);
       if (btn) btn.textContent = '▶ شروع تنفس';
       return;
