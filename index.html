@@ -5178,7 +5178,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     </div>
 
     <div class="section-label">
-      <h2><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>مسیر عصبی شکرگذاری</h2>
+      <h2><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>انجام این تمرین</h2>
     </div>
     <div class="neural-card" id="np-gratitude-mount"></div>
 
@@ -5193,8 +5193,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     <div class="topbar bordered">
       <button class="icon-btn" onclick="goto('home')">‹</button>
       <div>
-        <h1>فروشگاه فراوانی</h1>
-        <div class="sub">هر چیزی که در زندگی داری، اینجا "بخر"</div>
+        <h1>بازی فراوانی</h1>
       </div>
     </div>
     <div class="custom-box">
@@ -5214,7 +5213,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       <button class="btn full" style="margin-bottom:10px;" onclick="openBankCalendar('shop')">📅 تقویم بازی فراوانی</button>
       <div class="section-label" style="margin:10px 0 6px;">
-        <h2 style="font-size:13px;margin:0;"><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>مسیر عصبی بازی فراوانی</h2>
+        <h2 style="font-size:13px;margin:0;"><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>انجام این تمرین</h2>
       </div>
       <div class="neural-card" id="np-shop-mount" style="margin-bottom:10px;"></div>
 
@@ -5433,7 +5432,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         <button class="today-btn2" id="future-read-btn" style="display:none;" onclick="markFutureRead()">📖 امروز خواندم</button>
       </div>
       <button class="btn full" style="margin-top:10px;" onclick="openBankCalendar('beliefs')">📅 تقویم خواندن</button>
-      <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 مسیر عصبی تمرین باب پراکتور</h2></div>
+      <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2></div>
       <div class="neural-card" id="np-belief-mount"></div>
     </div>
 
@@ -5526,7 +5525,7 @@ body.bg-mode-image #grat-root{background:transparent;}
           </div>
         </div>
         <button class="btn full" style="margin-top:10px;" onclick="openBankCalendar('tracking')">📅 تقویم ردیابی</button>
-        <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 مسیر عصبی ردیابی</h2></div>
+        <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2></div>
         <div class="neural-card" id="np-tracking-mount"></div>
       </div>
 
@@ -5543,7 +5542,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         <p class="bf-desc" style="margin-right:36px;">حالا در همان حال بمان و همان آدمی که می‌خواهی بشوی را با تمام وجود تجربه کن. همین که انجامش دادی، یک رشته‌ی جدید در مدار عصبی‌ات ساخته شد.</p>
         <button class="today-btn2" style="width:calc(100% - 36px); margin-right:36px; margin-top:8px;" onclick="markDispenzaDone()">🧠 امروز این پروتکل را کامل کردم</button>
         <div class="section-label" style="margin:14px 0 6px; margin-right:36px;">
-          <h2 style="font-size:13px;margin:0;">🧬 مدار عصبی مدیتیشن دیسپنزا</h2>
+          <h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2>
         </div>
         <div class="neural-card" id="np-dispenza-mount" style="margin-right:36px;"></div>
       </div>
@@ -5558,7 +5557,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         <input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">
       </div>
       <div class="visual-gallery" id="visual-gallery"></div>
-      <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 مسیر عصبی تصویرسازی</h2></div>
+      <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2></div>
       <div class="neural-card" id="np-visual-mount"></div>
     </div>
 
@@ -7222,8 +7221,10 @@ function renderBeliefsView(){
   if(!state.currentBelief) state.currentBelief = defaultCurrentBelief();
   const cb = state.currentBelief;
   document.getElementById('b-visual-note').value = cb.visualNote || '';
-  renderVisualGallery();
-  renderMeditationAudio();
+  // مسیرهای عصبی و بخش‌های سبک رو اول رندر می‌کنیم تا فوراً دیده بشن؛ گالری
+  // عکس‌ها و پلیر موسیقی (که به‌صورت base64 حجیم‌ان و رندرشون سنگین‌تره) رو
+  // با یک تاخیر خیلی کوتاه (بعد از رنگ اول صفحه) رندر می‌کنیم تا این بخش‌های
+  // سنگین جلوی نمایش سریع بقیه‌ی UI رو نگیرن.
   renderTrackingList();
   renderTrackingState();
   renderAllNeuralPathways();
@@ -7232,6 +7233,10 @@ function renderBeliefsView(){
   const sw = document.getElementById('alarm-switch');
   sw.classList.toggle('on', !!state.alarmEnabled);
   document.getElementById('alarm-time').value = state.alarmTime;
+  setTimeout(function(){
+    renderVisualGallery();
+    renderMeditationAudio();
+  }, 0);
 }
 
 /* ---------------- future-life text: 90-day reading protocol ---------------- */
