@@ -1,6 +1,5 @@
 // App.jsx
-// نسخه 13.0 — با پرسش‌های چند انتخابی در چرخه
-// بدون AI — کاملاً Rule-Based
+// نسخه 14.0 — کامل با CheckInView گروه‌بندی‌شده و LifeCycleDetailView عمیق
 
 import React, { useState, useEffect, useMemo } from "react";
 
@@ -27,6 +26,7 @@ import { getLifeCycleDetail } from "./LIFE_CYCLES_DETAIL";
 import { mergeAdditions } from "./SCHEMAS_ADDITIONS";
 import { mergeTriggers } from "./TRIGGERS_EXTRA";
 import { getTodayReminders } from "./DAILY_REMINDERS";
+import { CHECKIN_GROUPS, SHORT_CHECKIN_NAMES } from "./CHECKIN_OPTIONS";
 
 /* =========================================================
  * ۰. ثبت برچسب‌ها + اسم ساده
@@ -119,6 +119,22 @@ function Chip({ children, active, onClick, color = "#1a3d2c" }) {
   );
 }
 
+function SectionTitle({ icon, title, color = "#000" }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+      <div style={{ fontSize: 18 }}>{icon}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color }}>{title}</div>
+    </div>
+  );
+}
+
+const STAGE_COLORS = {
+  1: "#3b82f6",
+  2: "#8b5cf6",
+  3: "#f59e0b",
+  4: "#10b981"
+};
+
 /* =========================================================
  * ۲. صفحه ریشه
  * ========================================================= */
@@ -159,9 +175,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
-          🧸 در کودکی چه اتفاقی افتاد؟
-        </div>
+        <SectionTitle icon="🧸" title="در کودکی چه اتفاقی افتاد؟" />
         {origin.childhood.map((c, i) => (
           <div key={i} style={{
             fontSize: 14, lineHeight: 1.9, color: "#000",
@@ -172,9 +186,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
 
       {origin.familyPatterns && origin.familyPatterns.length > 0 && (
         <Card style={{ marginTop: 12, background: "#f3e8ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            👨‍👩‍👧 الگوی خانوادگی
-          </div>
+          <SectionTitle icon="👨‍👩‍👧" title="الگوی خانوادگی" color="#6b21a8" />
           {origin.familyPatterns.map((p, i) => (
             <div key={i} style={{
               fontSize: 14, lineHeight: 1.9, color: "#000",
@@ -186,18 +198,14 @@ function OriginView({ schemaId, onBack, onSOS }) {
       )}
 
       <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
-          💡 کودکی که بودی، این را یاد گرفت
-        </div>
+        <SectionTitle icon="💡" title="کودکی که بودی، این را یاد گرفت" color="#92400e" />
         <div style={{ fontSize: 15, lineHeight: 1.9, color: "#000", fontStyle: "italic" }}>
           {origin.whatChildLearned}
         </div>
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
-          🔊 این صداها برایت آشناست؟
-        </div>
+        <SectionTitle icon="🔊" title="این صداها برایت آشناست؟" />
         {origin.innerVoice.map((v, i) => (
           <div key={i} style={{
             fontSize: 14, lineHeight: 1.9, color: "#000",
@@ -207,9 +215,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
-          🕊️ کودکی که بودی، این‌ها را لازم داشت
-        </div>
+        <SectionTitle icon="🕊️" title="کودکی که بودی، این‌ها را لازم داشت" />
         {origin.whatWasMissing.map((w, i) => (
           <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
             • {w}
@@ -223,9 +229,7 @@ function OriginView({ schemaId, onBack, onSOS }) {
 
       {nextSteps.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: "#000" }}>
-            🕊️ حالا باید چکار کنی؟
-          </div>
+          <SectionTitle icon="🕊️" title="حالا باید چکار کنی؟" color="#065f46" />
           {nextSteps.map((step, i) => (
             <div key={i} style={{
               fontSize: 14, lineHeight: 1.9, color: "#000",
@@ -266,12 +270,8 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
     health: "#ef4444"
   };
 
-  const featured = cycles.slice(0, 2);
-
   return (
     <Shell title="چرخه‌های زندگی" onBack={onBack} showSOS onSOS={onSOS}>
-
-      {/* ─── Hero ─── */}
       <Card style={{
         background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
         color: "#fff",
@@ -288,43 +288,30 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
         </div>
       </Card>
 
-      {/* ─── دسته‌بندی ─── */}
-      <div style={{
-        display: "flex",
-        gap: 6,
-        overflowX: "auto",
-        paddingBottom: 8,
-        marginBottom: 12
-      }}>
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 12 }}>
         {LIFE_CYCLE_CATEGORIES.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => setCategory(c.id)}
-            style={{
-              flexShrink: 0,
-              padding: "8px 14px",
-              borderRadius: 20,
-              border: "none",
-              background: category === c.id ? "#1a3d2c" : "#fff",
-              color: category === c.id ? "#fff" : "#000",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "inherit",
-              border: category === c.id ? "none" : "1px solid #e5e5e5",
-              transition: "all .15s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: 6
-            }}
-          >
+          <button key={c.id} onClick={() => setCategory(c.id)} style={{
+            flexShrink: 0,
+            padding: "8px 14px",
+            borderRadius: 20,
+            border: category === c.id ? "none" : "1px solid #e5e5e5",
+            background: category === c.id ? "#1a3d2c" : "#fff",
+            color: category === c.id ? "#fff" : "#000",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            transition: "all .15s ease",
+            display: "flex",
+            alignItems: "center",
+            gap: 6
+          }}>
             <span>{c.emoji}</span>
             <span>{c.label}</span>
           </button>
         ))}
       </div>
 
-      {/* ─── لیست ─── */}
       {cycles.length === 0 && (
         <Card style={{ textAlign: "center", padding: 30 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
@@ -349,67 +336,29 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
             cursor: "pointer",
             fontFamily: "inherit",
             position: "relative",
-            overflow: "hidden",
-            transition: "all .15s ease"
+            overflow: "hidden"
           }}>
-            {/* نوار رنگی کنار */}
             <div style={{
-              position: "absolute",
-              top: 0,
-              right: 0,
-              width: 4,
-              height: "100%",
-              background: color
+              position: "absolute", top: 0, right: 0,
+              width: 4, height: "100%", background: color
             }} />
-
-            {/* دسته */}
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              marginBottom: 10
-            }}>
+            <div style={{ marginBottom: 10 }}>
               <span style={{
-                fontSize: 10,
-                padding: "3px 10px",
-                borderRadius: 20,
-                background: color + "15",
-                color: color,
-                fontWeight: 700
+                fontSize: 10, padding: "3px 10px", borderRadius: 20,
+                background: color + "15", color: color, fontWeight: 700
               }}>
                 {cycle.categoryLabel}
               </span>
             </div>
-
-            {/* عنوان */}
-            <div style={{
-              fontSize: 15,
-              fontWeight: 700,
-              lineHeight: 1.6,
-              color: "#000",
-              marginBottom: 8
-            }}>
+            <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.6, color: "#000", marginBottom: 8 }}>
               {cycle.title}
             </div>
-
-            {/* توضیح */}
-            <div style={{
-              fontSize: 12,
-              color: "#666",
-              lineHeight: 1.8
-            }}>
+            <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8 }}>
               {cycle.shortDescription}
             </div>
-
-            {/* نمایش فلش */}
             <div style={{
-              marginTop: 12,
-              fontSize: 11,
-              color: color,
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              gap: 4
+              marginTop: 12, fontSize: 11, color: color,
+              fontWeight: 700, display: "flex", alignItems: "center", gap: 4
             }}>
               <span>مشاهده کامل</span>
               <span>←</span>
@@ -417,32 +366,17 @@ function LifeCyclesView({ onBack, onPickCycle, onSOS }) {
           </button>
         );
       })}
-
-      {/* ─── پیام پایانی ─── */}
-      {cycles.length > 0 && (
-        <Card style={{
-          marginTop: 12,
-          background: "#f6f6f6",
-          padding: 16,
-          textAlign: "center"
-        }}>
-          <div style={{ fontSize: 12, color: "#000", lineHeight: 1.9 }}>
-            هر بار که چرخه‌ای رو ببینی،
-            <br />
-            یک قدم ازش فاصله گرفتی.
-          </div>
-        </Card>
-      )}
     </Shell>
   );
 }
 
 /* =========================================================
- * ۴. جزئیات چرخه زندگی
+ * ۴. جزئیات چرخه — نسخه عمیق با stages
  * ========================================================= */
 
 function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
   const cycle = getLifeCycle(cycleId);
+  const detail = getLifeCycleDetail(cycleId);
 
   if (!cycle) {
     return (
@@ -458,88 +392,328 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
 
   return (
     <Shell title={cycle.categoryLabel} onBack={onBack} showSOS onSOS={onSOS}>
-      <Card>
-        <h2 style={{ margin: "0 0 10px", fontSize: 18, lineHeight: 1.7 }}>
+      {/* Hero */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 22,
+        marginBottom: 14
+      }}>
+        <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 6 }}>
+          {cycle.categoryLabel}
+        </div>
+        <h2 style={{ margin: "0 0 10px", fontSize: 19, lineHeight: 1.6, fontWeight: 700 }}>
           {cycle.title}
         </h2>
-        <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
           {cycle.shortDescription}
-        </div>
+        </p>
       </Card>
 
-      {cycle.examples && cycle.examples.length > 0 && (
-        <Card style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
-            آیا این جمله‌ها برای تو آشناست؟
-          </div>
+      {/* آیا آشناست */}
+      {cycle.examples?.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="💭" title="آیا این جمله‌ها برایت آشناست؟" />
           {cycle.examples.map((ex, i) => (
             <div key={i} style={{
-              fontSize: 14, lineHeight: 1.9, padding: "8px 0",
-              borderBottom: i < cycle.examples.length - 1 ? "1px dashed #eee" : "none",
-              color: "#000"
+              fontSize: 14, lineHeight: 1.9, padding: "10px 12px",
+              marginBottom: 6, background: "#fafafa",
+              borderRadius: 8, color: "#000",
+              borderRight: "3px solid #e5e5e5"
             }}>«{ex}»</div>
           ))}
         </Card>
       )}
 
-      {cycle.childhood && cycle.childhood.length > 0 && (
-        <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            🧸 احتمالاً در کودکی این‌ها را تجربه کرده
-          </div>
+      {/* ریشه */}
+      {detail?.rootWound && (
+        <Card style={{ marginBottom: 12, background: "#eef4ff", border: "1px solid #bfdbfe" }}>
+          <SectionTitle icon="🧸" title="این الگو از کجا آمد؟" color="#1e40af" />
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.95, color: "#000" }}>
+            {detail.rootWound}
+          </p>
+        </Card>
+      )}
+
+      {/* کودکی */}
+      {cycle.childhood?.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🌱" title="در کودکی چه اتفاقی افتاد؟" />
           {cycle.childhood.map((c, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
-              • {c}
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, paddingRight: 10,
+              borderRight: "2px solid #a7f3d0"
+            }}>{c}</div>
+          ))}
+        </Card>
+      )}
+
+      {/* چرخه */}
+      {cycle.cycle?.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🔁" title="چرخه‌ی این الگو" />
+          {cycle.cycle.map((step, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: "50%",
+                background: "#1a3d2c", color: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, fontWeight: 700, flexShrink: 0
+              }}>{toFa(i + 1)}</div>
+              <div style={{
+                flex: 1, padding: "10px 12px", background: "#f6f6f6",
+                borderRadius: 8, fontSize: 13, lineHeight: 1.7, color: "#000"
+              }}>{step}</div>
             </div>
           ))}
         </Card>
       )}
 
-      {cycle.cycle && cycle.cycle.length > 0 && (
-        <Card style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>
-            🔁 چرخه‌ی این الگو
+      {/* نفع پنهان */}
+      {detail?.hiddenPayoff?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#fffbeb", border: "1px solid #fde68a" }}>
+          <SectionTitle icon="🎭" title="چرا ذهنت ولش نمی‌کنه؟" color="#92400e" />
+          <div style={{ fontSize: 12, color: "#78350f", marginBottom: 10, fontStyle: "italic" }}>
+            هر الگویی که ادامه داره، یک نفع پنهان داره — وگرنه تا حالا ترکش کرده بودی:
           </div>
-          {cycle.cycle.map((step, i) => (
+          {detail.hiddenPayoff.map((p, i) => (
             <div key={i} style={{
-              padding: "10px 12px", background: "#f6f6f6",
-              borderRadius: 8, fontSize: 13, lineHeight: 1.7,
-              marginBottom: 6, color: "#000"
-            }}>{step}</div>
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, paddingRight: 10,
+              borderRight: "3px solid #f59e0b"
+            }}>• {p}</div>
           ))}
         </Card>
       )}
 
-      {cycle.whyItRepeats && cycle.whyItRepeats.length > 0 && (
-        <Card style={{ marginTop: 12, background: "#fef3f2" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
-            🤔 چرا این چرخه تکرار می‌شود؟
+      {/* هزینه پنهان */}
+      {detail?.hiddenCost?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#fef2f2", border: "1px solid #fecaca" }}>
+          <SectionTitle icon="💔" title="چه چیزی داری از دست می‌دی؟" color="#991b1b" />
+          {detail.hiddenCost.map((c, i) => (
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, paddingRight: 10,
+              borderRight: "3px solid #ef4444"
+            }}>• {c}</div>
+          ))}
+        </Card>
+      )}
+
+      {/* دام‌های فکری */}
+      {detail?.thinkingTraps?.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🧠" title="دام‌های فکری" />
+          <div style={{ fontSize: 12, color: "#666", marginBottom: 10, fontStyle: "italic" }}>
+            این‌ها جملاتی هستند که ذهنت بهت می‌گه تا این چرخه ادامه پیدا کنه:
           </div>
+          {detail.thinkingTraps.map((t, i) => (
+            <div key={i} style={{
+              fontSize: 13, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, padding: "10px 12px",
+              background: "#f3e8ff", borderRadius: 8,
+              borderRight: "3px solid #8b5cf6"
+            }}>{t}</div>
+          ))}
+        </Card>
+      )}
+
+      {/* سیگنال‌های بدنی */}
+      {detail?.bodySignals?.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🫀" title="بدنت کِی خبر می‌ده؟" />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {detail.bodySignals.map((s, i) => (
+              <div key={i} style={{
+                fontSize: 12, padding: "7px 12px",
+                background: "#fce7f3", color: "#831843",
+                borderRadius: 20, fontWeight: 500
+              }}>{s}</div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* چرا تکرار */}
+      {cycle.whyItRepeats?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#fef3c7" }}>
+          <SectionTitle icon="🤔" title="چرا این چرخه تکرار می‌شود؟" />
           {cycle.whyItRepeats.map((w, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
+            <div key={i} style={{ fontSize: 13, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
               • {w}
             </div>
           ))}
         </Card>
       )}
 
-      {relatedSchemas.length > 0 && (
-        <Card style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
-            این چرخه به این الگوها مربوط است
+      {/* مراحل شکستن */}
+      {detail?.breakingStages?.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            marginBottom: 12, paddingRight: 4
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 12,
+              background: "linear-gradient(135deg, #0a3d38, #178a7c)",
+              color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18
+            }}>🚀</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#000" }}>
+                مراحل شکستن این چرخه
+              </div>
+              <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>
+                {toFa(detail.breakingStages.length)} مرحله — مرحله‌به‌مرحله، نه یک‌جا
+              </div>
+            </div>
           </div>
+
+          {detail.breakingStages.map((stage) => (
+            <Card key={stage.n} style={{
+              marginBottom: 10, padding: 16,
+              borderRight: `4px solid ${STAGE_COLORS[stage.n] || "#1a3d2c"}`,
+              background: "#fff"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                <div style={{
+                  width: 34, height: 34, borderRadius: 10,
+                  background: STAGE_COLORS[stage.n] || "#1a3d2c",
+                  color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: 700, fontSize: 14, flexShrink: 0
+                }}>{toFa(stage.n)}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#000", marginBottom: 2 }}>
+                    {stage.title}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#666" }}>
+                    ⏱ {stage.duration}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                padding: 10, background: "#f0f7f4",
+                borderRadius: 8, marginBottom: 10,
+                fontSize: 12.5, color: "#000", lineHeight: 1.7,
+                borderRight: "3px solid #10b981"
+              }}>
+                <strong>🎯 هدف:</strong> {stage.goal}
+              </div>
+
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 6, fontWeight: 600 }}>
+                اقدام‌ها:
+              </div>
+              {stage.actions.map((a, i) => (
+                <div key={i} style={{
+                  fontSize: 13, lineHeight: 1.85, color: "#000",
+                  marginBottom: 6, paddingRight: 14, position: "relative"
+                }}>
+                  <span style={{
+                    position: "absolute", right: 0, top: 6,
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: STAGE_COLORS[stage.n] || "#1a3d2c"
+                  }} />
+                  {a}
+                </div>
+              ))}
+
+              <div style={{
+                marginTop: 10, padding: 10,
+                background: "#fef3c7", borderRadius: 8,
+                fontSize: 12, color: "#78350f", lineHeight: 1.7,
+                display: "flex", alignItems: "flex-start", gap: 6
+              }}>
+                <span>✓</span>
+                <span><strong>نشانه موفقیت:</strong> {stage.marker}</span>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* نشانه‌های بازگشت */}
+      {detail?.relapseSigns?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#fef2f2", border: "1px solid #fecaca" }}>
+          <SectionTitle icon="⚠️" title="نشانه‌های بازگشت — مواظب باش!" color="#991b1b" />
+          <div style={{ fontSize: 12, color: "#78350f", marginBottom: 10, fontStyle: "italic" }}>
+            اگه این‌ها رو دیدی، یعنی داری عقب می‌ری — ولی هنوز وقت داری برگردی:
+          </div>
+          {detail.relapseSigns.map((s, i) => (
+            <div key={i} style={{
+              fontSize: 13, lineHeight: 1.85, color: "#000",
+              marginBottom: 6, paddingRight: 10,
+              borderRight: "3px solid #ef4444"
+            }}>• {s}</div>
+          ))}
+        </Card>
+      )}
+
+      {/* آزمایش‌های کوچک */}
+      {cycle.smallExperiments?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#ecfeff", border: "1px solid #a5f3fc" }}>
+          <SectionTitle icon="🧪" title="آزمایش‌های کوچک امروز" color="#155e75" />
+          {cycle.smallExperiments.map((exp, i) => (
+            <div key={i} style={{
+              fontSize: 13, lineHeight: 1.85, color: "#000",
+              marginBottom: 8, padding: "10px 12px",
+              background: "#fff", borderRadius: 8,
+              borderRight: "3px solid #06b6d4"
+            }}>{exp}</div>
+          ))}
+        </Card>
+      )}
+
+      {/* خودگویی */}
+      {cycle.selfTalk?.length > 0 && (
+        <Card style={{ marginBottom: 12, background: "#f3e8ff" }}>
+          <SectionTitle icon="🗣️" title="به خودت این‌ها رو بگو" color="#6b21a8" />
+          {cycle.selfTalk.map((phrase, i) => (
+            <div key={i} style={{
+              fontSize: 13.5, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, padding: "10px 14px",
+              background: "#fff", borderRadius: 8,
+              borderRight: "3px solid #8b5cf6",
+              fontStyle: "italic"
+            }}>«{phrase}»</div>
+          ))}
+        </Card>
+      )}
+
+      {/* یادداشت همدلانه */}
+      {detail?.compassionNote && (
+        <Card style={{
+          marginBottom: 12,
+          background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+          color: "#fff",
+          padding: 20
+        }}>
+          <div style={{ fontSize: 24, marginBottom: 10 }}>💙</div>
+          <div style={{ fontSize: 14, lineHeight: 2, opacity: 0.95 }}>
+            {detail.compassionNote}
+          </div>
+        </Card>
+      )}
+
+      {/* الگوهای مرتبط */}
+      {relatedSchemas.length > 0 && (
+        <Card style={{ marginBottom: 12 }}>
+          <SectionTitle icon="🔗" title="این چرخه به این الگوها مربوط است" />
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {relatedSchemas.map((s) => (
               <button key={s.id} onClick={() => onPickSchema(s.id)} style={{
                 padding: "12px 14px", borderRadius: 10,
-                border: "1px solid #e5e5e5", background: "#fff",
+                border: "1px solid #e5e5e5", background: "#fafafa",
                 cursor: "pointer", textAlign: "right",
                 fontFamily: "inherit", fontSize: 14
               }}>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                <div style={{ fontWeight: 600, marginBottom: 4, color: "#000" }}>
                   {s.name_plain || s.name_fa}
                 </div>
-                <div style={{ fontSize: 12, color: "#000", lineHeight: 1.5 }}>
+                <div style={{ fontSize: 12, color: "#666", lineHeight: 1.5 }}>
                   {s.one_liner || s.short_description}
                 </div>
               </button>
@@ -548,64 +722,17 @@ function LifeCycleDetailView({ cycleId, onBack, onPickSchema, onSOS }) {
         </Card>
       )}
 
-      {cycle.whatToDo && cycle.whatToDo.length > 0 && (
-        <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
-            🕊️ حالا باید چکار کنی؟
-          </div>
-          {cycle.whatToDo.map((w, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, marginBottom: 10, opacity: 0.95 }}>
-              • {w}
-            </div>
-          ))}
-        </Card>
-      )}
-
-      {cycle.selfTalk && cycle.selfTalk.length > 0 && (
-        <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            🗣️ به خودت این‌ها را بگو
-          </div>
-          {cycle.selfTalk.map((phrase, i) => (
-            <div key={i} style={{
-              fontSize: 14, lineHeight: 1.9, color: "#000",
-              marginBottom: 8, padding: "10px 14px", background: "#fff",
-              borderRadius: 8, borderRight: "3px solid #3b82f6"
-            }}>«{phrase}»</div>
-          ))}
-        </Card>
-      )}
-
-      {cycle.smallExperiments && cycle.smallExperiments.length > 0 && (
-        <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            🧪 آزمایش‌های کوچک
-          </div>
-          {cycle.smallExperiments.map((exp, i) => (
-            <div key={i} style={{
-              fontSize: 14, lineHeight: 1.9, color: "#000",
-              marginBottom: 10, paddingRight: 12,
-              borderRight: "3px solid #f39c12"
-            }}>
-              {exp}
-            </div>
-          ))}
-        </Card>
-      )}
-
-      <Card style={{ marginTop: 12, background: "#f6f6f6" }}>
-        <div style={{ fontSize: 13, color: "#000", lineHeight: 1.9, textAlign: "center" }}>
-          این چرخه یک‌شبه درست نمی‌شه.
-          <br />
-          ولی هر بار که ببینی‌اش، یک قدم جلوتری.
-        </div>
-      </Card>
+      <div style={{ marginTop: 16 }}>
+        <Btn onClick={() => onPickSchema(relatedSchemas[0]?.id)}>
+          کار روی {relatedSchemas[0]?.name_plain || "این الگو"}
+        </Btn>
+      </div>
     </Shell>
   );
 }
 
 /* =========================================================
- * ۵. چک‌این روزانه
+ * ۵. چک‌این روزانه — نسخه گروه‌بندی‌شده
  * ========================================================= */
 
 function CheckInView({ analysis, onDone, onSkip }) {
@@ -613,116 +740,380 @@ function CheckInView({ analysis, onDone, onSkip }) {
   const [mood, setMood] = useState(null);
   const [schemaId, setSchemaId] = useState(null);
   const [note, setNote] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState({});
 
   const prompt = getTodayPrompt();
 
-  const activeSchemas = useMemo(() => {
-    if (!analysis?.all) return SCHEMAS.slice(0, 5);
-    const list = [];
-    for (const r of analysis.all) {
-      if (r.percentage >= 40) {
-        const s = SCHEMAS.find((x) => x.id === r.schemaId);
-        if (s) list.push(s);
-      }
-    }
-    return list.length > 0 ? list : SCHEMAS.slice(0, 5);
+  const activeSchemaIds = useMemo(() => {
+    if (!analysis?.all) return null;
+    const ids = analysis.all
+      .filter((r) => r.percentage >= 40)
+      .map((r) => r.schemaId);
+    return ids.length > 0 ? ids : null;
   }, [analysis]);
 
+  const activeGroups = useMemo(() => {
+    if (!activeSchemaIds) {
+      return CHECKIN_GROUPS.map((g) => ({
+        ...g,
+        activeSchemas: g.schemas
+          .map((id) => SCHEMAS.find((s) => s.id === id))
+          .filter(Boolean)
+      })).filter((g) => g.activeSchemas.length > 0);
+    }
+    return CHECKIN_GROUPS
+      .map((g) => {
+        const activeSchemas = g.schemas
+          .filter((id) => activeSchemaIds.includes(id))
+          .map((id) => SCHEMAS.find((s) => s.id === id))
+          .filter(Boolean);
+        return { ...g, activeSchemas };
+      })
+      .filter((g) => g.activeSchemas.length > 0);
+  }, [activeSchemaIds]);
+
+  const MOOD_INFO = {
+    good: { emoji: "😊", label: "خوب", color: "#27ae60", sub: "امروز حالت خوبه — بریم سراغ الگوها" },
+    meh:  { emoji: "😐", label: "متوسط", color: "#f39c12", sub: "امروز متوسطه — با هم ببینیم چی می‌شه" },
+    hard: { emoji: "😔", label: "سخت", color: "#e74c3c", sub: "امروز سخته — با هم آروم می‌ریم جلو" }
+  };
+
+  const getPercentage = (sid) => {
+    const r = analysis?.all?.find((x) => x.schemaId === sid);
+    return r ? Math.round(r.percentage) : 0;
+  };
+
+  const getPriorityColor = (sid) => {
+    const r = analysis?.all?.find((x) => x.schemaId === sid);
+    return r?.priority?.color || "#1a3d2c";
+  };
+
+  const getPriorityEmoji = (sid) => {
+    const r = analysis?.all?.find((x) => x.schemaId === sid);
+    return r?.priority?.emoji || "🟢";
+  };
+
+  const toggleGroup = (gid) => {
+    setExpandedGroups((prev) => ({ ...prev, [gid]: !prev[gid] }));
+  };
+
+  /* مرحله ۱ */
   if (phase === "mood") {
     return (
       <Shell title="صبح بخیر">
-        <Card>
-          <p style={{ margin: "0 0 6px", fontSize: 14, color: "#000" }}>{prompt}</p>
-          <p style={{ margin: "20px 0 16px", fontSize: 16, fontWeight: 600 }}>
-            امروز چه احساسی داری؟
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <button onClick={() => { setMood("good"); setPhase("schema"); }} style={styles.moodBtn}>
-              <span style={{ fontSize: 28 }}>😊</span>
-              <span style={{ fontSize: 15 }}>خوب</span>
-            </button>
-            <button onClick={() => { setMood("meh"); setPhase("schema"); }} style={styles.moodBtn}>
-              <span style={{ fontSize: 28 }}>😐</span>
-              <span style={{ fontSize: 15 }}>متوسط</span>
-            </button>
-            <button onClick={() => { setMood("hard"); setPhase("schema"); }} style={styles.moodBtn}>
-              <span style={{ fontSize: 28 }}>😔</span>
-              <span style={{ fontSize: 15 }}>سخت</span>
-            </button>
+        <div style={{
+          background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+          color: "#fff",
+          borderRadius: 14,
+          padding: 24,
+          marginBottom: 14,
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute", top: -30, left: -30,
+            width: 120, height: 120, borderRadius: "50%",
+            background: "rgba(255,255,255,.05)"
+          }} />
+          <div style={{ position: "relative" }}>
+            <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+              {new Date().toLocaleDateString("fa-IR", { weekday: "long", day: "numeric", month: "long" })}
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.5, marginBottom: 8 }}>
+              امروز چه حالی داری؟
+            </div>
+            <div style={{ fontSize: 13, opacity: 0.85, lineHeight: 1.9 }}>
+              {prompt}
+            </div>
           </div>
-        </Card>
-        <div style={{ marginTop: 16 }}>
-          <Btn variant="ghost" onClick={onSkip}>رد کن</Btn>
+        </div>
+
+        <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+          {[1, 2, 3].map((n) => (
+            <div key={n} style={{
+              flex: 1, height: 4, borderRadius: 2,
+              background: n === 1 ? "#1a3d2c" : "#eee"
+            }} />
+          ))}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {Object.entries(MOOD_INFO).map(([key, info]) => (
+            <button key={key} onClick={() => { setMood(key); setTimeout(() => setPhase("schema"), 150); }}
+              style={{
+                padding: 18, borderRadius: 14, border: "1px solid #f0f0f0",
+                background: "#fff", cursor: "pointer", fontFamily: "inherit",
+                display: "flex", alignItems: "center", gap: 16, textAlign: "right"
+              }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: 14,
+                background: info.color + "15",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 28, flexShrink: 0
+              }}>{info.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#000", marginBottom: 3 }}>
+                  {info.label}
+                </div>
+                <div style={{ fontSize: 12, color: "#666", lineHeight: 1.6 }}>
+                  {info.sub}
+                </div>
+              </div>
+              <span style={{ fontSize: 18, color: "#ccc" }}>←</span>
+            </button>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <Btn variant="ghost" onClick={onSkip}>رد کن، بعداً</Btn>
         </div>
       </Shell>
     );
   }
 
+  /* مرحله ۲ — گروه‌ها */
   if (phase === "schema") {
+    const moodInfo = MOOD_INFO[mood];
     return (
       <Shell title="صبح بخیر" onBack={() => setPhase("mood")}>
-        <Card>
-          <p style={{ margin: "0 0 6px", fontSize: 15, fontWeight: 600 }}>
-            کدام الگو امروز فعال‌تر است؟
-          </p>
-          <p style={{ margin: "0 0 16px", fontSize: 13, color: "#000" }}>
-            فقط الگوهای خودت نشان داده می‌شوند.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {activeSchemas.map((s) => (
-              <button key={s.id} onClick={() => setSchemaId(s.id)} style={{
-                padding: "12px 14px", borderRadius: 10,
-                border: schemaId === s.id ? "2px solid #1a3d2c" : "1px solid #e5e5e5",
-                background: schemaId === s.id ? "#1a3d2c" : "#fff",
-                color: schemaId === s.id ? "#fff" : "#000",
-                fontSize: 14, textAlign: "right", cursor: "pointer",
-                fontFamily: "inherit", lineHeight: 1.6
-              }}>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>
-                  {s.name_plain || s.name_fa}
-                </div>
-                <div style={{ fontSize: 12, opacity: 0.7, lineHeight: 1.5 }}>
-                  {s.one_liner || s.short_description}
-                </div>
-              </button>
-            ))}
+        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+          {[1, 2, 3].map((n) => (
+            <div key={n} style={{
+              flex: 1, height: 4, borderRadius: 2,
+              background: n <= 2 ? "#1a3d2c" : "#eee"
+            }} />
+          ))}
+        </div>
+
+        {moodInfo && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "10px 14px", borderRadius: 10,
+            background: moodInfo.color + "10",
+            border: `1px solid ${moodInfo.color}30`,
+            marginBottom: 14
+          }}>
+            <span style={{ fontSize: 20 }}>{moodInfo.emoji}</span>
+            <div style={{ fontSize: 12, color: "#000" }}>
+              حالت امروز: <strong>{moodInfo.label}</strong>
+            </div>
           </div>
-        </Card>
-        <div style={{ marginTop: 16 }}>
-          <Btn onClick={() => setPhase("note")}>بعدی</Btn>
-          <div style={{ marginTop: 8 }}>
-            <Btn variant="ghost" onClick={() => { setSchemaId(null); setPhase("note"); }}>
-              مطمئن نیستم
-            </Btn>
+        )}
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: "#000", marginBottom: 6 }}>
+            کدام الگو امروز فعال‌تره؟
+          </div>
+          <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8 }}>
+            الگوها بر اساس دسته‌بندی نشون داده شدن — روی یکی بزن.
           </div>
         </div>
-      </Shell>
-    );
-  }
 
-  if (phase === "note") {
-    return (
-      <Shell title="صبح بخیر" onBack={() => setPhase("schema")}>
-        <Card>
-          <div style={{ fontSize: 14, color: "#000", marginBottom: 8 }}>
-            چیز دیگری می‌خواهی بگویی؟ (اختیاری)
-          </div>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)}
-            rows={3} placeholder="هر چیزی که به ذهنت می‌آید..." style={styles.textarea} />
-        </Card>
-        <div style={{ marginTop: 16 }}>
-          <Btn onClick={async () => { await addCheckIn({ mood, schemaId, note }); onDone(); }}>
-            ثبت کن
+        {activeGroups.length === 0 && (
+          <Card style={{ textAlign: "center", padding: 24 }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>🌱</div>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, color: "#000" }}>
+              در حال حاضر الگوی فعالی نداری.
+            </p>
+          </Card>
+        )}
+
+        {activeGroups.map((group) => {
+          const isExpanded = expandedGroups[group.id] !== false;
+          const groupCount = group.activeSchemas.length;
+          const hasSelected = group.activeSchemas.some((s) => s.id === schemaId);
+
+          return (
+            <div key={group.id} style={{ marginBottom: 12 }}>
+              <button onClick={() => toggleGroup(group.id)} style={{
+                width: "100%", padding: "12px 14px", borderRadius: 12,
+                border: hasSelected ? "2px solid #1a3d2c" : "1px solid #f0f0f0",
+                background: hasSelected ? "#f0f7f4" : "#fff",
+                cursor: "pointer", fontFamily: "inherit",
+                display: "flex", alignItems: "center", gap: 12,
+                textAlign: "right", marginBottom: isExpanded ? 8 : 0
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: "#f0f7f4",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 18, flexShrink: 0
+                }}>{group.emoji}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#000", marginBottom: 2 }}>
+                    {group.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#666" }}>
+                    {toFa(groupCount)} الگو
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 14, color: "#999",
+                  transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                  transition: "transform .2s ease"
+                }}>◀</span>
+              </button>
+
+              {isExpanded && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {group.activeSchemas.map((schema) => {
+                    const isSelected = schemaId === schema.id;
+                    const pct = getPercentage(schema.id);
+                    const color = getPriorityColor(schema.id);
+                    const emoji = getPriorityEmoji(schema.id);
+                    const shortName = SHORT_CHECKIN_NAMES[schema.id] || schema.name_plain || schema.name_fa;
+                    return (
+                      <button key={schema.id} onClick={() => setSchemaId(schema.id)} style={{
+                        padding: 14, borderRadius: 12,
+                        border: isSelected ? "2px solid #1a3d2c" : "1px solid #f0f0f0",
+                        background: isSelected ? "#f0f7f4" : "#fff",
+                        cursor: "pointer", fontFamily: "inherit", textAlign: "right",
+                        display: "flex", alignItems: "flex-start", gap: 12, marginRight: 8
+                      }}>
+                        <div style={{
+                          width: 4, height: 44, borderRadius: 2,
+                          background: color, flexShrink: 0
+                        }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            display: "flex", justifyContent: "space-between",
+                            alignItems: "flex-start", gap: 8, marginBottom: 6
+                          }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: "#000", marginBottom: 3 }}>
+                                {shortName}
+                              </div>
+                              {schema.name_fa !== shortName && (
+                                <div style={{ fontSize: 10, color: "#999" }}>
+                                  {schema.name_fa}
+                                </div>
+                              )}
+                            </div>
+                            {pct > 0 && (
+                              <div style={{
+                                display: "flex", alignItems: "center", gap: 4,
+                                padding: "3px 8px", background: color + "15",
+                                color: color, borderRadius: 20, fontSize: 11,
+                                fontWeight: 700, flexShrink: 0
+                              }}>
+                                <span>{emoji}</span>
+                                <span>{toFa(pct)}%</span>
+                              </div>
+                            )}
+                          </div>
+                          {schema.one_liner && (
+                            <div style={{ fontSize: 11, color: "#666", lineHeight: 1.7 }}>
+                              {schema.one_liner}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{
+                          width: 20, height: 20, borderRadius: "50%",
+                          border: isSelected ? "none" : "2px solid #ddd",
+                          background: isSelected ? "#1a3d2c" : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          color: "#fff", fontSize: 11, fontWeight: 900,
+                          flexShrink: 0, marginTop: 2
+                        }}>{isSelected ? "✓" : ""}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 8 }}>
+          <Btn disabled={!schemaId} onClick={() => setPhase("note")}>
+            {schemaId ? "بعدی" : "یک الگو انتخاب کن"}
+          </Btn>
+          <Btn variant="ghost" onClick={() => { setSchemaId(null); setPhase("note"); }}>
+            مطمئن نیستم — بپر بعدی
           </Btn>
         </div>
       </Shell>
     );
   }
+
+  /* مرحله ۳ — یادداشت */
+  if (phase === "note") {
+    const moodInfo = MOOD_INFO[mood];
+    const selectedSchema = schemaId ? SCHEMAS.find((s) => s.id === schemaId) : null;
+    const selectedShortName = selectedSchema
+      ? (SHORT_CHECKIN_NAMES[selectedSchema.id] || selectedSchema.name_plain || selectedSchema.name_fa)
+      : null;
+
+    return (
+      <Shell title="صبح بخیر" onBack={() => setPhase("schema")}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+          {[1, 2, 3].map((n) => (
+            <div key={n} style={{
+              flex: 1, height: 4, borderRadius: 2,
+              background: "#1a3d2c"
+            }} />
+          ))}
+        </div>
+
+        <div style={{
+          background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+          color: "#fff", borderRadius: 14, padding: 20, marginBottom: 14
+        }}>
+          <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 10 }}>خلاصه‌ی امروز</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 24 }}>{moodInfo?.emoji}</span>
+            <div>
+              <div style={{ fontSize: 11, opacity: 0.7 }}>حالت</div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>
+                {moodInfo?.label || "ثبت نشده"}
+              </div>
+            </div>
+          </div>
+          {selectedSchema && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              paddingTop: 10, borderTop: "1px solid rgba(255,255,255,.15)"
+            }}>
+              <span style={{ fontSize: 24 }}>🧩</span>
+              <div>
+                <div style={{ fontSize: 11, opacity: 0.7 }}>الگوی فعال</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>
+                  {selectedShortName}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <Card>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#000", marginBottom: 10 }}>
+            چیز دیگه‌ای هست که بخوای بنویسی؟
+          </div>
+          <div style={{ fontSize: 12, color: "#666", marginBottom: 12, lineHeight: 1.7 }}>
+            اختیاری — می‌تونی خالی بذاری
+          </div>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)}
+            rows={4} placeholder="مثلاً: امروز صبح یه پیام دیدم که حالم رو بد کرد..."
+            style={styles.textarea} />
+        </Card>
+
+        <div style={{ marginTop: 16 }}>
+          <Btn onClick={async () => {
+            await addCheckIn({ mood, schemaId, note });
+            onDone();
+          }}>
+            ✓ ثبت کن و ادامه
+          </Btn>
+        </div>
+      </Shell>
+    );
+  }
+
   return null;
 }
 
 /* =========================================================
- * ۶. حالت SOS
+ * ۶. SOS
  * ========================================================= */
 
 function SOSView({ onBack, onBetter }) {
@@ -807,7 +1198,11 @@ function SOSView({ onBack, onBetter }) {
   if (phase === "phrase") {
     return (
       <div dir="rtl" style={styles.sosFull}>
-        <div style={{ padding: 30, textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", minHeight: "100vh" }}>
+        <div style={{
+          padding: 30, textAlign: "center",
+          display: "flex", flexDirection: "column",
+          justifyContent: "center", minHeight: "100vh"
+        }}>
           <div style={{ fontSize: 40, marginBottom: 20 }}>💙</div>
           <p style={{ color: "#fff", fontSize: 18, lineHeight: 2, margin: "0 0 40px" }}>
             {randomPhrase}
@@ -827,15 +1222,13 @@ function SOSView({ onBack, onBetter }) {
 }
 
 /* =========================================================
- * ۷. صفحه خوش‌آمد
+ * ۷. Welcome
  * ========================================================= */
 
 function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, onSOS, onSituations, onRelationships, onLifeCycles }) {
   const activeSchemaIds = useMemo(() => {
     if (!analysis?.all) return null;
-    const list = analysis.all
-      .filter((r) => r.percentage >= 40)
-      .map((r) => r.schemaId);
+    const list = analysis.all.filter((r) => r.percentage >= 40).map((r) => r.schemaId);
     return list.length > 0 ? list : null;
   }, [analysis]);
 
@@ -850,39 +1243,21 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, o
 
   return (
     <Shell title="الگوهای من" showSOS onSOS={onSOS}>
-
-      {/* ─── Hero ─── */}
       <Card style={{
         background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
-        color: "#fff",
-        padding: 24,
-        marginBottom: 12,
-        position: "relative",
-        overflow: "hidden"
+        color: "#fff", padding: 24, marginBottom: 12, position: "relative", overflow: "hidden"
       }}>
         <div style={{
-          position: "absolute",
-          top: -40, left: -40,
-          width: 140, height: 140,
-          borderRadius: "50%",
+          position: "absolute", top: -40, left: -40,
+          width: 140, height: 140, borderRadius: "50%",
           background: "rgba(255,255,255,.05)"
         }} />
-        <div style={{
-          position: "absolute",
-          bottom: -60, right: -20,
-          width: 100, height: 100,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,.04)"
-        }} />
-
         <div style={{ position: "relative" }}>
           <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 8, letterSpacing: 1 }}>
             شناخت الگوهای تکرارشونده
           </div>
           <h2 style={{ margin: "0 0 12px", fontSize: 24, lineHeight: 1.5, fontWeight: 700 }}>
-            چه چیزی در من
-            <br />
-            تکرار می‌شود؟
+            چه چیزی در من<br />تکرار می‌شود؟
           </h2>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
             اینجا قرار نیست برچسبی به تو بزنیم. با هم می‌بینیم کجا فعال می‌شوی و چطور می‌توانی این بار جور دیگری پاسخ بدهی.
@@ -890,20 +1265,12 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, o
         </div>
       </Card>
 
-      {/* ─── یادآوری‌های امروز ─── */}
       {reminders && reminders.length > 0 && (
         <Card style={{
-          marginBottom: 12,
-          background: "#fff8e1",
-          border: "1px solid #fde68a",
-          padding: 16
+          marginBottom: 12, background: "#fff8e1",
+          border: "1px solid #fde68a", padding: 16
         }}>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 12
-          }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8,
               background: "#f59e0b",
@@ -921,96 +1288,43 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, o
               )}
             </div>
           </div>
-
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {reminders.slice(0, 3).map((rem, i) => (
               <div key={i} style={{
-                fontSize: 13,
-                lineHeight: 1.9,
-                color: "#000",
-                padding: "10px 12px",
-                background: "rgba(255,255,255,.6)",
-                borderRadius: 8,
-                borderRight: "3px solid #f59e0b"
-              }}>
-                {rem}
-              </div>
+                fontSize: 13, lineHeight: 1.9, color: "#000",
+                padding: "10px 12px", background: "rgba(255,255,255,.6)",
+                borderRadius: 8, borderRight: "3px solid #f59e0b"
+              }}>{rem}</div>
             ))}
           </div>
         </Card>
       )}
 
-      {/* ─── دکمه اصلی ─── */}
       <div style={{ marginBottom: 16 }}>
-        {hasProfile ? (
-          <button onClick={onSkipToProfile} style={{
-            width: "100%",
-            padding: "18px 20px",
-            borderRadius: 14,
-            border: "none",
-            background: "#1a3d2c",
-            color: "#fff",
-            fontSize: 16,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 6px 20px rgba(26,61,44,.2)"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 22 }}>🧭</span>
-              <span>پروفایل الگوهای من</span>
-            </div>
-            <span style={{ opacity: 0.6 }}>←</span>
-          </button>
-        ) : (
-          <button onClick={onStart} style={{
-            width: "100%",
-            padding: "18px 20px",
-            borderRadius: 14,
-            border: "none",
-            background: "#1a3d2c",
-            color: "#fff",
-            fontSize: 16,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            boxShadow: "0 6px 20px rgba(26,61,44,.2)"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 22 }}>✨</span>
-              <span>شروع ارزیابی</span>
-            </div>
-            <span style={{ opacity: 0.6 }}>←</span>
-          </button>
-        )}
+        <button onClick={hasProfile ? onSkipToProfile : onStart} style={{
+          width: "100%", padding: "18px 20px", borderRadius: 14,
+          border: "none", background: "#1a3d2c", color: "#fff",
+          fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          boxShadow: "0 6px 20px rgba(26,61,44,.2)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 22 }}>{hasProfile ? "🧭" : "✨"}</span>
+            <span>{hasProfile ? "پروفایل الگوهای من" : "شروع ارزیابی"}</span>
+          </div>
+          <span style={{ opacity: 0.6 }}>←</span>
+        </button>
       </div>
 
-      {/* ─── اکشن‌های سریع ─── */}
       <div style={{ fontSize: 12, fontWeight: 700, color: "#000", marginBottom: 8, paddingRight: 4 }}>
         کاوش کن
       </div>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 8,
-        marginBottom: 20
-      }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
         {actions.map((a) => (
           <button key={a.id} onClick={a.onClick} style={{
-            padding: 16,
-            borderRadius: 14,
-            border: "1px solid #e5e5e5",
-            background: "#fff",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            textAlign: "right",
-            transition: "all .15s ease"
+            padding: 16, borderRadius: 14,
+            border: "1px solid #e5e5e5", background: "#fff",
+            cursor: "pointer", fontFamily: "inherit", textAlign: "right"
           }}>
             <div style={{
               width: 40, height: 40, borderRadius: 12,
@@ -1028,7 +1342,6 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, o
         ))}
       </div>
 
-      {/* ─── فوت‌نوت ─── */}
       <Card style={{ background: "#f6f6f6", padding: 14 }}>
         <div style={{ fontSize: 11, color: "#000", lineHeight: 1.9 }}>
           <strong style={{ display: "block", marginBottom: 6 }}>این اپ چه چیزی نیست:</strong>
@@ -1044,7 +1357,7 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, phrase, o
 }
 
 /* =========================================================
- * ۸. صفحه تست YSQ
+ * ۸. YSQ
  * ========================================================= */
 
 function YSQView({ onDone, onBack }) {
@@ -1071,7 +1384,6 @@ function YSQView({ onDone, onBack }) {
           <ProgressBar value={check.progress} />
         </div>
       </div>
-
       <Card>
         <p style={{ fontSize: 17, lineHeight: 1.9, margin: "0 0 20px", minHeight: 80 }}>
           {q.text}
@@ -1092,16 +1404,10 @@ function YSQView({ onDone, onBack }) {
           })}
         </div>
       </Card>
-
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <Btn variant="ghost" onClick={() => setIndex(Math.max(0, index - 1))} disabled={index === 0}>
-          قبلی
-        </Btn>
-        <Btn variant="ghost" onClick={() => setIndex(Math.min(YSQ_QUESTIONS.length - 1, index + 1))} disabled={isLast}>
-          بعدی
-        </Btn>
+        <Btn variant="ghost" onClick={() => setIndex(Math.max(0, index - 1))} disabled={index === 0}>قبلی</Btn>
+        <Btn variant="ghost" onClick={() => setIndex(Math.min(YSQ_QUESTIONS.length - 1, index + 1))} disabled={isLast}>بعدی</Btn>
       </div>
-
       {check.valid && (
         <div style={{ marginTop: 12 }}>
           <Btn onClick={() => onDone(answers, analyzeYSQ(answers))}>دیدن پروفایل من</Btn>
@@ -1112,21 +1418,16 @@ function YSQView({ onDone, onBack }) {
 }
 
 /* =========================================================
- * ۹. صفحه پروفایل (تک انتخابی)
+ * ۹. Profile
  * ========================================================= */
 
-function ProfileView({
-  analysis, onPickSchema, onPickOrigin, onRetake, onBack,
-  onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles
-}) {
+function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles }) {
   if (!analysis) {
     return (
       <Shell title="پروفایل" onBack={onBack}>
         <Card style={{ textAlign: "center", padding: 30 }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
-          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.9 }}>
-            هنوز ارزیابی‌ای انجام نشده.
-          </p>
+          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.9 }}>هنوز ارزیابی‌ای انجام نشده.</p>
         </Card>
       </Shell>
     );
@@ -1138,11 +1439,11 @@ function ProfileView({
   const allActive = [...high, ...medium];
 
   const quickActions = [
-    { id: "wins",     icon: "⭐", title: "لحظه‌های من",  onClick: onWins,       color: "#f59e0b" },
-    { id: "cal",      icon: "📅", title: "تقویم",         onClick: onCalendar,   color: "#3b82f6" },
-    { id: "sit",      icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
-    { id: "life",     icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
-    { id: "rel",      icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" }
+    { id: "wins", icon: "⭐", title: "لحظه‌های من", onClick: onWins, color: "#f59e0b" },
+    { id: "cal",  icon: "📅", title: "تقویم",         onClick: onCalendar, color: "#3b82f6" },
+    { id: "sit",  icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
+    { id: "life", icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
+    { id: "rel",  icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" }
   ];
 
   return (
@@ -1150,170 +1451,97 @@ function ProfileView({
       showQuickButton onQuick={() => onPickSchema(recommended?.schemaId)}
       showSOS onSOS={onSOS}>
 
-      {/* ─── Hero با پیشنهاد ─── */}
       <Card style={{
         background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
-        color: "#fff",
-        padding: 22,
-        marginBottom: 12,
-        position: "relative",
-        overflow: "hidden"
+        color: "#fff", padding: 22, marginBottom: 12, position: "relative", overflow: "hidden"
       }}>
         <div style={{
-          position: "absolute",
-          top: -30, left: -30,
-          width: 120, height: 120,
-          borderRadius: "50%",
+          position: "absolute", top: -30, left: -30,
+          width: 120, height: 120, borderRadius: "50%",
           background: "rgba(255,255,255,.06)"
         }} />
-
         <div style={{ position: "relative" }}>
           <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 11,
-            padding: "4px 10px",
-            background: "rgba(255,255,255,.15)",
-            borderRadius: 20,
-            marginBottom: 12
+            display: "inline-flex", alignItems: "center", gap: 6,
+            fontSize: 11, padding: "4px 10px",
+            background: "rgba(255,255,255,.15)", borderRadius: 20, marginBottom: 12
           }}>
             <span>{recommended?.priority?.emoji}</span>
             <span>پیشنهاد شروع</span>
           </div>
-
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4, lineHeight: 1.4 }}>
             {recPlain}
           </div>
-
           {recSchema && (
             <div style={{ fontSize: 11, opacity: 0.6, marginBottom: 12 }}>
               {recSchema.name_fa}
             </div>
           )}
-
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ flex: 1 }}>
               <div style={{
-                height: 6,
-                background: "rgba(255,255,255,.2)",
-                borderRadius: 3,
-                overflow: "hidden"
+                height: 6, background: "rgba(255,255,255,.2)",
+                borderRadius: 3, overflow: "hidden"
               }}>
                 <div style={{
                   height: "100%",
                   width: (recommended?.percentage || 0) + "%",
-                  background: "#fff",
-                  borderRadius: 3,
-                  transition: "width .6s ease"
+                  background: "#fff", borderRadius: 3
                 }} />
               </div>
             </div>
-            <span style={{
-              fontSize: 14,
-              fontWeight: 700,
-              fontVariantNumeric: "tabular-nums"
-            }}>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>
               {toFa(recommended?.percentage || 0)}%
             </span>
           </div>
-
-          <button
-            onClick={() => onPickSchema(recommended?.schemaId)}
-            style={{
-              marginTop: 16,
-              width: "100%",
-              padding: "12px 16px",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,.3)",
-              background: "rgba(255,255,255,.1)",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "inherit",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
-            }}
-          >
+          <button onClick={() => onPickSchema(recommended?.schemaId)} style={{
+            marginTop: 16, width: "100%", padding: "12px 16px",
+            borderRadius: 10, border: "1px solid rgba(255,255,255,.3)",
+            background: "rgba(255,255,255,.1)", color: "#fff",
+            fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+            display: "flex", alignItems: "center", justifyContent: "space-between"
+          }}>
             <span>شروع کار روی این الگو</span>
             <span style={{ opacity: 0.7 }}>←</span>
           </button>
         </div>
       </Card>
 
-      {/* ─── آمار کلی ─── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: 8,
-        marginBottom: 16
-      }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
         <div style={{
-          padding: 14,
-          borderRadius: 12,
-          background: "#fef2f2",
-          border: "1px solid #fecaca",
-          textAlign: "center"
+          padding: 14, borderRadius: 12, background: "#fef2f2",
+          border: "1px solid #fecaca", textAlign: "center"
         }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#dc2626", fontVariantNumeric: "tabular-nums" }}>
-            {toFa(high.length)}
-          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#dc2626" }}>{toFa(high.length)}</div>
           <div style={{ fontSize: 11, color: "#991b1b", marginTop: 4 }}>بالا</div>
         </div>
         <div style={{
-          padding: 14,
-          borderRadius: 12,
-          background: "#fffbeb",
-          border: "1px solid #fde68a",
-          textAlign: "center"
+          padding: 14, borderRadius: 12, background: "#fffbeb",
+          border: "1px solid #fde68a", textAlign: "center"
         }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#d97706", fontVariantNumeric: "tabular-nums" }}>
-            {toFa(medium.length)}
-          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#d97706" }}>{toFa(medium.length)}</div>
           <div style={{ fontSize: 11, color: "#92400e", marginTop: 4 }}>متوسط</div>
         </div>
         <div style={{
-          padding: 14,
-          borderRadius: 12,
-          background: "#ecfdf5",
-          border: "1px solid #a7f3d0",
-          textAlign: "center"
+          padding: 14, borderRadius: 12, background: "#ecfdf5",
+          border: "1px solid #a7f3d0", textAlign: "center"
         }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#059669", fontVariantNumeric: "tabular-nums" }}>
-            {toFa(low.length)}
-          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#059669" }}>{toFa(low.length)}</div>
           <div style={{ fontSize: 11, color: "#065f46", marginTop: 4 }}>پایین</div>
         </div>
       </div>
 
-      {/* ─── اکشن‌های سریع ─── */}
       <div style={{ fontSize: 12, fontWeight: 700, color: "#000", marginBottom: 8, paddingRight: 4 }}>
         دسترسی سریع
       </div>
-      <div style={{
-        display: "flex",
-        gap: 8,
-        overflowX: "auto",
-        paddingBottom: 4,
-        marginBottom: 20
-      }}>
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 20 }}>
         {quickActions.map((a) => (
           <button key={a.id} onClick={a.onClick} style={{
-            flexShrink: 0,
-            padding: "12px 16px",
-            borderRadius: 12,
-            border: "1px solid #e5e5e5",
-            background: "#fff",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 13,
-            fontWeight: 600,
-            color: "#000"
+            flexShrink: 0, padding: "12px 16px", borderRadius: 12,
+            border: "1px solid #e5e5e5", background: "#fff",
+            cursor: "pointer", fontFamily: "inherit",
+            display: "flex", alignItems: "center", gap: 8,
+            fontSize: 13, fontWeight: 600, color: "#000"
           }}>
             <span style={{
               width: 28, height: 28, borderRadius: 8,
@@ -1326,42 +1554,21 @@ function ProfileView({
         ))}
       </div>
 
-      {/* ─── الگوهای فعال ─── */}
       <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "baseline",
-        marginBottom: 10
+        display: "flex", justifyContent: "space-between",
+        alignItems: "baseline", marginBottom: 10
       }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#000" }}>
-          الگوهای فعال
-        </div>
-        <span style={{ fontSize: 11, color: "#666" }}>
-          {toFa(allActive.length)} الگو
-        </span>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#000" }}>الگوهای فعال</div>
+        <span style={{ fontSize: 11, color: "#666" }}>{toFa(allActive.length)} الگو</span>
       </div>
-
-      {allActive.length === 0 && (
-        <Card style={{ textAlign: "center", padding: 24, marginBottom: 12 }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>🌱</div>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, color: "#000" }}>
-            در حال حاضر الگوی فعالی نداری.
-          </p>
-        </Card>
-      )}
 
       {allActive.map((r) => {
         const schema = SCHEMAS.find((s) => s.id === r.schemaId);
         const plain = schema?.name_plain || r.name;
-
         return (
           <div key={r.schemaId} style={{
-            marginBottom: 10,
-            borderRadius: 14,
-            background: "#fff",
-            border: "1px solid #f0f0f0",
-            overflow: "hidden",
-            transition: "all .15s ease"
+            marginBottom: 10, borderRadius: 14, background: "#fff",
+            border: "1px solid #f0f0f0", overflow: "hidden"
           }}>
             <button onClick={() => onPickSchema(r.schemaId)} style={{
               display: "block", width: "100%", textAlign: "right",
@@ -1370,14 +1577,14 @@ function ProfileView({
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                 <div style={{
-                  width: 4,
-                  height: 44,
-                  borderRadius: 2,
-                  background: r.priority.color,
-                  flexShrink: 0
+                  width: 4, height: 44, borderRadius: 2,
+                  background: r.priority.color, flexShrink: 0
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                  <div style={{
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "flex-start", marginBottom: 6
+                  }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: 15, color: "#000", marginBottom: 3 }}>
                         {plain}
@@ -1387,37 +1594,24 @@ function ProfileView({
                       </div>
                     </div>
                     <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "4px 10px",
-                      borderRadius: 20,
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "4px 10px", borderRadius: 20,
                       background: r.priority.color + "15",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: r.priority.color,
-                      fontVariantNumeric: "tabular-nums"
+                      fontSize: 12, fontWeight: 700, color: r.priority.color
                     }}>
                       <span>{r.priority.emoji}</span>
                       <span>{toFa(r.percentage)}%</span>
                     </div>
                   </div>
-
                   <div style={{
-                    height: 4,
-                    background: "#f0f0f0",
-                    borderRadius: 2,
-                    overflow: "hidden",
-                    marginBottom: 10
+                    height: 4, background: "#f0f0f0",
+                    borderRadius: 2, overflow: "hidden", marginBottom: 10
                   }}>
                     <div style={{
-                      height: "100%",
-                      width: r.percentage + "%",
-                      background: r.priority.color,
-                      transition: "width .4s ease"
+                      height: "100%", width: r.percentage + "%",
+                      background: r.priority.color
                     }} />
                   </div>
-
                   {schema?.one_liner && (
                     <div style={{ fontSize: 12, color: "#555", lineHeight: 1.7 }}>
                       {schema.one_liner}
@@ -1426,42 +1620,22 @@ function ProfileView({
                 </div>
               </div>
             </button>
-
-            <div style={{
-              display: "flex",
-              borderTop: "1px solid #f0f0f0"
-            }}>
+            <div style={{ display: "flex", borderTop: "1px solid #f0f0f0" }}>
               <button onClick={() => onPickOrigin(r.schemaId)} style={{
-                flex: 1,
-                padding: "12px",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontSize: 12,
-                color: "#666",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6
+                flex: 1, padding: "12px", border: "none",
+                background: "transparent", cursor: "pointer",
+                fontFamily: "inherit", fontSize: 12, color: "#666",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6
               }}>
                 🧸 ریشه و راهنما
               </button>
               <div style={{ width: 1, background: "#f0f0f0" }} />
               <button onClick={() => onPickSchema(r.schemaId)} style={{
-                flex: 1,
-                padding: "12px",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontSize: 12,
-                color: "#1a3d2c",
+                flex: 1, padding: "12px", border: "none",
+                background: "transparent", cursor: "pointer",
+                fontFamily: "inherit", fontSize: 12, color: "#1a3d2c",
                 fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6
               }}>
                 ▶ شروع کار
               </button>
@@ -1470,10 +1644,12 @@ function ProfileView({
         );
       })}
 
-      {/* ─── سایر الگوها ─── */}
       {low.length > 0 && (
         <>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#666", margin: "22px 0 10px", paddingRight: 4 }}>
+          <div style={{
+            fontSize: 13, fontWeight: 700, color: "#666",
+            margin: "22px 0 10px", paddingRight: 4
+          }}>
             سایر الگوها
           </div>
           {low.map((r) => {
@@ -1481,27 +1657,14 @@ function ProfileView({
             const plain = schema?.name_plain || r.name;
             return (
               <button key={r.schemaId} onClick={() => onPickSchema(r.schemaId)} style={{
-                display: "flex",
-                width: "100%",
-                alignItems: "center",
+                display: "flex", width: "100%", alignItems: "center",
                 justifyContent: "space-between",
-                padding: "12px 14px",
-                marginBottom: 6,
-                borderRadius: 10,
-                border: "1px solid #f0f0f0",
-                background: "#fafafa",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                textAlign: "right"
+                padding: "12px 14px", marginBottom: 6, borderRadius: 10,
+                border: "1px solid #f0f0f0", background: "#fafafa",
+                cursor: "pointer", fontFamily: "inherit", textAlign: "right"
               }}>
                 <span style={{ fontSize: 13, color: "#000" }}>{plain}</span>
-                <span style={{
-                  fontSize: 11,
-                  color: "#999",
-                  fontVariantNumeric: "tabular-nums"
-                }}>
-                  {toFa(r.percentage)}%
-                </span>
+                <span style={{ fontSize: 11, color: "#999" }}>{toFa(r.percentage)}%</span>
               </button>
             );
           })}
@@ -1511,7 +1674,6 @@ function ProfileView({
       <div style={{ marginTop: 20 }}>
         <Btn variant="ghost" onClick={onRetake}>ارزیابی مجدد</Btn>
       </div>
-
       <p style={{ fontSize: 10, color: "#999", marginTop: 20, lineHeight: 1.8, textAlign: "center" }}>
         این نتایج یک ارزیابی خودگزارشی است و تشخیص بالینی نیست.
       </p>
@@ -1520,17 +1682,14 @@ function ProfileView({
 }
 
 /* =========================================================
- * ۱۰. صفحه چرخه — با انتخاب چندگانه
+ * ۱۰. Cycle (چند انتخابی)
  * ========================================================= */
 
 function CycleView({ schemaId, onDone, onBack }) {
   const schema = SCHEMAS.find((s) => s.id === schemaId);
   const [step, setStep] = useState(0);
   const [choice, setChoice] = useState({
-    triggerIds: [],
-    thoughtIds: [],
-    emotionIds: [],
-    behaviorIds: []
+    triggerIds: [], thoughtIds: [], emotionIds: [], behaviorIds: []
   });
 
   if (!schema) {
@@ -1553,18 +1712,13 @@ function CycleView({ schemaId, onDone, onBack }) {
 
   const toggle = (id) => {
     const arr = choice[current.idKey] || [];
-    const next = arr.includes(id)
-      ? arr.filter((x) => x !== id)
-      : [...arr, id];
+    const next = arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
     setChoice({ ...choice, [current.idKey]: next });
   };
 
   const goNext = () => {
-    if (step < steps.length - 1) {
-      setTimeout(() => setStep(step + 1), 200);
-    } else {
-      setTimeout(() => onDone(choice), 250);
-    }
+    if (step < steps.length - 1) setTimeout(() => setStep(step + 1), 200);
+    else setTimeout(() => onDone(choice), 250);
   };
 
   const canContinue = selected.length > 0;
@@ -1580,15 +1734,11 @@ function CycleView({ schemaId, onDone, onBack }) {
           }} />
         ))}
       </div>
-
       <Card>
-        <p style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px" }}>
-          {current.title}
-        </p>
+        <p style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px" }}>{current.title}</p>
         <p style={{ fontSize: 12, color: "#666", margin: "0 0 16px" }}>
           می‌توانی چند مورد را انتخاب کنی — محدودیتی نیست.
         </p>
-
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {current.items.map((it) => {
             const active = selected.includes(it.id);
@@ -1609,16 +1759,13 @@ function CycleView({ schemaId, onDone, onBack }) {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   color: active ? "#1a3d2c" : "transparent",
                   fontSize: 12, fontWeight: 900, flexShrink: 0
-                }}>
-                  {active ? "✓" : ""}
-                </div>
+                }}>{active ? "✓" : ""}</div>
                 <span style={{ flex: 1 }}>{it.text}</span>
               </button>
             );
           })}
         </div>
       </Card>
-
       {selected.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef7ee" }}>
           <div style={{ fontSize: 13, color: "#000", lineHeight: 1.8 }}>
@@ -1626,7 +1773,6 @@ function CycleView({ schemaId, onDone, onBack }) {
           </div>
         </Card>
       )}
-
       <div style={{ marginTop: 16 }}>
         <Btn onClick={goNext} disabled={!canContinue}>
           {step < steps.length - 1 ? "بعدی" : "دیدن خلاصه"}
@@ -1637,7 +1783,7 @@ function CycleView({ schemaId, onDone, onBack }) {
 }
 
 /* =========================================================
- * ۱۱. خلاصه چرخه
+ * ۱۱. CycleSummary
  * ========================================================= */
 
 function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBack }) {
@@ -1658,19 +1804,12 @@ function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBac
 
   return (
     <Shell title="الگوی تو" onBack={onBack}>
-
-      {/* ─── Hero ─── */}
       <Card style={{
         background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
-        color: "#fff",
-        padding: 22,
-        marginBottom: 16,
-        textAlign: "center"
+        color: "#fff", padding: 22, marginBottom: 16, textAlign: "center"
       }}>
         <div style={{ fontSize: 44, marginBottom: 8 }}>🧩</div>
-        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
-          چرخه‌ی تو
-        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>چرخه‌ی تو</div>
         <div style={{ fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
           {toFa(totalItems)} بخش از این الگو رو شناختی
           <br />
@@ -1678,69 +1817,41 @@ function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBac
         </div>
       </Card>
 
-      {/* ─── بخش‌ها ─── */}
       {sections.map((sec, idx) => {
         if (sec.values.length === 0) return null;
-
         return (
           <div key={sec.key} style={{ marginBottom: 12 }}>
-            {/* هدر بخش */}
             <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 8,
-              paddingRight: 4
+              display: "flex", alignItems: "center", gap: 10,
+              marginBottom: 8, paddingRight: 4
             }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 10,
                 background: sec.color + "15",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 16
-              }}>
-                {sec.icon}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#000" }}>
-                  {sec.label}
-                </div>
+              }}>{sec.icon}</div>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 700, color: "#000" }}>
+                {sec.label}
               </div>
               <div style={{
-                fontSize: 11,
-                color: sec.color,
-                fontWeight: 700,
-                background: sec.color + "15",
-                padding: "3px 10px",
-                borderRadius: 20,
-                fontVariantNumeric: "tabular-nums"
-              }}>
-                {toFa(sec.values.length)}
-              </div>
+                fontSize: 11, color: sec.color, fontWeight: 700,
+                background: sec.color + "15", padding: "3px 10px",
+                borderRadius: 20
+              }}>{toFa(sec.values.length)}</div>
             </div>
-
-            {/* آیتم‌ها */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {sec.values.map((v) => (
                 <div key={v.id} style={{
-                  fontSize: 12,
-                  padding: "8px 14px",
-                  background: "#fff",
-                  border: `1px solid ${sec.color}30`,
-                  borderRadius: 20,
-                  color: "#000",
-                  lineHeight: 1.6,
-                  fontWeight: 500
-                }}>
-                  {v.text}
-                </div>
+                  fontSize: 12, padding: "8px 14px", background: "#fff",
+                  border: `1px solid ${sec.color}30`, borderRadius: 20,
+                  color: "#000", lineHeight: 1.6, fontWeight: 500
+                }}>{v.text}</div>
               ))}
             </div>
-
-            {/* خط جداکننده */}
             {idx < sections.length - 1 && (
               <div style={{
-                marginTop: 16,
-                height: 1,
+                marginTop: 16, height: 1,
                 background: "linear-gradient(to left, transparent, #e5e5e5, transparent)"
               }} />
             )}
@@ -1748,14 +1859,10 @@ function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBac
         );
       })}
 
-      {/* ─── جمله همدلانه ─── */}
       {phrase && (
         <Card style={{
-          marginTop: 20,
-          background: "#eef4ff",
-          border: "1px solid #bfdbfe",
-          padding: 18,
-          textAlign: "center"
+          marginTop: 20, background: "#eef4ff",
+          border: "1px solid #bfdbfe", padding: 18, textAlign: "center"
         }}>
           <div style={{ fontSize: 24, marginBottom: 8 }}>💙</div>
           <div style={{ fontSize: 14, lineHeight: 2, color: "#000", fontStyle: "italic" }}>
@@ -1764,63 +1871,56 @@ function CycleSummaryView({ schemaId, selection, onContinue, onViewOrigin, onBac
         </Card>
       )}
 
-      {/* ─── CTA ─── */}
       <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
         <button onClick={onContinue} style={{
-          width: "100%",
-          padding: "16px 20px",
-          borderRadius: 12,
-          border: "none",
-          background: "#1a3d2c",
-          color: "#fff",
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: "pointer",
-          fontFamily: "inherit",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          width: "100%", padding: "16px 20px", borderRadius: 12,
+          border: "none", background: "#1a3d2c", color: "#fff",
+          fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
           boxShadow: "0 6px 20px rgba(26,61,44,.2)"
         }}>
           <span>بعدی — بیا این چرخه رو بشکنیم</span>
           <span style={{ opacity: 0.6 }}>←</span>
         </button>
-        <Btn variant="ghost" onClick={onViewOrigin}>
-          🧸 این الگو از کجا آمده؟
-        </Btn>
+        <Btn variant="ghost" onClick={onViewOrigin}>🧸 این الگو از کجا آمده؟</Btn>
       </div>
     </Shell>
   );
 }
 
 /* =========================================================
- * ۱۲. صفحه تمرین — انتخاب اولین trigger+behavior برای قاعده
+ * ۱۲. Exercise
  * ========================================================= */
 
 function pickRule(schema, triggerIds, behaviorIds) {
   const triggers = triggerIds || [];
   const behaviors = behaviorIds || [];
-
-  // ۱) هر ترکیب trigger + behavior
   for (const t of triggers) {
     for (const b of behaviors) {
       const rule = resolveExercise(schema.id, t, b);
       if (rule) return rule;
     }
   }
-  // ۲) فقط behavior
   for (const b of behaviors) {
     const rule = resolveExercise(schema.id, null, b);
     if (rule) return rule;
   }
-  // ۳) فقط trigger
   for (const t of triggers) {
     const rule = resolveExercise(schema.id, t, null);
     if (rule) return rule;
   }
-  // ۴) پیش‌فرض
   return resolveExercise(schema.id, null, null);
 }
+
+const EXERCISE_TYPE_LABELS = {
+  two_column:    { icon: "⚖️", label: "تحلیل دو ستونه" },
+  three_column:  { icon: "🔬", label: "بررسی شواهد" },
+  timer:         { icon: "⏱️", label: "مکث زمان‌دار" },
+  single_choice: { icon: "🎯", label: "انتخاب" },
+  single_input:  { icon: "✍️", label: "نوشتن" },
+  reflection:    { icon: "💭", label: "تأمل" },
+  list:          { icon: "📝", label: "فهرست" }
+};
 
 function ExerciseView({ schemaId, selection, onDone, onBack }) {
   const schema = SCHEMAS.find((s) => s.id === schemaId);
@@ -1846,33 +1946,21 @@ function ExerciseView({ schemaId, selection, onDone, onBack }) {
     );
   }
 
-  const typeLabel = EXERCISE_TYPE_LABELS[exercise.type] || { icon: "🎯", label: "تمرین", color: "#1a3d2c" };
+  const typeLabel = EXERCISE_TYPE_LABELS[exercise.type] || { icon: "🎯", label: "تمرین" };
 
   return (
     <Shell title="تمرین" onBack={onBack}>
-
-      {/* ─── هدر تمرین ─── */}
       <Card style={{
         background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
-        color: "#fff",
-        padding: 18,
-        marginBottom: 16
+        color: "#fff", padding: 18, marginBottom: 16
       }}>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 10
-        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
           <div style={{
-            width: 44, height: 44,
-            borderRadius: 12,
+            width: 44, height: 44, borderRadius: 12,
             background: "rgba(255,255,255,.15)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 22
-          }}>
-            {typeLabel.icon}
-          </div>
+          }}>{typeLabel.icon}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 3 }}>
               {typeLabel.label}
@@ -1886,102 +1974,39 @@ function ExerciseView({ schemaId, selection, onDone, onBack }) {
           این تمرین به تو کمک می‌کنه این بار جور دیگه‌ای پاسخ بدی.
         </div>
       </Card>
-
-      {/* ─── رندرر تمرین ─── */}
       <ExerciseRenderer exercise={exercise} onComplete={(record) => onDone(record)} onSkip={onDone} />
     </Shell>
   );
 }
 
-const EXERCISE_TYPE_LABELS = {
-  two_column:    { icon: "⚖️", label: "تحلیل دو ستونه" },
-  three_column:  { icon: "🔬", label: "بررسی شواهد" },
-  timer:         { icon: "⏱️", label: "مکث زمان‌دار" },
-  single_choice: { icon: "🎯", label: "انتخاب" },
-  single_input:  { icon: "✍️", label: "نوشتن" },
-  reflection:    { icon: "💭", label: "تأمل" },
-  list:          { icon: "📝", label: "فهرست" }
-};
-
 /* =========================================================
- * متادیتای انواع مأموریت
+ * ۱۳. Mission
  * ========================================================= */
 
 const MISSION_TYPE_META = {
-  observe: {
-    icon: "🔍",
-    label: "مشاهده",
-    color: "#3b82f6",
-    bgColor: "#eff6ff",
-    time: "۱ دقیقه",
-    difficulty: 1,
-    why: "فقط می‌خوای ببینی چه اتفاقی می‌افته — بدون قضاوت، بدون واکنش."
-  },
-  action: {
-    icon: "✋",
-    label: "اقدام",
-    color: "#f59e0b",
-    bgColor: "#fffbeb",
-    time: "۲-۳ دقیقه",
-    difficulty: 2,
-    why: "این کار کوچیک، به ذهنت یاد می‌ده که این بار می‌تونه جور دیگه‌ای هم عمل کنه."
-  },
-  write: {
-    icon: "✍️",
-    label: "نوشتن",
-    color: "#a855f7",
-    bgColor: "#faf5ff",
-    time: "۳-۵ دقیقه",
-    difficulty: 2,
-    why: "نوشتن، فکر رو از ذهنت بیرون میاره — تا بتونی ببینیش، نه اینکه توش غرق بشی."
-  },
-  "self-talk": {
-    icon: "💬",
-    label: "خودگویی",
-    color: "#10b981",
-    bgColor: "#ecfdf5",
-    time: "۳۰ ثانیه",
-    difficulty: 1,
-    why: "جمله‌ای که به خودت می‌گی، صدای قدیمی رو کم‌رنگ‌تر می‌کنه."
-  },
-  experiment: {
-    icon: "🧪",
-    label: "آزمایش",
-    color: "#0891b2",
-    bgColor: "#ecfeff",
-    time: "۱۰-۳۰ دقیقه",
-    difficulty: 3,
-    why: "مغز با تجربه یاد می‌گیره، نه با فکر کردن. این یک آزمایش کوچیکه."
-  }
+  observe:    { icon: "🔍", label: "مشاهده",  color: "#3b82f6", bgColor: "#eff6ff", time: "۱ دقیقه",   difficulty: 1, why: "فقط می‌خوای ببینی چه اتفاقی می‌افته — بدون قضاوت، بدون واکنش." },
+  action:     { icon: "✋", label: "اقدام",   color: "#f59e0b", bgColor: "#fffbeb", time: "۲-۳ دقیقه", difficulty: 2, why: "این کار کوچیک، به ذهنت یاد می‌ده که این بار می‌تونه جور دیگه‌ای هم عمل کنه." },
+  write:      { icon: "✍️", label: "نوشتن",   color: "#a855f7", bgColor: "#faf5ff", time: "۳-۵ دقیقه", difficulty: 2, why: "نوشتن، فکر رو از ذهنت بیرون میاره — تا بتونی ببینیش، نه اینکه توش غرق بشی." },
+  "self-talk":{ icon: "💬", label: "خودگویی", color: "#10b981", bgColor: "#ecfdf5", time: "۳۰ ثانیه",  difficulty: 1, why: "جمله‌ای که به خودت می‌گی، صدای قدیمی رو کم‌رنگ‌تر می‌کنه." },
+  experiment: { icon: "🧪", label: "آزمایش",  color: "#0891b2", bgColor: "#ecfeff", time: "۱۰-۳۰ دقیقه", difficulty: 3, why: "مغز با تجربه یاد می‌گیره، نه با فکر کردن. این یک آزمایش کوچیکه." }
 };
 
 const DEFAULT_MISSION_META = {
-  icon: "🎯",
-  label: "مأموریت",
-  color: "#1a3d2c",
-  bgColor: "#f0f7f4",
-  time: "۱-۲ دقیقه",
-  difficulty: 1,
-  why: "یک قدم کوچیک، خودش یک پیروزیه."
+  icon: "🎯", label: "مأموریت", color: "#1a3d2c", bgColor: "#f0f7f4",
+  time: "۱-۲ دقیقه", difficulty: 1, why: "یک قدم کوچیک، خودش یک پیروزیه."
 };
 
 function getMissionMeta(mission) {
   return MISSION_TYPE_META[mission?.type] || DEFAULT_MISSION_META;
 }
 
-/* =========================================================
- * ۱۳. صفحه مأموریت — نسخه حرفه‌ای
- * ========================================================= */
-
 function MissionView({ schemaId, onDone, onBack }) {
   const schema = SCHEMAS.find((s) => s.id === schemaId);
   const microMissions = getMicroMissions(schemaId);
   const missions = microMissions.length > 0 ? microMissions : (schema?.real_life_missions || []);
-
   const [selectedId, setSelectedId] = useState(missions[0]?.id || null);
   const [doneIds, setDoneIds] = useState([]);
 
-  // حالت خالی
   if (missions.length === 0) {
     return (
       <Shell title="مأموریت امروز" onBack={onBack}>
@@ -2020,13 +2045,9 @@ function MissionView({ schemaId, onDone, onBack }) {
 
   return (
     <Shell title="مأموریت امروز" onBack={onBack}>
-
-      {/* ─── کارت هدر با پیشرفت ─── */}
       <Card style={{
         background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
-        color: "#fff",
-        marginBottom: 12,
-        padding: 18
+        color: "#fff", marginBottom: 12, padding: 18
       }}>
         <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 8 }}>
           {schema?.name_plain || schema?.name_fa}
@@ -2034,29 +2055,20 @@ function MissionView({ schemaId, onDone, onBack }) {
         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, lineHeight: 1.5 }}>
           یک قدم کوچیک برای امروز
         </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ flex: 1 }}>
             <div style={{
-              height: 6,
-              background: "rgba(255,255,255,.2)",
-              borderRadius: 3,
-              overflow: "hidden"
+              height: 6, background: "rgba(255,255,255,.2)",
+              borderRadius: 3, overflow: "hidden"
             }}>
               <div style={{
-                height: "100%",
-                width: progressPct + "%",
-                background: "#fff",
-                transition: "width .4s ease",
-                borderRadius: 3
+                height: "100%", width: progressPct + "%",
+                background: "#fff", borderRadius: 3
               }} />
             </div>
           </div>
           <div style={{
-            fontSize: 12,
-            opacity: 0.95,
-            whiteSpace: "nowrap",
-            fontVariantNumeric: "tabular-nums",
+            fontSize: 12, opacity: 0.95, whiteSpace: "nowrap",
             fontWeight: 600
           }}>
             {toFa(doneIds.length)} از {toFa(missions.length)}
@@ -2064,7 +2076,6 @@ function MissionView({ schemaId, onDone, onBack }) {
         </div>
       </Card>
 
-      {/* ─── راهنما ─── */}
       {doneIds.length === 0 && (
         <Card style={{ marginBottom: 12, background: "#f6f6f6", padding: 12 }}>
           <div style={{ fontSize: 12, color: "#000", lineHeight: 1.8 }}>
@@ -2075,141 +2086,68 @@ function MissionView({ schemaId, onDone, onBack }) {
         </Card>
       )}
 
-      {/* ─── کارت مأموریت انتخاب‌شده ─── */}
       <Card style={{
         marginBottom: 16,
         border: `2px solid ${selectedMeta.color}`,
         background: selectedMeta.bgColor,
-        padding: 18,
-        transition: "all .25s ease"
+        padding: 18
       }}>
-        {/* هدر کارت */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
           <div style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
+            width: 44, height: 44, borderRadius: 12,
             background: selectedMeta.color,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 22,
-            flexShrink: 0,
-            boxShadow: `0 4px 12px ${selectedMeta.color}33`
-          }}>
-            {selectedMeta.icon}
-          </div>
-
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 22, flexShrink: 0
+          }}>{selectedMeta.icon}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontSize: 14,
-              fontWeight: 700,
-              color: "#000",
-              marginBottom: 4
-            }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#000", marginBottom: 4 }}>
               {selectedMeta.label}
             </div>
             <div style={{
-              fontSize: 11,
-              color: "#555",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: "wrap"
+              fontSize: 11, color: "#555",
+              display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap"
             }}>
               <span>⏱ {selectedMeta.time}</span>
               <span style={{ opacity: 0.5 }}>•</span>
-              <span>
-                {"★".repeat(selectedMeta.difficulty)}
-                <span style={{ opacity: 0.3 }}>
-                  {"★".repeat(3 - selectedMeta.difficulty)}
-                </span>
-              </span>
+              <span>{"★".repeat(selectedMeta.difficulty)}<span style={{ opacity: 0.3 }}>{"★".repeat(3 - selectedMeta.difficulty)}</span></span>
             </div>
           </div>
-
-          {/* دکمه انجام شد */}
-          <button
-            onClick={() => toggleDone(selected.id)}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              border: isSelectedDone ? "none" : "2px solid #bbb",
-              background: isSelectedDone ? selectedMeta.color : "#fff",
-              color: "#fff",
-              fontSize: 16,
-              fontWeight: 900,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "inherit",
-              transition: "all .2s ease",
-              flexShrink: 0
-            }}
-            title={isSelectedDone ? "لغو انجام" : "علامت‌گذاری به‌عنوان انجام شده"}
-          >
-            {isSelectedDone ? "✓" : ""}
-          </button>
+          <button onClick={() => toggleDone(selected.id)} style={{
+            width: 36, height: 36, borderRadius: "50%",
+            border: isSelectedDone ? "none" : "2px solid #bbb",
+            background: isSelectedDone ? selectedMeta.color : "#fff",
+            color: "#fff", fontSize: 16, fontWeight: 900,
+            cursor: "pointer", display: "flex", alignItems: "center",
+            justifyContent: "center", fontFamily: "inherit", flexShrink: 0
+          }}>{isSelectedDone ? "✓" : ""}</button>
         </div>
 
-        {/* متن مأموریت */}
         <div style={{
-          fontSize: 15,
-          lineHeight: 1.9,
-          color: "#000",
-          fontWeight: 500,
-          marginBottom: 14,
-          paddingBottom: 14,
+          fontSize: 15, lineHeight: 1.9, color: "#000", fontWeight: 500,
+          marginBottom: 14, paddingBottom: 14,
           borderBottom: "1px dashed rgba(0,0,0,.12)"
-        }}>
-          {selected.text}
-        </div>
+        }}>{selected.text}</div>
 
-        {/* چرا این مهم است */}
         <div style={{
-          fontSize: 12,
-          color: "#000",
-          lineHeight: 1.9,
-          opacity: 0.75,
-          display: "flex",
-          gap: 8
+          fontSize: 12, color: "#000", lineHeight: 1.9,
+          opacity: 0.75, display: "flex", gap: 8
         }}>
           <span style={{ flexShrink: 0 }}>💡</span>
           <span style={{ fontStyle: "italic" }}>{selectedMeta.why}</span>
         </div>
       </Card>
 
-      {/* ─── لیست همه مأموریت‌ها ─── */}
       <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 10
+        display: "flex", justifyContent: "space-between",
+        alignItems: "center", marginBottom: 10
       }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "#000" }}>
-          همه مأموریت‌ها
-        </div>
-        <button
-          onClick={shuffle}
-          style={{
-            background: "#fff",
-            border: "1px solid #e5e5e5",
-            color: "#1a3d2c",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer",
-            padding: "6px 12px",
-            borderRadius: 20,
-            fontFamily: "inherit",
-            display: "flex",
-            alignItems: "center",
-            gap: 5
-          }}
-        >
-          🔄 یکی دیگه
-        </button>
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#000" }}>همه مأموریت‌ها</div>
+        <button onClick={shuffle} style={{
+          background: "#fff", border: "1px solid #e5e5e5",
+          color: "#1a3d2c", fontSize: 12, fontWeight: 600,
+          cursor: "pointer", padding: "6px 12px", borderRadius: 20,
+          fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5
+        }}>🔄 یکی دیگه</button>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -2217,82 +2155,41 @@ function MissionView({ schemaId, onDone, onBack }) {
           const meta = getMissionMeta(m);
           const isSelected = selectedId === m.id;
           const isDone = doneIds.includes(m.id);
-
           return (
-            <button
-              key={`${m.id}_${idx}`}
-              onClick={() => setSelectedId(m.id)}
-              style={{
-                padding: "12px 14px",
-                borderRadius: 10,
-                border: isSelected
-                  ? `2px solid ${meta.color}`
-                  : "1px solid #e5e5e5",
-                background: isSelected ? meta.bgColor : "#fff",
-                cursor: "pointer",
-                textAlign: "right",
-                fontFamily: "inherit",
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                transition: "all .15s ease"
-              }}
-            >
-              {/* آیکن */}
+            <button key={`${m.id}_${idx}`} onClick={() => setSelectedId(m.id)} style={{
+              padding: "12px 14px", borderRadius: 10,
+              border: isSelected ? `2px solid ${meta.color}` : "1px solid #e5e5e5",
+              background: isSelected ? meta.bgColor : "#fff",
+              cursor: "pointer", textAlign: "right", fontFamily: "inherit",
+              display: "flex", alignItems: "center", gap: 12
+            }}>
               <div style={{
-                width: 32,
-                height: 32,
-                borderRadius: 9,
-                background: meta.color,
-                color: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 15,
-                flexShrink: 0,
-                opacity: isDone ? 0.5 : 1
-              }}>
-                {meta.icon}
-              </div>
-
-              {/* متن و متادیتا */}
+                width: 32, height: 32, borderRadius: 9,
+                background: meta.color, color: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 15, flexShrink: 0, opacity: isDone ? 0.5 : 1
+              }}>{meta.icon}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 13,
-                  color: "#000",
-                  lineHeight: 1.7,
-                  marginBottom: 3,
+                  fontSize: 13, color: "#000", lineHeight: 1.7, marginBottom: 3,
                   textDecoration: isDone ? "line-through" : "none",
                   opacity: isDone ? 0.55 : 1
-                }}>
-                  {m.text}
-                </div>
+                }}>{m.text}</div>
                 <div style={{
-                  fontSize: 10,
-                  color: "#777",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6
+                  fontSize: 10, color: "#777",
+                  display: "flex", alignItems: "center", gap: 6
                 }}>
                   <span>{meta.label}</span>
                   <span style={{ opacity: 0.5 }}>•</span>
                   <span>⏱ {meta.time}</span>
                 </div>
               </div>
-
-              {/* تیک */}
               {isDone && (
                 <div style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "50%",
-                  background: meta.color,
-                  color: "#fff",
-                  fontSize: 12,
-                  fontWeight: 900,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: meta.color, color: "#fff",
+                  fontSize: 12, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   flexShrink: 0
                 }}>✓</div>
               )}
@@ -2301,18 +2198,12 @@ function MissionView({ schemaId, onDone, onBack }) {
         })}
       </div>
 
-      {/* ─── یادآوری ─── */}
       <Card style={{
-        marginTop: 16,
-        background: "#fff8e1",
-        padding: 14,
-        border: "1px solid #ffe0b2"
+        marginTop: 16, background: "#fff8e1",
+        padding: 14, border: "1px solid #ffe0b2"
       }}>
         <div style={{
-          fontSize: 12,
-          color: "#000",
-          lineHeight: 1.9,
-          textAlign: "center"
+          fontSize: 12, color: "#000", lineHeight: 1.9, textAlign: "center"
         }}>
           🌱 حتی اگر فقط به این مأموریت فکر کنی،
           <br />
@@ -2320,23 +2211,18 @@ function MissionView({ schemaId, onDone, onBack }) {
         </div>
       </Card>
 
-      {/* ─── دکمه‌های پایین ─── */}
       <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         <Btn onClick={() => onDone(selected)}>
-          {isSelectedDone
-            ? "✓ این را انجام دادم — ادامه"
-            : "این یکی رو انتخاب می‌کنم"}
+          {isSelectedDone ? "✓ این را انجام دادم — ادامه" : "این یکی رو انتخاب می‌کنم"}
         </Btn>
-        <Btn variant="ghost" onClick={() => onDone(null)}>
-          الان نمی‌تونم — رد کن
-        </Btn>
+        <Btn variant="ghost" onClick={() => onDone(null)}>الان نمی‌تونم — رد کن</Btn>
       </div>
     </Shell>
   );
 }
 
 /* =========================================================
- * ۱۴. ثبت نتیجه
+ * ۱۴. Log
  * ========================================================= */
 
 function LogResultView({ schemaId, selection, onDone, onBack }) {
@@ -2348,9 +2234,9 @@ function LogResultView({ schemaId, selection, onDone, onBack }) {
   const replacement = getReplacementResponse(schemaId, primaryBehaviorId);
 
   const options = [
-    { id: "old",    label: "واکنش قدیمی را انجام دادم",   color: "#000", emoji: "🔴" },
-    { id: "paused", label: "مکث کردم",                    color: "#000", emoji: "🟡" },
-    { id: "new",    label: "پاسخ جدید را امتحان کردم",     color: "#000", emoji: "🟢" }
+    { id: "old",    label: "واکنش قدیمی را انجام دادم", color: "#000", emoji: "🔴" },
+    { id: "paused", label: "مکث کردم",                  color: "#000", emoji: "🟡" },
+    { id: "new",    label: "پاسخ جدید را امتحان کردم",   color: "#000", emoji: "🟢" }
   ];
 
   return (
@@ -2427,7 +2313,7 @@ function LogResultView({ schemaId, selection, onDone, onBack }) {
 }
 
 /* =========================================================
- * ۱۵. صفحه لحظه‌های من
+ * ۱۵. Wins
  * ========================================================= */
 
 function WinsView({ onBack, onSOS }) {
@@ -2444,8 +2330,7 @@ function WinsView({ onBack, onSOS }) {
 
   const formatDate = (iso) => {
     const d = new Date(iso);
-    const months = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
-      "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+    const months = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
     const h = d.getHours();
     const m = String(d.getMinutes()).padStart(2, "0");
     return `${toFa(d.getDate())} ${months[d.getMonth()]} — ${toFa(h)}:${toFa(m)}`;
@@ -2468,11 +2353,12 @@ function WinsView({ onBack, onSOS }) {
 
   return (
     <Shell title="لحظه‌های من" onBack={onBack} showSOS onSOS={onSOS}>
-      <Card style={{ background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff", marginBottom: 12 }}>
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff", marginBottom: 12
+      }}>
         <div style={{ fontSize: 12, opacity: 0.7 }}>مجموع لحظه‌های برد</div>
-        <div style={{ fontSize: 32, fontWeight: 700, marginTop: 4 }}>
-          {toFa(wins.length)}
-        </div>
+        <div style={{ fontSize: 32, fontWeight: 700, marginTop: 4 }}>{toFa(wins.length)}</div>
         <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
           این‌ها لحظه‌هایی هستند که تو انتخاب کردی.
         </div>
@@ -2506,7 +2392,7 @@ function WinsView({ onBack, onSOS }) {
 }
 
 /* =========================================================
- * ۱۶. صفحه تقویم
+ * ۱۶. Calendar
  * ========================================================= */
 
 function CalendarView({ onBack, onSOS }) {
@@ -2553,7 +2439,10 @@ function CalendarView({ onBack, onSOS }) {
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap", fontSize: 12, color: "#000" }}>
+        <div style={{
+          marginTop: 16, display: "flex", gap: 12,
+          flexWrap: "wrap", fontSize: 12, color: "#000"
+        }}>
           {Object.entries(moodLabels).map(([k, label]) => (
             <div key={k} style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <span style={{
@@ -2570,7 +2459,7 @@ function CalendarView({ onBack, onSOS }) {
 }
 
 /* =========================================================
- * ۱۷. صفحه موقعیت‌ها
+ * ۱۷. Situations
  * ========================================================= */
 
 function SituationsView({ onBack, onPickSituation, onSOS }) {
@@ -2616,7 +2505,7 @@ function SituationsView({ onBack, onPickSituation, onSOS }) {
 }
 
 /* =========================================================
- * ۱۸. جزئیات موقعیت
+ * ۱۸. SituationDetail
  * ========================================================= */
 
 function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
@@ -2642,9 +2531,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
-          آیا این جمله‌ها برای تو آشناست؟
-        </div>
+        <SectionTitle icon="💭" title="آیا این جمله‌ها برای تو آشناست؟" />
         {situation.examples.map((ex, i) => (
           <div key={i} style={{
             fontSize: 14, lineHeight: 1.9, padding: "8px 0",
@@ -2655,9 +2542,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
-          چرخه‌ی پشت این موقعیت
-        </div>
+        <SectionTitle icon="🔁" title="چرخه‌ی پشت این موقعیت" />
         {situation.cycle.map((step, i) => (
           <div key={i} style={{
             padding: "10px 12px", background: "#f6f6f6",
@@ -2668,9 +2553,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>
-          این موقعیت به این الگوها مربوط است
-        </div>
+        <SectionTitle icon="🔗" title="این موقعیت به این الگوها مربوط است" />
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {relatedSchemas.map((s) => (
             <button key={s.id} onClick={() => onPickSchema(s.id)} style={{
@@ -2691,7 +2574,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>چه کار کنی؟</div>
+        <SectionTitle icon="🕊️" title="چه کار کنی؟" />
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {situation.whatToDo.map((tip, i) => (
             <div key={i} style={{ fontSize: 14, lineHeight: 1.8, opacity: 0.95 }}>
@@ -2703,32 +2586,20 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
 
       {situation.selfTalk && situation.selfTalk.length > 0 && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            🗣️ به خودت این‌ها را بگو
-          </div>
+          <SectionTitle icon="🗣️" title="به خودت این‌ها را بگو" color="#1e40af" />
           {situation.selfTalk.map((phrase, i) => (
-            <div
-              key={i}
-              style={{
-                fontSize: 14,
-                lineHeight: 1.9,
-                color: "#000",
-                marginBottom: 8,
-                padding: "10px 14px",
-                background: "#fff",
-                borderRadius: 8,
-                borderRight: "3px solid #3b82f6"
-              }}
-            >
-              «{phrase}»
-            </div>
+            <div key={i} style={{
+              fontSize: 14, lineHeight: 1.9, color: "#000",
+              marginBottom: 8, padding: "10px 14px", background: "#fff",
+              borderRadius: 8, borderRight: "3px solid #3b82f6"
+            }}>«{phrase}»</div>
           ))}
         </Card>
       )}
 
       <div style={{ marginTop: 16 }}>
         <Btn variant="ghost" onClick={() => onPickSchema(relatedSchemas[0]?.id)}>
-          کار روی {relatedSchemas[0]?.name_plain || relatedSchemas[0]?.name_fa || "این الگو"}
+          کار روی {relatedSchemas[0]?.name_plain || "این الگو"}
         </Btn>
       </div>
     </Shell>
@@ -2736,7 +2607,7 @@ function SituationDetailView({ situationId, onBack, onPickSchema, onSOS }) {
 }
 
 /* =========================================================
- * ۱۹. صفحه روابط
+ * ۱۹. Relationships
  * ========================================================= */
 
 function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuide, onSOS }) {
@@ -2752,21 +2623,14 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
     const userSchemaIds = userSchemas.map((s) => s.schemaId);
     return ATTRACTION_PATTERNS
       .filter((p) => p.schemas.some((sid) => userSchemaIds.includes(sid)))
-      .concat(
-        ATTRACTION_PATTERNS.filter((p) => !p.schemas.some((sid) => userSchemaIds.includes(sid)))
-      );
+      .concat(ATTRACTION_PATTERNS.filter((p) => !p.schemas.some((sid) => userSchemaIds.includes(sid))));
   }, [userSchemas]);
 
   return (
     <Shell title="روابط من" onBack={onBack} showSOS onSOS={onSOS}>
-
-      {/* ─── Hero ─── */}
       <Card style={{
         background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
-        color: "#fff",
-        padding: 22,
-        marginBottom: 14,
-        textAlign: "center"
+        color: "#fff", padding: 22, marginBottom: 14, textAlign: "center"
       }}>
         <div style={{ fontSize: 44, marginBottom: 8 }}>💞</div>
         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>
@@ -2779,100 +2643,54 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
         </div>
       </Card>
 
-      {/* ─── تب‌ها ─── */}
       <div style={{
-        display: "flex",
-        gap: 6,
-        padding: 4,
-        background: "#f0f0f0",
-        borderRadius: 12,
-        marginBottom: 16
+        display: "flex", gap: 6, padding: 4,
+        background: "#f0f0f0", borderRadius: 12, marginBottom: 16
       }}>
-        <button
-          onClick={() => setTab("respond")}
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 9,
-            border: "none",
-            background: tab === "respond" ? "#fff" : "transparent",
-            color: tab === "respond" ? "#1a3d2c" : "#666",
-            fontSize: 12,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            transition: "all .15s ease",
-            boxShadow: tab === "respond" ? "0 2px 6px rgba(0,0,0,.06)" : "none"
-          }}
-        >
-          💬 چطور برخورد کنم؟
-        </button>
-        <button
-          onClick={() => setTab("why")}
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 9,
-            border: "none",
-            background: tab === "why" ? "#fff" : "transparent",
-            color: tab === "why" ? "#1a3d2c" : "#666",
-            fontSize: 12,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            transition: "all .15s ease",
-            boxShadow: tab === "why" ? "0 2px 6px rgba(0,0,0,.06)" : "none"
-          }}
-        >
-          🔁 چرا تکرار می‌شوند؟
-        </button>
+        {[
+          { id: "respond", label: "💬 چطور برخورد کنم؟" },
+          { id: "why",     label: "🔁 چرا تکرار می‌شوند؟" }
+        ].map((t) => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            flex: 1, padding: "10px 12px", borderRadius: 9, border: "none",
+            background: tab === t.id ? "#fff" : "transparent",
+            color: tab === t.id ? "#1a3d2c" : "#666",
+            fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+            boxShadow: tab === t.id ? "0 2px 6px rgba(0,0,0,.06)" : "none"
+          }}>{t.label}</button>
+        ))}
       </div>
 
-      {/* ─── محتوای تب ─── */}
       {tab === "respond" && (
         <>
           <div style={{
-            fontSize: 12,
-            color: "#666",
-            lineHeight: 1.9,
-            marginBottom: 12,
-            padding: "0 4px"
+            fontSize: 12, color: "#666", lineHeight: 1.9,
+            marginBottom: 12, padding: "0 4px"
           }}>
             اگر کسی که تو زندگیت هست، این الگو را دارد — روی اسمش بزن تا ببینی چطور رفتار کنی.
           </div>
-
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {SCHEMAS.map((s) => {
               const guide = HOW_TO_RESPOND[s.id];
               const plain = s.name_plain || guide?.plainName || s.name_fa;
               return (
                 <button key={s.id} onClick={() => onPickResponseGuide(s.id)} style={{
-                  padding: "14px 16px",
-                  borderRadius: 12,
-                  border: "1px solid #f0f0f0",
-                  background: "#fff",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  textAlign: "right",
-                  transition: "all .15s ease"
+                  padding: "14px 16px", borderRadius: 12,
+                  border: "1px solid #f0f0f0", background: "#fff",
+                  cursor: "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: 12, textAlign: "right"
                 }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: 10,
                     background: "#f0f7f4",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 16,
-                    flexShrink: 0
+                    fontSize: 16, flexShrink: 0
                   }}>💡</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#000", marginBottom: 2 }}>
                       {plain}
                     </div>
-                    <div style={{ fontSize: 10, color: "#999" }}>
-                      {s.name_fa}
-                    </div>
+                    <div style={{ fontSize: 10, color: "#999" }}>{s.name_fa}</div>
                   </div>
                   <span style={{ fontSize: 16, color: "#ccc" }}>←</span>
                 </button>
@@ -2885,65 +2703,35 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
       {tab === "why" && (
         <>
           <div style={{
-            fontSize: 12,
-            color: "#666",
-            lineHeight: 1.9,
-            marginBottom: 12,
-            padding: "0 4px"
+            fontSize: 12, color: "#666", lineHeight: 1.9,
+            marginBottom: 12, padding: "0 4px"
           }}>
             این‌ها ترکیب‌های رایج‌اند. روی هر کدام بزن تا بفهمی چرا همیشه شبیه هم‌اند.
           </div>
-
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {relevantPatterns.map((p, idx) => (
               <button key={p.id} onClick={() => onPickPattern(p.id)} style={{
-                padding: 18,
-                borderRadius: 14,
-                border: "1px solid #f0f0f0",
-                background: "#fff",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                textAlign: "right",
-                position: "relative",
-                overflow: "hidden",
-                transition: "all .15s ease"
+                padding: 18, borderRadius: 14,
+                border: "1px solid #f0f0f0", background: "#fff",
+                cursor: "pointer", fontFamily: "inherit",
+                textAlign: "right", position: "relative", overflow: "hidden"
               }}>
                 <div style={{
-                  position: "absolute",
-                  top: 0, right: 0,
-                  width: 4,
-                  height: "100%",
+                  position: "absolute", top: 0, right: 0,
+                  width: 4, height: "100%",
                   background: idx % 2 === 0 ? "#8b5cf6" : "#ec4899"
                 }} />
-
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <div style={{ marginBottom: 8 }}>
                   <span style={{
-                    fontSize: 10,
-                    padding: "3px 10px",
-                    borderRadius: 20,
-                    background: "#f0f0f0",
-                    color: "#666",
-                    fontWeight: 600
-                  }}>
-                    {p.shortName}
-                  </span>
+                    fontSize: 10, padding: "3px 10px", borderRadius: 20,
+                    background: "#f0f0f0", color: "#666", fontWeight: 600
+                  }}>{p.shortName}</span>
                 </div>
-
                 <div style={{
-                  fontSize: 15,
-                  fontWeight: 700,
-                  lineHeight: 1.6,
-                  color: "#000",
-                  marginBottom: 8
-                }}>
-                  {p.boxTitle || p.title}
-                </div>
-
-                <div style={{
-                  fontSize: 12,
-                  color: "#666",
-                  lineHeight: 1.8
-                }}>
+                  fontSize: 15, fontWeight: 700, lineHeight: 1.6,
+                  color: "#000", marginBottom: 8
+                }}>{p.boxTitle || p.title}</div>
+                <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8 }}>
                   {p.boxDescription}
                 </div>
               </button>
@@ -2956,7 +2744,7 @@ function RelationshipsView({ analysis, onBack, onPickPattern, onPickResponseGuid
 }
 
 /* =========================================================
- * ۲۰. جزئیات الگوی جذب
+ * ۲۰. RelationshipDetail
  * ========================================================= */
 
 function RelationshipDetailView({ patternId, onBack, onSOS }) {
@@ -2970,9 +2758,7 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
     );
   }
 
-  const schemas = pattern.schemas
-    .map((id) => SCHEMAS.find((s) => s.id === id))
-    .filter(Boolean);
+  const schemas = pattern.schemas.map((id) => SCHEMAS.find((s) => s.id === id)).filter(Boolean);
 
   return (
     <Shell title={pattern.shortName} onBack={onBack} showSOS onSOS={onSOS}>
@@ -2988,41 +2774,31 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
 
       {pattern.childhood && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            🧸 احتمالاً در کودکی این‌ها را تجربه کرده
-          </div>
+          <SectionTitle icon="🧸" title="احتمالاً در کودکی این‌ها را تجربه کرده" color="#1e40af" />
           {Array.isArray(pattern.childhood) ? pattern.childhood.map((c, i) => (
             <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
               • {c}
             </div>
           )) : (
-            <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>
-              {pattern.childhood}
-            </div>
+            <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>{pattern.childhood}</div>
           )}
         </Card>
       )}
 
       {pattern.realLife && (
         <Card style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>
-            📖 در زندگی واقعی چطور است؟
-          </div>
+          <SectionTitle icon="📖" title="در زندگی واقعی چطور است؟" />
           <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>{pattern.realLife}</div>
         </Card>
       )}
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10 }}>
-          🔁 معمولاً چطور پیش می‌رود؟
-        </div>
+        <SectionTitle icon="🔁" title="معمولاً چطور پیش می‌رود؟" />
         <div style={{ fontSize: 14, lineHeight: 1.9, color: "#000" }}>{pattern.typical}</div>
       </Card>
 
       <Card style={{ marginTop: 12, background: "#fef3f2" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
-          ⚠️ چالش‌های این رابطه
-        </div>
+        <SectionTitle icon="⚠️" title="چالش‌های این رابطه" color="#991b1b" />
         {pattern.challenges.map((c, i) => (
           <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
             • {c}
@@ -3031,9 +2807,7 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
-          ✅ چه چیزی کمک می‌کند
-        </div>
+        <SectionTitle icon="✅" title="چه چیزی کمک می‌کند" color="#065f46" />
         {pattern.whatHelps.map((h, i) => (
           <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
             ✓ {h}
@@ -3042,9 +2816,7 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
-          ❌ چه چیزی اوضاع را بدتر می‌کند
-        </div>
+        <SectionTitle icon="❌" title="چه چیزی اوضاع را بدتر می‌کند" color="#92400e" />
         {pattern.whatHurts.map((h, i) => (
           <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 6 }}>
             ✕ {h}
@@ -3054,9 +2826,7 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
 
       {pattern.whatToDoNow && (
         <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>
-            🕊️ حالا باید چکار کرد
-          </div>
+          <SectionTitle icon="🕊️" title="حالا باید چکار کرد" />
           {pattern.whatToDoNow.map((w, i) => (
             <div key={i} style={{ fontSize: 14, lineHeight: 1.9, marginBottom: 8, opacity: 0.95 }}>
               • {w}
@@ -3069,7 +2839,7 @@ function RelationshipDetailView({ patternId, onBack, onSOS }) {
 }
 
 /* =========================================================
- * ۲۱. راهنمای برخورد
+ * ۲۱. ResponseGuide
  * ========================================================= */
 
 function ResponseGuideView({ schemaId, onBack, onSOS }) {
@@ -3090,27 +2860,19 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
       <Card>
         <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>{plain || guide.name}</h2>
         <div style={{ fontSize: 12, color: "#000", marginBottom: 12 }}>{guide.name}</div>
-        <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
-          {guide.plainDescription}
-        </div>
+        <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>{guide.plainDescription}</div>
       </Card>
 
       {guide.example && (
         <Card style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
-            📖 در زندگی واقعی
-          </div>
-          <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>
-            {guide.example}
-          </div>
+          <SectionTitle icon="📖" title="در زندگی واقعی" />
+          <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>{guide.example}</div>
         </Card>
       )}
 
       {guide.childhood && (
         <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            🧸 احتمالاً در کودکی این‌ها را تجربه کرده
-          </div>
+          <SectionTitle icon="🧸" title="احتمالاً در کودکی این‌ها را تجربه کرده" color="#1e40af" />
           {guide.childhood.map((c, i) => (
             <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
               • {c}
@@ -3125,9 +2887,7 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
-          ✅ این کارها را بکن
-        </div>
+        <SectionTitle icon="✅" title="این کارها را بکن" color="#065f46" />
         {guide.doThis.map((d, i) => (
           <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
             • {d}
@@ -3136,9 +2896,7 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
       </Card>
 
       <Card style={{ marginTop: 12, background: "#fef3f2" }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: "#000" }}>
-          ❌ این کارها را نکن
-        </div>
+        <SectionTitle icon="❌" title="این کارها را نکن" color="#991b1b" />
         {guide.dontDoThis.map((d, i) => (
           <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
             • {d}
@@ -3148,9 +2906,7 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
 
       {guide.whatToDoNow && (
         <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 12, color: "#000" }}>
-            🕊️ حالا باید چکار کرد
-          </div>
+          <SectionTitle icon="🕊️" title="حالا باید چکار کرد" color="#92400e" />
           {guide.whatToDoNow.map((w, i) => (
             <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
               • {w}
@@ -3163,7 +2919,7 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
 }
 
 /* =========================================================
- * ۲۲. صفحه شکستن چرخه
+ * ۲۲. BreakCycle
  * ========================================================= */
 
 function BreakCycleView({ onBack, onSOS }) {
@@ -3203,7 +2959,7 @@ function BreakCycleView({ onBack, onSOS }) {
 }
 
 /* =========================================================
- * ۲۳. صفحه پیشرفت
+ * ۲۳. Progress
  * ========================================================= */
 
 function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) {
@@ -3226,20 +2982,15 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
             <div style={{ fontSize: 12, color: "#000" }}>فعال شدن الگو</div>
-            <div style={{ fontSize: 28, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-              {toFa(total)}
-            </div>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{toFa(total)}</div>
           </div>
           {streak > 0 && (
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: 12, color: "#000" }}>روز پیوسته</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: "#000" }}>
-                {toFa(streak)}
-              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: "#000" }}>{toFa(streak)}</div>
             </div>
           )}
         </div>
-
         {winsCount > 0 && (
           <button onClick={onWins} style={{
             marginTop: 14, width: "100%", padding: 12,
@@ -3250,84 +3001,33 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
             <span style={{ fontWeight: 600, fontSize: 14, color: "#000" }}>
               ⭐ {toFa(winsCount)} لحظه‌ی برد
             </span>
-            <div style={{ fontSize: 12, color: "#000", marginTop: 2 }}>
-              ببین چه کردی →
-            </div>
+            <div style={{ fontSize: 12, color: "#000", marginTop: 2 }}>ببین چه کردی →</div>
           </button>
         )}
       </Card>
 
       <Card style={{ marginTop: 12 }}>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-            <span>واکنش قدیمی</span>
-            <span style={{ fontVariantNumeric: "tabular-nums" }}>{toFa(reactions.old)}</span>
+        {[
+          { label: "واکنش قدیمی", value: reactions.old,    color: "#e74c3c" },
+          { label: "مکث",          value: reactions.paused, color: "#f39c12" },
+          { label: "پاسخ جدید",    value: reactions.new,    color: "#27ae60" }
+        ].map((r, i) => (
+          <div key={i} style={{ marginBottom: i < 2 ? 12 : 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+              <span>{r.label}</span>
+              <span>{toFa(r.value)}</span>
+            </div>
+            <div style={{ marginTop: 4 }}>
+              <ProgressBar value={r.value} max={Math.max(10, total)} color={r.color} />
+            </div>
           </div>
-          <div style={{ marginTop: 4 }}>
-            <ProgressBar value={reactions.old} max={Math.max(10, total)} color="#e74c3c" />
-          </div>
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-            <span>مکث</span>
-            <span style={{ fontVariantNumeric: "tabular-nums" }}>{toFa(reactions.paused)}</span>
-          </div>
-          <div style={{ marginTop: 4 }}>
-            <ProgressBar value={reactions.paused} max={Math.max(10, total)} color="#f39c12" />
-          </div>
-        </div>
-        <div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-            <span>پاسخ جدید</span>
-            <span style={{ fontVariantNumeric: "tabular-nums" }}>{toFa(reactions.new)}</span>
-          </div>
-          <div style={{ marginTop: 4 }}>
-            <ProgressBar value={reactions.new} max={Math.max(10, total)} color="#27ae60" />
-          </div>
-        </div>
+        ))}
       </Card>
 
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
         <button onClick={onCalendar} style={styles.dashBtn}>📅 تقویم</button>
         <button onClick={onWins} style={styles.dashBtn}>⭐ لحظه‌های من</button>
       </div>
-
-      {(weekly.lastWeek.total > 0 || weekly.thisWeek.total > 0) && (
-        <Card style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
-            این هفته در مقایسه با هفته قبل
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontSize: 13 }}>
-            <div style={{ color: "#000" }}></div>
-            <div style={{ textAlign: "center", color: "#000", fontSize: 12 }}>هفته قبل</div>
-            <div style={{ textAlign: "center", color: "#000", fontSize: 12 }}>این هفته</div>
-
-            <div>فعال شدن</div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums" }}>
-              {toFa(weekly.lastWeek.total)}
-            </div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>
-              {toFa(weekly.thisWeek.total)}
-            </div>
-
-            <div>واکنش قدیمی</div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000" }}>
-              {toFa(weekly.lastWeek.old)}
-            </div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000", fontWeight: 600 }}>
-              {toFa(weekly.thisWeek.old)}
-            </div>
-
-            <div>پاسخ جدید</div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000" }}>
-              {toFa(weekly.lastWeek.new)}
-            </div>
-            <div style={{ textAlign: "center", fontVariantNumeric: "tabular-nums", color: "#000", fontWeight: 600 }}>
-              {toFa(weekly.thisWeek.new)}
-            </div>
-          </div>
-        </Card>
-      )}
 
       {insights.length > 0 && (
         <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
@@ -3352,7 +3052,7 @@ function ProgressView({ schemaId, onBack, onQuick, onWins, onCalendar, onSOS }) 
 }
 
 /* =========================================================
- * ۲۴. جریان سریع
+ * ۲۴. QuickCheck
  * ========================================================= */
 
 function QuickCheckView({ profiles, onDone, onBack }) {
@@ -3417,7 +3117,11 @@ function QuickCheckView({ profiles, onDone, onBack }) {
             <button onClick={() => save("old")} style={{ ...styles.quickOptBtn, borderColor: "#e74c3c", color: "#000" }}>
               واکنش قدیمی
             </button>
-            <button onClick={() => save("new")} style={{ ...styles.quickOptBtn, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff", borderColor: "#178a7c" }}>
+            <button onClick={() => save("new")} style={{
+              ...styles.quickOptBtn,
+              background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+              color: "#fff", borderColor: "#178a7c"
+            }}>
               امتحان جدید
             </button>
             <button onClick={() => save("paused")} style={{ ...styles.quickOptBtn, borderColor: "#f39c12", color: "#000" }}>
@@ -3447,7 +3151,7 @@ function QuickCheckView({ profiles, onDone, onBack }) {
 }
 
 /* =========================================================
- * ۲۵. اپ اصلی
+ * ۲۵. App
  * ========================================================= */
 
 export default function App() {
@@ -3477,10 +3181,7 @@ export default function App() {
     if (!analysis) return [];
     return [...analysis.high, ...analysis.medium].map((r) => {
       const schema = SCHEMAS.find((s) => s.id === r.schemaId);
-      return {
-        schemaId: r.schemaId,
-        name: schema?.name_plain || r.name
-      };
+      return { schemaId: r.schemaId, name: schema?.name_plain || r.name };
     });
   }, [analysis]);
 
@@ -3496,17 +3197,6 @@ export default function App() {
     setReturnFromOrigin(from);
     go("origin");
   };
-
-  const todayPhrase = useMemo(() => {
-    const all = [];
-    for (const s of SCHEMAS) {
-      const p = getCompassionatePhrases(s.id);
-      for (const ph of p) all.push(ph);
-    }
-    if (all.length === 0) return null;
-    const day = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-    return all[day % all.length];
-  }, []);
 
   if (view === "loading") {
     return (
@@ -3534,7 +3224,7 @@ export default function App() {
         analysis={analysis}
         hasProfile={!!analysis}
         onStart={() => go("ysq")} onSkipToProfile={() => go("profile")}
-        phrase={todayPhrase} onSOS={openSOS}
+        phrase={null} onSOS={openSOS}
         onSituations={() => go("situations")}
         onRelationships={() => go("relationships")}
         onLifeCycles={() => go("life_cycles")} />
@@ -3628,7 +3318,6 @@ export default function App() {
       <LogResultView schemaId={activeSchemaId} selection={selection}
         onBack={() => go("mission")}
         onDone={async (log) => {
-          // برای PROGRESS از اولین آیتم هر آرایه استفاده می‌کنیم (سازگاری با ذخیره‌سازی)
           const primaryTriggerId  = (selection.triggerIds  || [])[0] || null;
           const primaryThoughtId  = (selection.thoughtIds  || [])[0] || null;
           const primaryEmotionId  = (selection.emotionIds  || [])[0] || null;
@@ -3636,15 +3325,10 @@ export default function App() {
 
           await recordCycle({
             schemaId: activeSchemaId,
-            triggerId:  primaryTriggerId,
-            thoughtId:  primaryThoughtId,
-            emotionId:  primaryEmotionId,
-            behaviorId: primaryBehaviorId,
-            // ذخیره‌ی کامل آرایه‌ها برای استفاده‌های بعدی
-            triggerIds:  selection.triggerIds,
-            thoughtIds:  selection.thoughtIds,
-            emotionIds:  selection.emotionIds,
-            behaviorIds: selection.behaviorIds,
+            triggerId: primaryTriggerId, thoughtId: primaryThoughtId,
+            emotionId: primaryEmotionId, behaviorId: primaryBehaviorId,
+            triggerIds: selection.triggerIds, thoughtIds: selection.thoughtIds,
+            emotionIds: selection.emotionIds, behaviorIds: selection.behaviorIds,
             ...log,
             exerciseId: exerciseRecord?.exerciseId || null,
             exerciseResult: exerciseRecord?.result || null,
@@ -3728,42 +3412,6 @@ export default function App() {
 
   return <p style={{ padding: 20 }}>وضعیت ناشناخته: {view}</p>;
 }
-
-/* =========================================================
- * کامپوننت کمکی + ثابت‌ها
- * ========================================================= */
-
-function SectionTitle({ icon, title, color = "#000" }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        marginBottom: 14
-      }}
-    >
-      <div style={{ fontSize: 18 }}>{icon}</div>
-
-      <div
-        style={{
-          fontSize: 14,
-          fontWeight: 700,
-          color
-        }}
-      >
-        {title}
-      </div>
-    </div>
-  );
-}
-
-const STAGE_COLORS = {
-  1: "#3b82f6",
-  2: "#8b5cf6",
-  3: "#f59e0b",
-  4: "#10b981"
-};
 
 /* =========================================================
  * ۲۶. استایل‌ها
