@@ -3461,65 +3461,323 @@ function ResponseGuideView({ schemaId, onBack, onSOS }) {
     );
   }
 
+  const stages = (guide.whatToDoNow || []).map((step, idx) => ({
+    n: idx + 1,
+    fullText: step,
+    color: STAGE_COLORS[((idx) % 4) + 1] || "#1a3d2c"
+  }));
+
   return (
     <Shell title={plain || guide.name} onBack={onBack} showSOS onSOS={onSOS}>
-      <Card>
-        <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>{plain || guide.name}</h2>
-        <div style={{ fontSize: 12, color: "#000", marginBottom: 12 }}>{guide.name}</div>
-        <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>{guide.plainDescription}</div>
+
+      {/* ═══ Hero ═══ */}
+      <Card style={{
+        background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+        color: "#fff",
+        padding: 24,
+        marginBottom: 14,
+        position: "relative",
+        overflow: "hidden"
+      }}>
+        <div style={{
+          position: "absolute", top: -40, right: -40,
+          width: 140, height: 140, borderRadius: "50%",
+          background: "rgba(255,255,255,.05)"
+        }} />
+        <div style={{
+          position: "absolute", bottom: -50, left: -30,
+          width: 100, height: 100, borderRadius: "50%",
+          background: "rgba(255,255,255,.04)"
+        }} />
+
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: 14,
+              background: "rgba(255,255,255,.12)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 26
+            }}>💡</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>
+                چطور با این الگو برخورد کنم؟
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4 }}>
+                {plain || guide.name}
+              </div>
+            </div>
+          </div>
+
+          {guide.name && guide.name !== plain && (
+            <div style={{ fontSize: 11, opacity: 0.6, marginBottom: 12 }}>
+              {guide.name}
+            </div>
+          )}
+
+          {guide.plainDescription && (
+            <div style={{
+              fontSize: 13,
+              lineHeight: 1.9,
+              padding: "12px 14px",
+              background: "rgba(255,255,255,.08)",
+              borderRadius: 10,
+              opacity: 0.95
+            }}>{guide.plainDescription}</div>
+          )}
+        </div>
       </Card>
 
+      {/* ═══ در زندگی واقعی ═══ */}
       {guide.example && (
-        <Card style={{ marginTop: 12 }}>
-          <SectionTitle icon="📖" title="در زندگی واقعی" />
-          <div style={{ fontSize: 14, color: "#000", lineHeight: 1.9 }}>{guide.example}</div>
+        <Card style={{
+          marginBottom: 12,
+          background: "#eef4ff",
+          border: "1px solid #bfdbfe"
+        }}>
+          <SectionTitle icon="📖" title="در زندگی واقعی چطور دیده می‌شه؟" color="#1e40af" />
+          <div style={{
+            fontSize: 14,
+            lineHeight: 1.95,
+            color: "#000",
+            padding: "12px 14px",
+            background: "#fff",
+            borderRadius: 10,
+            borderRight: "3px solid #3b82f6"
+          }}>{guide.example}</div>
         </Card>
       )}
 
-      {guide.childhood && (
-        <Card style={{ marginTop: 12, background: "#eef4ff" }}>
-          <SectionTitle icon="🧸" title="احتمالاً در کودکی این‌ها را تجربه کرده" color="#1e40af" />
+      {/* ═══ کودکی ═══ */}
+      {guide.childhood && guide.childhood.length > 0 && (
+        <Card style={{
+          marginBottom: 12,
+          background: "#faf5ff",
+          border: "1px solid #e9d5ff"
+        }}>
+          <SectionTitle icon="🧸" title="این الگو از کجا آمد؟" color="#6b21a8" />
+          <div style={{
+            fontSize: 12,
+            color: "#7c3aed",
+            marginBottom: 12,
+            fontStyle: "italic"
+          }}>
+            احتمالاً در کودکی این‌ها را تجربه کرده:
+          </div>
           {guide.childhood.map((c, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
-              • {c}
+            <div key={i} style={{
+              display: "flex",
+              gap: 12,
+              padding: "12px 14px",
+              marginBottom: 8,
+              background: "#fff",
+              borderRadius: 10,
+              borderRight: "3px solid #8b5cf6"
+            }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: "50%",
+                background: "#8b5cf6", color: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, fontWeight: 700, flexShrink: 0,
+                marginTop: 1
+              }}>{toFa(i + 1)}</div>
+              <div style={{
+                flex: 1,
+                fontSize: 13.5,
+                lineHeight: 1.9,
+                color: "#000"
+              }}>{c}</div>
             </div>
           ))}
         </Card>
       )}
 
-      <Card style={{ marginTop: 12, background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)", color: "#fff" }}>
-        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>🌟 قاعده طلایی</div>
-        <div style={{ fontSize: 16, lineHeight: 1.9, fontWeight: 600 }}>{guide.goldenRule}</div>
-      </Card>
-
-      <Card style={{ marginTop: 12, background: "#eef7ee" }}>
-        <SectionTitle icon="✅" title="این کارها را بکن" color="#065f46" />
-        {guide.doThis.map((d, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
-            • {d}
+      {/* ═══ قاعده طلایی ═══ */}
+      {guide.goldenRule && (
+        <Card style={{
+          marginBottom: 12,
+          background: "linear-gradient(135deg, #0a3d38 0%, #0f5b53 52%, #178a7c 100%)",
+          color: "#fff",
+          padding: 22,
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute", top: -20, left: -20,
+            fontSize: 80, opacity: 0.06
+          }}>⭐</div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            marginBottom: 14, position: "relative"
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 11,
+              background: "rgba(255,255,255,.15)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 20
+            }}>⭐</div>
+            <div style={{ fontSize: 14, fontWeight: 700, opacity: 0.95 }}>
+              قاعده طلایی
+            </div>
           </div>
-        ))}
-      </Card>
+          <div style={{
+            fontSize: 16,
+            lineHeight: 2,
+            fontWeight: 600,
+            position: "relative",
+            padding: "12px 14px",
+            background: "rgba(255,255,255,.08)",
+            borderRadius: 10
+          }}>{guide.goldenRule}</div>
+        </Card>
+      )}
 
-      <Card style={{ marginTop: 12, background: "#fef3f2" }}>
-        <SectionTitle icon="❌" title="این کارها را نکن" color="#991b1b" />
-        {guide.dontDoThis.map((d, i) => (
-          <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
-            • {d}
+      {/* ═══ این کارها را بکن ═══ */}
+      {guide.doThis && guide.doThis.length > 0 && (
+        <Card style={{
+          marginBottom: 12,
+          background: "#ecfdf5",
+          border: "1px solid #a7f3d0"
+        }}>
+          <SectionTitle icon="✅" title="این کارها را بکن" color="#065f46" />
+          <div style={{ fontSize: 12, color: "#047857", marginBottom: 12, fontStyle: "italic" }}>
+            چیزهایی که کمک می‌کنند رابطه سالم‌تر بشه:
           </div>
-        ))}
-      </Card>
-
-      {guide.whatToDoNow && (
-        <Card style={{ marginTop: 12, background: "#fff8e1" }}>
-          <SectionTitle icon="🕊️" title="حالا باید چکار کرد" color="#92400e" />
-          {guide.whatToDoNow.map((w, i) => (
-            <div key={i} style={{ fontSize: 14, lineHeight: 1.9, color: "#000", marginBottom: 8 }}>
-              • {w}
+          {guide.doThis.map((d, i) => (
+            <div key={i} style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "flex-start",
+              padding: "10px 14px",
+              marginBottom: 8,
+              background: "#fff",
+              borderRadius: 10,
+              borderRight: "3px solid #10b981"
+            }}>
+              <span style={{
+                color: "#10b981",
+                fontWeight: 900,
+                fontSize: 14,
+                flexShrink: 0,
+                marginTop: 2
+              }}>✓</span>
+              <span style={{
+                flex: 1,
+                fontSize: 13.5,
+                lineHeight: 1.9,
+                color: "#000"
+              }}>{d}</span>
             </div>
           ))}
         </Card>
       )}
+
+      {/* ═══ این کارها را نکن ═══ */}
+      {guide.dontDoThis && guide.dontDoThis.length > 0 && (
+        <Card style={{
+          marginBottom: 12,
+          background: "#fef2f2",
+          border: "1px solid #fecaca"
+        }}>
+          <SectionTitle icon="❌" title="این کارها را نکن" color="#991b1b" />
+          <div style={{ fontSize: 12, color: "#b91c1c", marginBottom: 12, fontStyle: "italic" }}>
+            چیزهایی که اوضاع را بدتر می‌کنند:
+          </div>
+          {guide.dontDoThis.map((d, i) => (
+            <div key={i} style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "flex-start",
+              padding: "10px 14px",
+              marginBottom: 8,
+              background: "#fff",
+              borderRadius: 10,
+              borderRight: "3px solid #ef4444"
+            }}>
+              <span style={{
+                color: "#ef4444",
+                fontWeight: 900,
+                fontSize: 14,
+                flexShrink: 0,
+                marginTop: 2
+              }}>✕</span>
+              <span style={{
+                flex: 1,
+                fontSize: 13.5,
+                lineHeight: 1.9,
+                color: "#000"
+              }}>{d}</span>
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {/* ═══ حالا باید چکار کرد — مرحله‌ای ═══ */}
+      {stages.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 12,
+            paddingRight: 4
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 12,
+              background: "linear-gradient(135deg, #0a3d38, #178a7c)",
+              color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18
+            }}>🚀</div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#000" }}>
+                حالا باید چکار کنی؟
+              </div>
+              <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>
+                {toFa(stages.length)} قدم — یکی‌یکی، نه یک‌جا
+              </div>
+            </div>
+          </div>
+
+          {stages.map((stage) => (
+            <Card key={stage.n} style={{
+              marginBottom: 8,
+              padding: 14,
+              borderRight: `4px solid ${stage.color}`,
+              background: "#fff"
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: stage.color,
+                  color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 700, flexShrink: 0
+                }}>{toFa(stage.n)}</div>
+                <div style={{
+                  flex: 1,
+                  fontSize: 14,
+                  lineHeight: 1.9,
+                  color: "#000"
+                }}>{stage.fullText}</div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* ═══ پیام پایانی ═══ */}
+      <Card style={{
+        marginTop: 12,
+        background: "#f6f6f6",
+        padding: 16,
+        textAlign: "center"
+      }}>
+        <div style={{ fontSize: 12, color: "#000", lineHeight: 1.9 }}>
+          تو نمی‌تونی دیگران رو تغییر بدی —
+          <br />
+          ولی می‌تونی خودت رو قوی‌تر کنی.
+        </div>
+      </Card>
     </Shell>
   );
 }
