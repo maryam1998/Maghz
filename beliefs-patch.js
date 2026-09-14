@@ -222,12 +222,28 @@
       '<div class="belief-flow-card" data-new-card="1" style="background:linear-gradient(135deg,rgba(43,191,171,.08),rgba(94,200,240,.05));border-color:rgba(43,191,171,.3);">' +
         '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🌌 قلمرو ممکن‌ها</div>' +
         '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">' +
-          'فراتر از دنیای فیزیکی، میدانی از همه‌ی احتمالات وجود دارد — ' +
-          'به آن <b>قلمرو ممکن‌ها</b> می‌گویند. در این میدان، هر واقعیتی که بتوانی تصور کنی، از قبل وجود دارد.' +
+          'جو دیسپنزا می‌گوید فراتر از دنیای فیزیکی، میدانی نامرئی از انرژی، اطلاعات و آگاهی وجود دارد ' +
+          'که فراتر از مکان و زمان عمل می‌کند. به این میدان، <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b> می‌گویند.' +
+        '</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">' +
+          'در این قلمرو، همه‌ی احتمالات از قبل به‌صورت «موج» وجود دارند — از سلامتی و ثروت تا هر تجربه‌ای که بتوانی تصور کنی. ' +
+          'واقعیت فیزیکی فعلی تو، فقط یکی از بی‌نهایت احتمالی است که در این میدان وجود دارد.' +
+        '</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;">' +
+          '<b>نکته‌ی کلیدی:</b> تو در این تمرین‌ها چیز جدیدی «خلق» نمی‌کنی — فقط خودت را با یکی از احتمالاتی که از قبل در میدان وجود دارد، هم‌راستا می‌کنی.' +
+        '</p>' +
+      '</div>' +
+
+      /* ---------- چرا باید هیچ شد ---------- */
+      '<div class="belief-flow-card" data-new-card="1" style="margin-top:14px;">' +
+        '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🕳️ چرا باید «هیچ» شوی؟</div>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">' +
+          'اول باید این‌طور «هیچ» شوی تا از «منِ قدیمی» و از جای «کمبود» به میدان کوانتومی سیگنال نفرستی. ' +
+          'در آن سکوت و خالی بودن، به قلمرو ممکن‌ها وصل می‌شوی و از جای «کلیت» و «فراوانی» می‌توانی واقعیت دلخواهت را خلق کنی.' +
         '</p>' +
         '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;">' +
-          'برای اتصال به این میدان، اول باید از هویت گذشته و از حس «کمبود» خالی شوی. ' +
-          'این همان مرحله‌ی <b>«هیچ شدن»</b> است. بعد از آن، بذر واقعیت دلخواهت را از جای کامل‌بودن می‌کاری — نه از جای آرزو.' +
+          'وقتی «هیچ» می‌شوی، دیگر از جای «کمبود» یا «نیاز» درخواست نمی‌کنی — از جای <b>کلیت</b> و <b>فراوانی</b> خلق می‌کنی. ' +
+          'در واقع، درخواست نمی‌کنی که چیزی به تو داده شود؛ خودت را با فرکانس آن واقعیتِ ممکن در میدان هم‌راستا می‌کنی.' +
         '</p>' +
       '</div>' +
 
@@ -237,7 +253,7 @@
           '<span id="dp-session-count" style="font-size:10.5px;color:var(--muted);">۰ جلسه</span>' +
         '</div>' +
         '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">' +
-          'شش مرحله. هر کدام را جدا تیک بزن.' +
+          'پنج مرحله. هر کدام را جدا تیک بزن.' +
         '</p>' +
 
         // تایمر
@@ -361,16 +377,14 @@
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
             '<span class="dp-step-num">۳</span>' +
             '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها</span>' +
-            '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="کاشتن بذر">▾</button>' +
+            '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="یادداشت بذر امروز">▾</button>' +
           '</div>' +
 
           '<div class="dp-why-box">' +
             '<span class="dp-def-chip">📖 <b>اتصال (Connection):</b> در این حالت خالی، آگاهی‌ات را به قلمرو ممکن‌ها وصل می‌کنی.</span>' +
-            'الان که از هویتِ گذشته و از جای «کمبود» خالی شدی، دیگه به‌عنوان «کسی که چیزی نداره» درخواست نمی‌کنی. ' +
-            'به‌عنوان <b>آگاهی خالص</b>، خودت را به قلمرو ممکن‌ها وصل می‌کنی — ' +
-            'میدانی که همه‌ی احتمالات از قبل در آن وجود دارند. ' +
-            'در این میدان، چیزی «درخواست» نمی‌کنی؛ فقط بذرِ واقعیتی که می‌خواهی را می‌کاری — ' +
-            'به‌عنوان حقیقتی که از قبل وجود دارد.' +
+            'در این چارچوب، «درخواست» به معنای التماس از یک نیروی بیرونی یا انتظار معجزه نیست. ' +
+            'درخواست واقعی، فرستادن یک سیگنال مشخص به میدان است — اما این سیگنال فقط وقتی فرستاده می‌شود ' +
+            'که تو «هیچ» شده باشی.' +
           '</div>' +
 
           '<div class="dp-step-content" style="margin-top:12px;">' +
@@ -391,50 +405,21 @@
                 '</div>' +
               '</div>' +
               '<div style="padding:10px 12px;background:rgba(94,200,240,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
-                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۳. کاشتن بذر</div>' +
+                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۳. انتخاب واقعیت</div>' +
                 '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">' +
-                  'یک تصویر واضح از واقعیتِ دلخواهت — نه به‌عنوان آرزو، بلکه به‌عنوان چیزی که الان هست — ' +
-                  'در ذهنت می‌کاری. و رها می‌کنی. میدان بقیه‌اش را انجام می‌دهد.' +
+                  'با خواسته‌ات هم‌فرکانس شو و از میان امکان‌های پیش‌رو، آینده‌ای را که می‌خواهی انتخاب کن.' +
                 '</div>' +
               '</div>' +
             '</div>' +
           '</div>' +
 
-          '<div id="dp-possibilities" class="dp-toggle-body" style="display:none;margin-top:12px;">' +
-            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
-              'بذری که امروز می‌کاری رو این‌جا بنویس. با «همین حالا...» شروع کن — نه با «آرزو می‌کنم» یا «کاش».' +
+          '<div class="dp-step-content" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
+            '<div class="dp-why-box" style="margin-top:0;margin-bottom:12px;">' +
+              'اینجا چیزی که می‌خوای رو می‌نویسی — ولی جوری که انگار <b>همین حالا بهش رسیدی</b>. ' +
+              'با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن. ' +
+              'وقتی هر روز این رو می‌خونی، ذهنت باور می‌کنه که این آینده واقعاً مال توئه.' +
             '</div>' +
-            '<div style="display:flex;flex-direction:column;gap:10px;">' +
-              '<div>' +
-                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">بذر اصلی امروز:</label>' +
-                '<textarea id="dp-possibility-fear" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="همین حالا من..."></textarea>' +
-              '</div>' +
-              '<div>' +
-                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">چطور حسش می‌کنم اگر همین حالا حقیقت داشت؟</label>' +
-                '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="حس می‌کنم که..."></textarea>' +
-              '</div>' +
-              '<div>' +
-                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">چه چیزی را رها می‌کنم؟</label>' +
-                '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="رها می‌کنم..."></textarea>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
 
-        /* ---------- مرحله ۴ — خواندن خواسته ---------- */
-        '<div class="dp-step">' +
-          '<div class="dp-step-head">' +
-            '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
-            '<span class="dp-step-num">۴</span>' +
-            '<span class="dp-step-title">خواسته‌ات را بخوان</span>' +
-          '</div>' +
-          '<div class="dp-why-box">' +
-            'اینجا چیزی که می‌خوای رو می‌نویسی — ولی جوری که انگار <b>همین حالا بهش رسیدی</b>. ' +
-            'با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن. ' +
-            'وقتی هر روز این رو می‌خونی، ذهنت باور می‌کنه که این آینده واقعاً مال توئه.' +
-          '</div>' +
-
-          '<div class="dp-step-content">' +
             '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;min-height:60px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
 
             '<div id="future-editor" style="display:none;margin-bottom:10px;">' +
@@ -465,13 +450,33 @@
               '<div id="future-mini-cal" class="mini-cal-grid"></div>' +
             '</div>' +
           '</div>' +
+
+          '<div id="dp-possibilities" class="dp-toggle-body" style="display:none;margin-top:12px;">' +
+            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
+              'بذری که امروز می‌کاری رو این‌جا بنویس. با «همین حالا...» شروع کن — نه با «آرزو می‌کنم» یا «کاش».' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
+              '<div>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">بذر اصلی امروز:</label>' +
+                '<textarea id="dp-possibility-fear" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="همین حالا من..."></textarea>' +
+              '</div>' +
+              '<div>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">چطور حسش می‌کنم اگر همین حالا حقیقت داشت؟</label>' +
+                '<textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="حس می‌کنم که..."></textarea>' +
+              '</div>' +
+              '<div>' +
+                '<label style="font-size:11.5px;display:block;margin-bottom:4px;">چه چیزی را رها می‌کنم؟</label>' +
+                '<textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="رها می‌کنم..."></textarea>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
 
-        /* ---------- مرحله ۵ — حسش کن و تبدیل شو ---------- */
+        /* ---------- مرحله ۴ — حسش کن و تبدیل شو ---------- */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
-            '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
-            '<span class="dp-step-num">۵</span>' +
+            '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
+            '<span class="dp-step-num">۴</span>' +
             '<span class="dp-step-title">حسش کن و تبدیل شو</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
@@ -484,7 +489,7 @@
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🖼️ تصویرسازی</div>' +
             '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> در همان حالت هیچ‌بودن، تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری — بدون احساس نیاز یا کمبود.</span>' +
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">' +
-              'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای. اگر بخواهی، عکس‌هایی از آن صحنه اضافه کن.' +
+              'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای؛ هر تعداد عکس که دوست داری از آن صحنه اضافه کن — محدودیتی نیست.' +
             '</div>' +
             '<label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>' +
             '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
@@ -523,11 +528,11 @@
           '<div class="neural-card" id="np-dispenza-mount"></div>' +
         '</div>' +
 
-        /* ---------- مرحله ۶ — ماموریت به ذهن ---------- */
+        /* ---------- مرحله ۵ — ماموریت به ذهن ---------- */
         '<div class="dp-step" style="margin-top:18px;">' +
           '<div class="dp-step-head">' +
-            '<button type="button" class="dp-check-btn" data-dp-check="6">○</button>' +
-            '<span class="dp-step-num">۶</span>' +
+            '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
+            '<span class="dp-step-num">۵</span>' +
             '<span class="dp-step-title">ماموریت به ذهن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
@@ -583,7 +588,7 @@
           '✨ ثبت جلسه‌ی امروز' +
         '</button>' +
         '<div id="dp-progress-hint" style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;">' +
-          '۰ از ۶ مرحله' +
+          '۰ از ۵ مرحله' +
         '</div>' +
       '</div>' +
 
@@ -731,7 +736,7 @@
       el.classList.toggle('done', isDone);
     });
     var hint = document.getElementById('dp-progress-hint');
-    if (hint) hint.textContent = toFa(done.length) + ' از ۶ مرحله';
+    if (hint) hint.textContent = toFa(done.length) + ' از ۵ مرحله';
 
     var totalDays = Math.min((state.dispenzaReadDays || []).length, 90);
     var countEl = document.getElementById('dp-session-count');
@@ -1021,7 +1026,7 @@
         var fibers = 1;
         var msg = 'ثبت شد — یک مسیر تازه 🧠';
         if (count === 0){ fibers = 0; msg = 'اول حداقل یک مرحله را تیک بزن'; }
-        else if (count === 6 && quality !== null){
+        else if (count === 5 && quality !== null){
           if (quality >= 500){ fibers = 2; msg = '🔥 همه مراحل + حس پرقدرت — دو مسیر ساخته شد!'; }
           else if (quality < 200){ fibers = 0; msg = '⚠️ حس ضعیف — دفعه‌ی بعد عمیق‌تر'; }
         }
