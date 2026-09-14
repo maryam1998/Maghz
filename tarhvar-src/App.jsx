@@ -23,6 +23,7 @@ import {
   getLifeCycle,
   getLifeCyclesByCategory
 } from "./LIFE_CYCLES";
+import { getLifeCycleDetail } from "./LIFE_CYCLES_DETAIL";
 import { mergeAdditions } from "./SCHEMAS_ADDITIONS";
 import { mergeTriggers } from "./TRIGGERS_EXTRA";
 import { getTodayReminders } from "./DAILY_REMINDERS";
@@ -3727,6 +3728,42 @@ export default function App() {
 
   return <p style={{ padding: 20 }}>وضعیت ناشناخته: {view}</p>;
 }
+
+/* =========================================================
+ * کامپوننت کمکی + ثابت‌ها
+ * ========================================================= */
+
+function SectionTitle({ icon, title, color = "#000" }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginBottom: 14
+      }}
+    >
+      <div style={{ fontSize: 18 }}>{icon}</div>
+
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 700,
+          color
+        }}
+      >
+        {title}
+      </div>
+    </div>
+  );
+}
+
+const STAGE_COLORS = {
+  1: "#3b82f6",
+  2: "#8b5cf6",
+  3: "#f59e0b",
+  4: "#10b981"
+};
 
 /* =========================================================
  * ۲۶. استایل‌ها
