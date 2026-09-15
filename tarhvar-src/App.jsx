@@ -1449,10 +1449,11 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, on
   const activeCount = activeSchemaIds ? activeSchemaIds.length : 0;
 
   const actions = [
-    { id: "life", icon: "🔄", title: "چرخه‌های زندگی", desc: "الگوهای عمیق‌تر", onClick: onLifeCycles, color: "#8b5cf6" },
-    { id: "sit",  icon: "🔍", title: "حس الان من",     desc: "موقعیت‌های واقعی", onClick: onSituations, color: "#0ea5e9" },
-    { id: "rel",  icon: "💞", title: "روابط من",       desc: "چطور برخورد کنم؟", onClick: onRelationships, color: "#ec4899" }
-  ];
+  { id: "life", icon: "🔄", title: "چرخه‌های زندگی", desc: "الگوهای عمیق‌تر", onClick: onLifeCycles, color: "#8b5cf6" },
+  { id: "sit",  icon: "🔍", title: "حس الان من",     desc: "موقعیت‌های واقعی", onClick: onSituations, color: "#0ea5e9" },
+  { id: "rel",  icon: "💞", title: "روابط من",       desc: "چطور برخورد کنم؟", onClick: onRelationships, color: "#ec4899" },
+  { id: "acc",  icon: "🕊️", title: "پذیرش",          desc: "آنچه انتخاب نکردم", onClick: onAcceptance, color: "#14b8a6" }
+];
 
   return (
     <Shell title="الگوهای من" showSOS onSOS={onSOS}>
