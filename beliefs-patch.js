@@ -144,11 +144,11 @@
      موج‌های سینوسی نامنظم
      ===================================================================== */
   var LAYER_WAVE = {
-    body:  { baseR: 105, amp: 5.5, freq: 3, phase: 0.0 },
-    one:   { baseR: 88,  amp: 4.8, freq: 4, phase: 0.8 },
-    thing: { baseR: 72,  amp: 4.0, freq: 5, phase: 1.6 },
-    where: { baseR: 56,  amp: 3.2, freq: 6, phase: 2.4 },
-    time:  { baseR: 40,  amp: 2.5, freq: 7, phase: 3.2 }
+    body:  { baseR: 105, amp: 11.0, freq: 3, phase: 0.0 },
+    one:   { baseR: 88,  amp: 9.5,  freq: 4, phase: 0.8 },
+    thing: { baseR: 72,  amp: 8.0,  freq: 5, phase: 1.6 },
+    where: { baseR: 56,  amp: 6.5,  freq: 6, phase: 2.4 },
+    time:  { baseR: 40,  amp: 5.0,  freq: 7, phase: 3.2 }
   };
   var PURE_WAVE = { baseR: 26, amp: 1.6, freq: 8, phase: 0 };
 
