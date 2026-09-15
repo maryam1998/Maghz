@@ -5,6 +5,7 @@
   'use strict';
 
   var ARCHIVE_OPEN = false;
+  var RAS_ARCHIVE_OPEN = false;
   var waveAnimFrame = null;
   var wavePhase = 0;
   var lastWaveFrame = 0;
@@ -34,7 +35,7 @@
     if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
     if (!state.dispenzaPossibilities) state.dispenzaPossibilities = {};
     if (!state.practiceEmotions) state.practiceEmotions = {};
-    if (!state.rasMission) state.rasMission = {};
+    if (!Array.isArray(state.rasSignals)) state.rasSignals = [];
     if (!Array.isArray(state.futureTextVersions)) {
       state.futureTextVersions = [];
       if (state.futureText && String(state.futureText).trim()) {
@@ -621,21 +622,17 @@
         '<div class="dp-step dp-bonus-step" style="margin-top:18px;">' +
           '<div class="dp-step-head">' +
             '<span style="font-size:16px;">🎯</span>' +
-            '<span class="dp-step-title">ماموریت به ذهن <span style="font-size:10px;font-weight:600;color:var(--muted);">(تمرین اضافه)</span></span>' +
+            '<span class="dp-step-title">ماموریت به ذهن</span>' +
+            '<button type="button" class="dp-expand-icon" data-toggle-box="ras-mission-box" style="margin-inline-start:auto;" title="باز/بسته کردن">▾</button>' +
           '</div>' +
-          '<div class="dp-why-box">ذهنت هر لحظه هزاران چیز رو فیلتر می‌کنه. وقتی بهش ماموریت بدی، در طول روز خودبه‌خود دنبال نشانه‌های اون ماموریت می‌گرده.</div>' +
-          '<div class="dp-step-content">' +
-            '<div style="font-size:12px;font-weight:700;margin-bottom:10px;">دو ماموریت برای ۲۴ ساعت آینده:</div>' +
-            '<div style="padding:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;">' +
-              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:18px;">👁️</span><span style="font-size:12.5px;font-weight:800;">ماموریت چشم</span></div>' +
-              '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:10px;">به‌جای غرق شدن در فکرها، حواست به نشانه‌ها باشد.</div>' +
-              '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;"><input type="checkbox" data-ras="see" style="width:16px;height:16px;accent-color:var(--emerald-500);"><span>نشانه دیدم</span></label>' +
+          '<div id="ras-mission-box" style="display:none;margin-top:12px;">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+              '<span style="font-size:12.5px;font-weight:800;">👁️ نشانه دیدم</span>' +
+              '<button type="button" id="ras-signal-add-btn" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--emerald-500);color:#fff;font-size:18px;font-weight:800;cursor:pointer;line-height:1;">+</button>' +
             '</div>' +
-            '<div style="padding:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;">' +
-              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:18px;">💗</span><span style="font-size:12.5px;font-weight:800;">ماموریت حس</span></div>' +
-              '<div style="font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:10px;">وقتی نشانه را دیدی، چند لحظه حسش کن.</div>' +
-              '<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:6px 0;"><input type="checkbox" data-ras="feel" style="width:16px;height:16px;accent-color:var(--emerald-500);"><span>حسش کردم</span></label>' +
-            '</div>' +
+            '<div id="ras-signal-list"></div>' +
+            '<button type="button" id="ras-archive-toggle-btn" class="btn tiny" style="width:100%;margin-top:8px;">📚 آرشیو (<span id="ras-archive-count">۰</span>)</button>' +
+            '<div id="ras-archive-box" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:220px;overflow-y:auto;"></div>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -979,6 +976,77 @@
     box.innerHTML = html;
   }
 
+  /* =====================================================================
+     ماموریت به ذهن — لاگ نشانه‌ها
+     ===================================================================== */
+  function rasDayKeyFromTs(ts){
+    var d = new Date(ts);
+    return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  }
+
+  function rasAddSignal(){
+    if (!Array.isArray(state.rasSignals)) state.rasSignals = [];
+    state.rasSignals.push({ id: 'sig_' + Date.now(), ts: Date.now() });
+    try { saveState(); } catch(e){}
+    rasRenderSignals();
+  }
+
+  function rasDeleteSignal(id){
+    if (!Array.isArray(state.rasSignals)) return;
+    state.rasSignals = state.rasSignals.filter(function(s){ return s.id !== id; });
+    try { saveState(); } catch(e){}
+    rasRenderSignals();
+  }
+
+  function rasToggleArchive(){ RAS_ARCHIVE_OPEN = !RAS_ARCHIVE_OPEN; rasRenderSignals(); }
+
+  function rasRenderSignals(){
+    var all = Array.isArray(state.rasSignals) ? state.rasSignals.slice() : [];
+    var todayKey = dpTodayKey();
+    var todayItems = all.filter(function(s){ return rasDayKeyFromTs(s.ts) === todayKey; }).sort(function(a,b){ return b.ts - a.ts; });
+    var archiveItems = all.filter(function(s){ return rasDayKeyFromTs(s.ts) !== todayKey; }).sort(function(a,b){ return b.ts - a.ts; });
+
+    var list = document.getElementById('ras-signal-list');
+    if (list){
+      if (!todayItems.length){
+        list.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--muted);padding:8px;">هنوز نشانه‌ای امروز ثبت نشده.</div>';
+      } else {
+        list.innerHTML = todayItems.map(function(s){
+          var timeStr = new Date(s.ts).toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;">' +
+            '<span style="font-size:12px;color:var(--ink);">🌀 ' + timeStr + '</span>' +
+            '<button type="button" data-ras-del="' + s.id + '" style="width:22px;height:22px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;line-height:1;">×</button>' +
+          '</div>';
+        }).join('');
+      }
+    }
+
+    var archiveCountEl = document.getElementById('ras-archive-count');
+    if (archiveCountEl) archiveCountEl.textContent = toFa(archiveItems.length);
+
+    var archiveBox = document.getElementById('ras-archive-box');
+    if (archiveBox){
+      if (!RAS_ARCHIVE_OPEN){
+        archiveBox.style.display = 'none';
+      } else {
+        archiveBox.style.display = 'block';
+        if (!archiveItems.length){
+          archiveBox.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--muted);padding:8px;">آرشیوی وجود ندارد.</div>';
+        } else {
+          archiveBox.innerHTML = archiveItems.map(function(s){
+            var d = new Date(s.ts);
+            var dateStr = d.toLocaleDateString('fa-IR');
+            var timeStr = d.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
+            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:10px;background:var(--surface-2);margin-bottom:6px;">' +
+              '<span style="font-size:11px;color:var(--ink-soft);">🌀 ' + dateStr + ' • ' + timeStr + '</span>' +
+              '<button type="button" data-ras-del="' + s.id + '" style="width:20px;height:20px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;line-height:1;">×</button>' +
+            '</div>';
+          }).join('');
+        }
+      }
+    }
+  }
+
   function dpGetTodaySteps(){
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
     var k = dpTodayKey();
@@ -1018,10 +1086,7 @@
       else em.textContent = '✓ ثبت شد';
     }
 
-    var todayRec = (state.rasMission && state.rasMission[dpTodayKey()]) || {};
-    document.querySelectorAll('input[data-ras]').forEach(function(cb){
-      cb.checked = !!todayRec[cb.dataset.ras];
-    });
+    try { rasRenderSignals(); } catch(e){}
 
     try { refreshNothingVisual(); } catch(e){}
   }
@@ -1245,6 +1310,11 @@
         return;
       }
 
+      if (t.id === 'ras-signal-add-btn'){ rasAddSignal(); return; }
+      if (t.id === 'ras-archive-toggle-btn'){ rasToggleArchive(); return; }
+      var delBtn = t.closest('[data-ras-del]');
+      if (delBtn){ rasDeleteSignal(delBtn.dataset.rasDel); return; }
+
       if (t.id === 'breath-start-btn'){ startBreathing(); return; }
       if (t.id === 'dp-timer-btn'){ dpStartTimer(); return; }
       if (t.id === 'edit-future-btn'){ openFutureEditor(); return; }
@@ -1303,15 +1373,6 @@
         try { saveState(); } catch(e2){}
       }
       if (id === 'seed-text-input'){ onSeedTextInput(e.target.value); }
-    });
-
-    document.addEventListener('change', function(e){
-      if (!e.target || !e.target.dataset || !e.target.dataset.ras) return;
-      var dk = dpTodayKey();
-      if (!state.rasMission) state.rasMission = {};
-      if (!state.rasMission[dk]) state.rasMission[dk] = {};
-      state.rasMission[dk][e.target.dataset.ras] = !!e.target.checked;
-      try { saveState(); } catch(e2){}
     });
 
     document.addEventListener('visibilitychange', function(){
