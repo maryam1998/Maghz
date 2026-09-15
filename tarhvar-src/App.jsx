@@ -2,7 +2,7 @@
 // نسخه 16.0 — کامل با تمام صفحات حرفه‌ای
 // OriginView حرفه‌ای + همه صفحات قبلی
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useContext, createContext } from "react";
 
 import { SCHEMAS, DOMAINS, resolveExercise, getReplacementResponse } from "./SCHEMAS";
 import { ExerciseRenderer, resolveExerciseFromRule } from "./EXERCISES";
@@ -59,7 +59,11 @@ registerIdLabels(LABELS);
  * کامپوننت‌های پایه
  * ========================================================= */
 
-function Shell({ children, title, onBack, showQuickButton, onQuick, showSOS, onSOS }) {
+const SearchContext = createContext(null);
+
+function Shell({ children, title, onBack, showQuickButton, onQuick, showSOS, onSOS, hideSearch }) {
+  const openSearch = useContext(SearchContext);
+  const canSearch = !hideSearch && typeof openSearch === "function";
   return (
     <div dir="rtl" style={styles.app}>
       <header style={styles.header}>
@@ -69,11 +73,16 @@ function Shell({ children, title, onBack, showQuickButton, onQuick, showSOS, onS
           <div style={{ width: 32 }} />
         )}
         <div style={styles.headerTitle}>{title}</div>
-        {showSOS ? (
-          <button onClick={onSOS} style={styles.sosHeaderBtn}>SOS</button>
-        ) : (
-          <div style={{ width: 32 }} />
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {canSearch && (
+            <button onClick={openSearch} style={styles.searchHeaderBtn} aria-label="جستجو">🔎</button>
+          )}
+          {showSOS ? (
+            <button onClick={onSOS} style={styles.sosHeaderBtn}>SOS</button>
+          ) : (
+            !canSearch && <div style={{ width: 32 }} />
+          )}
+        </div>
       </header>
       <main style={styles.main}>{children}</main>
       {showQuickButton && (
@@ -127,6 +136,141 @@ function SectionTitle({ icon, title, color = "#000" }) {
 }
 
 const STAGE_COLORS = { 1: "#3b82f6", 2: "#8b5cf6", 3: "#f59e0b", 4: "#10b981" };
+
+/* =========================================================
+ * جستجوی سراسری
+ * ========================================================= */
+
+function normalizeFa(str) {
+  return (str || "")
+    .toString()
+    .replace(/ي/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/[\u064B-\u065F\u0670\u200c]/g, " ")
+    .toLowerCase()
+    .trim();
+}
+
+function tokenizeFa(str) {
+  return normalizeFa(str).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+}
+
+// هر کلمه‌ی سرچ باید ابتدای حداقل یکی از کلمات متن باشد (جستجوی پیشوندی)
+function matchesQuery(text, queryTokens) {
+  if (!queryTokens.length) return false;
+  const words = tokenizeFa(text);
+  if (!words.length) return false;
+  return queryTokens.every((qt) => words.some((w) => w.startsWith(qt)));
+}
+
+function useSearchIndex() {
+  return useMemo(() => {
+    const items = [];
+
+    for (const s of SCHEMAS) {
+      items.push({
+        type: "schema",
+        id: s.id,
+        icon: "🧩",
+        title: s.name_plain || s.name_fa,
+        subtitle: s.name_fa,
+        text: [s.name_fa, s.name_en, s.name_plain, s.one_liner, s.short_description, s.core_need]
+          .filter(Boolean).join(" ")
+      });
+    }
+
+    for (const st of SITUATIONS) {
+      items.push({
+        type: "situation",
+        id: st.id,
+        icon: "🔍",
+        title: st.title,
+        subtitle: st.categoryLabel,
+        text: [st.title, st.categoryLabel, ...(st.examples || [])].filter(Boolean).join(" ")
+      });
+    }
+
+    for (const lc of LIFE_CYCLES) {
+      items.push({
+        type: "life_cycle",
+        id: lc.id,
+        icon: "🔄",
+        title: lc.title,
+        subtitle: lc.categoryLabel,
+        text: [lc.title, lc.categoryLabel, lc.shortDescription, ...(lc.examples || [])]
+          .filter(Boolean).join(" ")
+      });
+    }
+
+    for (const p of ATTRACTION_PATTERNS) {
+      items.push({
+        type: "relationship",
+        id: p.id,
+        icon: "💞",
+        title: p.shortName || p.title,
+        subtitle: p.title,
+        text: [p.title, p.shortName, p.boxTitle, p.boxDescription].filter(Boolean).join(" ")
+      });
+    }
+
+    return items;
+  }, []);
+}
+
+function SearchView({ onBack, onPickSchema, onPickSituation, onPickCycle, onPickPattern }) {
+  const [query, setQuery] = useState("");
+  const index = useSearchIndex();
+
+  const results = useMemo(() => {
+    const tokens = tokenizeFa(query);
+    if (!tokens.length) return [];
+    return index.filter((item) => matchesQuery(item.text, tokens)).slice(0, 50);
+  }, [query, index]);
+
+  const handlePick = (item) => {
+    if (item.type === "schema") onPickSchema(item.id);
+    else if (item.type === "situation") onPickSituation(item.id);
+    else if (item.type === "life_cycle") onPickCycle(item.id);
+    else if (item.type === "relationship") onPickPattern(item.id);
+  };
+
+  return (
+    <Shell title="جستجو" onBack={onBack} hideSearch>
+      <input
+        autoFocus
+        dir="rtl"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="جستجو در طرحواره‌ها، موقعیت‌ها، چرخه‌ها و روابط…"
+        style={styles.searchInput}
+      />
+
+      {query.trim() === "" && (
+        <p style={{ fontSize: 13, color: "#999", textAlign: "center", padding: "30px 10px" }}>
+          چند حرف تایپ کن تا نتایج نشون داده بشه.
+        </p>
+      )}
+
+      {query.trim() !== "" && results.length === 0 && (
+        <p style={{ fontSize: 13, color: "#999", textAlign: "center", padding: "30px 10px" }}>
+          چیزی پیدا نشد. یک عبارت دیگه رو امتحان کن.
+        </p>
+      )}
+
+      {results.map((item) => (
+        <button key={item.type + "-" + item.id} onClick={() => handlePick(item)} style={styles.searchResultBtn}>
+          <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
+          <div style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#000" }}>{item.title}</div>
+            {item.subtitle && (
+              <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{item.subtitle}</div>
+            )}
+          </div>
+        </button>
+      ))}
+    </Shell>
+  );
+}
 
 /* =========================================================
  * Origin — ریشه (نسخه حرفه‌ای)
@@ -4019,6 +4163,8 @@ export default function App() {
   const [exerciseRecord, setExerciseRecord] = useState(null);
   const [missionRecord, setMissionRecord] = useState(null);
   const [returnTo, setReturnTo] = useState("welcome");
+  const [searchReturnTo, setSearchReturnTo] = useState("welcome");
+  let screen = null;
 
   useEffect(() => {
     Promise.all([loadProfile(), hasCheckedInToday()]).then(([p, checkedIn]) => {
@@ -4038,6 +4184,7 @@ export default function App() {
 
   const go = (v) => setView(v);
   const openSOS = () => { setReturnTo(view); go("sos"); };
+  const openSearch = () => { setSearchReturnTo(view); go("search"); };
   const openOrigin = (schemaId, from) => {
     setOriginSchemaId(schemaId);
     setReturnFromOrigin(from);
@@ -4045,7 +4192,7 @@ export default function App() {
   };
 
   if (view === "loading") {
-    return (
+    screen = (
       <div style={styles.app}>
         <p style={{ textAlign: "center", padding: 40 }}>در حال بارگذاری...</p>
       </div>
@@ -4053,7 +4200,7 @@ export default function App() {
   }
 
   if (view === "checkin") {
-    return (
+    screen = (
       <CheckInView analysis={analysis}
         onDone={() => go(analysis ? "profile" : "welcome")}
         onSkip={() => go(analysis ? "profile" : "welcome")} />
@@ -4061,11 +4208,11 @@ export default function App() {
   }
 
   if (view === "sos") {
-    return <SOSView onBack={() => go(returnTo)} onBetter={() => go(returnTo)} />;
+    screen = <SOSView onBack={() => go(returnTo)} onBetter={() => go(returnTo)} />;
   }
 
   if (view === "welcome") {
-    return (
+    screen = (
       <WelcomeView
         analysis={analysis}
         hasProfile={!!analysis}
@@ -4078,7 +4225,7 @@ export default function App() {
   }
 
   if (view === "ysq") {
-    return (
+    screen = (
       <YSQView onBack={() => go("welcome")}
         onDone={async (answers, result) => {
           const payload = buildResultPayload(answers);
@@ -4091,7 +4238,7 @@ export default function App() {
   }
 
   if (view === "profile") {
-    return (
+    screen = (
       <ProfileView analysis={analysis}
         onBack={() => go("welcome")} onRetake={() => go("ysq")}
         onWins={() => go("wins")} onCalendar={() => go("calendar")}
@@ -4104,14 +4251,14 @@ export default function App() {
   }
 
   if (view === "origin" && originSchemaId) {
-    return <OriginView schemaId={originSchemaId}
+    screen = <OriginView schemaId={originSchemaId}
       onBack={() => go(returnFromOrigin)}
       onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
       onSOS={openSOS} />;
   }
 
   if (view === "life_cycles") {
-    return (
+    screen = (
       <LifeCyclesView
         onBack={() => go(analysis ? "profile" : "welcome")}
         onSOS={openSOS}
@@ -4120,7 +4267,7 @@ export default function App() {
   }
 
   if (view === "life_cycle_detail" && activeLifeCycleId) {
-    return (
+    screen = (
       <LifeCycleDetailView
         cycleId={activeLifeCycleId}
         onBack={() => go("life_cycles")}
@@ -4130,7 +4277,7 @@ export default function App() {
   }
 
   if (view === "cycle" && activeSchemaId) {
-    return (
+    screen = (
       <CycleView schemaId={activeSchemaId}
         onBack={() => go("profile")}
         onDone={(sel) => { setSelection(sel); go("cycle_summary"); }} />
@@ -4138,7 +4285,7 @@ export default function App() {
   }
 
   if (view === "cycle_summary" && selection) {
-    return (
+    screen = (
       <CycleSummaryView schemaId={activeSchemaId} selection={selection}
         onBack={() => go("cycle")} onContinue={() => go("exercise")}
         onViewOrigin={() => openOrigin(activeSchemaId, "cycle_summary")} />
@@ -4146,7 +4293,7 @@ export default function App() {
   }
 
   if (view === "exercise") {
-    return (
+    screen = (
       <ExerciseView schemaId={activeSchemaId} selection={selection}
         onBack={() => go("cycle_summary")}
         onDone={(record) => { setExerciseRecord(record || null); go("mission"); }} />
@@ -4154,7 +4301,7 @@ export default function App() {
   }
 
   if (view === "mission") {
-    return (
+    screen = (
       <MissionView schemaId={activeSchemaId}
         onBack={() => go("exercise")}
         onDone={(mission) => { setMissionRecord(mission); go("log"); }} />
@@ -4162,7 +4309,7 @@ export default function App() {
   }
 
   if (view === "log") {
-    return (
+    screen = (
       <LogResultView schemaId={activeSchemaId} selection={selection}
         onBack={() => go("mission")}
         onDone={async (log) => {
@@ -4187,7 +4334,7 @@ export default function App() {
   }
 
   if (view === "progress") {
-    return (
+    screen = (
       <ProgressView schemaId={activeSchemaId}
         onBack={() => go("profile")} onQuick={() => go("quick")}
         onWins={() => go("wins")} onCalendar={() => go("calendar")}
@@ -4196,15 +4343,15 @@ export default function App() {
   }
 
   if (view === "wins") {
-    return <WinsView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
+    screen = <WinsView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
   }
 
   if (view === "calendar") {
-    return <CalendarView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
+    screen = <CalendarView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
   }
 
   if (view === "situations") {
-    return (
+    screen = (
       <SituationsView onBack={() => go(analysis ? "profile" : "welcome")}
         onSOS={openSOS}
         onPickSituation={(id) => { setActiveSituationId(id); go("situation_detail"); }} />
@@ -4212,7 +4359,7 @@ export default function App() {
   }
 
   if (view === "situation_detail" && activeSituationId) {
-    return (
+    screen = (
       <SituationDetailView situationId={activeSituationId}
         onBack={() => go("situations")} onSOS={openSOS}
         onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }} />
@@ -4220,7 +4367,7 @@ export default function App() {
   }
 
   if (view === "relationships") {
-    return (
+    screen = (
       <RelationshipsView analysis={analysis}
         onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS}
         onPickPattern={(id) => { setActivePatternId(id); go("relationship_detail"); }}
@@ -4229,7 +4376,7 @@ export default function App() {
   }
 
   if (view === "relationship_detail" && activePatternId) {
-    return (
+    screen = (
       <RelationshipDetailView patternId={activePatternId}
         onBack={() => go("relationships")}
         onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
@@ -4238,18 +4385,18 @@ export default function App() {
   }
 
   if (view === "response_guide" && activeGuideSchemaId) {
-    return (
+    screen = (
       <ResponseGuideView schemaId={activeGuideSchemaId}
         onBack={() => go("relationships")} onSOS={openSOS} />
     );
   }
 
   if (view === "break_cycle") {
-    return <BreakCycleView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
+    screen = <BreakCycleView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
   }
 
   if (view === "quick") {
-    return (
+    screen = (
       <QuickCheckView
         profiles={profiles.length ? profiles : SCHEMAS.slice(0, 5).map((s) => ({
           schemaId: s.id, name: s.name_plain || s.name_fa
@@ -4259,7 +4406,27 @@ export default function App() {
     );
   }
 
-  return <p style={{ padding: 20 }}>وضعیت ناشناخته: {view}</p>;
+  if (view === "search") {
+    screen = (
+      <SearchView
+        onBack={() => go(searchReturnTo)}
+        onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
+        onPickOrigin={(id) => openOrigin(id, "search")}
+        onPickSituation={(id) => { setActiveSituationId(id); go("situation_detail"); }}
+        onPickCycle={(id) => { setActiveLifeCycleId(id); go("life_cycle_detail"); }}
+        onPickPattern={(id) => { setActivePatternId(id); go("relationship_detail"); }} />
+    );
+  }
+
+  if (!screen) {
+    screen = <p style={{ padding: 20 }}>وضعیت ناشناخته: {view}</p>;
+  }
+
+  return (
+    <SearchContext.Provider value={openSearch}>
+      {screen}
+    </SearchContext.Provider>
+  );
 }
 
 /* =========================================================
@@ -4284,6 +4451,25 @@ const styles = {
     fontSize: 16, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontFamily: "inherit"
+  },
+  searchHeaderBtn: {
+    width: 32, height: 32, borderRadius: "50%",
+    border: "1px solid #eee", background: "#fff",
+    fontSize: 14, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "inherit"
+  },
+  searchInput: {
+    width: "100%", padding: "12px 14px", borderRadius: 12,
+    border: "1px solid #e5e5e5", background: "#fff",
+    fontSize: 14, fontFamily: "inherit", boxSizing: "border-box",
+    marginBottom: 16
+  },
+  searchResultBtn: {
+    display: "flex", alignItems: "center", gap: 10, width: "100%",
+    padding: "14px 14px", marginBottom: 8, borderRadius: 12,
+    border: "1px solid #f0f0f0", background: "#fff",
+    cursor: "pointer", fontFamily: "inherit", textAlign: "right"
   },
   sosHeaderBtn: {
     width: 40, height: 32, borderRadius: 8,
