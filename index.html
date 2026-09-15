@@ -5392,16 +5392,16 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   <!-- ============ BELIEFS ============ -->
   <section class="view" id="view-beliefs">
-    <div class="topbar bordered">
+    <div class="topbar bordered" style="position:relative;">
       <button class="icon-btn" onclick="goto('home')">‹</button>
       <div>
         <h1>بازنویسی باورها</h1>
         <div class="sub">سیم‌کشی مغز بر پایه‌ی RAS، نوروپلاستیسیتی و روش دکتر جو دیسپنزا</div>
       </div>
+      <button class="icon-btn" id="reminder-icon-btn" onclick="toggleReminderPanel()" title="یادآوری روزانه" style="margin-inline-start:auto;">🔔</button>
     </div>
 
-    <div class="section-label"><h2>🔔 یادآوری روزانه</h2></div>
-    <div class="b-card">
+    <div id="reminder-panel" class="b-card" style="display:none; position:absolute; top:64px; left:12px; z-index:50; width:250px; box-shadow:0 10px 24px rgba(0,0,0,.15);">
       <div class="reminder-row">
         <span class="rt-label">آلارم تمرین روزانه فعال باشد</span>
         <div class="switch" id="alarm-switch" onclick="toggleAlarm()"><div class="knob"></div></div>
@@ -5410,12 +5410,9 @@ body.bg-mode-image #grat-root{background:transparent;}
         <span class="rt-label">ساعت یادآوری</span>
         <input type="time" class="time-input" id="alarm-time" value="20:00" onchange="setAlarmTime(this.value)">
       </div>
-      <p style="margin-top:10px;">وقتی برنامه در مرورگر باز باشد، سر ساعت انتخابی یک نوتیفیکیشن برایت می‌فرستد تا پروتکل روزانه‌ات را فراموش نکنی.</p>
+      <p style="margin-top:10px;font-size:11px;">وقتی برنامه در مرورگر باز باشد، سر ساعت انتخابی یک نوتیفیکیشن برایت می‌فرستد تا پروتکل روزانه‌ات را فراموش نکنی.</p>
     </div>
 
-    <div class="section-label"><h2>🧠 باور و توجه</h2></div>
-
-    <div class="section-label"><h2>📜 متن روزهای آینده‌ام</h2></div>
     <div class="belief-flow-card">
       <p class="bf-desc">مثل تمرین باب پراکتور: زندگی‌ای که می‌خوای رو همین حالا، انگار که اتفاق افتاده، بنویس. با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن.</p>
       <textarea id="b-future-text" rows="4" placeholder="بسیار خوشحال و سپاسگزارم حالا که..." oninput="updateFutureText(this.value)"></textarea>
@@ -6015,7 +6012,14 @@ function defaultCurrentBelief(){
   return { trackingItems:[], trackingActive:false, attentionLever:50, visualNote:'', visualImages:[], audioTrack:null, neural:{logs:{}, lastSyncKey:null, habitFormed:false}, trackingNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, visualNeural:{logs:{}, lastSyncKey:null, habitFormed:false} };
 }
 function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e){
+    console.error('saveState failed:', e);
+    if (typeof toast === 'function') {
+      toast('⚠️ حجم فایل زیاده و ذخیره نشد — یک فایل کوچیک‌تر انتخاب کن');
+    }
+  }
 }
 
 /* ---------------- digit helpers ---------------- */
@@ -6883,10 +6887,15 @@ function handleMeditationAudio(files){
   const r = new FileReader();
   r.onload = ()=>{
     state.currentBelief.audioTrack = { name: f.name, src: r.result };
-    saveState();
     renderMeditationAudio();
     document.getElementById('meditation-audio-input').value = '';
-    toast('موسیقی اضافه شد 🎵');
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      toast('موسیقی اضافه شد 🎵');
+    } catch(e){
+      console.error('saveState failed:', e);
+      toast('⚠️ موسیقی پخش می‌شه ولی حجمش زیاده و ذخیره نشد — با بستن صفحه از بین می‌ره');
+    }
   };
   r.readAsDataURL(f);
 }
@@ -7472,6 +7481,19 @@ function showBankCalDay(key, items){
 }
 
 /* ---------------- daily reminder notification ---------------- */
+function toggleReminderPanel(){
+  var panel = document.getElementById('reminder-panel');
+  if (!panel) return;
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+}
+document.addEventListener('click', function(e){
+  var panel = document.getElementById('reminder-panel');
+  var btn = document.getElementById('reminder-icon-btn');
+  if (!panel || panel.style.display === 'none') return;
+  if (panel.contains(e.target) || (btn && btn.contains(e.target))) return;
+  panel.style.display = 'none';
+});
 function toggleAlarm(){
   if(!state.alarmEnabled){
     if(!('Notification' in window)){ toast('مرورگرت از نوتیفیکیشن پشتیبانی نمی‌کنه'); return; }
@@ -8143,6 +8165,5 @@ window.addEventListener('appinstalled', function(){
 });
 </script>
 <script src="emotion-widget.js"></script>
-<script src="beliefs-patch.js"></script>  
 </body>
 </html>
