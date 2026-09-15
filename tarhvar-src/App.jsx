@@ -25,6 +25,8 @@ import { mergeAdditions } from "./SCHEMAS_ADDITIONS";
 import { mergeTriggers } from "./TRIGGERS_EXTRA";
 import { getTodayReminders } from "./DAILY_REMINDERS";
 import { CHECKIN_GROUPS, SHORT_CHECKIN_NAMES } from "./CHECKIN_OPTIONS";
+// بالای فایل، بعد از import های موجود
+import AcceptanceView from "./AcceptanceView";
 
 /* =========================================================
  * ۰. ثبت برچسب‌ها
