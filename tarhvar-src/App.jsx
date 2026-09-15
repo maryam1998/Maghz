@@ -1438,7 +1438,7 @@ function SOSView({ onBack, onBetter }) {
  * Welcome
  * ========================================================= */
 
-function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, onSituations, onRelationships, onLifeCycles }) {
+function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, onSituations, onRelationships, onLifeCycles, onAcceptance }) {
   const activeSchemaIds = useMemo(() => {
     if (!analysis?.all) return null;
     const list = analysis.all.filter((r) => r.percentage >= 40).map((r) => r.schemaId);
