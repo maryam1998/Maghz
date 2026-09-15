@@ -4216,17 +4216,18 @@ export default function App() {
   }
 
   if (view === "welcome") {
-    screen = (
-      <WelcomeView
-        analysis={analysis}
-        hasProfile={!!analysis}
-        onStart={() => go("ysq")} onSkipToProfile={() => go("profile")}
-        onSOS={openSOS}
-        onSituations={() => go("situations")}
-        onRelationships={() => go("relationships")}
-        onLifeCycles={() => go("life_cycles")} />
-    );
-  }
+  screen = (
+    <WelcomeView
+      analysis={analysis}
+      hasProfile={!!analysis}
+      onStart={() => go("ysq")} onSkipToProfile={() => go("profile")}
+      onSOS={openSOS}
+      onSituations={() => go("situations")}
+      onRelationships={() => go("relationships")}
+      onLifeCycles={() => go("life_cycles")}
+      onAcceptance={() => go("acceptance")} />
+  );
+}
 
   if (view === "ysq") {
     screen = (
