@@ -4400,6 +4400,13 @@ export default function App() {
   if (view === "break_cycle") {
     screen = <BreakCycleView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
   }
+  if (view === "acceptance") {
+  screen = (
+    <AcceptanceView
+      onBack={() => go(analysis ? "profile" : "welcome")}
+      onSOS={openSOS} />
+  );
+}
 
   if (view === "quick") {
     screen = (
