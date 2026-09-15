@@ -1652,12 +1652,13 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
   const allActive = [...high, ...medium];
 
   const quickActions = [
-    { id: "wins", icon: "⭐", title: "لحظه‌های من", onClick: onWins, color: "#f59e0b" },
-    { id: "cal",  icon: "📅", title: "تقویم",         onClick: onCalendar, color: "#3b82f6" },
-    { id: "sit",  icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
-    { id: "life", icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
-    { id: "rel",  icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" }
-  ];
+  { id: "wins", icon: "⭐", title: "لحظه‌های من", onClick: onWins, color: "#f59e0b" },
+  { id: "cal",  icon: "📅", title: "تقویم",         onClick: onCalendar, color: "#3b82f6" },
+  { id: "sit",  icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
+  { id: "life", icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
+  { id: "rel",  icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" },
+  { id: "acc",  icon: "🕊️", title: "پذیرش",         onClick: onAcceptance, color: "#14b8a6" }
+];
 
   return (
     <Shell title="پروفایل الگوهای من" onBack={onBack}
