@@ -400,26 +400,6 @@
             'درخواست واقعی، فرستادن یک سیگنال مشخص به میدان است — اما این سیگنال فقط وقتی فرستاده می‌شود ' +
             'که تو «هیچ» شده باشی.' +
           '</div>' +
-
-          '<div class="dp-step-content" style="margin-top:12px;">' +
-            '<div style="display:flex;flex-direction:column;gap:10px;">' +
-              '<div style="padding:10px 12px;background:rgba(94,200,240,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
-                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۱. پل زدن</div>' +
-                '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">' +
-                  'در این خالی بودن، آگاهی‌ات را به میدانِ بی‌نهایت امکانات وصل کن. ' +
-                  'حس کن که این میدان همه‌جا هست — و تو هم بخشی از آنی.' +
-                '</div>' +
-              '</div>' +
-              '<div style="padding:10px 12px;background:rgba(94,200,240,.06);border-right:3px solid var(--emerald-300);border-radius:8px;">' +
-                '<div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:4px;">۲. دیدن از جای کلیت</div>' +
-                '<div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">' +
-                  'نه از جای «نداشتن» — از جای «کامل بودن». ' +
-                  'آن واقعیتی که می‌خواهی، از قبل در این میدان وجود دارد. ' +
-                  'خودت را با فرکانس آن هم‌راستا کن.' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
         '</div>' +
 
         /* ---------- مرحله ۴ — انتخاب واقعیت ---------- */
@@ -497,7 +477,7 @@
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
             '<span class="dp-step-num">۵</span>' +
-            '<span class="dp-step-title">کاشتن بذر</span>' +
+            '<span class="dp-step-title">تصویرسازی</span>' +
           '</div>' +
 
           '<div class="dp-step-content">' +
@@ -510,7 +490,6 @@
             '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
             '<div class="visual-gallery" id="visual-gallery" style="margin-top:10px;"></div>' +
             '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
-              '<button type="button" id="new-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">🌱 بذر جدید (آرشیو کن)</button>' +
               '<button type="button" id="archive-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="seed-archive-count">۰</span>)</button>' +
             '</div>' +
             '<div id="seed-archive-box" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
