@@ -630,6 +630,7 @@
               '<span style="font-size:12.5px;font-weight:800;">👁️ نشانه دیدم</span>' +
               '<button type="button" id="ras-signal-add-btn" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--emerald-500);color:#fff;font-size:18px;font-weight:800;cursor:pointer;line-height:1;">+</button>' +
             '</div>' +
+            '<textarea id="ras-signal-input" rows="3" style="display:none;width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;"></textarea>' +
             '<div id="ras-signal-list"></div>' +
             '<button type="button" id="ras-archive-toggle-btn" class="btn tiny" style="width:100%;margin-top:8px;">📚 آرشیو (<span id="ras-archive-count">۰</span>)</button>' +
             '<div id="ras-archive-box" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:220px;overflow-y:auto;"></div>' +
@@ -985,9 +986,20 @@
   }
 
   function rasAddSignal(){
+    var input = document.getElementById('ras-signal-input');
+    if (input && input.style.display === 'none'){
+      input.style.display = 'block';
+      input.value = '';
+      input.focus();
+      return;
+    }
+    var text = input ? input.value.trim() : '';
+    if (!text) return;
     if (!Array.isArray(state.rasSignals)) state.rasSignals = [];
-    state.rasSignals.push({ id: 'sig_' + Date.now(), ts: Date.now() });
+    state.rasSignals.push({ id: 'sig_' + Date.now(), ts: Date.now(), text: text });
     try { saveState(); } catch(e){}
+    input.value = '';
+    input.style.display = 'none';
     rasRenderSignals();
   }
 
@@ -1013,9 +1025,12 @@
       } else {
         list.innerHTML = todayItems.map(function(s){
           var timeStr = new Date(s.ts).toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
-          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;">' +
-            '<span style="font-size:12px;color:var(--ink);">🌀 ' + timeStr + '</span>' +
-            '<button type="button" data-ras-del="' + s.id + '" style="width:22px;height:22px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;line-height:1;">×</button>' +
+          return '<div style="padding:7px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+              '<span style="font-size:11px;color:var(--muted);">🌀 ' + timeStr + '</span>' +
+              '<button type="button" data-ras-del="' + s.id + '" style="width:22px;height:22px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;line-height:1;">×</button>' +
+            '</div>' +
+            (s.text ? '<div style="font-size:12px;color:var(--ink);margin-top:4px;white-space:pre-wrap;line-height:1.7;">' + escapeHtml(s.text) + '</div>' : '') +
           '</div>';
         }).join('');
       }
@@ -1037,9 +1052,12 @@
             var d = new Date(s.ts);
             var dateStr = d.toLocaleDateString('fa-IR');
             var timeStr = d.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
-            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:10px;background:var(--surface-2);margin-bottom:6px;">' +
-              '<span style="font-size:11px;color:var(--ink-soft);">🌀 ' + dateStr + ' • ' + timeStr + '</span>' +
-              '<button type="button" data-ras-del="' + s.id + '" style="width:20px;height:20px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;line-height:1;">×</button>' +
+            return '<div style="padding:7px 10px;border-radius:10px;background:var(--surface-2);margin-bottom:6px;">' +
+              '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+                '<span style="font-size:11px;color:var(--ink-soft);">🌀 ' + dateStr + ' • ' + timeStr + '</span>' +
+                '<button type="button" data-ras-del="' + s.id + '" style="width:20px;height:20px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:13px;cursor:pointer;line-height:1;">×</button>' +
+              '</div>' +
+              (s.text ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;white-space:pre-wrap;line-height:1.7;">' + escapeHtml(s.text) + '</div>' : '') +
             '</div>';
           }).join('');
         }
