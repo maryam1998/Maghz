@@ -191,9 +191,10 @@
       });
       var pure = document.getElementById('nw-pure');
       if (pure){
+        var allDone = done.length >= 5;
         pure.setAttribute('d', buildSinePath(
           PURE_WAVE.baseR,
-          PURE_WAVE.amp + Math.sin(wavePhase * 2) * 0.5,
+          allDone ? 0 : PURE_WAVE.amp + Math.sin(wavePhase * 2) * 0.5,
           PURE_WAVE.freq,
           PURE_WAVE.phase + wavePhase * 2.4
         ));
