@@ -1021,4 +1021,340 @@
     }
 
     var todayRec = (state.rasMission && state.rasMission[dpTodayKey()]) || {};
-    document.querySelectorAll('input[data
+    document.querySelectorAll('input[data-ras]').forEach(function(cb){
+      cb.checked = !!todayRec[cb.dataset.ras];
+    });
+
+    try { refreshNothingVisual(); } catch(e){}
+  }
+
+  /* =====================================================================
+     تایمر
+     ===================================================================== */
+  var dpTimerInterval = null;
+  var dpTimerSeconds = 15 * 60;
+
+  function dpStartTimer(){
+    var btn = document.getElementById('dp-timer-btn');
+    var disp = document.getElementById('dp-timer-display');
+    if (!btn || !disp) return;
+    if (dpTimerInterval){ clearInterval(dpTimerInterval); dpTimerInterval = null; btn.textContent = 'ادامه'; return; }
+    btn.textContent = 'توقف';
+    dpTimerInterval = setInterval(function(){
+      dpTimerSeconds--;
+      if (dpTimerSeconds <= 0){
+        clearInterval(dpTimerInterval); dpTimerInterval = null;
+        disp.textContent = '۰۰:۰۰'; btn.textContent = 'پایان';
+        if (navigator.vibrate) try { navigator.vibrate([200,100,200]); } catch(e){}
+        if (typeof playCompletionGong === 'function') playCompletionGong();
+        return;
+      }
+      var m = Math.floor(dpTimerSeconds/60).toString().padStart(2,'0');
+      var s = (dpTimerSeconds%60).toString().padStart(2,'0');
+      disp.textContent = m + ':' + s;
+    }, 1000);
+  }
+
+  /* =====================================================================
+     دایره تنفس
+     ===================================================================== */
+  var breathTimer = null;
+  var breathPhase = 'idle';
+
+  function setBreathUI(phase, seconds){
+    var circle = document.getElementById('breath-circle');
+    var phaseEl = document.getElementById('breath-phase-text');
+    var hintEl = document.getElementById('breath-hint-text');
+    var prog = document.getElementById('breath-progress-circle');
+    if (!circle || !phaseEl || !hintEl || !prog) return;
+    circle.classList.remove('inhale', 'exhale');
+    var labels = { idle:'آماده', inhale:'دم', hold:'نگه‌دار', exhale:'بازدم' };
+    var hints  = { idle:'برای شروع دکمه را بزن', inhale:'به‌آرامی نفس بکش', hold:'نفس را نگه‌ دار', exhale:'به‌آرامی رها کن' };
+    phaseEl.textContent = labels[phase] || '';
+    hintEl.textContent = hints[phase] || '';
+    var dur = (phase === 'idle') ? .6 : seconds;
+    circle.style.transitionDuration = dur + 's';
+    prog.style.transitionDuration = dur + 's';
+    if (phase === 'idle'){ prog.style.strokeDashoffset = 289; return; }
+    if (phase === 'inhale'){ circle.classList.add('inhale'); prog.style.strokeDashoffset = 0; }
+    else if (phase === 'hold'){ prog.style.strokeDashoffset = 0; }
+    else if (phase === 'exhale'){ circle.classList.add('exhale'); prog.style.strokeDashoffset = 289; }
+  }
+
+  function runBreathCycle(){
+    breathPhase = 'inhale'; setBreathUI('inhale', 4);
+    breathTimer = setTimeout(function(){
+      breathPhase = 'hold'; setBreathUI('hold', 7);
+      breathTimer = setTimeout(function(){
+        breathPhase = 'exhale'; setBreathUI('exhale', 8);
+        breathTimer = setTimeout(function(){ runBreathCycle(); }, 8000);
+      }, 7000);
+    }, 4000);
+  }
+
+  function startBreathing(){
+    var btn = document.getElementById('breath-start-btn');
+    if (breathTimer){
+      clearTimeout(breathTimer); breathTimer = null;
+      breathPhase = 'idle'; setBreathUI('idle', 0);
+      if (btn) btn.textContent = '▶ شروع تنفس';
+      return;
+    }
+    if (btn) btn.textContent = '⏸ توقف تنفس';
+    runBreathCycle();
+  }
+
+  /* =====================================================================
+     ویرایش و آرشیو متن آینده
+     ===================================================================== */
+  function openFutureEditor(){
+    var v = getActiveVersion();
+    var editorBox = document.getElementById('future-editor');
+    var input = document.getElementById('future-editor-input');
+    var display = document.getElementById('future-display');
+    var actions = document.getElementById('future-actions');
+    if (!editorBox || !input) return;
+    input.value = v ? v.text : '';
+    editorBox.style.display = 'block';
+    if (display) display.style.display = 'none';
+    if (actions) actions.style.display = 'none';
+    setTimeout(function(){ input.focus(); }, 50);
+  }
+  function closeFutureEditor(){
+    var editorBox = document.getElementById('future-editor');
+    var display = document.getElementById('future-display');
+    var actions = document.getElementById('future-actions');
+    if (editorBox) editorBox.style.display = 'none';
+    if (display) display.style.display = 'block';
+    if (actions) actions.style.display = 'flex';
+  }
+  function saveFutureText(){
+    var input = document.getElementById('future-editor-input');
+    if (!input) return;
+    var newText = (input.value || '').trim();
+    if (!newText){ if (typeof toast === 'function') toast('متن نمی‌تونه خالی باشه'); return; }
+    var v = getActiveVersion();
+    if (v && newText === v.text){ closeFutureEditor(); return; }
+    if (v) v.endDate = dpTodayKey();
+    var newV = { id: 'v_' + Date.now(), text: newText, startDate: dpTodayKey(), endDate: null, readDays: [] };
+    if (!Array.isArray(state.futureTextVersions)) state.futureTextVersions = [];
+    state.futureTextVersions.push(newV);
+    state.activeFutureVersionId = newV.id;
+    state.futureText = newText;
+    state.futureStartDate = newV.startDate;
+    state.futureReadDays = newV.readDays;
+    try { saveState(); } catch(e){}
+    closeFutureEditor(); renderFutureText(); dpRenderProgress();
+    if (typeof toast === 'function') toast(v ? 'نسخه‌ی جدید ثبت شد 📚' : 'متن خواسته‌ات ثبت شد ✨');
+  }
+  function toggleArchive(){ ARCHIVE_OPEN = !ARCHIVE_OPEN; renderArchiveBox(); }
+  function activateVersion(id){
+    var versions = state.futureTextVersions || [];
+    var chosen = versions.filter(function(v){ return v.id === id; })[0];
+    if (!chosen) return;
+    versions.forEach(function(v){ if (v.id !== id && !v.endDate) v.endDate = dpTodayKey(); });
+    chosen.endDate = null;
+    state.activeFutureVersionId = chosen.id;
+    state.futureText = chosen.text;
+    state.futureStartDate = chosen.startDate;
+    state.futureReadDays = chosen.readDays || [];
+    try { saveState(); } catch(e){}
+    renderFutureText(); dpRenderProgress();
+    if (typeof toast === 'function') toast('نسخه فعال شد ✓');
+  }
+  function registerTodayRead(){
+    var dk = dpTodayKey();
+    var v = getActiveVersion();
+    if (!v || !v.text){ if (typeof toast === 'function') toast('اول متن خواسته‌ات را بنویس'); return; }
+    if (!Array.isArray(v.readDays)) v.readDays = [];
+    if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
+    if (!state.futureReadDays) state.futureReadDays = [];
+    if (state.futureReadDays.indexOf(dk) === -1) state.futureReadDays.push(dk);
+    if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
+    if (state.dispenzaReadDays.indexOf(dk) === -1) state.dispenzaReadDays.push(dk);
+    var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
+    if (dn && typeof neuralAddFiber === 'function') neuralAddFiber(dn, {calendarLinked:false});
+    try { saveState(); } catch(e){}
+    renderFutureText(); dpRenderProgress(); renderOurNeuralPathways();
+    if (typeof toast === 'function') toast('✓ امروز ثبت شد — یک مسیر عصبی تازه ساخت شد');
+  }
+
+  /* =====================================================================
+     مسیر عصبی
+     ===================================================================== */
+  function renderOurNeuralPathways(){
+    if (typeof renderNeuralPathway !== 'function') return;
+    if (!document.getElementById('np-dispenza-mount')) return;
+    try {
+      var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
+      if (!dn) return;
+      renderNeuralPathway('np-dispenza-mount', dn, {
+        label: 'تمرین روزانه', practiceKey: 'dispenza', onChange: saveState
+      });
+    } catch(e){ console.warn('[np-dispenza]', e); }
+  }
+  function overrideRenderAll(){
+    window.renderAllNeuralPathways = function(){ renderOurNeuralPathways(); };
+  }
+  function wrapRenderBeliefsView(){
+    if (typeof window.renderBeliefsView !== 'function') return;
+    if (window.renderBeliefsView.__patchedV11) return;
+    var original = window.renderBeliefsView;
+    window.renderBeliefsView = function(){
+      try { original.apply(this, arguments); } catch(e){}
+      try { renderFutureText(); } catch(e){}
+      try { renderSeedSection(); } catch(e){}
+      try { dpRenderProgress(); } catch(e){}
+      try { renderOurNeuralPathways(); } catch(e){}
+      try { buildNothingDust(); } catch(e){}
+      try { refreshNothingVisual(); } catch(e){}
+    };
+    window.renderBeliefsView.__patchedV11 = true;
+  }
+
+  /* =====================================================================
+     رویدادها
+     ===================================================================== */
+  function wireEvents(){
+    document.addEventListener('click', function(e){
+      var t = e.target;
+      if (!t || !t.closest) return;
+
+      var checkBtn = t.closest('.dp-check-btn[data-dp-check]');
+      if (checkBtn){
+        e.stopPropagation();
+        var step = checkBtn.dataset.dpCheck;
+        var done = dpGetTodaySteps();
+        var idx = done.indexOf(step);
+        if (idx === -1) done.push(step); else done.splice(idx, 1);
+        try { saveState(); } catch(e2){}
+        dpRenderProgress();
+        return;
+      }
+
+      var expandIcon = t.closest('.dp-expand-icon');
+      if (expandIcon){
+        var bodyId = expandIcon.dataset.toggleBox;
+        var body = document.getElementById(bodyId);
+        if (body){
+          var isOpen = body.style.display !== 'none';
+          body.style.display = isOpen ? 'none' : 'block';
+          expandIcon.classList.toggle('open', !isOpen);
+        }
+        return;
+      }
+
+      // کلیک روی nothing-step → به‌روزرسانی بصری
+      var nothingStep = t.closest('.nothing-step');
+      if (nothingStep){
+        setTimeout(function(){
+          try { refreshNothingVisual(); } catch(e){}
+        }, 60);
+        return;
+      }
+
+      if (t.id === 'breath-start-btn'){ startBreathing(); return; }
+      if (t.id === 'dp-timer-btn'){ dpStartTimer(); return; }
+      if (t.id === 'edit-future-btn'){ openFutureEditor(); return; }
+      if (t.id === 'future-save-btn'){ saveFutureText(); return; }
+      if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
+      if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
+      if (t.id === 'future-register-btn'){ registerTodayRead(); return; }
+      var actBtn = t.closest('[data-activate-version]');
+      if (actBtn){ activateVersion(actBtn.dataset.activateVersion); return; }
+
+      if (t.id === 'new-seed-btn'){ archiveSeedVersion(); return; }
+      if (t.id === 'archive-seed-btn'){ toggleSeedArchive(); return; }
+      var restoreSeedBtn = t.closest('[data-restore-seed]');
+      if (restoreSeedBtn){ restoreSeedFromArchive(restoreSeedBtn.dataset.restoreSeed); return; }
+
+      if (t.id === 'dp-complete-btn'){
+        var quality = getTodayEmotionQualityFor('dispenza');
+        var done = dpGetTodaySteps();
+        var count = done.length;
+        var fibers = 1;
+        var msg = 'ثبت شد — یک مسیر تازه 🧠';
+        if (count === 0){ fibers = 0; msg = 'اول حداقل یک مرحله را تیک بزن'; }
+        else if (count === 6 && quality !== null){
+          if (quality >= 500){ fibers = 2; msg = '🔥 همه مراحل + حس پرقدرت — دو مسیر ساخته شد!'; }
+          else if (quality < 200){ fibers = 0; msg = '⚠️ حس ضعیف — دفعه‌ی بعد عمیق‌تر'; }
+        }
+        var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
+        if (dn && fibers > 0){
+          for (var i = 0; i < fibers; i++){
+            if (typeof neuralAddFiber === 'function') neuralAddFiber(dn, {calendarLinked:false});
+          }
+        }
+        var dk = dpTodayKey();
+        if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
+        if (state.dispenzaReadDays.indexOf(dk) === -1) state.dispenzaReadDays.push(dk);
+        var v = getActiveVersion();
+        if (v){
+          if (!Array.isArray(v.readDays)) v.readDays = [];
+          if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
+        }
+        if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
+        state.dispenzaDailyProgress[dk] = [];
+        try { saveState(); } catch(e2){}
+        dpRenderProgress(); renderFutureText(); renderOurNeuralPathways();
+        if (typeof toast === 'function') toast(msg);
+      }
+    });
+
+    document.addEventListener('input', function(e){
+      if (!e.target) return;
+      var id = e.target.id;
+      if (id && id.indexOf('dp-possibility-') === 0){
+        var key = id.replace('dp-possibility-','possibility_');
+        if (!state.dispenzaPossibilities) state.dispenzaPossibilities = {};
+        state.dispenzaPossibilities[key] = e.target.value;
+        try { saveState(); } catch(e2){}
+      }
+      if (id === 'seed-text-input'){ onSeedTextInput(e.target.value); }
+    });
+
+    document.addEventListener('change', function(e){
+      if (!e.target || !e.target.dataset || !e.target.dataset.ras) return;
+      var dk = dpTodayKey();
+      if (!state.rasMission) state.rasMission = {};
+      if (!state.rasMission[dk]) state.rasMission[dk] = {};
+      state.rasMission[dk][e.target.dataset.ras] = !!e.target.checked;
+      try { saveState(); } catch(e2){}
+    });
+  }
+
+  function dpRestorePossibilities(){
+    if (!state.dispenzaPossibilities) return;
+    Object.keys(state.dispenzaPossibilities).forEach(function(k){
+      var id = 'dp-possibility-' + k.replace('possibility_','');
+      var el = document.getElementById(id);
+      if (el) el.value = state.dispenzaPossibilities[k];
+    });
+  }
+
+  /* =====================================================================
+     اجرا
+     ===================================================================== */
+  function boot(){
+    if (!ensureState()){ setTimeout(boot, 100); return; }
+    injectHelpSection();
+    rebuildBeliefsView();
+    overrideRenderAll();
+    wrapRenderBeliefsView();
+    wireEvents();
+    dpRestorePossibilities();
+    try { renderFutureText(); } catch(e){}
+    try { renderSeedSection(); } catch(e){}
+    try { dpRenderProgress(); } catch(e){}
+    try { renderOurNeuralPathways(); } catch(e){}
+    try { buildNothingDust(); } catch(e){}
+    try { refreshNothingVisual(); } catch(e){}
+    var bv = document.getElementById('view-beliefs');
+    if (bv && bv.classList.contains('active') && typeof window.renderBeliefsView === 'function'){
+      try { window.renderBeliefsView(); } catch(e){}
+    }
+  }
+
+  if (document.readyState === 'complete') setTimeout(boot, 300);
+  else window.addEventListener('load', function(){ setTimeout(boot, 300); });
+})();
