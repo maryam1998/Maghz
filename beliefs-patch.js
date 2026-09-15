@@ -1,5 +1,5 @@
 /* =====================================================================
-   beliefs-patch.js — برچسب‌های لایه روی دایره‌ی آگاهی خالص
+   beliefs-patch.js — با پنج لایه روی دایره‌ی آگاهی خالص
    ===================================================================== */
 (function(){
   'use strict';
@@ -141,7 +141,7 @@
   }
 
   /* =====================================================================
-     ساخت موج سینوسی
+     موج‌های سینوسی نامنظم
      ===================================================================== */
   var LAYER_WAVE = {
     body:  { baseR: 105, amp: 5.5, freq: 3, phase: 0.0 },
@@ -150,7 +150,7 @@
     where: { baseR: 56,  amp: 3.2, freq: 6, phase: 2.4 },
     time:  { baseR: 40,  amp: 2.5, freq: 7, phase: 3.2 }
   };
-  var PURE_WAVE = { baseR: 24, amp: 1.5, freq: 8, phase: 0 };
+  var PURE_WAVE = { baseR: 26, amp: 1.6, freq: 8, phase: 0 };
 
   function buildSinePath(baseR, amp, freq, phase){
     var cx = 150, cy = 150, pts = 160, d = '';
@@ -166,16 +166,15 @@
   }
 
   function getDoneNothingLayers(){
-    var done = [];
-    document.querySelectorAll('.nc-chip.is-gone').forEach(function(el){
-      if (el.dataset.chip) done.push(el.dataset.chip);
-    });
-    return done;
+    if (typeof state === 'undefined' || !state || !state.nothingProgress) return [];
+    var k = dpTodayKey();
+    return Array.isArray(state.nothingProgress[k]) ? state.nothingProgress[k].slice() : [];
   }
 
+  /* انیمیشن موج‌ها */
   function animateNothingWaves(t){
     if (!lastWaveFrame || t - lastWaveFrame > 42){
-      wavePhase += 0.055;
+      wavePhase += 0.045;
       lastWaveFrame = t;
       var done = getDoneNothingLayers();
       Object.keys(LAYER_WAVE).forEach(function(k){
@@ -183,16 +182,21 @@
         var isDone = done.indexOf(k) !== -1;
         var path = document.getElementById('nw-' + k);
         if (!path) return;
-        var amp = isDone ? p.amp * 0.18 : p.amp;
+        var amp = isDone ? p.amp * 0.35 : p.amp;
         var freq = isDone ? PURE_WAVE.freq : p.freq;
         var basePhase = isDone ? PURE_WAVE.phase : p.phase;
-        var phase = basePhase + wavePhase * (isDone ? 1.6 : 1);
+        var phase = basePhase + wavePhase * (isDone ? 1.8 : 1);
         path.setAttribute('d', buildSinePath(p.baseR, amp, freq, phase));
-        path.style.opacity = isDone ? 0.3 : 0.75;
+        path.style.opacity = isDone ? 0.4 : 0.78;
       });
       var pure = document.getElementById('nw-pure');
       if (pure){
-        pure.setAttribute('d', buildSinePath(PURE_WAVE.baseR, PURE_WAVE.amp + Math.sin(wavePhase*2)*0.4, PURE_WAVE.freq, PURE_WAVE.phase + wavePhase * 2.2));
+        pure.setAttribute('d', buildSinePath(
+          PURE_WAVE.baseR,
+          PURE_WAVE.amp + Math.sin(wavePhase * 2) * 0.5,
+          PURE_WAVE.freq,
+          PURE_WAVE.phase + wavePhase * 2.4
+        ));
       }
     }
     waveAnimFrame = requestAnimationFrame(animateNothingWaves);
@@ -206,7 +210,7 @@
   }
 
   /* =====================================================================
-     ساخت غبار
+     غبار
      ===================================================================== */
   function buildNothingDust(){
     Object.keys(LAYER_WAVE).forEach(function(k){
@@ -214,7 +218,8 @@
       if (!group) return;
       var r = LAYER_WAVE[k].baseR;
       var html = '';
-      for (var i = 0; i < 16; i++){
+      var count = 18;
+      for (var i = 0; i < count; i++){
         var theta = Math.random() * Math.PI * 2;
         var dr = (Math.random() - 0.5) * 16;
         var x = 150 + (r + dr) * Math.cos(theta);
@@ -243,29 +248,20 @@
     });
   }
 
-  /* =====================================================================
-     به‌روزرسانی بصری هیچ شدن
-     ===================================================================== */
-  function refreshNothingVisual(){
-    var stage = document.getElementById('nothing-stage');
-    if (!stage) return;
+  function syncNothingChips(){
     var done = getDoneNothingLayers();
-    var prog = done.length / 5;
-    stage.style.setProperty('--progress', prog.toFixed(3));
-
-    // چیپ‌ها: هر تیک، چیپ مربوطه محو می‌شود
-    document.querySelectorAll('.nc-chip').forEach(function(chip){
-      var key = chip.dataset.chip;
-      var isDone = done.indexOf(key) !== -1;
-      chip.classList.toggle('is-gone', isDone);
+    document.querySelectorAll('.nothing-layer-chip').forEach(function(chip){
+      var key = chip.dataset.nothing;
+      chip.classList.toggle('is-checked', done.indexOf(key) !== -1);
     });
+  }
 
-    // متن «آگاهی خالص» فقط وقتی همه‌ی ۵ لایه رها شدند
-    var label = document.getElementById('nothing-core-label');
-    if (label) label.classList.toggle('is-visible', done.length === 5);
-
+  function refreshNothingVisual(){
     try { updateNothingDustVisibility(); } catch(e){}
-
+    try { syncNothingChips(); } catch(e){}
+    var done = getDoneNothingLayers();
+    var stage = document.getElementById('nothing-stage');
+    if (stage) stage.style.setProperty('--progress', (done.length / 5).toFixed(2));
     var finalEl = document.getElementById('nothing-final');
     if (finalEl) finalEl.classList.toggle('is-visible', done.length >= 5);
   }
@@ -366,19 +362,19 @@
           '</div>' +
 
           '<div class="dp-step-content" style="margin-top:12px;">' +
-            '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink);">پنج لایه را یکی‌یکی رها کن — با هر تیک، برچسبی که روی دایره است محو می‌شود و آگاهی خالص نورانی‌تر:</div>' +
+            '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink);">پنج لایه را یکی‌یکی رها کن — با هر تیک، غبار کمتر و آگاهی روشن‌تر:</div>' +
           '</div>' +
 
-          /* صحنه‌ی هیچ شدن */
+          /* ===== صحنه‌ی هیچ شدن ===== */
           '<div class="nothing-stage" id="nothing-stage">' +
-            /* موج‌های سینوسی متحرک */
+            /* موج‌های سینوسی نامنظم — پشت همه */
             '<svg class="nothing-waves-svg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">' +
-              '<path class="nw-wave" id="nw-body"  fill="none" stroke="#8b8fa8" stroke-width="1.1" opacity="0.75"/>' +
-              '<path class="nw-wave" id="nw-one"   fill="none" stroke="#a0a4b8" stroke-width="1.1" opacity="0.75"/>' +
-              '<path class="nw-wave" id="nw-thing" fill="none" stroke="#b0b4c8" stroke-width="1.1" opacity="0.75"/>' +
-              '<path class="nw-wave" id="nw-where" fill="none" stroke="#c0c4d8" stroke-width="1.1" opacity="0.75"/>' +
-              '<path class="nw-wave" id="nw-time"  fill="none" stroke="#d0d4e8" stroke-width="1.1" opacity="0.75"/>' +
-              '<path class="nw-pure" id="nw-pure" fill="none" stroke="#f4c542" stroke-width="1.5" opacity="0.85"/>' +
+              '<path id="nw-body"  fill="none" stroke="#8b8fa8" stroke-width="1.1" opacity="0.78"/>' +
+              '<path id="nw-one"   fill="none" stroke="#a0a4b8" stroke-width="1.1" opacity="0.78"/>' +
+              '<path id="nw-thing" fill="none" stroke="#b0b4c8" stroke-width="1.1" opacity="0.78"/>' +
+              '<path id="nw-where" fill="none" stroke="#c0c4d8" stroke-width="1.1" opacity="0.78"/>' +
+              '<path id="nw-time"  fill="none" stroke="#d0d4e8" stroke-width="1.1" opacity="0.78"/>' +
+              '<path id="nw-pure"  fill="none" stroke="#f4c542" stroke-width="1.6" opacity="0.9"/>' +
             '</svg>' +
 
             /* غبار */
@@ -390,23 +386,23 @@
               '<g id="dust-time"></g>' +
             '</svg>' +
 
-            /* آگاهی خالص — با برچسب‌های ۵ لایه رویش */
+            /* آگاهی خالص در مرکز + پنج لایه روی آن */
             '<div class="nothing-core" id="nothing-core">' +
               '<div class="nothing-core-glow"></div>' +
               '<div class="nothing-core-ring"></div>' +
               '<div class="nothing-core-dot"></div>' +
-              /* ۵ چیپ روی دایره — با هر تیک محو می‌شوند */
-              '<span class="nc-chip" data-chip="body">بدن</span>' +
-              '<span class="nc-chip" data-chip="one">هویت</span>' +
-              '<span class="nc-chip" data-chip="thing">اشیا</span>' +
-              '<span class="nc-chip" data-chip="where">مکان</span>' +
-              '<span class="nc-chip" data-chip="time">زمان</span>' +
-              /* متن آگاهی خالص — فقط وقتی هر ۵ رها شدند */
-              '<span class="nothing-core-label" id="nothing-core-label">آگاهی خالص</span>' +
+              '<div class="nothing-labels-overlay">' +
+                '<span class="nothing-layer-chip" data-nothing="body">بدن</span>' +
+                '<span class="nothing-layer-chip" data-nothing="one">هویت</span>' +
+                '<span class="nothing-layer-chip" data-nothing="thing">اشیا</span>' +
+                '<span class="nothing-layer-chip" data-nothing="where">مکان</span>' +
+                '<span class="nothing-layer-chip" data-nothing="time">زمان</span>' +
+              '</div>' +
+              '<span class="nothing-core-label">آگاهی خالص</span>' +
             '</div>' +
           '</div>' +
 
-          /* پنج مرحله */
+          /* پنج مرحله پایین */
           '<div class="nothing-steps" id="nothing-steps" style="margin:14px auto 0;max-width:340px;">' +
             '<button type="button" class="nothing-step" data-nothing-step="body">' +
               '<span class="nothing-step-num">۱</span>' +
@@ -445,7 +441,7 @@
           '</div>' +
         '</div>' +
 
-        /* مرحله ۳ — اتصال */
+        /* مرحله ۳ */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
@@ -620,7 +616,7 @@
         '<button type="button" id="dp-complete-btn" style="width:100%;margin-top:16px;padding:14px;font-size:13.5px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px rgba(15,91,83,.2);">✨ ثبت جلسه‌ی امروز</button>' +
         '<div id="dp-progress-hint" style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;">۰ از ۶ مرحله</div>' +
 
-        /* ماموریت */
+        /* ماموریت به ذهن */
         '<div class="dp-step dp-bonus-step" style="margin-top:18px;">' +
           '<div class="dp-step-head">' +
             '<span style="font-size:16px;">🎯</span>' +
@@ -684,7 +680,6 @@
       '.dp-expand-icon{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.2s;}' +
       '.dp-expand-icon.open{transform:rotate(180deg);background:var(--emerald-100);color:var(--emerald-700);border-color:var(--emerald-500);}' +
 
-      /* دایره تنفس */
       '.breath-wrap{display:flex;flex-direction:column;align-items:center;margin-top:16px;gap:14px;}' +
       '.breath-circle{position:relative;width:172px;height:172px;border-radius:50%;background:radial-gradient(circle, rgba(43,191,171,.10), transparent 72%);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out;will-change:transform;}' +
       '.breath-circle.inhale{transform:scale(1.14);transition-timing-function:ease-out;}' +
@@ -696,43 +691,48 @@
       '.breath-progress circle{transition:stroke-dashoffset 4s linear;}' +
       '.breath-controls{display:flex;flex-direction:column;align-items:center;gap:6px;}' +
 
-      /* ============== هیچ شدن ============== */
+      /* ============== صحنه‌ی هیچ شدن ============== */
       '.nothing-stage{position:relative;width:100%;max-width:300px;height:300px;margin:16px auto 0;--progress:0;}' +
       '.nothing-waves-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}' +
-      '.nw-wave{transition:opacity 1.2s ease, stroke-width 1.2s ease;}' +
-      '.nw-pure{filter:drop-shadow(0 0 4px rgba(244,197,66,.6));}' +
+      '.nothing-waves-svg path{transition:opacity .8s ease;}' +
+      '#nw-pure{filter:drop-shadow(0 0 5px rgba(244,197,66,.75));transition:opacity .8s ease, stroke-width .8s ease;}' +
       '.nothing-dust-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}' +
       '.dust-p{opacity:0.5;}' +
 
-      /* آگاهی خالص — با نور پویا */
-      '.nothing-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:112px;height:112px;display:flex;align-items:center;justify-content:center;z-index:5;}' +
-      '.nothing-core-glow{position:absolute;inset:-18px;border-radius:50%;background:radial-gradient(circle, rgba(244,197,66,calc(0.2 + var(--progress) * 0.5)) 0%, rgba(43,191,171,calc(0.08 + var(--progress) * 0.25)) 40%, transparent 70%);animation:coreGlowPulse 3.5s ease-in-out infinite;pointer-events:none;transition:background 1s ease;}' +
-      '@keyframes coreGlowPulse{0%,100%{opacity:calc(0.5 + var(--progress) * 0.3);transform:scale(0.95);}50%{opacity:calc(0.8 + var(--progress) * 0.2);transform:scale(1.12);}}' +
-      '.nothing-core-ring{position:absolute;inset:14px;border-radius:50%;border:1.5px solid rgba(244,197,66,calc(0.4 + var(--progress) * 0.5));opacity:calc(0.5 + var(--progress) * 0.4);animation:coreBreathe 4s ease-in-out infinite;box-shadow:0 0 calc(10px + var(--progress) * 25px) rgba(244,197,66,calc(0.2 + var(--progress) * 0.5)) inset, 0 0 calc(8px + var(--progress) * 20px) rgba(244,197,66,calc(0.3 + var(--progress) * 0.5));transition:box-shadow 1s ease, border-color 1s ease, opacity 1s ease;}' +
-      '.nothing-core-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(84,201,184,0.7);opacity:calc(0.4 + var(--progress) * 0.5);}' +
-      '@keyframes coreBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}' +
-      '.nothing-core-dot{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ffffff, #f4c542 70%);box-shadow:0 0 calc(15px + var(--progress) * 30px) rgba(244,197,66,calc(0.5 + var(--progress) * 0.5)), 0 0 calc(30px + var(--progress) * 50px) rgba(244,197,66,calc(0.2 + var(--progress) * 0.6));position:relative;z-index:2;animation:coreDotPulse 2.4s ease-in-out infinite;transition:box-shadow 1s ease;}' +
+      /* آگاهی خالص — دایره‌ی مرکزی با نور پیشرونده */
+      '.nothing-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:150px;height:150px;display:flex;align-items:center;justify-content:center;z-index:5;}' +
+      '.nothing-core-glow{position:absolute;inset:-6px;border-radius:50%;' +
+        'background:radial-gradient(circle, rgba(244,197,66,calc(0.20 + var(--progress) * 0.55)) 0%, rgba(43,191,171,calc(0.08 + var(--progress) * 0.35)) 42%, transparent 72%);' +
+        'opacity:calc(0.55 + var(--progress) * 0.45);' +
+        'animation:coreGlowPulse 3.5s ease-in-out infinite;pointer-events:none;transition:opacity .8s ease, background .8s ease;}' +
+      '@keyframes coreGlowPulse{0%,100%{transform:scale(0.96);}50%{transform:scale(1.10);}}' +
+      '.nothing-core-ring{position:absolute;inset:26px;border-radius:50%;' +
+        'border:calc(1px + var(--progress) * 1.2px) solid rgba(244,197,66, calc(0.45 + var(--progress) * 0.5));' +
+        'box-shadow:inset 0 0 calc(8px + var(--progress) * 16px) rgba(244,197,66, calc(0.15 + var(--progress) * 0.4)), 0 0 calc(6px + var(--progress) * 14px) rgba(244,197,66, calc(0.2 + var(--progress) * 0.5));' +
+        'animation:coreBreathe 4s ease-in-out infinite;transition:border-color .8s ease, box-shadow .8s ease;}' +
+      '.nothing-core-ring::after{content:"";position:absolute;inset:10px;border-radius:50%;border:1px solid rgba(84,201,184, calc(0.4 + var(--progress) * 0.5));opacity:.7;}' +
+      '@keyframes coreBreathe{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}' +
+      '.nothing-core-dot{width:16px;height:16px;border-radius:50%;' +
+        'background:radial-gradient(circle at 35% 30%, #ffffff, #f4c542 70%);' +
+        'box-shadow:0 0 calc(14px + var(--progress) * 20px) rgba(244,197,66, 0.8), 0 0 calc(28px + var(--progress) * 30px) rgba(244,197,66, 0.4);' +
+        'position:relative;z-index:2;animation:coreDotPulse 2.4s ease-in-out infinite;transition:box-shadow .8s ease;}' +
       '@keyframes coreDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}' +
 
-      /* چیپ‌های روی دایره — ۵ برچسب لایه */
-      '.nc-chip{position:absolute;font-family:inherit;font-size:10px;font-weight:800;color:#ffffff;background:rgba(18,20,38,0.82);padding:3px 9px;border-radius:12px;pointer-events:none;white-space:nowrap;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(0,0,0,0.45);transition:opacity 0.9s ease, transform 0.9s ease, filter 0.9s ease;z-index:12;border:1px solid rgba(255,255,255,0.15);}' +
-      'html[data-theme="light"] .nc-chip{background:rgba(255,255,255,0.92);color:#0f5b53;box-shadow:0 2px 6px rgba(0,0,0,0.12);border-color:rgba(15,91,83,0.2);}' +
-      '.nc-chip[data-chip="body"]{top:-14px;left:50%;transform:translateX(-50%);}' +
-      '.nc-chip[data-chip="one"]{top:14px;right:-34px;}' +
-      '.nc-chip[data-chip="thing"]{bottom:14px;right:-34px;}' +
-      '.nc-chip[data-chip="where"]{bottom:14px;left:-34px;}' +
-      '.nc-chip[data-chip="time"]{top:14px;left:-34px;}' +
-      '.nc-chip.is-gone{opacity:0;filter:blur(3px);}' +
-      '.nc-chip[data-chip="body"].is-gone{transform:translateX(-50%) translateY(-12px) scale(0.5);}' +
-      '.nc-chip[data-chip="one"].is-gone{transform:translate(15px,-15px) scale(0.5);}' +
-      '.nc-chip[data-chip="thing"].is-gone{transform:translate(15px,15px) scale(0.5);}' +
-      '.nc-chip[data-chip="where"].is-gone{transform:translate(-15px,15px) scale(0.5);}' +
-      '.nc-chip[data-chip="time"].is-gone{transform:translate(-15px,-15px) scale(0.5);}' +
-
-      /* متن «آگاهی خالص» — فقط وقتی visible */
-      '.nothing-core-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:var(--emerald-700,#0f5b53);letter-spacing:0.5px;white-space:nowrap;text-shadow:0 0 10px rgba(244,197,66,0.7);opacity:0;transition:opacity 1.2s ease, transform 1.2s ease;z-index:15;}' +
-      'html[data-theme="dark"] .nothing-core-label{color:#f4c542;text-shadow:0 0 12px rgba(244,197,66,0.9);}' +
-      '.nothing-core-label.is-visible{opacity:1;transform:translateX(-50%) translateY(-3px);}' +
+      /* پنج لایه روی دایره */
+      '.nothing-labels-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;max-width:110px;z-index:8;pointer-events:none;}' +
+      '.nothing-layer-chip{font-family:inherit;font-size:9.5px;font-weight:800;color:#fff;' +
+        'background:rgba(18,20,38,0.85);padding:3px 8px;border-radius:12px;white-space:nowrap;letter-spacing:.2px;' +
+        'box-shadow:0 2px 8px rgba(0,0,0,0.4);' +
+        'cursor:pointer;pointer-events:auto;user-select:none;' +
+        'transition:opacity .7s ease, transform .7s ease, filter .7s ease, background .5s ease, color .5s ease, box-shadow .5s ease;}' +
+      'html[data-theme="light"] .nothing-layer-chip{background:rgba(255,255,255,0.92);color:#0f5b53;box-shadow:0 2px 8px rgba(0,0,0,0.12);}' +
+      '.nothing-layer-chip.is-checked{background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;box-shadow:0 0 14px rgba(43,191,171,0.7);opacity:0.55;}' +
+      '.nothing-layer-chip.is-checked::before{content:"✓ ";font-weight:900;}' +
+      '.nothing-core-label{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:800;' +
+        'color:var(--emerald-700,#0f5b53);letter-spacing:.4px;white-space:nowrap;z-index:7;' +
+        'opacity:calc(0.55 + var(--progress) * 0.45);' +
+        'text-shadow:0 0 calc(4px + var(--progress) * 8px) rgba(244,197,66, calc(0.2 + var(--progress) * 0.5));' +
+        'transition:opacity .8s ease, text-shadow .8s ease;}' +
 
       /* مراحل پایین */
       '.nothing-steps{display:flex;flex-direction:column;gap:6px;}' +
@@ -752,7 +752,7 @@
       '.nothing-reset{background:none;border:none;cursor:pointer;font-family:inherit;font-size:11.5px;color:var(--muted);text-decoration:underline;}' +
       '.nothing-sound-btn{flex:none;width:32px;height:32px;border-radius:50%;background:var(--surface,#f7f6f1);border:1px solid var(--line);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;}' +
 
-      /* قلمرو ممکن‌ها */
+      /* ============== قلمرو ممکن‌ها ============== */
       '.quantum-connect-wrap{position:relative;margin:16px 0 0;padding:14px;background:radial-gradient(ellipse at 50% 50%, rgba(143,123,240,.10), rgba(94,200,240,.03) 70%, transparent);border-radius:16px;border:1px solid rgba(143,123,240,.22);overflow:hidden;}' +
       '.electric-aura{position:absolute;inset:0;pointer-events:none;opacity:0.55;' +
         'background-image:' +
@@ -814,7 +814,7 @@
   }
 
   /* =====================================================================
-     رندر متن آینده
+     بقیه‌ی توابع (متن آینده، بذر، تایمر، تنفس، ...)
      ===================================================================== */
   function renderFutureText(){
     var v = getActiveVersion();
@@ -889,9 +889,6 @@
     box.innerHTML = html;
   }
 
-  /* =====================================================================
-     کاشتن بذر — آرشیو
-     ===================================================================== */
   var SEED_ARCHIVE_OPEN = false;
 
   function renderSeedSection(){
@@ -1029,9 +1026,6 @@
     try { refreshNothingVisual(); } catch(e){}
   }
 
-  /* =====================================================================
-     تایمر
-     ===================================================================== */
   var dpTimerInterval = null;
   var dpTimerSeconds = 15 * 60;
 
@@ -1056,9 +1050,6 @@
     }, 1000);
   }
 
-  /* =====================================================================
-     دایره تنفس
-     ===================================================================== */
   var breathTimer = null;
   var breathPhase = 'idle';
 
@@ -1105,9 +1096,6 @@
     runBreathCycle();
   }
 
-  /* =====================================================================
-     ویرایش و آرشیو متن آینده
-     ===================================================================== */
   function openFutureEditor(){
     var v = getActiveVersion();
     var editorBox = document.getElementById('future-editor');
@@ -1180,11 +1168,188 @@
     if (typeof toast === 'function') toast('✓ امروز ثبت شد — یک مسیر عصبی تازه ساخت شد');
   }
 
-  /* =====================================================================
-     مسیر عصبی
-     ===================================================================== */
   function renderOurNeuralPathways(){
     if (typeof renderNeuralPathway !== 'function') return;
     if (!document.getElementById('np-dispenza-mount')) return;
     try {
-      var dn = (typeof ensureDispenzaNeural ===
+      var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
+      if (!dn) return;
+      renderNeuralPathway('np-dispenza-mount', dn, {
+        label: 'تمرین روزانه', practiceKey: 'dispenza', onChange: saveState
+      });
+    } catch(e){ console.warn('[np-dispenza]', e); }
+  }
+  function overrideRenderAll(){
+    window.renderAllNeuralPathways = function(){ renderOurNeuralPathways(); };
+  }
+  function wrapRenderBeliefsView(){
+    if (typeof window.renderBeliefsView !== 'function') return;
+    if (window.renderBeliefsView.__patchedV13) return;
+    var original = window.renderBeliefsView;
+    window.renderBeliefsView = function(){
+      try { original.apply(this, arguments); } catch(e){}
+      try { renderFutureText(); } catch(e){}
+      try { renderSeedSection(); } catch(e){}
+      try { dpRenderProgress(); } catch(e){}
+      try { renderOurNeuralPathways(); } catch(e){}
+      try { buildNothingDust(); } catch(e){}
+      try { refreshNothingVisual(); } catch(e){}
+      try { startNothingWaves(); } catch(e){}
+    };
+    window.renderBeliefsView.__patchedV13 = true;
+  }
+
+  function wireEvents(){
+    document.addEventListener('click', function(e){
+      var t = e.target;
+      if (!t || !t.closest) return;
+
+      var checkBtn = t.closest('.dp-check-btn[data-dp-check]');
+      if (checkBtn){
+        e.stopPropagation();
+        var step = checkBtn.dataset.dpCheck;
+        var done = dpGetTodaySteps();
+        var idx = done.indexOf(step);
+        if (idx === -1) done.push(step); else done.splice(idx, 1);
+        try { saveState(); } catch(e2){}
+        dpRenderProgress();
+        return;
+      }
+
+      var expandIcon = t.closest('.dp-expand-icon');
+      if (expandIcon){
+        var bodyId = expandIcon.dataset.toggleBox;
+        var body = document.getElementById(bodyId);
+        if (body){
+          var isOpen = body.style.display !== 'none';
+          body.style.display = isOpen ? 'none' : 'block';
+          expandIcon.classList.toggle('open', !isOpen);
+        }
+        return;
+      }
+
+      /* کلیک روی چیپ‌های روی دایره → همان toggle مرحله */
+      var chip = t.closest('.nothing-layer-chip');
+      if (chip){
+        var chipKey = chip.dataset.nothing;
+        if (typeof toggleNothingStep === 'function'){
+          toggleNothingStep(chipKey);
+        }
+        setTimeout(function(){ try { refreshNothingVisual(); } catch(e){} }, 80);
+        return;
+      }
+
+      var nothingStep = t.closest('.nothing-step');
+      if (nothingStep){
+        setTimeout(function(){ try { refreshNothingVisual(); } catch(e){} }, 80);
+        return;
+      }
+
+      if (t.id === 'breath-start-btn'){ startBreathing(); return; }
+      if (t.id === 'dp-timer-btn'){ dpStartTimer(); return; }
+      if (t.id === 'edit-future-btn'){ openFutureEditor(); return; }
+      if (t.id === 'future-save-btn'){ saveFutureText(); return; }
+      if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
+      if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
+      if (t.id === 'future-register-btn'){ registerTodayRead(); return; }
+      var actBtn = t.closest('[data-activate-version]');
+      if (actBtn){ activateVersion(actBtn.dataset.activateVersion); return; }
+
+      if (t.id === 'new-seed-btn'){ archiveSeedVersion(); return; }
+      if (t.id === 'archive-seed-btn'){ toggleSeedArchive(); return; }
+      var restoreSeedBtn = t.closest('[data-restore-seed]');
+      if (restoreSeedBtn){ restoreSeedFromArchive(restoreSeedBtn.dataset.restoreSeed); return; }
+
+      if (t.id === 'dp-complete-btn'){
+        var quality = getTodayEmotionQualityFor('dispenza');
+        var done = dpGetTodaySteps();
+        var count = done.length;
+        var fibers = 1;
+        var msg = 'ثبت شد — یک مسیر تازه 🧠';
+        if (count === 0){ fibers = 0; msg = 'اول حداقل یک مرحله را تیک بزن'; }
+        else if (count === 6 && quality !== null){
+          if (quality >= 500){ fibers = 2; msg = '🔥 همه مراحل + حس پرقدرت — دو مسیر ساخته شد!'; }
+          else if (quality < 200){ fibers = 0; msg = '⚠️ حس ضعیف — دفعه‌ی بعد عمیق‌تر'; }
+        }
+        var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
+        if (dn && fibers > 0){
+          for (var i = 0; i < fibers; i++){
+            if (typeof neuralAddFiber === 'function') neuralAddFiber(dn, {calendarLinked:false});
+          }
+        }
+        var dk = dpTodayKey();
+        if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
+        if (state.dispenzaReadDays.indexOf(dk) === -1) state.dispenzaReadDays.push(dk);
+        var v = getActiveVersion();
+        if (v){
+          if (!Array.isArray(v.readDays)) v.readDays = [];
+          if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
+        }
+        if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
+        state.dispenzaDailyProgress[dk] = [];
+        try { saveState(); } catch(e2){}
+        dpRenderProgress(); renderFutureText(); renderOurNeuralPathways();
+        if (typeof toast === 'function') toast(msg);
+      }
+    });
+
+    document.addEventListener('input', function(e){
+      if (!e.target) return;
+      var id = e.target.id;
+      if (id && id.indexOf('dp-possibility-') === 0){
+        var key = id.replace('dp-possibility-','possibility_');
+        if (!state.dispenzaPossibilities) state.dispenzaPossibilities = {};
+        state.dispenzaPossibilities[key] = e.target.value;
+        try { saveState(); } catch(e2){}
+      }
+      if (id === 'seed-text-input'){ onSeedTextInput(e.target.value); }
+    });
+
+    document.addEventListener('change', function(e){
+      if (!e.target || !e.target.dataset || !e.target.dataset.ras) return;
+      var dk = dpTodayKey();
+      if (!state.rasMission) state.rasMission = {};
+      if (!state.rasMission[dk]) state.rasMission[dk] = {};
+      state.rasMission[dk][e.target.dataset.ras] = !!e.target.checked;
+      try { saveState(); } catch(e2){}
+    });
+
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) stopNothingWaves();
+      else startNothingWaves();
+    });
+  }
+
+  function dpRestorePossibilities(){
+    if (!state.dispenzaPossibilities) return;
+    Object.keys(state.dispenzaPossibilities).forEach(function(k){
+      var id = 'dp-possibility-' + k.replace('possibility_','');
+      var el = document.getElementById(id);
+      if (el) el.value = state.dispenzaPossibilities[k];
+    });
+  }
+
+  function boot(){
+    if (!ensureState()){ setTimeout(boot, 100); return; }
+    injectHelpSection();
+    rebuildBeliefsView();
+    overrideRenderAll();
+    wrapRenderBeliefsView();
+    wireEvents();
+    dpRestorePossibilities();
+    try { renderFutureText(); } catch(e){}
+    try { renderSeedSection(); } catch(e){}
+    try { dpRenderProgress(); } catch(e){}
+    try { renderOurNeuralPathways(); } catch(e){}
+    try { buildNothingDust(); } catch(e){}
+    try { refreshNothingVisual(); } catch(e){}
+    try { startNothingWaves(); } catch(e){}
+    var bv = document.getElementById('view-beliefs');
+    if (bv && bv.classList.contains('active') && typeof window.renderBeliefsView === 'function'){
+      try { window.renderBeliefsView(); } catch(e){}
+    }
+  }
+
+  if (document.readyState === 'complete') setTimeout(boot, 300);
+  else window.addEventListener('load', function(){ setTimeout(boot, 300); });
+})();
