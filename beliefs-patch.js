@@ -1,10 +1,13 @@
 /* =====================================================================
-   beliefs-patch.js — با موج‌های سینوسی و غبار برای هیچ شدن
+   beliefs-patch.js — با موج‌های متحرک و ارتعاش ملایم
    ===================================================================== */
 (function(){
   'use strict';
 
   var ARCHIVE_OPEN = false;
+  var waveAnimFrame = null;
+  var wavePhase = 0;
+  var lastWaveFrame = 0;
 
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -25,9 +28,6 @@
     return new Date(p[0], p[1]-1, p[2]);
   }
 
-  /* =====================================================================
-     مقداردهی state
-     ===================================================================== */
   function ensureState(){
     if (typeof state === 'undefined' || !state) return false;
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
@@ -116,7 +116,7 @@
           '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📍 No where / هیچ‌جا</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">آگاهی به اینجا و آنجا گره نخورده است.</div></div>' +
           '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">⏳ In no time / در هیچ زمانی</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">گذشته و آینده رها می‌شوند و فقط حالِ بی‌زمان می‌ماند.</div></div>' +
         '</div>' +
-        '<p style="background:rgba(244,197,66,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #f4c542;"><b>نکته:</b> این «هیچ» منفی نیست؛ مثل صفحه‌ی سفید یا فضاست که همه‌چیز را در خودش جا می‌دهد. این یک تمرین مدیتیشن است، نه باور دائمی.</p>' +
+        '<p style="background:rgba(244,197,66,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #f4c542;"><b>نکته:</b> این «هیچ» منفی نیست؛ مثل صفحه‌ی سفید یا فضاست که همه‌چیز را در خودش جا می‌دهد.</p>' +
       '</div>' +
       '<div class="help-section">' +
         '<h3>🔗 پیوند «هیچ شدن» و «درخواست از قلمرو ممکن‌ها»</h3>' +
@@ -141,14 +141,14 @@
   }
 
   /* =====================================================================
-     ساخت موج سینوسی نامنظم و منظم
+     ساخت موج سینوسی
      ===================================================================== */
   var LAYER_WAVE = {
-    body:  { baseR: 105, amp: 5.5, freq: 3, phase: 0.0 },
-    one:   { baseR: 88,  amp: 4.8, freq: 4, phase: 0.8 },
-    thing: { baseR: 72,  amp: 4.0, freq: 5, phase: 1.6 },
-    where: { baseR: 56,  amp: 3.2, freq: 6, phase: 2.4 },
-    time:  { baseR: 40,  amp: 2.5, freq: 7, phase: 3.2 }
+    body:  { baseR: 105, amp: 5.5, freq: 3, phase: 0.0, color: '#8b8fa8' },
+    one:   { baseR: 88,  amp: 4.8, freq: 4, phase: 0.8, color: '#a0a4b8' },
+    thing: { baseR: 72,  amp: 4.0, freq: 5, phase: 1.6, color: '#b0b4c8' },
+    where: { baseR: 56,  amp: 3.2, freq: 6, phase: 2.4, color: '#c0c4d8' },
+    time:  { baseR: 40,  amp: 2.5, freq: 7, phase: 3.2, color: '#d0d4e8' }
   };
   var PURE_WAVE = { baseR: 24, amp: 1.5, freq: 8, phase: 0 };
 
@@ -173,23 +173,38 @@
     return done;
   }
 
-  function rebuildNothingWaves(){
-    var done = getDoneNothingLayers();
-    Object.keys(LAYER_WAVE).forEach(function(k){
-      var p = LAYER_WAVE[k];
-      var isDone = done.indexOf(k) !== -1;
-      var path = document.getElementById('nw-' + k);
-      if (!path) return;
-      var amp = isDone ? p.amp * 0.15 : p.amp;
-      var freq = isDone ? PURE_WAVE.freq : p.freq;
-      var phase = isDone ? PURE_WAVE.phase : p.phase;
-      path.setAttribute('d', buildSinePath(p.baseR, amp, freq, phase));
-      path.style.opacity = isDone ? 0.25 : 0.75;
-    });
-    var pure = document.getElementById('nw-pure');
-    if (pure){
-      pure.setAttribute('d', buildSinePath(PURE_WAVE.baseR, PURE_WAVE.amp, PURE_WAVE.freq, PURE_WAVE.phase));
+  /* انیمیشن پیوسته‌ی موج‌ها */
+  function animateNothingWaves(t){
+    if (!lastWaveFrame || t - lastWaveFrame > 42){
+      wavePhase += 0.055;
+      lastWaveFrame = t;
+      var done = getDoneNothingLayers();
+      Object.keys(LAYER_WAVE).forEach(function(k){
+        var p = LAYER_WAVE[k];
+        var isDone = done.indexOf(k) !== -1;
+        var path = document.getElementById('nw-' + k);
+        if (!path) return;
+        var amp = isDone ? p.amp * 0.18 : p.amp;
+        var freq = isDone ? PURE_WAVE.freq : p.freq;
+        var basePhase = isDone ? PURE_WAVE.phase : p.phase;
+        var phase = basePhase + wavePhase * (isDone ? 1.6 : 1);
+        path.setAttribute('d', buildSinePath(p.baseR, amp, freq, phase));
+        path.style.opacity = isDone ? 0.3 : 0.75;
+      });
+      var pure = document.getElementById('nw-pure');
+      if (pure){
+        pure.setAttribute('d', buildSinePath(PURE_WAVE.baseR, PURE_WAVE.amp + Math.sin(wavePhase*2)*0.4, PURE_WAVE.freq, PURE_WAVE.phase + wavePhase * 2.2));
+      }
     }
+    waveAnimFrame = requestAnimationFrame(animateNothingWaves);
+  }
+
+  function startNothingWaves(){
+    if (waveAnimFrame) return;
+    waveAnimFrame = requestAnimationFrame(animateNothingWaves);
+  }
+  function stopNothingWaves(){
+    if (waveAnimFrame){ cancelAnimationFrame(waveAnimFrame); waveAnimFrame = null; }
   }
 
   /* =====================================================================
@@ -232,7 +247,6 @@
   }
 
   function refreshNothingVisual(){
-    try { rebuildNothingWaves(); } catch(e){}
     try { updateNothingDustVisibility(); } catch(e){}
     var done = getDoneNothingLayers();
     var finalEl = document.getElementById('nothing-final');
@@ -280,7 +294,6 @@
         '</div>' +
         '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">شش مرحله. هر کدام را جدا تیک بزن.</p>' +
 
-        /* موسیقی */
         '<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);">' +
           '<div style="font-size:11px;font-weight:700;margin-bottom:8px;">🎵 موسیقی مدیتیشن (اختیاری)</div>' +
           '<label class="visual-upload-btn" for="meditation-audio-input" style="font-size:11px;padding:6px 12px;">+ افزودن موسیقی</label>' +
@@ -288,14 +301,13 @@
           '<div id="meditation-audio-wrap"></div>' +
         '</div>' +
 
-        /* تایمر */
         '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border-radius:12px;padding:8px 12px;margin-bottom:16px;">' +
           '<span style="font-size:11.5px;font-weight:700;">⏱️ زمان تمرین</span>' +
           '<span id="dp-timer-display" style="font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;">۱۵:۰۰</span>' +
           '<button type="button" id="dp-timer-btn" class="btn tiny" style="padding:4px 12px;font-size:11px;">شروع</button>' +
         '</div>' +
 
-        /* مرحله ۱ — رهاسازی */
+        /* مرحله ۱ */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="1">○</button>' +
@@ -324,7 +336,7 @@
           '</div>' +
         '</div>' +
 
-        /* ============ مرحله ۲ — هیچ شدن (با موج + غبار) ============ */
+        /* ============ مرحله ۲ — هیچ شدن ============ */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="2">○</button>' +
@@ -341,40 +353,41 @@
             '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink);">پنج لایه را یکی‌یکی رها کن — با هر تیک، غبار کمتر و موج‌ها هم‌راستاتر می‌شوند:</div>' +
           '</div>' +
 
-          /* ===== صحنه‌ی هیچ شدن ===== */
+          /* صحنه‌ی هیچ شدن */
           '<div class="nothing-stage" id="nothing-stage">' +
-            /* موج‌های سینوسی */
+            /* موج‌های سینوسی — پشت */
             '<svg class="nothing-waves-svg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">' +
-              '<path class="nw-wave nw-body"  id="nw-body"  data-layer="body"  fill="none" stroke="#8b8fa8" stroke-width="1.1"/>' +
-              '<path class="nw-wave nw-one"   id="nw-one"   data-layer="one"   fill="none" stroke="#a0a4b8" stroke-width="1.1"/>' +
-              '<path class="nw-wave nw-thing" id="nw-thing" data-layer="thing" fill="none" stroke="#b0b4c8" stroke-width="1.1"/>' +
-              '<path class="nw-wave nw-where" id="nw-where" data-layer="where" fill="none" stroke="#c0c4d8" stroke-width="1.1"/>' +
-              '<path class="nw-wave nw-time"  id="nw-time"  data-layer="time"  fill="none" stroke="#d0d4e8" stroke-width="1.1"/>' +
+              '<path class="nw-wave" id="nw-body"  fill="none" stroke="#8b8fa8" stroke-width="1.1" opacity="0.75"/>' +
+              '<path class="nw-wave" id="nw-one"   fill="none" stroke="#a0a4b8" stroke-width="1.1" opacity="0.75"/>' +
+              '<path class="nw-wave" id="nw-thing" fill="none" stroke="#b0b4c8" stroke-width="1.1" opacity="0.75"/>' +
+              '<path class="nw-wave" id="nw-where" fill="none" stroke="#c0c4d8" stroke-width="1.1" opacity="0.75"/>' +
+              '<path class="nw-wave" id="nw-time"  fill="none" stroke="#d0d4e8" stroke-width="1.1" opacity="0.75"/>' +
               '<path class="nw-pure" id="nw-pure" fill="none" stroke="#f4c542" stroke-width="1.5" opacity="0.85"/>' +
             '</svg>' +
 
-            /* غبار هر لایه */
+            /* غبار */
             '<svg class="nothing-dust-svg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">' +
-              '<g class="dust-group" data-layer="body"  id="dust-body"></g>' +
-              '<g class="dust-group" data-layer="one"   id="dust-one"></g>' +
-              '<g class="dust-group" data-layer="thing" id="dust-thing"></g>' +
-              '<g class="dust-group" data-layer="where" id="dust-where"></g>' +
-              '<g class="dust-group" data-layer="time"  id="dust-time"></g>' +
+              '<g id="dust-body"></g>' +
+              '<g id="dust-one"></g>' +
+              '<g id="dust-thing"></g>' +
+              '<g id="dust-where"></g>' +
+              '<g id="dust-time"></g>' +
             '</svg>' +
 
-            /* آگاهی خالص — مرکز */
+            /* برچسب‌های لایه — روی دایره‌ی آگاهی خالص، در پایین هر حلقه */
+            '<div class="nothing-layer" data-nothing="body"><span class="nl-text">بدن</span></div>' +
+            '<div class="nothing-layer" data-nothing="one"><span class="nl-text">هویت</span></div>' +
+            '<div class="nothing-layer" data-nothing="thing"><span class="nl-text">اشیا</span></div>' +
+            '<div class="nothing-layer" data-nothing="where"><span class="nl-text">مکان</span></div>' +
+            '<div class="nothing-layer" data-nothing="time"><span class="nl-text">زمان</span></div>' +
+
+            /* آگاهی خالص — نورانی */
             '<div class="nothing-core" id="nothing-core">' +
+              '<div class="nothing-core-glow"></div>' +
               '<div class="nothing-core-ring"></div>' +
               '<div class="nothing-core-dot"></div>' +
               '<span class="nothing-core-label">آگاهی خالص</span>' +
             '</div>' +
-
-            /* برچسب‌های لایه */
-            '<div class="nothing-layer" data-nothing="body">بدن</div>' +
-            '<div class="nothing-layer" data-nothing="one">هویت</div>' +
-            '<div class="nothing-layer" data-nothing="thing">اشیا</div>' +
-            '<div class="nothing-layer" data-nothing="where">مکان</div>' +
-            '<div class="nothing-layer" data-nothing="time">زمان</div>' +
           '</div>' +
 
           /* پنج مرحله */
@@ -416,7 +429,7 @@
           '</div>' +
         '</div>' +
 
-        /* ============ مرحله ۳ — اتصال به قلمرو ممکن‌ها (با رعد و برق) ============ */
+        /* ============ مرحله ۳ — اتصال (بدون رعد و برق مصنوعی) ============ */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="3">○</button>' +
@@ -429,10 +442,13 @@
           '</div>' +
 
           '<div class="quantum-connect-wrap">' +
+            /* لایه‌ی ارتعاش محیطی */
+            '<div class="electric-aura" aria-hidden="true"></div>' +
+
             '<svg class="quantum-connect-svg" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">' +
               '<defs>' +
                 '<radialGradient id="qcore-grad" cx="50%" cy="50%" r="50%">' +
-                  '<stop offset="0%" stop-color="#f4c542" stop-opacity="0.9"/>' +
+                  '<stop offset="0%" stop-color="#f4c542" stop-opacity="0.95"/>' +
                   '<stop offset="60%" stop-color="#2bbfab" stop-opacity="0.4"/>' +
                   '<stop offset="100%" stop-color="#2bbfab" stop-opacity="0"/>' +
                 '</radialGradient>' +
@@ -443,63 +459,50 @@
                 '</radialGradient>' +
               '</defs>' +
 
-              /* قلمرو ممکن‌ها — سمت چپ */
+              /* جرقه‌های الکتریکی پراکنده در کل کادر */
+              '<g class="qsparks">' +
+                '<circle class="qspark" cx="25" cy="30"  r="1.2" fill="#5ec8f0"/>' +
+                '<circle class="qspark" cx="280" cy="45"  r="1.0" fill="#a29bff"/>' +
+                '<circle class="qspark" cx="150" cy="22"  r="1.4" fill="#5ec8f0"/>' +
+                '<circle class="qspark" cx="15" cy="175"  r="1.3" fill="#8f7bf0"/>' +
+                '<circle class="qspark" cx="285" cy="170" r="1.1" fill="#a29bff"/>' +
+                '<circle class="qspark" cx="200" cy="15"  r="1.2" fill="#5ec8f0"/>' +
+                '<circle class="qspark" cx="80"  cy="190" r="1.0" fill="#a29bff"/>' +
+                '<circle class="qspark" cx="240" cy="185" r="1.3" fill="#5ec8f0"/>' +
+                '<circle class="qspark" cx="45"  cy="100" r="1.1" fill="#8f7bf0"/>' +
+                '<circle class="qspark" cx="260" cy="100" r="1.2" fill="#5ec8f0"/>' +
+                '<circle class="qspark" cx="120" cy="185" r="1.0" fill="#a29bff"/>' +
+                '<circle class="qspark" cx="180" cy="190" r="1.1" fill="#8f7bf0"/>' +
+              '</g>' +
+
+              /* میدان چپ */
               '<circle cx="70" cy="100" r="55" fill="url(#qfield-grad)" class="qfield-glow"/>' +
               '<circle cx="70" cy="100" r="38" fill="none" stroke="#8f7bf0" stroke-width="0.8" class="qfield-ring qfield-ring-1"/>' +
               '<circle cx="70" cy="100" r="28" fill="none" stroke="#8f7bf0" stroke-width="0.6" class="qfield-ring qfield-ring-2"/>' +
               '<circle cx="70" cy="100" r="18" fill="none" stroke="#8f7bf0" stroke-width="0.6" class="qfield-ring qfield-ring-3"/>' +
 
-              /* جرقه‌ها */
-              '<g class="qsparks">' +
-                '<circle class="qspark" cx="40" cy="75" r="1.4" fill="#5ec8f0"/>' +
-                '<circle class="qspark" cx="95" cy="80" r="1.2" fill="#a29bff"/>' +
-                '<circle class="qspark" cx="55" cy="130" r="1.3" fill="#5ec8f0"/>' +
-                '<circle class="qspark" cx="100" cy="125" r="1.1" fill="#a29bff"/>' +
-                '<circle class="qspark" cx="35" cy="105" r="1.0" fill="#5ec8f0"/>' +
-                '<circle class="qspark" cx="105" cy="100" r="1.5" fill="#8f7bf0"/>' +
-                '<circle class="qspark" cx="70" cy="65" r="1.2" fill="#a29bff"/>' +
-                '<circle class="qspark" cx="70" cy="140" r="1.3" fill="#5ec8f0"/>' +
-              '</g>' +
-
-              /* رعد و برق — خطوط شکسته */
-              '<g class="qlightning-group">' +
-                '<path class="qbolt qbolt-1" d="M 55 70 L 62 85 L 58 87 L 68 102 L 63 104 L 72 118" fill="none" stroke="#a29bff" stroke-width="1.2" stroke-linejoin="round"/>' +
-                '<path class="qbolt qbolt-2" d="M 88 65 L 82 82 L 87 84 L 80 100 L 85 102 L 78 118" fill="none" stroke="#5ec8f0" stroke-width="1.2" stroke-linejoin="round"/>' +
-                '<path class="qbolt qbolt-3" d="M 45 95 L 55 100 L 52 104 L 62 110" fill="none" stroke="#8f7bf0" stroke-width="1.0" stroke-linejoin="round"/>' +
-                '<path class="qbolt qbolt-4" d="M 92 90 L 84 96 L 88 100 L 78 108" fill="none" stroke="#a29bff" stroke-width="1.0" stroke-linejoin="round"/>' +
-                '<path class="qbolt qbolt-5" d="M 65 55 L 70 68 L 66 70 L 74 82" fill="none" stroke="#5ec8f0" stroke-width="1.1" stroke-linejoin="round"/>' +
-              '</g>' +
-
-              /* امواج هم‌فرکانس */
+              /* موج چپ */
               '<path class="qwave qwave-left" d="M 105 100 Q 115 80, 125 100 T 145 100" fill="none" stroke="#8f7bf0" stroke-width="1.4" stroke-linecap="round"/>' +
-              '<path class="qwave qwave-right" d="M 195 100 Q 185 120, 175 100 T 155 100" fill="none" stroke="#f4c542" stroke-width="1.4" stroke-linecap="round"/>' +
 
-              /* کاربر — مرکز */
+              /* مرکز — کاربر */
               '<circle cx="150" cy="100" r="26" fill="url(#qcore-grad)" class="qcore-glow"/>' +
               '<circle cx="150" cy="100" r="14" fill="none" stroke="#f4c542" stroke-width="1.5" class="qcore-ring qcore-ring-1"/>' +
               '<circle cx="150" cy="100" r="9" fill="none" stroke="#f4c542" stroke-width="1.2" class="qcore-ring qcore-ring-2"/>' +
               '<circle cx="150" cy="100" r="4" fill="#f4c542" class="qcore-dot"/>' +
 
-              /* پیوند */
+              /* پیوند موج‌دار */
               '<path class="qlink" d="M 70 100 Q 110 70, 150 100 Q 190 130, 230 100" fill="none" stroke="url(#qcore-grad)" stroke-width="1.2" stroke-dasharray="4 3"/>' +
 
-              /* پیوند رعد و برق — روی qlink */
-              '<path class="qlink-bolt" d="M 100 88 L 108 92 L 105 95 L 115 100" fill="none" stroke="#a29bff" stroke-width="1.1" stroke-linejoin="round"/>' +
-              '<path class="qlink-bolt" d="M 175 108 L 185 105 L 182 100 L 192 96" fill="none" stroke="#f4c542" stroke-width="1.1" stroke-linejoin="round"/>' +
+              /* موج راست */
+              '<path class="qwave qwave-right" d="M 195 100 Q 185 120, 175 100 T 155 100" fill="none" stroke="#f4c542" stroke-width="1.4" stroke-linecap="round"/>' +
 
-              /* قلمرو — سمت راست (آینه) */
+              /* میدان راست */
               '<circle cx="230" cy="100" r="55" fill="url(#qfield-grad)" class="qfield-glow qfield-glow-right"/>' +
               '<circle cx="230" cy="100" r="38" fill="none" stroke="#f4c542" stroke-width="0.8" class="qfield-ring qfield-ring-r1"/>' +
               '<circle cx="230" cy="100" r="28" fill="none" stroke="#f4c542" stroke-width="0.6" class="qfield-ring qfield-ring-r2"/>' +
               '<circle cx="230" cy="100" r="18" fill="none" stroke="#f4c542" stroke-width="0.6" class="qfield-ring qfield-ring-r3"/>' +
-
-              /* رعد و برق سمت راست */
-              '<g class="qlightning-group-right">' +
-                '<path class="qbolt qbolt-r1" d="M 245 70 L 238 85 L 242 87 L 232 102 L 237 104 L 228 118" fill="none" stroke="#f4c542" stroke-width="1.2" stroke-linejoin="round"/>' +
-                '<path class="qbolt qbolt-r2" d="M 212 65 L 218 82 L 213 84 L 220 100 L 215 102 L 222 118" fill="none" stroke="#5ec8f0" stroke-width="1.2" stroke-linejoin="round"/>' +
-                '<path class="qbolt qbolt-r3" d="M 255 95 L 245 100 L 248 104 L 238 110" fill="none" stroke="#f4c542" stroke-width="1.0" stroke-linejoin="round"/>' +
-              '</g>' +
             '</svg>' +
+
             '<div class="quantum-connect-caption">' +
               '<div class="qc-labels">' +
                 '<span class="qc-side qc-left">🕳️ آگاهی خالص</span>' +
@@ -511,7 +514,7 @@
           '</div>' +
         '</div>' +
 
-        /* مرحله ۴ — انتخاب واقعیت */
+        /* مرحله ۴ */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
@@ -557,7 +560,7 @@
           '</div>' +
         '</div>' +
 
-        /* مرحله ۵ — تصویرسازی */
+        /* مرحله ۵ */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
@@ -580,7 +583,7 @@
           '</div>' +
         '</div>' +
 
-        /* مرحله ۶ — احساس فراوانی */
+        /* مرحله ۶ */
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="6">○</button>' +
@@ -656,7 +659,8 @@
     }
 
     try { buildNothingDust(); } catch(e){}
-    try { rebuildNothingWaves(); } catch(e){}
+    try { refreshNothingVisual(); } catch(e){}
+    try { startNothingWaves(); } catch(e){}
   }
 
   /* =====================================================================
@@ -693,30 +697,34 @@
       '.breath-progress circle{transition:stroke-dashoffset 4s linear;}' +
       '.breath-controls{display:flex;flex-direction:column;align-items:center;gap:6px;}' +
 
-      /* ============== صحنه‌ی هیچ شدن ============== */
+      /* ============== هیچ شدن ============== */
       '.nothing-stage{position:relative;width:100%;max-width:300px;height:300px;margin:16px auto 0;}' +
-      '.nothing-waves-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transition:opacity 1.2s ease;}' +
+      '.nothing-waves-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}' +
       '.nw-wave{transition:opacity 1.2s ease, stroke-width 1.2s ease;}' +
-      '.nw-pure{animation:pureWavePulse 3s ease-in-out infinite;}' +
-      '@keyframes pureWavePulse{0%,100%{opacity:0.6;stroke-width:1.3;}50%{opacity:1;stroke-width:1.8;}}' +
+      '.nw-pure{filter:drop-shadow(0 0 4px rgba(244,197,66,.6));}' +
       '.nothing-dust-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}' +
       '.dust-p{opacity:0.5;}' +
 
-      /* آگاهی خالص — مرکز */
+      /* آگاهی خالص — نورانی */
       '.nothing-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:112px;height:112px;display:flex;align-items:center;justify-content:center;z-index:5;}' +
-      '.nothing-core-ring{position:absolute;inset:14px;border-radius:50%;border:1.5px solid var(--emerald-500,#2bbfab);opacity:.55;animation:coreBreathe 4s ease-in-out infinite;}' +
-      '.nothing-core-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;border:1px solid var(--emerald-300,#54c9b8);opacity:.55;}' +
-      '@keyframes coreBreathe{0%,100%{transform:scale(1);opacity:.55;}50%{transform:scale(1.08);opacity:.9;}}' +
-      '.nothing-core-dot{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ffffff, var(--emerald-500,#2bbfab));box-shadow:0 0 20px rgba(43,191,171,.7);position:relative;z-index:2;}' +
-      '.nothing-core-label{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;color:var(--emerald-700,#0f5b53);letter-spacing:.4px;white-space:nowrap;}' +
+      '.nothing-core-glow{position:absolute;inset:-18px;border-radius:50%;background:radial-gradient(circle, rgba(244,197,66,.35) 0%, rgba(43,191,171,.15) 40%, transparent 70%);animation:coreGlowPulse 3.5s ease-in-out infinite;pointer-events:none;}' +
+      '@keyframes coreGlowPulse{0%,100%{opacity:0.6;transform:scale(0.95);}50%{opacity:1;transform:scale(1.12);}}' +
+      '.nothing-core-ring{position:absolute;inset:14px;border-radius:50%;border:1.5px solid rgba(244,197,66,0.65);opacity:.7;animation:coreBreathe 4s ease-in-out infinite;box-shadow:0 0 18px rgba(244,197,66,0.3) inset, 0 0 12px rgba(244,197,66,0.4);}' +
+      '.nothing-core-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(84,201,184,0.7);opacity:.6;}' +
+      '@keyframes coreBreathe{0%,100%{transform:scale(1);opacity:.7;}50%{transform:scale(1.08);opacity:1;}}' +
+      '.nothing-core-dot{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #ffffff, #f4c542 70%);box-shadow:0 0 22px rgba(244,197,66,0.9), 0 0 40px rgba(244,197,66,0.5);position:relative;z-index:2;animation:coreDotPulse 2.4s ease-in-out infinite;}' +
+      '@keyframes coreDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}' +
+      '.nothing-core-label{position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:800;color:var(--emerald-700,#0f5b53);letter-spacing:.4px;white-space:nowrap;text-shadow:0 0 8px rgba(244,197,66,0.5);z-index:7;}' +
 
-      /* برچسب‌های لایه */
-      '.nothing-layer{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:10.5px;font-weight:700;color:var(--muted);background:rgba(94,200,240,.04);border:1px dashed rgba(94,200,240,.28);pointer-events:none;transition:opacity .9s ease, transform 1.2s cubic-bezier(.5,0,.85,1), filter .9s ease;z-index:3;}' +
+      /* برچسب‌های لایه — روی حلقه‌ها، در پایین هر دایره */
+      '.nothing-layer{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;border-radius:50%;pointer-events:none;transition:opacity .9s ease, transform 1.2s cubic-bezier(.5,0,.85,1), filter .9s ease;z-index:6;}' +
+      '.nothing-layer .nl-text{font-family:inherit;font-size:10.5px;font-weight:800;color:#ffffff;background:rgba(18,20,38,0.78);padding:3px 10px;border-radius:20px;letter-spacing:.3px;box-shadow:0 2px 10px rgba(0,0,0,0.4);white-space:nowrap;}' +
+      'html[data-theme="light"] .nothing-layer .nl-text{background:rgba(255,255,255,0.92);color:#0f5b53;box-shadow:0 2px 10px rgba(0,0,0,0.1);}' +
       '.nothing-layer[data-nothing="body"]{width:210px;height:210px;}' +
       '.nothing-layer[data-nothing="one"]{width:176px;height:176px;}' +
       '.nothing-layer[data-nothing="thing"]{width:144px;height:144px;}' +
-      '.nothing-layer[data-nothing="where"]{width:112px;height:112px;opacity:0.55;}' +
-      '.nothing-layer[data-nothing="time"]{width:80px;height:80px;opacity:0.35;}' +
+      '.nothing-layer[data-nothing="where"]{width:112px;height:112px;}' +
+      '.nothing-layer[data-nothing="time"]{width:80px;height:80px;}' +
       '.nothing-layer.is-gone{opacity:0;transform:translate(-50%,-50%) scale(1.5);filter:blur(6px);}' +
 
       /* مراحل پایین */
@@ -737,9 +745,23 @@
       '.nothing-reset{background:none;border:none;cursor:pointer;font-family:inherit;font-size:11.5px;color:var(--muted);text-decoration:underline;}' +
       '.nothing-sound-btn{flex:none;width:32px;height:32px;border-radius:50%;background:var(--surface,#f7f6f1);border:1px solid var(--line);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;}' +
 
-      /* ============== قلمرو ممکن‌ها — بصری با رعد و برق ============== */
-      '.quantum-connect-wrap{margin:16px 0 0;padding:14px;background:radial-gradient(ellipse at 50% 50%, rgba(143,123,240,.08), rgba(94,200,240,.02) 70%, transparent);border-radius:16px;border:1px solid rgba(143,123,240,.18);}' +
-      '.quantum-connect-svg{width:100%;height:auto;display:block;max-height:220px;}' +
+      /* ============== قلمرو ممکن‌ها — ارتعاش محیطی ملایم ============== */
+      '.quantum-connect-wrap{position:relative;margin:16px 0 0;padding:14px;background:radial-gradient(ellipse at 50% 50%, rgba(143,123,240,.10), rgba(94,200,240,.03) 70%, transparent);border-radius:16px;border:1px solid rgba(143,123,240,.22);overflow:hidden;}' +
+      /* لایه‌ی ارتعاش محیطی — خطوط طولی که به‌آرامی عبور می‌کنند */
+      '.electric-aura{position:absolute;inset:0;pointer-events:none;opacity:0.55;' +
+        'background-image:' +
+          'repeating-linear-gradient(90deg, transparent 0px, transparent 38px, rgba(94,200,240,0.06) 38px, rgba(94,200,240,0.06) 39px, transparent 39px, transparent 78px),' +
+          'repeating-linear-gradient(0deg, transparent 0px, transparent 52px, rgba(143,123,240,0.05) 52px, rgba(143,123,240,0.05) 53px, transparent 53px, transparent 105px);' +
+        'animation:electricScan 7s linear infinite;}' +
+      '@keyframes electricScan{' +
+        '0%{background-position:0 0, 0 0;opacity:0.4;}' +
+        '50%{background-position:39px 26px, 26px 52px;opacity:0.75;}' +
+        '100%{background-position:78px 52px, 52px 105px;opacity:0.4;}' +
+      '}' +
+      /* هاله‌ی نرم الکتریکی که در فضا حرکت می‌کند */
+      '.electric-aura::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 40%, rgba(94,200,240,0.10), transparent 45%),radial-gradient(circle at 70% 60%, rgba(143,123,240,0.10), transparent 45%);animation:electricFloat 5s ease-in-out infinite;}' +
+      '@keyframes electricFloat{0%,100%{transform:scale(1) translate(0,0);opacity:0.5;}50%{transform:scale(1.08) translate(6px,-4px);opacity:0.9;}}' +
+      '.quantum-connect-svg{position:relative;width:100%;height:auto;display:block;max-height:220px;z-index:1;}' +
 
       '.qfield-glow{animation:qfieldPulse 4s ease-in-out infinite;}' +
       '.qfield-glow-right{animation-delay:0.5s;}' +
@@ -754,35 +776,21 @@
       '.qfield-ring-r3{animation:qringPulse 3s ease-in-out infinite 0.95s;}' +
       '@keyframes qringPulse{0%,100%{opacity:0.3;transform:scale(0.97);}50%{opacity:0.9;transform:scale(1.04);}}' +
 
-      /* جرقه‌های الکتریکی */
-      '.qspark{animation:qsparkFlash 2.4s ease-in-out infinite;}' +
+      /* جرقه‌های الکتریکی پراکنده */
+      '.qspark{animation:qsparkFlash 2.6s ease-in-out infinite;}' +
       '.qspark:nth-child(1){animation-delay:0s;}' +
-      '.qspark:nth-child(2){animation-delay:0.3s;}' +
-      '.qspark:nth-child(3){animation-delay:0.6s;}' +
-      '.qspark:nth-child(4){animation-delay:0.9s;}' +
-      '.qspark:nth-child(5){animation-delay:1.2s;}' +
-      '.qspark:nth-child(6){animation-delay:1.5s;}' +
-      '.qspark:nth-child(7){animation-delay:1.8s;}' +
-      '.qspark:nth-child(8){animation-delay:2.1s;}' +
-      '@keyframes qsparkFlash{0%,100%{opacity:0.1;transform:scale(1);}50%{opacity:1;transform:scale(1.5);}}' +
-
-      /* رعد و برق — خطوط شکسته */
-      '.qbolt{opacity:0;animation:qboltFlash 2.6s ease-in-out infinite;}' +
-      '.qbolt-1{animation-delay:0s;}' +
-      '.qbolt-2{animation-delay:0.9s;}' +
-      '.qbolt-3{animation-delay:1.6s;}' +
-      '.qbolt-4{animation-delay:0.5s;}' +
-      '.qbolt-5{animation-delay:2.1s;}' +
-      '.qbolt-r1{animation-delay:0.3s;}' +
-      '.qbolt-r2{animation-delay:1.3s;}' +
-      '.qbolt-r3{animation-delay:2s;}' +
-      '@keyframes qboltFlash{0%,100%{opacity:0;}8%{opacity:1;}12%{opacity:0.3;}16%{opacity:1;}24%{opacity:0;}}' +
-
-      /* رعد و برق روی پیوند */
-      '.qlink-bolt{opacity:0;animation:qlinkBoltFlash 3s ease-in-out infinite;}' +
-      '.qlink-bolt:nth-of-type(1){animation-delay:0.6s;}' +
-      '.qlink-bolt:nth-of-type(2){animation-delay:1.8s;}' +
-      '@keyframes qlinkBoltFlash{0%,100%{opacity:0;}10%{opacity:1;}15%{opacity:0.2;}20%{opacity:0.9;}30%{opacity:0;}}' +
+      '.qspark:nth-child(2){animation-delay:0.4s;}' +
+      '.qspark:nth-child(3){animation-delay:0.8s;}' +
+      '.qspark:nth-child(4){animation-delay:1.2s;}' +
+      '.qspark:nth-child(5){animation-delay:1.6s;}' +
+      '.qspark:nth-child(6){animation-delay:2s;}' +
+      '.qspark:nth-child(7){animation-delay:2.4s;}' +
+      '.qspark:nth-child(8){animation-delay:2.8s;}' +
+      '.qspark:nth-child(9){animation-delay:0.6s;}' +
+      '.qspark:nth-child(10){animation-delay:1.4s;}' +
+      '.qspark:nth-child(11){animation-delay:1.8s;}' +
+      '.qspark:nth-child(12){animation-delay:0.2s;}' +
+      '@keyframes qsparkFlash{0%,100%{opacity:0.05;transform:scale(0.8);}50%{opacity:0.8;transform:scale(1.4);}}' +
 
       /* موج‌های هم‌فرکانس */
       '.qwave{opacity:0.85;animation:qwaveTravel 2.8s ease-in-out infinite;}' +
@@ -805,7 +813,7 @@
       '@keyframes qlinkDash{to{stroke-dashoffset:-14;}}' +
 
       /* زیرنویس */
-      '.quantum-connect-caption{margin-top:12px;padding-top:10px;border-top:1px dashed rgba(143,123,240,.25);}' +
+      '.quantum-connect-caption{position:relative;margin-top:12px;padding-top:10px;border-top:1px dashed rgba(143,123,240,.25);z-index:2;}' +
       '.qc-labels{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:800;margin-bottom:8px;}' +
       '.qc-side{color:var(--ink);}' +
       '.qc-center{font-size:10.5px;color:var(--emerald-700);background:rgba(43,191,171,.12);padding:3px 10px;border-radius:12px;letter-spacing:.3px;}' +
@@ -813,7 +821,7 @@
   }
 
   /* =====================================================================
-     رندر متن آینده
+     متن آینده
      ===================================================================== */
   function renderFutureText(){
     var v = getActiveVersion();
@@ -1198,7 +1206,7 @@
   }
   function wrapRenderBeliefsView(){
     if (typeof window.renderBeliefsView !== 'function') return;
-    if (window.renderBeliefsView.__patchedV11) return;
+    if (window.renderBeliefsView.__patchedV12) return;
     var original = window.renderBeliefsView;
     window.renderBeliefsView = function(){
       try { original.apply(this, arguments); } catch(e){}
@@ -1208,8 +1216,9 @@
       try { renderOurNeuralPathways(); } catch(e){}
       try { buildNothingDust(); } catch(e){}
       try { refreshNothingVisual(); } catch(e){}
+      try { startNothingWaves(); } catch(e){}
     };
-    window.renderBeliefsView.__patchedV11 = true;
+    window.renderBeliefsView.__patchedV12 = true;
   }
 
   /* =====================================================================
@@ -1244,12 +1253,9 @@
         return;
       }
 
-      // کلیک روی nothing-step → به‌روزرسانی بصری
       var nothingStep = t.closest('.nothing-step');
       if (nothingStep){
-        setTimeout(function(){
-          try { refreshNothingVisual(); } catch(e){}
-        }, 60);
+        setTimeout(function(){ try { refreshNothingVisual(); } catch(e){} }, 60);
         return;
       }
 
@@ -1321,6 +1327,12 @@
       state.rasMission[dk][e.target.dataset.ras] = !!e.target.checked;
       try { saveState(); } catch(e2){}
     });
+
+    /* پاکسازی موج‌ها وقتی تب بسته می‌شود */
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) stopNothingWaves();
+      else startNothingWaves();
+    });
   }
 
   function dpRestorePossibilities(){
@@ -1349,6 +1361,7 @@
     try { renderOurNeuralPathways(); } catch(e){}
     try { buildNothingDust(); } catch(e){}
     try { refreshNothingVisual(); } catch(e){}
+    try { startNothingWaves(); } catch(e){}
     var bv = document.getElementById('view-beliefs');
     if (bv && bv.classList.contains('active') && typeof window.renderBeliefsView === 'function'){
       try { window.renderBeliefsView(); } catch(e){}
