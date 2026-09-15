@@ -4243,17 +4243,18 @@ export default function App() {
   }
 
   if (view === "profile") {
-    screen = (
-      <ProfileView analysis={analysis}
-        onBack={() => go("welcome")} onRetake={() => go("ysq")}
-        onWins={() => go("wins")} onCalendar={() => go("calendar")}
-        onSOS={openSOS} onSituations={() => go("situations")}
-        onRelationships={() => go("relationships")}
-        onLifeCycles={() => go("life_cycles")}
-        onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
-        onPickOrigin={(id) => openOrigin(id, "profile")} />
-    );
-  }
+  screen = (
+    <ProfileView analysis={analysis}
+      onBack={() => go("welcome")} onRetake={() => go("ysq")}
+      onWins={() => go("wins")} onCalendar={() => go("calendar")}
+      onSOS={openSOS} onSituations={() => go("situations")}
+      onRelationships={() => go("relationships")}
+      onLifeCycles={() => go("life_cycles")}
+      onAcceptance={() => go("acceptance")}
+      onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
+      onPickOrigin={(id) => openOrigin(id, "profile")} />
+  );
+}
 
   if (view === "origin" && originSchemaId) {
     screen = <OriginView schemaId={originSchemaId}
