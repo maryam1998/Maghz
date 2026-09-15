@@ -1634,7 +1634,7 @@ function YSQView({ onDone, onBack }) {
  * Profile
  * ========================================================= */
 
-function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles }) {
+function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles, onAcceptance }) {
   if (!analysis) {
     return (
       <Shell title="پروفایل" onBack={onBack}>
