@@ -182,7 +182,7 @@
         var isDone = done.indexOf(k) !== -1;
         var path = document.getElementById('nw-' + k);
         if (!path) return;
-        var amp = isDone ? p.amp * 0.35 : p.amp;
+        var amp = isDone ? 0 : p.amp;
         var freq = isDone ? PURE_WAVE.freq : p.freq;
         var basePhase = isDone ? PURE_WAVE.phase : p.phase;
         var phase = basePhase + wavePhase * (isDone ? 1.8 : 1);
@@ -719,12 +719,18 @@
       '@keyframes coreDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}' +
 
       /* پنج لایه روی دایره */
-      '.nothing-labels-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;max-width:110px;z-index:8;pointer-events:none;}' +
-      '.nothing-layer-chip{font-family:inherit;font-size:9.5px;font-weight:800;color:#fff;' +
+      '.nothing-labels-overlay{position:absolute;inset:0;z-index:8;pointer-events:none;}' +
+      '.nothing-layer-chip{position:absolute;top:50%;left:50%;font-family:inherit;font-size:9.5px;font-weight:800;color:#fff;' +
         'background:rgba(18,20,38,0.85);padding:3px 8px;border-radius:12px;white-space:nowrap;letter-spacing:.2px;' +
         'box-shadow:0 2px 8px rgba(0,0,0,0.4);' +
         'cursor:pointer;pointer-events:auto;user-select:none;' +
-        'transition:opacity .7s ease, transform .7s ease, filter .7s ease, background .5s ease, color .5s ease, box-shadow .5s ease;}' +
+        'transition:opacity .7s ease, filter .7s ease, background .5s ease, color .5s ease, box-shadow .5s ease;}' +
+      /* هر چیپ روی محیط دایره‌ی آگاهی خالص (شعاع حلقه‌ی nothing-core-ring) قرار می‌گیرد */
+      '.nothing-layer-chip[data-nothing="body"]{transform:translate(-50%,-50%) translate(0px,-49px);}' +
+      '.nothing-layer-chip[data-nothing="one"]{transform:translate(-50%,-50%) translate(47px,-15px);}' +
+      '.nothing-layer-chip[data-nothing="thing"]{transform:translate(-50%,-50%) translate(29px,40px);}' +
+      '.nothing-layer-chip[data-nothing="where"]{transform:translate(-50%,-50%) translate(-29px,40px);}' +
+      '.nothing-layer-chip[data-nothing="time"]{transform:translate(-50%,-50%) translate(-47px,-15px);}' +
       'html[data-theme="light"] .nothing-layer-chip{background:rgba(255,255,255,0.92);color:#0f5b53;box-shadow:0 2px 8px rgba(0,0,0,0.12);}' +
       '.nothing-layer-chip.is-checked{background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;box-shadow:0 0 14px rgba(43,191,171,0.7);opacity:0.55;}' +
       '.nothing-layer-chip.is-checked::before{content:"✓ ";font-weight:900;}' +
