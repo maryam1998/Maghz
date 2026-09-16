@@ -95,48 +95,48 @@
     wrap.setAttribute('data-our-help', '1');
     wrap.innerHTML = '' +
       '<div class="help-section">' +
-        '<h3>🌱 این اپ چطور بهت کمک می‌کند؟</h3>' +
-        '<p>ذهن آدم مثل یک مزرعه است. هر فکری که تکرار کنی، مثل یک بذر کاشته می‌شود. بعد از مدتی این بذرها به «باور» تبدیل می‌شوند و باورهایت زندگی‌ات را می‌سازند.</p>' +
-        '<ul><li>اهدافت را روی نقشه می‌بینی و مسیر رسیدن به آن‌ها را ترسیم می‌کنی.</li>' +
-        '<li>هر روز شکرگذاری می‌کنی تا ذهنت یاد بگیرد چیزهای خوب زندگی‌ات را ببیند.</li>' +
-        '<li>با یک تمرین روزانه بر اساس آموزه‌های جو دیسپنزا، زندگی‌ات را از درون تغییر می‌دهی.</li></ul>' +
+        '<h3>🌱 این اپ چیه؟</h3>' +
+        '<p>این اپ یه فضای شخصیه. سه بخش داره که با هم کار می‌کنن:</p>' +
+        '<ul>' +
+          '<li><b>شناخت:</b> اینجا الگوهای ذهنی‌ات رو می‌شناسی. طرحواره‌ها، موقعیت‌ها، چرخه‌های تکرارشونده.</li>' +
+          '<li><b>هدف‌گذاری (نقشه):</b> روی نقشه، هدف‌هات رو می‌بینی و مسیرت رو ترسیم می‌کنی.</li>' +
+          '<li><b>تمرین (باورها و فراوانی):</b> تمرین‌هایی که بهت کمک می‌کنن حس و حالت درونت رو ببینی و نگه داری.</li>' +
+        '</ul>' +
+        '<p>هدف اصلی، <b>شناختن خودته</b>. تمرین‌های دیگه فقط ابزارن — کمک می‌کنن با چشم باز، احساست رو ببینی و توی لحظه بمونی.</p>' +
       '</div>' +
       '<div class="help-section">' +
-        '<h3>🌌 قلمرو ممکن‌ها چیست؟</h3>' +
-        '<p>جو دیسپنزا می‌گوید فراتر از دنیای فیزیکی، میدانی نامرئی از انرژی، اطلاعات و آگاهی وجود دارد که فراتر از مکان و زمان عمل می‌کند. به این میدان، <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b> می‌گویند.</p>' +
-        '<p>در این قلمرو، همه‌ی احتمالات از قبل به‌صورت «موج» وجود دارند. واقعیت فیزیکی فعلی تو، فقط یکی از بی‌نهایت احتمالی است که در این میدان وجود دارد.</p>' +
-        '<p style="background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>نکته‌ی کلیدی:</b> تو چیز جدیدی «خلق» نمی‌کنی — فقط خودت را با یکی از احتمالاتی که از قبل در میدان وجود دارد، هم‌راستا می‌کنی.</p>' +
+        '<h3>🌌 قلمرو ممکن‌ها چیه؟</h3>' +
+        '<p>جو دیسپنزا می‌گه فراتر از دنیای فیزیکی، یه میدان از انرژی، اطلاعات و آگاهی هست که به مکان و زمان گره نخورده. بهش می‌گن <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b>.</p>' +
+        '<p>توی این میدان، همه‌ی احتمالات از قبل هستن — مثل موج. واقعیت امروز تو، فقط یکی از بی‌نهایت حالتیه که می‌تونه باشه.</p>' +
+        '<p style="background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>یه نکته:</b> تو چیز جدیدی «نمی‌سازی» — فقط خودت رو با یکی از احتمالاتی که از قبل هست، هماهنگ می‌کنی.</p>' +
       '</div>' +
       '<div class="help-section">' +
-        '<h3>🕳️ «هیچ شدن» یعنی چه؟</h3>' +
-        '<p>عبارت «No body, no one, no thing, no where, in no time» یعنی: <b>بدون بدن، بدون شخص، بدون چیز، بدون مکان، در هیچ زمانی</b>. این‌ها نه به معنای فیزیکی، بلکه به معنای <b>رها کردن هویت‌های شرطی‌شده</b> است.</p>' +
+        '<h3>🕳️ «هیچ شدن» یعنی چی؟</h3>' +
+        '<p>عبارت «No body, no one, no thing, no where, in no time» یعنی: بدون بدن، بدون شخص، بدون چیز، بدون مکان، توی هیچ زمانی. این‌ها معنای فیزیکی ندارن — یعنی <b>رها کردن هویت‌هایی که بهشون عادت کردی</b>.</p>' +
         '<div style="display:flex;flex-direction:column;gap:8px;margin:10px 0;">' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">🫀 No body / بی‌بدن</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من بدنم نیستم. توجه از بدن، دردها و حواس جسمی جدا می‌شود.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">👤 No one / هیچ‌کس</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من آن شخصیت، اسم، نقش، گذشته و داستان‌هایم نیستم.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📦 No thing / هیچ‌چیز</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">وابستگی به اشیاء، دارایی‌ها و شرایط بیرونی رها می‌شود.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📍 No where / هیچ‌جا</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">آگاهی به اینجا و آنجا گره نخورده است.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">⏳ In no time / در هیچ زمانی</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">گذشته و آینده رها می‌شوند و فقط حالِ بی‌زمان می‌ماند.</div></div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">🫀 بدن — من بدنم نیستم</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">توجهت از درد، خستگی و حس‌های جسمی جدا می‌شه.</div></div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">👤 هویت — من اون شخص نیستم</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">اسم، نقش، شغل، گذشته — همه‌شون یه لایه‌ن. می‌ذاریشون کنار.</div></div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📦 اشیا — وابستگی رو رها کن</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">به دارایی‌ها و چیزهای بیرونی گره نمی‌خوری.</div></div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📍 مکان — اینجا و آنجا معنی نداره</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">آگاهی به یه جای خاص گره نخورده.</div></div>' +
+          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">⏳ زمان — فقط حال می‌مونه</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">گذشته و آینده رها می‌شن. همین لحظه کافیه.</div></div>' +
         '</div>' +
-        '<p style="background:rgba(244,197,66,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #f4c542;"><b>نکته:</b> این «هیچ» منفی نیست؛ مثل صفحه‌ی سفید یا فضاست که همه‌چیز را در خودش جا می‌دهد.</p>' +
+        '<p style="background:rgba(244,197,66,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #f4c542;"><b>این «هیچ» منفی نیست.</b> مثل صفحه‌ی سفیده — همه‌چیز رو توی خودش جا می‌ده.</p>' +
       '</div>' +
       '<div class="help-section">' +
-        '<h3>🔗 پیوند «هیچ شدن» و «درخواست از قلمرو ممکن‌ها»</h3>' +
-        '<p>درخواست به معنای التماس از نیروی بیرونی نیست. درخواست واقعی، فرستادن سیگنال مشخص به میدان است — اما فقط وقتی تو «هیچ» شده باشی.</p>' +
-        '<p>وقتی «هیچ» می‌شوی، از جای <b>کلیت</b> و <b>فراوانی</b> خلق می‌کنی — خودت را با فرکانس آن واقعیتِ ممکن در میدان هم‌راستا می‌کنی.</p>' +
+        '<h3>🔗 «هیچ شدن» و «درخواست» چطور به هم ربط دارن؟</h3>' +
+        '<p>درخواست یعنی التماس از یه نیروی بیرونی؟ نه.</p>' +
+        '<p>درخواست واقعی، فرستادن یه سیگنال مشخص به میدانه. ولی این سیگنال، فقط وقتی درست فرستاده می‌شه که تو «هیچ» شده باشی.</p>' +
+        '<p>وقتی «هیچ» می‌شی، از جای <b>کلیت</b> و <b>فراوانی</b> حرف می‌زنی — نه از جای کمبود.</p>' +
       '</div>' +
       '<div class="help-section">' +
         '<h3>🧘 پنج مرحله‌ی عملی</h3>' +
         '<ol style="padding-inline-start:20px;line-height:2;font-size:12.5px;color:var(--text-dim);">' +
-          '<li><b>رهاسازی:</b> بدن را عمیقاً آرام می‌کنی تا از حالت «بقا» خارج شوی.</li>' +
-          '<li><b>هیچ شدن:</b> توجه را از بدن، محیط و هویت «من» برمی‌داری.</li>' +
-          '<li><b>اتصال:</b> در این حالت خالی، آگاهی‌ات را به قلمرو ممکن‌ها وصل می‌کنی.</li>' +
-          '<li><b>کاشتن بذر:</b> تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری.</li>' +
-          '<li><b>احساس فراوانی:</b> احساس آن واقعیت را در بدن ایجاد می‌کنی تا فرکانست هماهنگ شود.</li>' +
+          '<li><b>رهاسازی:</b> بدنت رو آروم می‌کنی. از حالت «بقا» بیرون میای.</li>' +
+          '<li><b>هیچ شدن:</b> توجه رو از بدن، محیط و هویت «من» برمی‌داری.</li>' +
+          '<li><b>اتصال:</b> توی همین خالی بودن، آگاهیت رو به قلمرو ممکن‌ها وصل می‌کنی.</li>' +
+          '<li><b>کاشتن بذر:</b> یه تصویر واضح از واقعیت دلخواهت توی ذهن می‌کاری.</li>' +
+          '<li><b>احساس فراوانی:</b> حسِ اون واقعیت رو توی بدنت می‌سازی — تا فرکانست هماهنگ شه.</li>' +
         '</ol>' +
-      '</div>' +
-      '<div class="help-section">' +
-        '<h3>⚕️ یک نکته‌ی مهم</h3>' +
-        '<p>این تمرین‌ها یک «باشگاه ذهن» هستند، نه جایگزین درمان پزشکی.</p>' +
       '</div>';
     modalActions.parentNode.insertBefore(wrap, modalActions);
   }
@@ -172,7 +172,6 @@
     return Array.isArray(state.nothingProgress[k]) ? state.nothingProgress[k].slice() : [];
   }
 
-  /* انیمیشن موج‌ها */
   function animateNothingWaves(t){
     if (!lastWaveFrame || t - lastWaveFrame > 42){
       wavePhase += 0.045;
@@ -211,9 +210,6 @@
     if (waveAnimFrame){ cancelAnimationFrame(waveAnimFrame); waveAnimFrame = null; }
   }
 
-  /* =====================================================================
-     غبار
-     ===================================================================== */
   function buildNothingDust(){
     Object.keys(LAYER_WAVE).forEach(function(k){
       var group = document.getElementById('dust-' + k);
@@ -290,15 +286,15 @@
     var html = '' +
       '<div class="belief-flow-card" data-new-card="1" style="background:linear-gradient(135deg,rgba(43,191,171,.08),rgba(94,200,240,.05));border-color:rgba(43,191,171,.3);">' +
         '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🌌 قلمرو ممکن‌ها</div>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">فراتر از دنیای فیزیکی، میدانی نامرئی از انرژی، اطلاعات و آگاهی وجود دارد که فراتر از مکان و زمان عمل می‌کند. به این میدان، <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b> می‌گویند.</p>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">در این قلمرو، همه‌ی احتمالات از قبل به‌صورت «موج» وجود دارند. واقعیت فیزیکی فعلی تو، فقط یکی از بی‌نهایت احتمالی است که در این میدان وجود دارد.</p>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>نکته‌ی کلیدی:</b> تو در این تمرین‌ها چیز جدیدی «خلق» نمی‌کنی — فقط خودت را با یکی از احتمالاتی که از قبل در میدان وجود دارد، هم‌راستا می‌کنی.</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">فراتر از دنیای فیزیکی که می‌بینی، یه میدان از انرژی، اطلاعات و آگاهی هست که به مکان و زمان گره نخورده. بهش می‌گن <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b>.</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">توی این میدان، همه‌ی احتمالات از قبل هستن — مثل موج. زندگی امروز تو، فقط یکی از بی‌نهایت حالتیه که می‌تونه باشه. بقیه‌ی حالت‌ها هم اون‌جان، منتظر.</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>یه نکته:</b> تو این تمرین‌ها چیز جدیدی «نمی‌سازی» — فقط خودت رو با یکی از احتمالاتی که از قبل هست، هماهنگ می‌کنی.</p>' +
       '</div>' +
 
       '<div class="belief-flow-card" data-new-card="1" style="margin-top:14px;">' +
         '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🕳️ چرا باید «هیچ» شوی؟</div>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">اول باید این‌طور «هیچ» شوی تا از «منِ قدیمی» و از جای «کمبود» به میدان کوانتومی سیگنال نفرستی. در آن سکوت و خالی بودن، به قلمرو ممکن‌ها وصل می‌شوی.</p>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;">وقتی «هیچ» می‌شوی، از جای <b>کلیت</b> و <b>فراوانی</b> خلق می‌کنی — خودت را با فرکانس آن واقعیتِ ممکن در میدان هم‌راستا می‌کنی.</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">اگه از «منِ قدیمی» به میدان سیگنال بفرستی، همون چیز قدیمی رو برمی‌گردونی. باید اول «هیچ» شی — یعنی از هویت قدیمی، از ترس‌ها و از کمبودها فاصله بگیری. توی اون سکوت و خالی بودن، به قلمرو ممکن‌ها وصل می‌شی.</p>' +
+        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;">وقتی «هیچ» می‌شی، از جای <b>کلیت</b> و <b>فراوانی</b> حرف می‌زنی — خودت رو با فرکانس اون واقعیتِ ممکن توی میدان هماهنگ می‌کنی.</p>' +
       '</div>' +
 
       '<div class="belief-flow-card" id="dispenza-protocol-card" data-new-card="1" style="margin-top:14px;">' +
@@ -306,7 +302,7 @@
           '<div class="bf-head" style="margin:0;">🌌 تمرین روزانه</div>' +
           '<span id="dp-session-count" style="font-size:10.5px;color:var(--muted);">۰ جلسه</span>' +
         '</div>' +
-        '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">شش مرحله. هر کدام را جدا تیک بزن.</p>' +
+        '<p style="font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 14px;">شش مرحله. هر کدوم رو جدا تیک بزن. لازم نیست یه‌جا انجام بدی.</p>' +
 
         '<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--line);">' +
           '<div style="font-size:11px;font-weight:700;margin-bottom:8px;">🎵 موسیقی مدیتیشن (اختیاری)</div>' +
@@ -329,8 +325,8 @@
             '<span class="dp-step-title">رهاسازی — آرام شدن</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>رهاسازی (Relaxation):</b> بدنت را عمیقاً آرام کن تا از حالت آماده‌باش و تنش فاصله بگیری.</span>' +
-            'وقتی بدن آرام می‌شود، توجه از فشارها و افکار روزمره فاصله می‌گیرد و ذهن برای تمرکز، تجسم و تجربه‌ی درونی آماده‌تر می‌شود.' +
+            '<span class="dp-def-chip">📖 <b>رهاسازی (Relaxation):</b> بدنت رو عمیقاً آروم کن تا از حالت آماده‌باش و تنش فاصله بگیری.</span>' +
+            'وقتی بدن آروم می‌شه، توجهت از فشارها و فکرهای روزمره جدا می‌شه. ذهنت آماده می‌شه برای تمرکز، تجسم و تجربه‌ی درونی.' +
           '</div>' +
           '<div class="breath-wrap">' +
             '<div class="breath-circle" id="breath-circle">' +
@@ -359,17 +355,15 @@
             '<button type="button" id="nothing-sound-toggle" class="nothing-sound-btn" onclick="toggleNothingSound()" style="margin-inline-start:auto;" title="قطع/وصل صدا">🔔</button>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>هیچ شدن (Becoming Nothing):</b> توجه را از بدن، محیط و هویت «من» برمی‌داری و به آگاهی محض اجازه می‌دهی گسترش یابد.</span>' +
-            'وقتی خودت را با نام، شغل، بدن، داستان‌های گذشته و نگرانی‌های آینده تعریف می‌کنی، سیگنالی از «گذشته» به میدان می‌فرستی. «هیچ شدن» یعنی رها کردن این هویت‌های شرطی‌شده.' +
+            '<span class="dp-def-chip">📖 <b>هیچ شدن (Becoming Nothing):</b> توجهت رو از بدن، محیط و هویت «من» برمی‌داری و به آگاهی محض اجازه می‌دی گسترش پیدا کنه.</span>' +
+            'وقتی خودت رو با اسم، شغل، بدن، خاطرات گذشته و نگرانی‌های آینده تعریف می‌کنی، داری سیگنالی از «گذشته» به میدان می‌فرستی. «هیچ شدن» یعنی رها کردن این هویت‌های شرطی‌شده.' +
           '</div>' +
 
           '<div class="dp-step-content" style="margin-top:12px;">' +
-            '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink);">پنج لایه را یکی‌یکی رها کن — با هر تیک، غبار کمتر و آگاهی روشن‌تر:</div>' +
+            '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink);">پنج لایه رو یکی‌یکی رها کن — با هر تیک، غبار کمتر و آگاهی روشن‌تر:</div>' +
           '</div>' +
 
-          /* ===== صحنه‌ی هیچ شدن ===== */
           '<div class="nothing-stage" id="nothing-stage">' +
-            /* موج‌های سینوسی نامنظم — پشت همه */
             '<svg class="nothing-waves-svg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">' +
               '<path id="nw-body"  fill="none" stroke="#8b8fa8" stroke-width="1.1" opacity="0.78"/>' +
               '<path id="nw-one"   fill="none" stroke="#a0a4b8" stroke-width="1.1" opacity="0.78"/>' +
@@ -379,7 +373,6 @@
               '<path id="nw-pure"  fill="none" stroke="#f4c542" stroke-width="1.6" opacity="0.9"/>' +
             '</svg>' +
 
-            /* غبار */
             '<svg class="nothing-dust-svg" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">' +
               '<g id="dust-body"></g>' +
               '<g id="dust-one"></g>' +
@@ -388,7 +381,6 @@
               '<g id="dust-time"></g>' +
             '</svg>' +
 
-            /* آگاهی خالص در مرکز + پنج لایه روی آن */
             '<div class="nothing-core" id="nothing-core">' +
               '<div class="nothing-core-glow"></div>' +
               '<div class="nothing-core-ring"></div>' +
@@ -404,31 +396,30 @@
             '</div>' +
           '</div>' +
 
-          /* پنج مرحله پایین */
           '<div class="nothing-steps" id="nothing-steps" style="margin:14px auto 0;max-width:340px;">' +
             '<button type="button" class="nothing-step" data-nothing-step="body">' +
               '<span class="nothing-step-num">۱</span>' +
-              '<span class="nothing-step-txt"><b>No body</b><br><span style="font-size:10.5px;color:var(--muted);">من بدنم نیستم. توجه از بدن، دردها و حواس جسمی جدا می‌شود.</span></span>' +
+              '<span class="nothing-step-txt"><b>No body</b><br><span style="font-size:10.5px;color:var(--muted);">من بدنم نیستم. توجه از بدن، دردها و حس‌های جسمی جدا می‌شه.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="one">' +
               '<span class="nothing-step-num">۲</span>' +
-              '<span class="nothing-step-txt"><b>No one</b><br><span style="font-size:10.5px;color:var(--muted);">من آن شخصیت، اسم، نقش، گذشته و داستان‌هایم نیستم.</span></span>' +
+              '<span class="nothing-step-txt"><b>No one</b><br><span style="font-size:10.5px;color:var(--muted);">من اون شخصیت، اسم، نقش، گذشته و داستان‌هام نیستم.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="thing">' +
               '<span class="nothing-step-num">۳</span>' +
-              '<span class="nothing-step-txt"><b>No thing</b><br><span style="font-size:10.5px;color:var(--muted);">وابستگی به اشیاء، دارایی‌ها و شرایط بیرونی رها می‌شود.</span></span>' +
+              '<span class="nothing-step-txt"><b>No thing</b><br><span style="font-size:10.5px;color:var(--muted);">وابستگی به اشیا، دارایی‌ها و شرایط بیرونی رها می‌شه.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="where">' +
               '<span class="nothing-step-num">۴</span>' +
-              '<span class="nothing-step-txt"><b>No where</b><br><span style="font-size:10.5px;color:var(--muted);">آگاهی به اینجا و آنجا گره نخورده است.</span></span>' +
+              '<span class="nothing-step-txt"><b>No where</b><br><span style="font-size:10.5px;color:var(--muted);">آگاهی به اینجا و آنجا گره نخورده.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
             '<button type="button" class="nothing-step" data-nothing-step="time">' +
               '<span class="nothing-step-num">۵</span>' +
-              '<span class="nothing-step-txt"><b>In no time</b><br><span style="font-size:10.5px;color:var(--muted);">گذشته و آینده رها می‌شوند و فقط حالِ بی‌زمان می‌ماند.</span></span>' +
+              '<span class="nothing-step-txt"><b>In no time</b><br><span style="font-size:10.5px;color:var(--muted);">گذشته و آینده رها می‌شن و فقط حالِ بی‌زمان می‌مونه.</span></span>' +
               '<span class="nothing-step-check">○</span>' +
             '</button>' +
           '</div>' +
@@ -436,7 +427,7 @@
           '<div class="nothing-final" id="nothing-final" style="text-align:center;margin-top:12px;"><span class="nothing-final-pulse"></span>Pure consciousness — آگاهی خالص</div>' +
 
           '<div class="dp-step-content" style="margin-top:14px;padding:10px 12px;background:rgba(244,197,66,.08);border-right:3px solid var(--gold-500);border-radius:8px;">' +
-            '<div style="font-size:11px;color:var(--ink-soft);line-height:1.75;">این «هیچ» منفی نیست — مثل صفحه‌ی سفید یا فضاست که همه‌چیز را در خودش جا می‌دهد.</div>' +
+            '<div style="font-size:11px;color:var(--ink-soft);line-height:1.75;">این «هیچ» منفی نیست — مثل صفحه‌ی سفیده که همه‌چیز رو توی خودش جا می‌ده.</div>' +
           '</div>' +
           '<div style="text-align:center;margin-top:8px;">' +
             '<button type="button" class="nothing-reset" onclick="resetNothingPractice()">↺ شروع دوباره</button>' +
@@ -451,8 +442,8 @@
             '<span class="dp-step-title">اتصال به قلمرو ممکن‌ها</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>اتصال (Connection):</b> در این حالت خالی، آگاهی‌ات را به قلمرو ممکن‌ها وصل می‌کنی.</span>' +
-            'درخواست واقعی، فرستادن یک سیگنال مشخص به میدان است — اما این سیگنال فقط وقتی فرستاده می‌شود که تو «هیچ» شده باشی.' +
+            '<span class="dp-def-chip">📖 <b>اتصال (Connection):</b> توی این حالت خالی، آگاهیت رو به قلمرو ممکن‌ها وصل می‌کنی.</span>' +
+            'درخواست واقعی، فرستادن یه سیگنال مشخص به میدانه — ولی این سیگنال، فقط وقتی فرستاده می‌شه که تو «هیچ» شده باشی.' +
           '</div>' +
 
           '<div class="quantum-connect-wrap">' +
@@ -506,7 +497,7 @@
                 '<span class="qc-center">هم‌فرکانسی</span>' +
                 '<span class="qc-side qc-right">🌌 قلمرو ممکن‌ها</span>' +
               '</div>' +
-              '<div class="qc-desc">وقتی آگاهی‌ات با فرکانس قلمرو ممکن‌ها یکی می‌شود، سیگنالت به میدان می‌رسد — و واقعیت دلخواهت شروع می‌کند به شکل گرفتن.</div>' +
+              '<div class="qc-desc">وقتی آگاهیت با فرکانس قلمرو ممکن‌ها یکی می‌شه، سیگنالت به میدان می‌رسه — و واقعیت دلخواهت شروع می‌کنه به شکل گرفتن.</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -520,8 +511,8 @@
             '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="یادداشت بذر امروز">▾</button>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>انتخاب واقعیت:</b> با خواسته‌ات هم‌فرکانس شو و از میان امکان‌های پیش‌رو، آینده‌ای را که می‌خواهی انتخاب کن.</span>' +
-            'با جمله‌ی «بسیار خوشحال و سپاسگزارم، حالا که...» شروع کن. طوری بنویس که انگار همین حالا به آن رسیده‌ای.' +
+            '<span class="dp-def-chip">📖 <b>انتخاب واقعیت:</b> با خواسته‌ات هم‌فرکانس شو و از بین امکان‌های پیش‌رو، آینده‌ای رو که می‌خوای انتخاب کن.</span>' +
+            'با جمله‌ی «بسیار خوشحال و سپاسگزارم، حالا که...» شروع کن. طوری بنویس که انگار همین حالا بهش رسیدی.' +
           '</div>' +
           '<div class="dp-step-content" style="margin-top:12px;">' +
             '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;min-height:60px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
@@ -536,7 +527,7 @@
               '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:80px;">✏️ ویرایش</button>' +
               '<button type="button" id="archive-future-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="archive-count">۰</span>)</button>' +
             '</div>' +
-            '<button type="button" id="future-register-btn" style="width:100%;padding:12px;font-size:13px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(15,91,83,.18);margin-bottom:12px;">✅ امروز خواندم — ثبت کن</button>' +
+            '<button type="button" id="future-register-btn" style="width:100%;padding:12px;font-size:13px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(15,91,83,.18);margin-bottom:12px;">✅ امروز خوندم — ثبت کن</button>' +
             '<div id="future-archive-box" style="display:none;margin-bottom:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
             '<div style="padding-top:12px;border-top:1px dashed var(--line);">' +
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
@@ -551,8 +542,8 @@
             '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">بذری که امروز می‌کاری رو این‌جا بنویس. با «همین حالا...» شروع کن.</div>' +
             '<div style="display:flex;flex-direction:column;gap:10px;">' +
               '<div><label style="font-size:11.5px;display:block;margin-bottom:4px;">بذر اصلی امروز:</label><textarea id="dp-possibility-fear" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="همین حالا من..."></textarea></div>' +
-              '<div><label style="font-size:11.5px;display:block;margin-bottom:4px;">چطور حسش می‌کنم اگر همین حالا حقیقت داشت؟</label><textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="حس می‌کنم که..."></textarea></div>' +
-              '<div><label style="font-size:11.5px;display:block;margin-bottom:4px;">چه چیزی را رها می‌کنم؟</label><textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="رها می‌کنم..."></textarea></div>' +
+              '<div><label style="font-size:11.5px;display:block;margin-bottom:4px;">چطور حسش می‌کنم اگه همین حالا حقیقت داشت؟</label><textarea id="dp-possibility-money" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="حس می‌کنم که..."></textarea></div>' +
+              '<div><label style="font-size:11.5px;display:block;margin-bottom:4px;">چی رو رها می‌کنم؟</label><textarea id="dp-possibility-approval" rows="2" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;" placeholder="رها می‌کنم..."></textarea></div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -565,8 +556,8 @@
             '<span class="dp-step-title">تصویرسازی</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری — بدون احساس نیاز یا کمبود.</span>' +
-            'خودت را در صحنه‌ای ببین که به خواسته‌ات رسیده‌ای؛ هر تعداد عکس که دوست داری اضافه کن.' +
+            '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> یه تصویر واضح از واقعیت دلخواهت توی ذهن می‌کاری — بدون حس نیاز یا کمبود.</span>' +
+            'خودت رو توی صحنه‌ای ببین که به خواسته‌ات رسیدی. هر تعداد عکس که دوست داری اضافه کن.' +
           '</div>' +
           '<div class="dp-step-content">' +
             '<textarea id="seed-text-input" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;" placeholder="توضیح این تصویرسازی (اختیاری)..."></textarea>' +
@@ -588,12 +579,12 @@
             '<span class="dp-step-title">احساس فراوانی</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>احساس فراوانی (Embodying):</b> احساس آن واقعیت را در بدن خودت ایجاد کن — شادی، سلامتی، آرامش — تا فرکانست هماهنگ شود.</span>' +
-            'وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با اون هویت هم‌راستا می‌شن.' +
+            '<span class="dp-def-chip">📖 <b>احساس فراوانی (Embodying):</b> حسِ اون واقعیت رو توی بدنت بساز — شادی، سلامتی، آرامش — تا فرکانست هماهنگ شه.</span>' +
+            'وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با همون هویت هم‌راستا می‌شن.' +
           '</div>' +
           '<div class="dp-step-content">' +
             '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">💗 حسِ حالا</div>' +
-            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">حس رسیدن را در بدنت فراخوانی کن. کدام احساس را داری؟</div>' +
+            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">حس رسیدن رو توی بدنت فراخوانی کن. کدوم احساس رو داری؟</div>' +
             '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
               '<button type="button" class="btn tiny" onclick="openEmotionCapture(\'dispenza\',\'after\',\'تمرین روزانه\')">💗 ثبت حس</button>' +
               '<span id="dp-emotion-feedback" style="font-size:11px;color:var(--muted);"></span>' +
@@ -602,9 +593,9 @@
           '<div class="dp-step-content" style="margin-top:14px;">' +
             '<div style="padding:16px;background:linear-gradient(135deg,rgba(43,191,171,.12),rgba(94,200,240,.06));border-radius:14px;text-align:center;">' +
               '<div style="font-size:11px;color:var(--emerald-700);font-weight:700;margin-bottom:6px;letter-spacing:.5px;">تأییدیه‌ی نهایی</div>' +
-              '<div style="font-size:15px;font-weight:800;color:var(--emerald-700);line-height:1.8;">«من همین حالا همان کسی هستم که می‌خواستم باشم.<br>همه‌چیز در وجود من کامل است.»</div>' +
+              '<div style="font-size:15px;font-weight:800;color:var(--emerald-700);line-height:1.8;">«من همین حالا همون کسی هستم که می‌خواستم باشم.<br>همه‌چیز توی وجود من کامله.»</div>' +
             '</div>' +
-            '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7;">این جمله را در دلت سه بار تکرار کن و چند لحظه در همان حس بمان.</div>' +
+            '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7;">این جمله رو توی دلت سه بار تکرار کن و چند لحظه توی همون حس بمون.</div>' +
           '</div>' +
         '</div>' +
 
@@ -626,6 +617,26 @@
             '<button type="button" class="dp-expand-icon" data-toggle-box="ras-mission-box" style="margin-inline-start:auto;" title="باز/بسته کردن">▾</button>' +
           '</div>' +
           '<div id="ras-mission-box" style="display:none;margin-top:12px;">' +
+
+            /* توضیح این بخش */
+            '<div style="padding:12px;background:rgba(43,191,171,.08);border-right:3px solid #2bbfab;border-radius:10px;margin-bottom:12px;">' +
+              '<div style="font-size:11.5px;color:var(--ink);line-height:1.9;">' +
+                '<b style="color:var(--emerald-700);">🧠 این بخش چیه؟</b><br>' +
+                'مغزت در هر لحظه، بین میلیون‌ها چیز، فقط به چیزهایی توجه می‌کنه که برات مهمه. این فیلتر، <b>RAS</b> نام داره — همون چیزیه که باعث می‌شه وقتی یه ماشین خاص می‌خری، یهو همه‌جا همون ماشین رو ببینی.' +
+              '</div>' +
+              '<div style="font-size:11.5px;color:var(--ink);line-height:1.9;margin-top:10px;">' +
+                '<b style="color:var(--emerald-700);">👁️ چه کاری اینجا می‌کنی؟</b><br>' +
+                'یه <b>نشانه</b> انتخاب کن که می‌خوای مغزت توی روز ببینه. مثلاً: «فرصت‌های کوچیک» یا «لحظه‌های آرامش». بعد هر بار که دیدی، ثبتش کن.' +
+              '</div>' +
+              '<div style="font-size:11.5px;color:var(--ink);line-height:1.9;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(43,191,171,.25);">' +
+                '<b style="color:var(--emerald-700);">🎯 چرا این مهمه؟</b><br>' +
+                'توی تب «شناخت»، الگوهای ذهنی‌ات رو می‌بینی. ولی تو نمی‌تونی الگویی رو عوض کنی که <b>نمی‌بینیش</b>. این بخش، چشم‌هات رو باز می‌کنه — کمک می‌کنه ببینی چه چیزهایی رو تا حالا از ذهنت رد کردی، بدون اینکه متوجه بشی.' +
+              '</div>' +
+              '<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:10px;">' +
+                '💡 مثال: اگه تصمیم بگیری «امروز سه لحظه‌ی آرامش ببینم»، مغزت خودکار می‌ره دنبالشون. بعد از چند روز، این یه عادت ذهنی می‌شه.' +
+              '</div>' +
+            '</div>' +
+
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
               '<span style="font-size:12.5px;font-weight:800;">👁️ نشانه دیدم</span>' +
               '<button type="button" id="ras-signal-add-btn" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--emerald-500);color:#fff;font-size:18px;font-weight:800;cursor:pointer;line-height:1;">+</button>' +
@@ -717,7 +728,6 @@
         'position:relative;z-index:2;animation:coreDotPulse 2.4s ease-in-out infinite;transition:box-shadow .8s ease;}' +
       '@keyframes coreDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}' +
 
-      /* پنج لایه روی دایره */
       '.nothing-labels-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;max-width:110px;z-index:8;pointer-events:none;}' +
       '.nothing-layer-chip{font-family:inherit;font-size:9.5px;font-weight:800;color:#fff;' +
         'background:rgba(18,20,38,0.85);padding:3px 8px;border-radius:12px;white-space:nowrap;letter-spacing:.2px;' +
@@ -732,7 +742,6 @@
         'text-shadow:0 0 calc(4px + var(--progress) * 8px) rgba(244,197,66, calc(0.2 + var(--progress) * 0.5));' +
         'transition:opacity .8s ease, text-shadow .8s ease;}' +
 
-      /* مراحل پایین */
       '.nothing-steps{display:flex;flex-direction:column;gap:6px;}' +
       '.nothing-step{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface,#f7f6f1);color:var(--ink);font-family:inherit;font-size:12.5px;text-align:right;cursor:pointer;transition:.2s;}' +
       '.nothing-step:active{transform:scale(.99);}' +
@@ -1311,7 +1320,6 @@
         return;
       }
 
-      /* کلیک روی چیپ‌های روی دایره → همان toggle مرحله */
       var chip = t.closest('.nothing-layer-chip');
       if (chip){
         var chipKey = chip.dataset.nothing;
