@@ -576,6 +576,23 @@
               '<span style="font-size:12.5px;font-weight:800;">👁️ نشانه دیدم</span>' +
               '<button type="button" id="ras-signal-add-btn" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--emerald-500);color:#fff;font-size:18px;font-weight:800;cursor:pointer;line-height:1;">+</button>' +
             '</div>' +
+               '<div style="padding:12px;background:rgba(43,191,171,.08);border-right:3px solid #2bbfab;border-radius:10px;margin-bottom:12px;">' +
+  '<div style="font-size:11.5px;color:var(--ink);line-height:1.9;">' +
+    '<b style="color:var(--emerald-700);">🧠 این بخش چیه؟</b><br>' +
+    'مغزت در هر لحظه، بین میلیون‌ها چیز، فقط به چیزهایی توجه می‌کنه که برات مهمه. این فیلتر، <b>RAS</b> نام داره — همون چیزیه که باعث می‌شه وقتی یه ماشین خاص می‌خری، یهو همه‌جا همون ماشین رو ببینی.' +
+  '</div>' +
+  '<div style="font-size:11.5px;color:var(--ink);line-height:1.9;margin-top:10px;">' +
+    '<b style="color:var(--emerald-700);">👁️ چه کاری اینجا می‌کنی؟</b><br>' +
+    'یه <b>نشانه</b> انتخاب کن که می‌خوای مغزت توی روز ببینه. مثلاً: «فرصت‌های کوچیک» یا «لحظه‌های آرامش». بعد هر بار که دیدی، ثبتش کن.' +
+  '</div>' +
+  '<div style="font-size:11.5px;color:var(--ink);line-height:1.9;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(43,191,171,.25);">' +
+    '<b style="color:var(--emerald-700);">🎯 چرا این مهمه؟</b><br>' +
+    'توی تب «شناخت»، الگوهای ذهنی‌ات رو می‌بینی. ولی تو نمی‌تونی الگویی رو عوض کنی که <b>نمی‌بینیش</b>. این بخش، چشم‌هات رو باز می‌کنه — کمک می‌کنه ببینی چه چیزهایی رو تا حالا از ذهنت رد کردی، بدون اینکه متوجه بشی.' +
+  '</div>' +
+  '<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:10px;">' +
+    '💡 مثال: اگه تصمیم بگیری «امروز سه لحظه‌ی آرامش ببینم»، مغزت خودکار می‌ره دنبالشون. بعد از چند روز، این یه عادت ذهنی می‌شه.' +
+  '</div>' +
+'</div>' +
             '<textarea id="ras-signal-input" rows="3" style="display:none;width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;"></textarea>' +
             '<div id="ras-signal-list"></div>' +
             '<button type="button" id="ras-archive-toggle-btn" class="btn tiny" style="width:100%;margin-top:8px;">📚 آرشیو (<span id="ras-archive-count">۰</span>)</button>' +
