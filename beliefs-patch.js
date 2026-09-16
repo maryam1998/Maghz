@@ -86,60 +86,6 @@
      راهنما
      ===================================================================== */
   function injectHelpSection(){
-    var helpOverlay = document.getElementById('help-modal-overlay');
-    if (!helpOverlay) return;
-    if (helpOverlay.querySelector('[data-our-help]')) return;
-    var modalActions = helpOverlay.querySelector('.modal-actions');
-    if (!modalActions) return;
-    var wrap = document.createElement('div');
-    wrap.setAttribute('data-our-help', '1');
-    wrap.innerHTML = '' +
-      '<div class="help-section">' +
-        '<h3>🌱 این اپ چطور بهت کمک می‌کند؟</h3>' +
-        '<p>ذهن آدم مثل یک مزرعه است. هر فکری که تکرار کنی، مثل یک بذر کاشته می‌شود. بعد از مدتی این بذرها به «باور» تبدیل می‌شوند و باورهایت زندگی‌ات را می‌سازند.</p>' +
-        '<ul><li>اهدافت را روی نقشه می‌بینی و مسیر رسیدن به آن‌ها را ترسیم می‌کنی.</li>' +
-        '<li>هر روز شکرگذاری می‌کنی تا ذهنت یاد بگیرد چیزهای خوب زندگی‌ات را ببیند.</li>' +
-        '<li>با یک تمرین روزانه بر اساس آموزه‌های جو دیسپنزا، زندگی‌ات را از درون تغییر می‌دهی.</li></ul>' +
-      '</div>' +
-      '<div class="help-section">' +
-        '<h3>🌌 قلمرو ممکن‌ها چیست؟</h3>' +
-        '<p>جو دیسپنزا می‌گوید فراتر از دنیای فیزیکی، میدانی نامرئی از انرژی، اطلاعات و آگاهی وجود دارد که فراتر از مکان و زمان عمل می‌کند. به این میدان، <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b> می‌گویند.</p>' +
-        '<p>در این قلمرو، همه‌ی احتمالات از قبل به‌صورت «موج» وجود دارند. واقعیت فیزیکی فعلی تو، فقط یکی از بی‌نهایت احتمالی است که در این میدان وجود دارد.</p>' +
-        '<p style="background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>نکته‌ی کلیدی:</b> تو چیز جدیدی «خلق» نمی‌کنی — فقط خودت را با یکی از احتمالاتی که از قبل در میدان وجود دارد، هم‌راستا می‌کنی.</p>' +
-      '</div>' +
-      '<div class="help-section">' +
-        '<h3>🕳️ «هیچ شدن» یعنی چه؟</h3>' +
-        '<p>عبارت «No body, no one, no thing, no where, in no time» یعنی: <b>بدون بدن، بدون شخص، بدون چیز، بدون مکان، در هیچ زمانی</b>. این‌ها نه به معنای فیزیکی، بلکه به معنای <b>رها کردن هویت‌های شرطی‌شده</b> است.</p>' +
-        '<div style="display:flex;flex-direction:column;gap:8px;margin:10px 0;">' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">🫀 No body / بی‌بدن</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من بدنم نیستم. توجه از بدن، دردها و حواس جسمی جدا می‌شود.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">👤 No one / هیچ‌کس</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">من آن شخصیت، اسم، نقش، گذشته و داستان‌هایم نیستم.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📦 No thing / هیچ‌چیز</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">وابستگی به اشیاء، دارایی‌ها و شرایط بیرونی رها می‌شود.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">📍 No where / هیچ‌جا</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">آگاهی به اینجا و آنجا گره نخورده است.</div></div>' +
-          '<div style="padding:10px 12px;background:rgba(43,191,171,.06);border-right:3px solid var(--emerald-300);border-radius:8px;"><div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:3px;">⏳ In no time / در هیچ زمانی</div><div style="font-size:11.5px;color:var(--ink-soft);line-height:1.75;">گذشته و آینده رها می‌شوند و فقط حالِ بی‌زمان می‌ماند.</div></div>' +
-        '</div>' +
-        '<p style="background:rgba(244,197,66,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #f4c542;"><b>نکته:</b> این «هیچ» منفی نیست؛ مثل صفحه‌ی سفید یا فضاست که همه‌چیز را در خودش جا می‌دهد.</p>' +
-      '</div>' +
-      '<div class="help-section">' +
-        '<h3>🔗 پیوند «هیچ شدن» و «درخواست از قلمرو ممکن‌ها»</h3>' +
-        '<p>درخواست به معنای التماس از نیروی بیرونی نیست. درخواست واقعی، فرستادن سیگنال مشخص به میدان است — اما فقط وقتی تو «هیچ» شده باشی.</p>' +
-        '<p>وقتی «هیچ» می‌شوی، از جای <b>کلیت</b> و <b>فراوانی</b> خلق می‌کنی — خودت را با فرکانس آن واقعیتِ ممکن در میدان هم‌راستا می‌کنی.</p>' +
-      '</div>' +
-      '<div class="help-section">' +
-        '<h3>🧘 پنج مرحله‌ی عملی</h3>' +
-        '<ol style="padding-inline-start:20px;line-height:2;font-size:12.5px;color:var(--text-dim);">' +
-          '<li><b>رهاسازی:</b> بدن را عمیقاً آرام می‌کنی تا از حالت «بقا» خارج شوی.</li>' +
-          '<li><b>هیچ شدن:</b> توجه را از بدن، محیط و هویت «من» برمی‌داری.</li>' +
-          '<li><b>اتصال:</b> در این حالت خالی، آگاهی‌ات را به قلمرو ممکن‌ها وصل می‌کنی.</li>' +
-          '<li><b>کاشتن بذر:</b> تصویر واضحی از واقعیت دلخواهت را در ذهن می‌کاری.</li>' +
-          '<li><b>احساس فراوانی:</b> احساس آن واقعیت را در بدن ایجاد می‌کنی تا فرکانست هماهنگ شود.</li>' +
-        '</ol>' +
-      '</div>' +
-      '<div class="help-section">' +
-        '<h3>⚕️ یک نکته‌ی مهم</h3>' +
-        '<p>این تمرین‌ها یک «باشگاه ذهن» هستند، نه جایگزین درمان پزشکی.</p>' +
-      '</div>';
-    modalActions.parentNode.insertBefore(wrap, modalActions);
-  }
 
   /* =====================================================================
      موج‌های سینوسی نامنظم
