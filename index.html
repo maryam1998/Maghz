@@ -1479,6 +1479,27 @@ html[data-theme="dark"] .np-emotion-row button{
   }
 #grat-root .grat-edit-actions button:hover{background:rgba(255,255,255,0.08);}
 #grat-root .tx-item .t1{white-space:pre-wrap; word-break:break-word;}
+/* استایل شمارشگر شکرگذاری */
+#grat-root .grat-counter-card{
+  margin:14px 18px 10px; padding:16px;
+  background:linear-gradient(135deg, var(--emerald-900), var(--emerald-700));
+  color:#fff; border-radius:16px; text-align:center; box-shadow:var(--shadow-1);
+}
+#grat-root .grat-counter-card .grat-user-count{font-size:18px; font-weight:800; margin-bottom:6px;}
+#grat-root .grat-counter-card .grat-global-count{
+  font-size:12px; opacity:0.85; border-top:1px dashed rgba(255,255,255,0.2);
+  padding-top:8px; margin-top:8px;
+}
+/* استایل گزینه‌های حریم خصوصی */
+#grat-root .visibility-options{
+  display:flex; gap:16px; margin:10px 0; font-size:12.5px; color:var(--ink-soft);
+}
+#grat-root .visibility-options label{display:flex; align-items:center; gap:6px; cursor:pointer;}
+#grat-root .visibility-options input[type="radio"]{
+  accent-color:var(--emerald-500); width:16px; height:16px; cursor:pointer;
+}
+/* استایل متن پیشوند «خدایا شکرت که» در لیست */
+#grat-root .tx-item .t1 .grat-prefix{color:var(--emerald-700); font-weight:800;}
 #grat-root .modal-card textarea{
     width:100%; font-family:inherit; font-size:14px;
     border:1px solid var(--line); border-radius:12px;
@@ -1496,6 +1517,59 @@ html[data-theme="dark"] .np-emotion-row button{
   }
 #grat-root .hist-total .l1{font-size:12px; opacity:.85;}
 #grat-root .hist-total .l2{font-size:22px; font-weight:800; margin-top:4px;}
+/* استایل عنوان کادر شکرگذاری */
+#grat-root .grat-input-header {
+    font-weight: 800;
+    color: var(--emerald-700);
+    font-size: 14.5px;
+    margin-bottom: 8px;
+    text-align: right;
+    direction: rtl;
+    unicode-bidi: plaintext;
+}
+
+/* استایل کادر متنی بزرگتر */
+#grat-root .quick-add textarea {
+    width: 100%;
+    min-height: 110px !important;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14px;
+    outline: none;
+    background: var(--card);
+    resize: none;
+    color: var(--ink);
+    line-height: 1.6;
+}
+#grat-root .quick-add textarea:focus {
+    border-color: var(--emerald-300);
+}
+
+/* استایل گزینه‌های حریم خصوصی */
+#grat-root .visibility-options {
+    display: flex;
+    gap: 16px;
+    margin: 12px 0 6px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    justify-content: flex-start;
+}
+#grat-root .visibility-options label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+#grat-root .visibility-options .ico {
+    width: 16px;
+    height: 16px;
+    color: var(--emerald-700);
+}
+/* انتقال کادر شمارش به بالای صفحه */
+#grat-root .grat-counter-card {
+    margin: 0 18px 16px;
+}
 #grat-root /* ---------- setup modal ---------- */
   .modal-overlay{
     position:fixed; top:0; left:0; right:0; bottom:64px; background:rgba(10,30,27,.55);
@@ -2008,6 +2082,19 @@ body.bg-mode-image #grat-root{background:transparent;}
 .help-open-arrow{ flex:none; color:var(--muted); }
 .help-open-arrow .ico{ width:16px;height:16px; }
 
+/* استایل ترازبندی آیکون‌های جایگزین شده */
+.emoji-replaced {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+.emoji-replaced .ico {
+  width: 1.2em;
+  height: 1.2em;
+  margin: 0 2px;
+  vertical-align: -0.15em;
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
@@ -2069,6 +2156,11 @@ body.bg-mode-image #grat-root{background:transparent;}
       <rect x="4" y="10" width="16" height="11" rx="2"/>
       <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
     </symbol>
+    <symbol id="ico-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M3 12h18"/>
+      <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>
+    </symbol>
     <symbol id="ico-user-guest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="8" r="3.5"/>
       <path d="M5 20a7 7 0 0 1 14 0"/>
@@ -2116,6 +2208,149 @@ body.bg-mode-image #grat-root{background:transparent;}
       <path d="M3 12a9 9 0 1 0 3-6.7"/>
       <path d="M3 4v4.5h4.5"/>
       <path d="M12 8v4.5l3 2"/>
+    </symbol>
+    <!-- این کدها را داخل تگ <defs> اضافه کنید -->
+    <symbol id="ico-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </symbol>
+    <symbol id="ico-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+    </symbol>
+    <symbol id="ico-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      <line x1="10" y1="11" x2="10" y2="17"/>
+      <line x1="14" y1="11" x2="14" y2="17"/>
+    </symbol>
+    <symbol id="ico-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </symbol>
+    <symbol id="ico-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+    </symbol>
+    <symbol id="ico-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </symbol>
+    <symbol id="ico-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </symbol>
+    <symbol id="ico-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </symbol>
+    <symbol id="ico-bell-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      <path d="M18.63 13A17.94 17.94 0 0 1 18 8"/>
+      <path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/>
+      <path d="M18 8a6 6 0 0 0-9.33-5"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </symbol>
+    <symbol id="ico-dove" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <path d="M12 8v4"/>
+    </symbol>
+    <symbol id="ico-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </symbol>
+    <symbol id="ico-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </symbol>
+    <symbol id="ico-seedling" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22V10"/>
+      <path d="M12 10a5 5 0 0 0-5-5c-2 0-2 3 0 4 2.5 1.5 5 1 5 1z"/>
+      <path d="M12 10a5 5 0 0 1 5-5c2 0 2 3 0 4-2.5 1.5-5 1-5 1z"/>
+    </symbol>
+    <symbol id="ico-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <circle cx="12" cy="12" r="6"/>
+      <circle cx="12" cy="12" r="2"/>
+    </symbol>
+    <symbol id="ico-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 2v7.31"/>
+      <path d="M14 9.3V1.99"/>
+      <path d="M8.5 2h7"/>
+      <path d="M14 9.3a6.5 6.5 0 1 1-4 0"/>
+      <path d="M5.58 16.5h12.85"/>
+    </symbol>
+    <symbol id="ico-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </symbol>
+    <symbol id="ico-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </symbol>
+    <symbol id="ico-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </symbol>
+    <symbol id="ico-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </symbol>
+    <symbol id="ico-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </symbol>
+    <symbol id="ico-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="4" width="4" height="16"/>
+      <rect x="14" y="4" width="4" height="16"/>
+    </symbol>
+    <symbol id="ico-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </symbol>
+    <symbol id="ico-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v18"/>
+      <path d="M8 21h8"/>
+      <path d="M12 3l-6 9h12z"/>
+    </symbol>
+    <symbol id="ico-microscope" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 18h8"/>
+      <path d="M3 22h18"/>
+      <path d="M14 22a7 7 0 1 0 0-14h-1"/>
+      <path d="M9 14h2"/>
+      <path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/>
+      <path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+    </symbol>
+    <symbol id="ico-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+    </symbol>
+    <symbol id="ico-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 4v6h-6M1 20v-6h6"/>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+    </symbol>
+    <symbol id="ico-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+    </symbol>
+    <symbol id="ico-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </symbol>
+    <symbol id="ico-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </symbol>
+    <symbol id="ico-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="13.5" cy="6.5" r=".5"/>
+      <circle cx="17.5" cy="10.5" r=".5"/>
+      <circle cx="8.5" cy="7.5" r=".5"/>
+      <circle cx="6.5" cy="12.5" r=".5"/>
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
     </symbol>
   </defs>
 </svg>
@@ -5140,14 +5375,20 @@ body.bg-mode-image #grat-root{background:transparent;}
     <div class="quick-add">
       <div class="lbl">🧠 مغزت رو تربیت کن تا داشته‌هات رو ببینه</div>
       <div class="sub">طبق علم اعصاب، هر بار شکرگذاری می‌کنی، مسیرهای عصبیِ مثبت‌نگری در مغزت قوی‌تر می‌شن.</div>
-      <div class="quick-add-row">
-        <textarea id="home-grat-input" rows="1" placeholder="مثلاً: سلامتی خانواده‌ام..." oninput="autoGrowGratInput(this)" onkeydown="if(event.key==='Enter' && (event.ctrlKey||event.metaKey)){event.preventDefault();addGratitudeHome();}"></textarea>
-        <button onclick="addGratitudeHome()">افزودن</button>
+
+      <!-- عنوان پویا با شماره -->
+      <div class="grat-input-header">
+        <span id="home-grat-number">۱</span> - خدایا شکرت که:
       </div>
-      <label class="reached-toggle" style="margin-top:8px;margin-bottom:0;">
-        <input type="checkbox" id="home-grat-share">
-        <span>🌍 این یکی برای دوستان هم‌فرکانسی هم نمایش داده بشه</span>
-      </label>
+
+      <textarea id="home-grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
+
+      <div class="visibility-options">
+        <label><input type="radio" name="home-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط خدا بدونه</label>
+        <label><input type="radio" name="home-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> همه می‌تونن بدونن</label>
+      </div>
+
+      <button onclick="addGratitudeHome()" style="margin-top:12px; width:100%;">ثبت شکرگذاری</button>
     </div>
 
     <div class="section-label">
@@ -5327,29 +5568,31 @@ body.bg-mode-image #grat-root{background:transparent;}
       </div>
     </div>
 
-    <div class="quick-add">
-      <div class="lbl">🙏 همین حالا برای چی شکرگذاری هستی؟</div>
-      <div class="quick-add-row">
-        <textarea id="grat-input" rows="1" placeholder="مثلاً: سلامتی خانواده‌ام..." oninput="autoGrowGratInput(this)" onkeydown="if(event.key==='Enter' && (event.ctrlKey||event.metaKey)){event.preventDefault();addGratitude();}"></textarea>
-        <button onclick="addGratitude()">افزودن</button>
-      </div>
-      <label class="reached-toggle" style="margin-top:8px;margin-bottom:0;">
-        <input type="checkbox" id="grat-share">
-        <span>🌍 این یکی برای دوستان هم‌فرکانسی هم نمایش داده بشه</span>
-      </label>
+    <!-- کادر شمارشگر شکرگذاری (منتقل شده به بالای صفحه) -->
+    <div class="grat-counter-card" id="grat-counter-card">
+      <!-- این کادر توسط جاوااسکریپت پر می‌شود -->
     </div>
 
-    <div class="grat-count-badge">
-      <span>🙏 تعداد شکرگذاری‌های ثبت‌شده</span>
-      <b id="grat-count">۰</b>
+    <div class="quick-add">
+      <!-- عنوان پویا با شماره -->
+      <div class="grat-input-header">
+        <span id="grat-number">۱</span> - خدایا شکرت که:
+      </div>
+
+      <textarea id="grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
+
+      <div class="visibility-options">
+        <label><input type="radio" name="grat-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط خدا بدونه</label>
+        <label><input type="radio" name="grat-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> همه می‌تونن بدونن</label>
+      </div>
+
+      <button onclick="addGratitude()" style="margin-top:12px; width:100%;">ثبت شکرگذاری</button>
     </div>
 
     <button class="btn full" style="margin:10px 0;" onclick="openBankCalendar('gratitude')">📅 تقویم شکرگذاری</button>
 
-    <div class="hist-total">
-      <div class="l1">مجموع فراوانی دریافت‌شده در این بازی</div>
-      <div class="l2" id="hist-total">۰</div>
-    </div>
+    <!-- کادر مجموع فراوانی (hist-total) به طور کامل حذف شد -->
+
     <div id="history-list"></div>
     <div id="history-empty" class="empty-hint" style="display:none;">
       هنوز هیچ شکرگذاری ثبت نشده.<br>یه چیز خوب زندگیت رو همین بالا بنویس 🌱
@@ -6345,8 +6588,16 @@ async function renderFriends(){
 }
 
 /* ---------------- home ---------------- */
+function updateGratitudeNumbers() {
+    const nextNum = (state.gratitude.length + 1).toLocaleString('fa-IR');
+    const homeNumEl = document.getElementById('home-grat-number');
+    const gratNumEl = document.getElementById('grat-number');
+    if (homeNumEl) homeNumEl.textContent = nextNum;
+    if (gratNumEl) gratNumEl.textContent = nextNum;
+}
 function renderHome(){
   if(ensureSetup()) return;
+  updateGratitudeNumbers();
   document.getElementById('home-hi').textContent = greetingWord();
   document.getElementById('home-name').textContent = state.name;
   document.getElementById('home-holder').textContent = state.name;
@@ -6360,9 +6611,6 @@ function renderHome(){
   document.getElementById('home-day-tag').textContent = 'روز '+daysPassed().toLocaleString('fa-IR');
   renderThemeBanner();
   renderAllNeuralPathways();
-
-  const homeShareBox = document.getElementById('home-grat-share');
-  if(homeShareBox) homeShareBox.checked = !!state.shareGratitude;
 
   const wrap = document.getElementById('home-recent');
   wrap.innerHTML = '';
@@ -6383,7 +6631,7 @@ function renderHome(){
     row.innerHTML = `
       <div class="ic">${iconOrImage(g)}</div>
       <div class="mid">
-        <div class="t1">${nl2br(escapeHtml(g.text))}</div>
+        <div class="t1">${nl2br(escapeHtml(gratDisplayText(g.text)))}</div>
         <div class="t2">${g.day} ${g.date} - ${g.time}</div>
       </div>
       ${g.source==='manual' ? `
@@ -6397,10 +6645,10 @@ function renderHome(){
 }
 function addGratitudeHome(){
   const input = document.getElementById('home-grat-input');
-  const shareBox = document.getElementById('home-grat-share');
   const val = (input.value||'').trim();
   if(!val){ toast('یه چیزی بنویس 🌱'); return; }
-  const shared = !!(shareBox && shareBox.checked);
+  const visRadio = document.querySelector('input[name="home-vis"]:checked');
+  const shared = !!(visRadio && visRadio.value === 'public');
   const np = nowParts();
   const newEntry = {
     id: Date.now()+Math.random(),
@@ -6409,13 +6657,15 @@ function addGratitudeHome(){
     shared: shared
   };
   state.gratitude.push(newEntry);
+  updateGratitudeNumbers();
   state.shareGratitude = shared;
   neuralAutoAddFiber(ensureGratitudeNeural());
   saveState();
   input.value='';
   autoGrowGratInput(input);
   renderHome();
-  toast(shared ? 'به لیست شکرگذاری اضافه و با دوستان به اشتراک گذاشته شد 🙏🌍' : 'به لیست شکرگذاری اضافه شد 🙏');
+  renderHistory();
+  toast(shared ? 'ثبت شد و برای دوستان هم‌فرکانسی نمایش داده می‌شود 🌍' : 'ثبت شد. فقط خدا می‌دونه 🤫');
   if(shared) syncGratitudeShare(newEntry);
 }
 
@@ -6649,10 +6899,10 @@ function showReceipt(r){
 /* ---------------- gratitude list ---------------- */
 function addGratitude(){
   const input = document.getElementById('grat-input');
-  const shareBox = document.getElementById('grat-share');
   const val = (input.value||'').trim();
   if(!val){ toast('یه چیزی بنویس 🌱'); return; }
-  const shared = !!(shareBox && shareBox.checked);
+  const visRadio = document.querySelector('input[name="grat-vis"]:checked');
+  const shared = !!(visRadio && visRadio.value === 'public');
   const np = nowParts();
   const newEntry = {
     id: Date.now()+Math.random(),
@@ -6661,55 +6911,87 @@ function addGratitude(){
     shared: shared
   };
   state.gratitude.push(newEntry);
+  updateGratitudeNumbers();
   state.shareGratitude = shared;
   neuralAutoAddFiber(ensureGratitudeNeural());
   saveState();
   input.value='';
   autoGrowGratInput(input);
   renderHistory();
+  renderHome();
   renderAllNeuralPathways();
-  toast(shared ? 'به لیست شکرگذاری اضافه و با دوستان به اشتراک گذاشته شد 🙏🌍' : 'به لیست شکرگذاری اضافه شد 🙏');
+  toast(shared ? 'ثبت شد و برای دوستان هم‌فرکانسی نمایش داده می‌شود 🌍' : 'ثبت شد. فقط خدا می‌دونه 🤫');
   if(shared) syncGratitudeShare(newEntry);
+}
+function gratDisplayText(text){
+  return text.startsWith('خدایا شکرت که') ? text : `خدایا شکرت که: ${text}`;
 }
 function renderHistory(){
   if(ensureSetup()) return;
-  const shareBox = document.getElementById('grat-share');
-  if(shareBox) shareBox.checked = !!state.shareGratitude;
+  updateGratitudeNumbers();
 
   const list = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
+  const counterCard = document.getElementById('grat-counter-card');
+
   list.innerHTML = '';
-  document.getElementById('hist-total').textContent = formatMoney(depositToman());
-  const countEl = document.getElementById('grat-count');
-  if(countEl) countEl.textContent = (state.gratitude.length).toLocaleString('fa-IR');
-  if(state.gratitude.length===0){
+
+  const totalCount = state.gratitude.length;
+  const faTotal = totalCount.toLocaleString('fa-IR');
+
+  // پر کردن کادر شمارشگر در بالای صفحه
+  if (counterCard) {
+    counterCard.innerHTML = `
+      <div class="grat-user-count">لطف خدا رو <b>${faTotal}</b> بار شکر کردم</div>
+    `;
+  }
+
+  if(totalCount===0){
     empty.style.display='block';
+    updateGlobalGratCount(faTotal);
     return;
   }
   empty.style.display='none';
+  updateGlobalGratCount(faTotal);
+
+  let itemsHTML = '';
   [...state.gratitude].reverse().forEach(g=>{
-    const row = document.createElement('div');
-    row.className = 'tx-item';
-    row.onclick = ()=>{
-      if(g.txId){
-        const tx = state.history.find(h=>h.id===g.txId);
-        if(tx){ showReceipt(tx); goto('receipt'); }
-      }
-    };
-    row.innerHTML = `
-      <div class="ic">${iconOrImage(g)}</div>
-      <div class="mid">
-        <div class="t1">${nl2br(escapeHtml(g.text))}</div>
-        <div class="t2">${g.day} ${g.date} - ${g.time}</div>
+    const displayText = gratDisplayText(g.text);
+    itemsHTML += `
+      <div class="tx-item" onclick="${g.txId ? `(function(){const tx=state.history.find(h=>h.id===${g.txId});if(tx){showReceipt(tx);goto('receipt');}})()` : ''}">
+        <div class="ic">${iconOrImage(g)}</div>
+        <div class="mid">
+          <div class="t1">${nl2br(escapeHtml(displayText))}</div>
+          <div class="t2">${g.day} ${g.date} - ${g.time}</div>
+        </div>
+        <div class="grat-edit-actions">
+          <button title="ویرایش" onclick="event.stopPropagation();openGratEditor(${g.id})">✏️</button>
+          <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">
+            ${g.shared
+              ? `<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--emerald-700);"><use href="#ico-globe"/></svg>`
+              : `<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--muted);"><use href="#ico-lock"/></svg>`}
+          </button>
+        </div>
+        ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : `<span class="badge-manual">شکرگذاری</span>`}
       </div>
-      ${g.source==='manual' ? `
-      <div class="grat-edit-actions">
-        <button title="ویرایش" onclick="event.stopPropagation();openGratEditor(${g.id})">✏️</button>
-        <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">${g.shared ? '🌍' : '🔒'}</button>
-      </div>` : ''}
-      ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : `<span class="badge-manual">شکرگذاری</span>`}`;
-    list.appendChild(row);
+    `;
   });
+  list.innerHTML = itemsHTML;
+}
+function updateGlobalGratCount(fallbackFa){
+  if(window.supabaseClient){
+    window.supabaseClient.from('public_gratitude').select('*', { count: 'exact', head: true })
+      .then(({ count })=>{
+        const globalEl = document.getElementById('global-grat-count');
+        if(globalEl && count !== null) globalEl.textContent = count.toLocaleString('fa-IR');
+      }).catch(()=>{
+        const globalEl = document.getElementById('global-grat-count');
+        if(globalEl) globalEl.textContent = fallbackFa;
+      });
+  } else {
+    const globalEl = document.getElementById('global-grat-count');
+    if(globalEl) globalEl.textContent = fallbackFa;
+  }
 }
 
 /* ---------------- تاریخچه خریدهای فروشگاه (بازی فراوانی) ---------------- */
@@ -6751,7 +7033,10 @@ function openGratEditor(id){
   const g = (state.gratitude||[]).find(x=>x.id===id);
   if(!g) return;
   editingGratId = id;
-  document.getElementById('grat-edit-text').value = g.text || '';
+  let rawText = g.text || '';
+  if(rawText.startsWith('خدایا شکرت که: ')) rawText = rawText.replace('خدایا شکرت که: ', '');
+  else if(rawText.startsWith('خدایا شکرت که')) rawText = rawText.replace('خدایا شکرت که', '');
+  document.getElementById('grat-edit-text').value = rawText;
   document.getElementById('grat-edit-modal').classList.add('show');
 }
 function closeGratEditor(){
@@ -8265,5 +8550,6 @@ window.addEventListener('appinstalled', function(){
 </script>
 <script src="emotion-widget.js"></script>
 <script src="beliefs-patch.js"></script>
+<script src="emoji-to-svg.js"></script>
 </body>
 </html>
