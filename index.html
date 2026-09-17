@@ -7433,66 +7433,151 @@ function renderBankCal(){
 }
 function showBankCalDay(key, items){
   const detail = document.getElementById('bank-cal-day-detail');
-  const realItems = (items || []).filter(function(it){ return !it.__emotion; });
+  if(!detail) return;
 
-  /* --- بلوک حس‌های ثبت‌شده --- */
-  let emotionHtml = '';
-  const pem = state.practiceEmotions || {};
-  const dayEm = pem[key];
-  if(dayEm){
-    const rows = Object.keys(dayEm).map(function(pk){
-      const rec = dayEm[pk];
-      const chip = function(id){
-        const e = EMOTION_BY_ID[id];
-        if(!e) return '';
-        return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;' +
-          'background:' + e.color + '22;color:' + e.color + ';border:1px solid ' + e.color + '55;' +
-          'font-size:10.5px;margin:2px 2px 2px 0;">' + e.fa + '</span>';
-      };
-      const row = function(ids, label){
-        if(!ids || !ids.length) return '';
-        return '<div style="margin:4px 0;font-size:11.5px;">' +
-          '<b>' + label + ':</b> ' + ids.map(chip).join('') + '</div>';
-      };
-      return '<div style="padding:6px 0;border-bottom:1px dashed var(--line);">' +
-        '<div style="font-size:11.5px;font-weight:800;margin-bottom:4px;">💗 ' +
-          escapeHtmlSafe(rec.label || pk) + '</div>' +
-        row(rec.before, 'قبل') +
-        row(rec.after,  'بعد') +
-        '</div>';
-    }).join('');
-    if(rows) emotionHtml = '<div class="sh-item" style="margin-bottom:8px;">' + rows + '</div>';
-  }
-
-  /* --- بلوک تمرین‌های همان تب --- */
-  let contentHtml = '';
-  if(realItems.length){
-    if(bankCalKind==='shop'){
-      contentHtml = realItems.map(function(h){
-        return '<div class="sh-item"><div class="sh-time">' + escapeHtmlSafe(h.time||'') + '</div>' +
-          h.items.map(function(it){
-            return '<div class="sh-row">' + (it.icon||'🛍️') + ' ' +
-              escapeHtmlSafe(it.name) + ' — ' + formatMoney(it.qty*it.price) + '</div>';
-          }).join('') + '</div>';
-      }).join('');
-    } else if(bankCalKind==='beliefs'){
-      contentHtml = '<div class="sh-item"><div class="sh-row">✅ متن آینده‌ات را این روز خواندی</div></div>';
-    } else if(bankCalKind==='tracking'){
-      contentHtml = '<div class="sh-item"><div class="sh-row">📡 این روز ردیابی را ثبت کردی</div></div>';
-    } else {
-      contentHtml = realItems.map(function(g){
-        return '<div class="sh-item"><div class="sh-time">' + escapeHtmlSafe(g.time||'') + '</div>' +
-          '<div class="sh-row">' + (g.icon||'🙏') + ' ' + escapeHtmlSafe(g.text) + '</div></div>';
-      }).join('');
-    }
-  }
-
-  if(!emotionHtml && !contentHtml){
+  if(!items || !items.length){
     detail.innerHTML = '<div class="empty-hint" style="padding:10px 0;">چیزی برای این روز ثبت نشده.</div>';
     return;
   }
-  detail.innerHTML = emotionHtml + contentHtml;
-}
+
+  /* گروه‌بندی بر اساس نوع */
+  const groups = { emotion: [], gratitude: [], shop: [], beliefs: [], dispenza: [], tracking: [], visual: [] };
+  items.forEach(function(it){
+    const kind = it.__kind;
+    if(groups[kind]) groups[kind].push(it);
+  });
+
+  const esc = function(s){
+    return (s == null ? '' : String(s)).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  };
+
+  let html = '';
+
+  /* ─── ۱. حس‌ها ─── */
+  if(groups.emotion.length){
+    groups.emotion.forEach(function(em){
+      const dayEm = em.data;
+      const rows = Object.keys(dayEm).map(function(pk){
+        const rec = dayEm[pk];
+        const chip = function(id){
+          const e = EMOTION_BY_ID[id];
+          if(!e) return '';
+          return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;' +
+            'background:' + e.color + '22;color:' + e.color + ';border:1px solid ' + e.color + '55;' +
+            'font-size:10.5px;margin:2px 2px 2px 0;">' + e.fa + '</span>';
+        };
+        const row = function(ids, label){
+          if(!ids || !ids.length) return '';
+          return '<div style="margin:4px 0;font-size:11.5px;">' +
+            '<b>' + label + ':</b> ' + ids.map(chip).join('') + '</div>';
+        };
+        return '<div style="padding:6px 0;border-bottom:1px dashed var(--line);">' +
+          '<div style="font-size:11.5px;font-weight:800;margin-bottom:4px;">💗 ' +
+            esc(rec.label || pk) + '</div>' +
+          row(rec.before, 'قبل') +
+          row(rec.after,  'بعد') +
+          '</div>';
+      }).join('');
+      if(rows) html += '<div class="sh-item" style="margin-bottom:8px;">' +
+        '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">💗 حس‌های قبل و بعد از تمرین</div>' +
+        rows + '</div>';
+    });
+  }
+
+  /* ─── ۲. شکرگذاری ─── */
+  if(groups.gratitude.length){
+    html += '<div class="sh-item" style="margin-bottom:8px;">' +
+      '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">🙏 شکرگذاری</div>';
+    groups.gratitude.forEach(function(g){
+      const d = g.data;
+      html += '<div style="padding:6px 0;border-bottom:1px dashed var(--line);">' +
+        '<div style="font-size:11px;color:var(--muted);">' + esc(d.time || '') + '</div>' +
+        '<div style="font-size:12.5px;color:var(--ink);margin-top:3px;white-space:pre-wrap;">' +
+          (d.icon ? d.icon + ' ' : '') + esc(d.text || '') + '</div>' +
+        (d.amount ? '<div style="font-size:11px;color:var(--emerald-700);margin-top:2px;">' + formatMoney(d.amount) + '</div>' : '') +
+        (d.shared ? '<div style="font-size:10.5px;color:var(--emerald-700);margin-top:2px;">🌍 با دوستان هم‌فرکانسی به اشتراک گذاشته شد</div>' : '') +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  /* ─── ۳. خریدها ─── */
+  if(groups.shop.length){
+    html += '<div class="sh-item" style="margin-bottom:8px;">' +
+      '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">🛍️ خریدهای فراوانی</div>';
+    groups.shop.forEach(function(h){
+      const d = h.data;
+      html += '<div style="padding:6px 0;border-bottom:1px dashed var(--line);">' +
+        '<div style="font-size:11px;color:var(--muted);">' + esc(d.time || '') + '</div>';
+      (d.items || []).forEach(function(it){
+        html += '<div style="font-size:12.5px;color:var(--ink);margin-top:3px;">' +
+          (it.icon || '🛍️') + ' ' + esc(it.name) +
+          ' <span style="color:var(--emerald-700);">— ' + formatMoney(it.qty * it.price) + '</span></div>';
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  /* ─── ۴. متن آینده ─── */
+  if(groups.beliefs.length){
+    html += '<div class="sh-item" style="margin-bottom:8px;">' +
+      '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">📖 متن آینده</div>' +
+      '<div style="font-size:12px;color:var(--ink-soft);">✅ این روز متن آینده‌ات را خواندی</div>' +
+      '</div>';
+  }
+
+  /* ─── ۵. پروتکل دیسپنزا ─── */
+  if(groups.dispenza.length){
+    const stepNames = { '1': 'رهاسازی', '2': 'هیچ شدن', '3': 'اتصال', '4': 'انتخاب واقعیت', '5': 'تصویرسازی', '6': 'احساس فراوانی' };
+    groups.dispenza.forEach(function(dp){
+      const steps = (dp.data && dp.data.steps) || [];
+      html += '<div class="sh-item" style="margin-bottom:8px;">' +
+        '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">🌌 پروتکل دیسپنزا</div>';
+      if(!steps.length){
+        html += '<div style="font-size:12px;color:var(--ink-soft);">✨ جلسه‌ی این روز کامل ثبت شد</div>';
+      } else {
+        html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+        steps.forEach(function(s){
+          html += '<span style="display:inline-block;padding:3px 10px;border-radius:12px;' +
+            'background:rgba(43,191,171,.15);color:var(--emerald-700);font-size:11px;">' +
+            '✓ ' + (stepNames[String(s)] || ('مرحله ' + s)) + '</span>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+  }
+
+  /* ─── ۶. نشانه‌های RAS ─── */
+  if(groups.tracking.length){
+    html += '<div class="sh-item" style="margin-bottom:8px;">' +
+      '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">📡 نشانه‌هایی که دیدی</div>';
+    groups.tracking.forEach(function(t){
+      html += '<div style="font-size:12.5px;color:var(--ink);padding:5px 0;border-bottom:1px dashed var(--line);white-space:pre-wrap;">' +
+        '🌀 ' + esc(t.data.text || '') + '</div>';
+    });
+    html += '</div>';
+  }
+
+  /* ─── ۷. عکس‌های تصویرسازی ─── */
+  if(groups.visual.length){
+    html += '<div class="sh-item" style="margin-bottom:8px;">' +
+      '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">✨ عکس‌های تصویرسازی</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    groups.visual.forEach(function(v){
+      html += '<img src="' + v.data.src + '" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">';
+    });
+    html += '</div></div>';
+  }
+
+  if(!html){
+    html = '<div class="empty-hint" style="padding:10px 0;">چیزی برای این روز ثبت نشده.</div>';
+  }
+  detail.innerHTML = html;
+                                                        }
 
 /* ---------------- daily reminder notification ---------------- */
 function toggleReminderPanel(){
