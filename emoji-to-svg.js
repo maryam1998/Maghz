@@ -3,7 +3,6 @@
   // نقشه تبدیل ایموجی‌ها به آیکون‌های SVG
   const EMOJI_MAP = {
     '🌙': 'ico-moon',
-    '؟': 'ico-help',
     '＋': 'ico-plus',
     '⚙': 'ico-settings',
     '📅': 'ico-calendar',
@@ -57,7 +56,15 @@
     '📈': 'ico-chart',
     '📉': 'ico-chart',
     '🔮': 'ico-spark',
-    '🎨': 'ico-palette'
+    '🎨': 'ico-palette',
+    '🧬': 'ico-dna',
+    '❤️': 'ico-heart',
+    '❤': 'ico-heart',
+    '💗': 'ico-heart',
+    '💚': 'ico-heart',
+    '🔐': 'ico-lock',
+    '↺': 'ico-refresh',
+    '✦': 'ico-spark'
   };
 
   // تابع جایگزینی ایموجی‌ها در گره‌های متنی
