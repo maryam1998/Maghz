@@ -25,6 +25,7 @@ import { mergeAdditions } from "./SCHEMAS_ADDITIONS";
 import { mergeTriggers } from "./TRIGGERS_EXTRA";
 import { getTodayReminders } from "./DAILY_REMINDERS";
 import { CHECKIN_GROUPS, SHORT_CHECKIN_NAMES } from "./CHECKIN_OPTIONS";
+import AcceptanceView from "./AcceptanceView";
 
 /* =========================================================
  * ۰. ثبت برچسب‌ها
@@ -1436,7 +1437,7 @@ function SOSView({ onBack, onBetter }) {
  * Welcome
  * ========================================================= */
 
-function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, onSituations, onRelationships, onLifeCycles }) {
+function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, onSituations, onRelationships, onLifeCycles, onAcceptance }) {
   const activeSchemaIds = useMemo(() => {
     if (!analysis?.all) return null;
     const list = analysis.all.filter((r) => r.percentage >= 40).map((r) => r.schemaId);
@@ -1449,7 +1450,8 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, on
   const actions = [
     { id: "life", icon: "🔄", title: "چرخه‌های زندگی", desc: "الگوهای عمیق‌تر", onClick: onLifeCycles, color: "#8b5cf6" },
     { id: "sit",  icon: "🔍", title: "حس الان من",     desc: "موقعیت‌های واقعی", onClick: onSituations, color: "#0ea5e9" },
-    { id: "rel",  icon: "💞", title: "روابط من",       desc: "چطور برخورد کنم؟", onClick: onRelationships, color: "#ec4899" }
+    { id: "rel",  icon: "💞", title: "روابط من",       desc: "چطور برخورد کنم؟", onClick: onRelationships, color: "#ec4899" },
+    { id: "acc",  icon: "🕊️", title: "پذیرش",          desc: "آنچه انتخاب نکردم", onClick: onAcceptance, color: "#14b8a6" }
   ];
 
   return (
@@ -1631,7 +1633,7 @@ function YSQView({ onDone, onBack }) {
  * Profile
  * ========================================================= */
 
-function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles }) {
+function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles, onAcceptance }) {
   if (!analysis) {
     return (
       <Shell title="پروفایل" onBack={onBack}>
@@ -1653,7 +1655,8 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
     { id: "cal",  icon: "📅", title: "تقویم",         onClick: onCalendar, color: "#3b82f6" },
     { id: "sit",  icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
     { id: "life", icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
-    { id: "rel",  icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" }
+    { id: "rel",  icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" },
+    { id: "acc",  icon: "🕊️", title: "پذیرش",         onClick: onAcceptance, color: "#14b8a6" }
   ];
 
   return (
@@ -4227,7 +4230,8 @@ export default function App() {
         onSOS={openSOS}
         onSituations={() => go("situations")}
         onRelationships={() => go("relationships")}
-        onLifeCycles={() => go("life_cycles")} />
+        onLifeCycles={() => go("life_cycles")}
+        onAcceptance={() => go("acceptance")} />
     );
   }
 
@@ -4252,6 +4256,7 @@ export default function App() {
         onSOS={openSOS} onSituations={() => go("situations")}
         onRelationships={() => go("relationships")}
         onLifeCycles={() => go("life_cycles")}
+        onAcceptance={() => go("acceptance")}
         onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
         onPickOrigin={(id) => openOrigin(id, "profile")} />
     );
@@ -4400,6 +4405,14 @@ export default function App() {
 
   if (view === "break_cycle") {
     screen = <BreakCycleView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
+  }
+
+  if (view === "acceptance") {
+    screen = (
+      <AcceptanceView
+        onBack={() => go(analysis ? "profile" : "welcome")}
+        onSOS={openSOS} />
+    );
   }
 
   if (view === "quick") {
