@@ -2,8 +2,7 @@
    مسیر عصبی (Neural Pathway) — موتور کامل ویجت رشد عادت
    نسخه‌ی حرفه‌ای: دو نورون (رفتار/عادت) + رشته‌های نازک بینشون،
    با رنگ و ضخامتِ پویا بر اساس کیفیت احساس امروز.
-   نکته: این فایل باید بعد از تعریف `state`, `todayKey`, `dayKeyOffset`,
-   و `getTodayEmotionQualityFor` در index.html لود شود.
+   هر دو نورون با تکرار رشد می‌کنند — طبق قانون هب.
    ===================================================================== */
 
 (function injectNeuralPathwayStyles(){
@@ -12,12 +11,25 @@
 #grat-root .neural-card{margin:0 18px 4px;}
 .neural-card .np-fiber{transition:stroke-dashoffset .7s ease, opacity .4s ease, stroke .5s ease;}
 .neural-card .np-node-label{font-family:'Vazirmatn',Tahoma,sans-serif;}
+.neural-card .np-node{transition:fill .6s ease, stroke .6s ease, stroke-width .4s ease;}
+.neural-card .np-node-text{transition:fill .6s ease;}
 .neural-card .np-stats-grid{display:flex; gap:10px; margin-top:12px;}
 .neural-card .np-stat-box{flex:1; background:var(--surface-2, var(--input-bg)); border-radius:14px; padding:10px 8px; text-align:center;}
 .neural-card .np-stat-label{font-size:11.5px; color:var(--muted, var(--text-dim)); margin-bottom:4px;}
 .neural-card .np-stat-value{font-size:18px; font-weight:800; color:var(--ink, var(--text-main));}
 .neural-card .np-status{font-size:12.5px; color:var(--ink-soft, var(--text-main)); margin-top:10px; text-align:center; line-height:1.6;}
 .neural-card .np-habit-btn{width:100%;}
+
+/* پالس آرام برای نورون بالغ (وقتی عادت جاافتاده) */
+@keyframes npPulseLock{
+  0%,100%{ transform:scale(1); opacity:.9; }
+  50%    { transform:scale(1.08); opacity:1; }
+}
+.neural-card .np-node-glow{
+  transform-origin:center;
+  transform-box:fill-box;
+  animation:npPulseLock 3s ease-in-out infinite;
+}
 
 /* ---- HUD علمی زیر هر هدف (روی نقشه‌ی اصلی) ---- */
 .goal-hud{
@@ -153,6 +165,63 @@ function neuralMarkDay(container, key, done){
 const NEURAL_FIBER_CAP = 10;
 
 /* =====================================================================
+   تعریف «تیِر» رشد برای هر نورون
+   ---------------------------------------------------------------------
+   هر نورون، با تکرار، از یه تیِر به تیِر بالاتر می‌ره. طبق قانون هب،
+   هر دو نورون (رفتار و عادت) رشد می‌کنن — ولی با یه تفاوت:
+     • نورون رفتار: با تعداد تکرارها، ظرفیت و آمادگیش بیشتر می‌شه.
+     • نورون عادت: علاوه بر تکرار، وقتی «قفل» شد (habitFormed)، به بالاترین تیِر می‌رسه.
+   ===================================================================== */
+function neuralTier(fiberCount, habitFormed){
+  if(habitFormed) return 3;
+  if(fiberCount <= 0) return 0;
+  if(fiberCount >= NEURAL_FIBER_CAP) return 3;
+  if(fiberCount >= Math.ceil(NEURAL_FIBER_CAP/2)) return 2;
+  return 1;
+}
+
+/* رنگ و ظاهر هر تیِر — مشترک بین دو نورون */
+function neuralTierStyle(tier, isHabitNode){
+  // رنگ‌های پایه
+  var base = {
+    fill:   'var(--input-bg)',
+    stroke: 'var(--panel-border)',
+    text:   'var(--muted)',
+    char:   '○',
+    glow:   false
+  };
+  if(tier === 1){
+    return {
+      fill:   'rgba(84,201,184,.10)',
+      stroke: 'rgba(84,201,184,.55)',
+      text:   'var(--emerald-300, #54c9b8)',
+      char:   '◔',
+      glow:   false
+    };
+  }
+  if(tier === 2){
+    return {
+      fill:   'rgba(43,191,171,.18)',
+      stroke: 'var(--emerald-300, #54c9b8)',
+      text:   'var(--emerald-500, #2bbfab)',
+      char:   '◐',
+      glow:   false
+    };
+  }
+  if(tier === 3){
+    // تیِر بالا: اگه نورون عادت باشه، پالس می‌گیره
+    return {
+      fill:   'rgba(43,191,171,.28)',
+      stroke: 'var(--emerald-500, #2bbfab)',
+      text:   'var(--emerald-700, #0f5b53)',
+      char:   isHabitNode ? '◉' : '◕',
+      glow:   isHabitNode
+    };
+  }
+  return base;
+}
+
+/* =====================================================================
    تابع اصلی رندر مسیر عصبی — نسخه‌ی حرفه‌ای
    ===================================================================== */
 function renderNeuralPathway(mountId, container, opts){
@@ -193,18 +262,21 @@ function renderNeuralPathway(mountId, container, opts){
     fibersSvg += '<path class="np-fiber" d="M71 '+sY+' Q190 '+mY+' 309 '+eY+'" fill="none" stroke="'+fiberColor+'" stroke-width="'+fiberWidth+'" stroke-linecap="round" opacity="'+fiberOpacity+'"/>';
   }
 
-  // ---- گره‌ها ----
-  const nodeStrong = habitFormed || fiberCount>=NEURAL_FIBER_CAP;
-  const nodeMid    = habitFormed || fiberCount>=Math.ceil(NEURAL_FIBER_CAP/3);
-  const nodeFill   = nodeStrong ? 'var(--emerald-100, #dcf3ee)' : 'var(--input-bg)';
-  const nodeStroke = nodeMid ? 'var(--emerald-500, #2bbfab)' : 'var(--panel-border)';
+  // ---- تیِرهای رشد دو نورون ----
+  // نورون رفتار: فقط با تکرار رشد می‌کنه
+  const behaviorTier = neuralTier(fiberCount, false);
+  const behaviorStyle = neuralTierStyle(behaviorTier, false);
+
+  // نورون عادت: با تکرار + قفل شدن کامل می‌شه
+  const habitTier = neuralTier(fiberCount, habitFormed);
+  const habitStyle = neuralTierStyle(habitTier, true);
 
   // ---- وضعیت کلامی ----
   let status;
-  if(habitFormed)       status = '🎉 این عادت کاملاً جاافتاده — یک مدار عصبی واقعی.';
+  if(habitFormed)        status = '🎉 این عادت کاملاً جاافتاده — یک مدار عصبی واقعی.';
   else if(fiberCount<=0) status = 'هنوز مداری برای «'+label+'» شکل نگرفته — امروز اولین قدم را بردار.';
-  else if(!nodeMid)      status = 'اولین رشته‌های «'+label+'» شکل گرفته — ادامه بده.';
-  else if(!nodeStrong)   status = 'رشته‌های «'+label+'» دارن کنار هم جمع و ضخیم می‌شن.';
+  else if(fiberCount < 3) status = 'اولین رشته‌های «'+label+'» شکل گرفته — ادامه بده.';
+  else if(fiberCount < NEURAL_FIBER_CAP) status = 'رشته‌های «'+label+'» دارن کنار هم جمع و ضخیم می‌شن.';
   else                   status = '«'+label+'» یک مسیر محکم شده — اگر واقعاً عادت شده، قفلش کن.';
 
   // ---- بج کیفیت احساس امروز ----
@@ -231,6 +303,9 @@ function renderNeuralPathway(mountId, container, opts){
     '</button>') : '';
 
   // ---- HTML نهایی ----
+  // نکته: اگه نورون عادت در تیِر ۳ باشه (قفل شده)، بهش پالس می‌دیم (class np-node-glow)
+  const habitNodeGlowClass = habitStyle.glow ? ' class="np-node np-node-glow"' : ' class="np-node"';
+
   mount.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
       '<span style="font-size:12.5px;font-weight:800;color:var(--ink)">🧠 '+label+'</span>'+
@@ -239,10 +314,24 @@ function renderNeuralPathway(mountId, container, opts){
     '<svg width="100%" viewBox="0 0 380 175" role="img" style="display:block;overflow:visible;">'+
       '<title>مسیر عصبی '+label+'</title>'+
       '<g>'+fibersSvg+'</g>'+
-      '<circle cx="55" cy="90" r="15" fill="var(--input-bg)" stroke="var(--panel-border)" stroke-width="1"/>'+
-      '<text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)">◐</text>'+
-      '<circle cx="325" cy="90" r="15" fill="'+nodeFill+'" stroke="'+nodeStroke+'" stroke-width="1.5"/>'+
-      '<text x="325" y="94" text-anchor="middle" font-size="10" fill="'+nodeStroke+'">◉</text>'+
+
+      /* ─── نورون رفتار (پیش‌سیناپسی) ─── */
+      '<circle class="np-node" cx="55" cy="90" r="15" '+
+        'fill="'+behaviorStyle.fill+'" '+
+        'stroke="'+behaviorStyle.stroke+'" '+
+        'stroke-width="1.5"/>'+
+      '<text class="np-node-text" x="55" y="94" text-anchor="middle" font-size="10" '+
+        'fill="'+behaviorStyle.text+'">'+behaviorStyle.char+'</text>'+
+
+      /* ─── نورون عادت (پس‌سیناپسی) ─── */
+      '<circle'+habitNodeGlowClass+' cx="325" cy="90" r="15" '+
+        'fill="'+habitStyle.fill+'" '+
+        'stroke="'+habitStyle.stroke+'" '+
+        'stroke-width="1.5"/>'+
+      '<text class="np-node-text" x="325" y="94" text-anchor="middle" font-size="10" '+
+        'fill="'+habitStyle.text+'">'+habitStyle.char+'</text>'+
+
+      /* ─── برچسب‌ها ─── */
       '<text class="np-node-label" x="55" y="128" text-anchor="middle" font-size="12" fill="var(--text-dim)">رفتار</text>'+
       '<text class="np-node-label" x="325" y="128" text-anchor="middle" font-size="12" fill="var(--text-dim)">عادت</text>'+
     '</svg>'+
