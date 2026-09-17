@@ -25,8 +25,6 @@ import { mergeAdditions } from "./SCHEMAS_ADDITIONS";
 import { mergeTriggers } from "./TRIGGERS_EXTRA";
 import { getTodayReminders } from "./DAILY_REMINDERS";
 import { CHECKIN_GROUPS, SHORT_CHECKIN_NAMES } from "./CHECKIN_OPTIONS";
-// بالای فایل، بعد از import های موجود
-import AcceptanceView from "./AcceptanceView";
 
 /* =========================================================
  * ۰. ثبت برچسب‌ها
@@ -1438,7 +1436,7 @@ function SOSView({ onBack, onBetter }) {
  * Welcome
  * ========================================================= */
 
-function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, onSituations, onRelationships, onLifeCycles, onAcceptance }) {
+function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, onSituations, onRelationships, onLifeCycles }) {
   const activeSchemaIds = useMemo(() => {
     if (!analysis?.all) return null;
     const list = analysis.all.filter((r) => r.percentage >= 40).map((r) => r.schemaId);
@@ -1449,11 +1447,10 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, on
   const activeCount = activeSchemaIds ? activeSchemaIds.length : 0;
 
   const actions = [
-  { id: "life", icon: "🔄", title: "چرخه‌های زندگی", desc: "الگوهای عمیق‌تر", onClick: onLifeCycles, color: "#8b5cf6" },
-  { id: "sit",  icon: "🔍", title: "حس الان من",     desc: "موقعیت‌های واقعی", onClick: onSituations, color: "#0ea5e9" },
-  { id: "rel",  icon: "💞", title: "روابط من",       desc: "چطور برخورد کنم؟", onClick: onRelationships, color: "#ec4899" },
-  { id: "acc",  icon: "🕊️", title: "پذیرش",          desc: "آنچه انتخاب نکردم", onClick: onAcceptance, color: "#14b8a6" }
-];
+    { id: "life", icon: "🔄", title: "چرخه‌های زندگی", desc: "الگوهای عمیق‌تر", onClick: onLifeCycles, color: "#8b5cf6" },
+    { id: "sit",  icon: "🔍", title: "حس الان من",     desc: "موقعیت‌های واقعی", onClick: onSituations, color: "#0ea5e9" },
+    { id: "rel",  icon: "💞", title: "روابط من",       desc: "چطور برخورد کنم؟", onClick: onRelationships, color: "#ec4899" }
+  ];
 
   return (
     <Shell title="الگوهای من" showSOS onSOS={onSOS}>
@@ -1634,7 +1631,7 @@ function YSQView({ onDone, onBack }) {
  * Profile
  * ========================================================= */
 
-function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles, onAcceptance }) {
+function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, onWins, onCalendar, onSOS, onSituations, onRelationships, onLifeCycles }) {
   if (!analysis) {
     return (
       <Shell title="پروفایل" onBack={onBack}>
@@ -1652,13 +1649,12 @@ function ProfileView({ analysis, onPickSchema, onPickOrigin, onRetake, onBack, o
   const allActive = [...high, ...medium];
 
   const quickActions = [
-  { id: "wins", icon: "⭐", title: "لحظه‌های من", onClick: onWins, color: "#f59e0b" },
-  { id: "cal",  icon: "📅", title: "تقویم",         onClick: onCalendar, color: "#3b82f6" },
-  { id: "sit",  icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
-  { id: "life", icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
-  { id: "rel",  icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" },
-  { id: "acc",  icon: "🕊️", title: "پذیرش",         onClick: onAcceptance, color: "#14b8a6" }
-];
+    { id: "wins", icon: "⭐", title: "لحظه‌های من", onClick: onWins, color: "#f59e0b" },
+    { id: "cal",  icon: "📅", title: "تقویم",         onClick: onCalendar, color: "#3b82f6" },
+    { id: "sit",  icon: "🔍", title: "موقعیت‌ها",    onClick: onSituations, color: "#0ea5e9" },
+    { id: "life", icon: "🔄", title: "چرخه‌ها",       onClick: onLifeCycles, color: "#8b5cf6" },
+    { id: "rel",  icon: "💞", title: "روابط",        onClick: onRelationships, color: "#ec4899" }
+  ];
 
   return (
     <Shell title="پروفایل الگوهای من" onBack={onBack}
@@ -4178,6 +4174,13 @@ export default function App() {
     });
   }, []);
 
+  // با هر تغییر صفحه، اسکرول کانتینر تب «شناخت» رو برگردون بالا؛
+  // چون این تب داخل یک div با overflow-y:auto (id="shenakht-root")
+  // نمایش داده میشه، نه کل صفحه‌ی window، باید همون کانتینر رو اسکرول کنیم.
+  useEffect(() => {
+    document.getElementById("shenakht-root")?.scrollTo(0, 0);
+  }, [view]);
+
   const profiles = useMemo(() => {
     if (!analysis) return [];
     return [...analysis.high, ...analysis.medium].map((r) => {
@@ -4216,18 +4219,17 @@ export default function App() {
   }
 
   if (view === "welcome") {
-  screen = (
-    <WelcomeView
-      analysis={analysis}
-      hasProfile={!!analysis}
-      onStart={() => go("ysq")} onSkipToProfile={() => go("profile")}
-      onSOS={openSOS}
-      onSituations={() => go("situations")}
-      onRelationships={() => go("relationships")}
-      onLifeCycles={() => go("life_cycles")}
-      onAcceptance={() => go("acceptance")} />
-  );
-}
+    screen = (
+      <WelcomeView
+        analysis={analysis}
+        hasProfile={!!analysis}
+        onStart={() => go("ysq")} onSkipToProfile={() => go("profile")}
+        onSOS={openSOS}
+        onSituations={() => go("situations")}
+        onRelationships={() => go("relationships")}
+        onLifeCycles={() => go("life_cycles")} />
+    );
+  }
 
   if (view === "ysq") {
     screen = (
@@ -4243,18 +4245,17 @@ export default function App() {
   }
 
   if (view === "profile") {
-  screen = (
-    <ProfileView analysis={analysis}
-      onBack={() => go("welcome")} onRetake={() => go("ysq")}
-      onWins={() => go("wins")} onCalendar={() => go("calendar")}
-      onSOS={openSOS} onSituations={() => go("situations")}
-      onRelationships={() => go("relationships")}
-      onLifeCycles={() => go("life_cycles")}
-      onAcceptance={() => go("acceptance")}
-      onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
-      onPickOrigin={(id) => openOrigin(id, "profile")} />
-  );
-}
+    screen = (
+      <ProfileView analysis={analysis}
+        onBack={() => go("welcome")} onRetake={() => go("ysq")}
+        onWins={() => go("wins")} onCalendar={() => go("calendar")}
+        onSOS={openSOS} onSituations={() => go("situations")}
+        onRelationships={() => go("relationships")}
+        onLifeCycles={() => go("life_cycles")}
+        onPickSchema={(id) => { setActiveSchemaId(id); go("cycle"); }}
+        onPickOrigin={(id) => openOrigin(id, "profile")} />
+    );
+  }
 
   if (view === "origin" && originSchemaId) {
     screen = <OriginView schemaId={originSchemaId}
@@ -4400,13 +4401,6 @@ export default function App() {
   if (view === "break_cycle") {
     screen = <BreakCycleView onBack={() => go(analysis ? "profile" : "welcome")} onSOS={openSOS} />;
   }
-  if (view === "acceptance") {
-  screen = (
-    <AcceptanceView
-      onBack={() => go(analysis ? "profile" : "welcome")}
-      onSOS={openSOS} />
-  );
-}
 
   if (view === "quick") {
     screen = (
