@@ -64,7 +64,13 @@
     '💚': 'ico-heart',
     '🔐': 'ico-lock',
     '↺': 'ico-refresh',
-    '✦': 'ico-spark'
+    '✦': 'ico-spark',
+    '💼': 'ico-briefcase',
+    '🏠': 'ico-home',
+    '👥': 'ico-users',
+    '💪': 'ico-muscle',
+    '📱': 'ico-phone',
+    '🌐': 'ico-globe'
   };
 
   // تابع جایگزینی ایموجی‌ها در گره‌های متنی

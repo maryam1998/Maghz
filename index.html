@@ -2352,6 +2352,19 @@ body.bg-mode-image #grat-root{background:transparent;}
       <circle cx="6.5" cy="12.5" r=".5"/>
       <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
     </symbol>
+    <symbol id="ico-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 8h14l-1.2 12.5a1.6 1.6 0 0 1-1.6 1.5H7.8a1.6 1.6 0 0 1-1.6-1.5L5 8z"/>
+      <path d="M9 8V6.5A1.5 1.5 0 0 1 10.5 5h3A1.5 1.5 0 0 1 15 6.5V8"/>
+      <path d="M3.5 13h17"/>
+    </symbol>
+    <symbol id="ico-muscle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12.5c0-2 1-3 2.5-3.5 1-2 3-3.5 5-3.5 3 0 5.5 2.2 5.5 5.5v2c0 3.3-2.5 6-6 6H8a4 4 0 0 1-4-4v-2.5z"/>
+      <path d="M8.5 9.5V7a2 2 0 0 1 4 0"/>
+    </symbol>
+    <symbol id="ico-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="7" y="2.5" width="10" height="19" rx="2.2"/>
+      <path d="M11 18.5h2"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -5835,6 +5848,10 @@ body.bg-mode-image #grat-root{background:transparent;}
         <input type="text" id="edit-bank-name" maxlength="24" placeholder="مثلاً: بانک فراوانی" style="direction:rtl;text-align:right;letter-spacing:normal;">
       </div>
       <div class="field">
+        <label>نام دارنده کارت</label>
+        <input type="text" id="edit-holder-name" maxlength="24" placeholder="مثلاً: مریم" style="direction:rtl;text-align:right;letter-spacing:normal;">
+      </div>
+      <div class="field">
         <label>شماره کارت</label>
         <input type="text" id="edit-card-number" maxlength="19" inputmode="numeric" placeholder="•••• •••• •••• ••••" oninput="formatCardNumberInput(this)">
       </div>
@@ -6299,6 +6316,7 @@ function pickCardTheme(id){
 }
 function openCardEditor(){
   document.getElementById('edit-bank-name').value = state.bankName;
+  document.getElementById('edit-holder-name').value = state.name || '';
   document.getElementById('edit-card-number').value = state.cardNumber;
   document.getElementById('edit-card-expiry').value = state.cardExpiry;
   document.getElementById('edit-card-cvv').value = state.cardCVV;
@@ -6309,14 +6327,16 @@ function closeCardEditor(){
   document.getElementById('card-edit-modal').classList.remove('show');
 }
 function saveCardEdit(){
-  const name = document.getElementById('edit-bank-name').value.trim();
-  const num  = document.getElementById('edit-card-number').value.trim();
-  const exp  = document.getElementById('edit-card-expiry').value.trim();
-  const cvv  = document.getElementById('edit-card-cvv').value.trim();
-  state.bankName    = name || 'بانک فراوانی';
-  state.cardNumber  = num  || '5859 8312 8347 6690';
-  state.cardExpiry  = exp  || '∞ / ∞';
-  state.cardCVV     = cvv  || '۱۴۰';
+  const name   = document.getElementById('edit-bank-name').value.trim();
+  const holder = document.getElementById('edit-holder-name').value.trim();
+  const num    = document.getElementById('edit-card-number').value.trim();
+  const exp    = document.getElementById('edit-card-expiry').value.trim();
+  const cvv    = document.getElementById('edit-card-cvv').value.trim();
+  state.bankName    = name   || 'بانک فراوانی';
+  state.name         = holder || 'کاربر فراوانی';
+  state.cardNumber  = num    || '5859 8312 8347 6690';
+  state.cardExpiry  = exp    || '∞ / ∞';
+  state.cardCVV     = cvv    || '۱۴۰';
   saveState();
   renderHome();
   closeCardEditor();

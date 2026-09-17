@@ -674,43 +674,68 @@
       .attr('stroke', neutralWaveColor).attr('stroke-width', 0.6).attr('opacity', 0.25)
       .attr('stroke-dasharray', '1.5,2');
 
-    /* موجِ ترکیبی از چند هارمونیک، شبیه‌ی امواج EEG واقعی (نه یک سینوسِ تک‌فرکانس) */
-    function eegPath(cx, y, halfW, amp, cycles, phase, seed) {
+    /* موجِ ترکیبی از چند هارمونیک، شبیه‌ی امواج EEG واقعی (نه یک سینوسِ تک‌فرکانس)
+       irr (بی‌نظمی: ۰ = کاملاً منظم مثل عشق/آرامش، ۱ = کاملاً آشفته مثل شرم/خشم)
+       کنترل می‌کند چقدر هارمونیک‌های اضافه و لرزش به موج پایه اضافه شود */
+    function eegPath(cx, y, halfW, amp, cycles, phase, seed, irr) {
       var n = 60, pts = [];
+      var h1 = 0.12 + 0.5 * irr;   /* هارمونیک درجه دو: در حالت منظم تقریباً صفر */
+      var h2 = 0.04 + 0.4 * irr;   /* هارمونیک درجه سه */
+      var h3 = irr > 0.32 ? 0.55 * irr : 0; /* لرزش ریز، فقط وقتی احساس واقعاً آشفته‌ست ظاهر می‌شه */
       for (var i = 0; i <= n; i++) {
         var t = i / n;
         var env = Math.sin(t * Math.PI); /* پاکت دامنه: صفر در دو سر، بیشینه در وسط */
         var x = cx - halfW + t * 2 * halfW;
         var main = Math.sin(t * cycles * Math.PI * 2 + phase);
-        var harm1 = 0.4 * Math.sin(t * cycles * Math.PI * 2 * 2.3 + phase * 1.7 + seed);
-        var harm2 = 0.2 * Math.sin(t * cycles * Math.PI * 2 * 4.1 + phase * 0.6 + seed * 2);
-        var yy = y - (main + harm1 + harm2) * amp * env;
+        var harm1 = h1 * Math.sin(t * cycles * Math.PI * 2 * 2.3 + phase * 1.7 + seed);
+        var harm2 = h2 * Math.sin(t * cycles * Math.PI * 2 * 4.1 + phase * 0.6 + seed * 2);
+        var harm3 = h3 * Math.sin(t * cycles * Math.PI * 2 * 7.7 + phase * 2.4 + seed * 3);
+        var yy = y - (main + harm1 + harm2 + harm3) * amp * env;
         pts.push([x, yy]);
       }
       return d3.line().curve(d3.curveBasis)(pts);
     }
 
+    /* نگاشتِ فرکانسِ احساس (مقیاس هاوکینز، ۲۰ تا ۷۰۰) به «میزان نظم» موج، به‌صورت لگاریتمی */
+    var FREQ_MIN = 20, FREQ_MAX = 700;
+    function regularityFromFreq(freq) {
+      var f = Math.max(FREQ_MIN, Math.min(FREQ_MAX, freq || 250));
+      var reg = (Math.log(f) - Math.log(FREQ_MIN)) / (Math.log(FREQ_MAX) - Math.log(FREQ_MIN));
+      return Math.max(0, Math.min(1, reg));
+    }
+
       waveColors.forEach(function (em, wi) {
+        var freq = em.freq || 250; /* برای حالت خنثی (بدون انتخاب)، فرکانس میانه */
+        var reg = regularityFromFreq(freq);  /* ۰..۱ ، هرچی بیشتر یعنی منظم‌تر (عشق/آرامش) */
+        var irr = 1 - reg;                    /* ۰..۱ ، هرچی بیشتر یعنی آشفته‌تر (شرم/خشم) */
+
         var halfW = waveHalfW - wi * 4;
         var amp = 5.2 - wi * 1.1;
-        var cycles = 2.1 + wi * 0.5;
+        var cycles = 1.5 + reg * 3.6 + wi * 0.35; /* فرکانس بالاتر → موج فشرده‌تر و تندتر */
         var y = waveY0 - wi * 5.5;
-        var seed = wi * 1.3;
-        var dA = eegPath(BODY_CX, y, halfW, amp, cycles, 0, seed);
-        var dB = eegPath(BODY_CX, y, halfW, amp, cycles, Math.PI, seed);
-        var dur = (1.8 + wi * 0.4).toFixed(2) + 's';
+        var seed = wi * 1.3 + (freq % 17) * 0.05;
+
+        /* موج‌های منظم با یک رفت‌وبرگشت ساده، موج‌های آشفته با چند فاز نامتقارن که چرخه‌ی غیرقابل‌پیش‌بینی‌تری می‌سازند */
+        var phases = irr > 0.45
+          ? [0, Math.PI * 0.55, Math.PI * 1.35, Math.PI * 1.8, Math.PI * 2]
+          : [0, Math.PI, Math.PI * 2];
+        var frames = phases.map(function (ph) { return eegPath(BODY_CX, y, halfW, amp, cycles, ph, seed, irr); });
+        var dA = frames[0];
+        var values = frames.join(';');
+        /* فرکانس بالاتر و منظم‌تر → حرکت نرم‌تر و آرام‌تر؛ آشفته‌تر → لرزش تندتر و عصبی‌تر */
+        var dur = (1.15 + reg * 1.7 + wi * 0.35).toFixed(2) + 's';
 
         var glow = waveG.append('path').attr('d', dA).attr('fill', 'none')
           .attr('stroke', em.color).attr('stroke-width', 3.2).attr('stroke-linecap', 'round')
           .attr('opacity', (hasSelection ? 0.28 : 0.16) - wi * 0.06).attr('filter', 'url(#echwWaveGlow)');
         glow.append('animate').attr('attributeName', 'd').attr('dur', dur).attr('repeatCount', 'indefinite')
-          .attr('values', dA + ';' + dB + ';' + dA);
+          .attr('values', values);
 
         var line = waveG.append('path').attr('d', dA).attr('fill', 'none')
           .attr('stroke', em.color).attr('stroke-width', 1).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round')
           .attr('opacity', (hasSelection ? 0.9 : 0.55) - wi * 0.15);
         line.append('animate').attr('attributeName', 'd').attr('dur', dur).attr('repeatCount', 'indefinite')
-          .attr('values', dA + ';' + dB + ';' + dA);
+          .attr('values', values);
       });
 
     /* ---------- بدن انسان ---------- */
