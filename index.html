@@ -7341,36 +7341,65 @@ function bankCalNav(delta){
 }
 function bankCalEntriesByDay(){
   const byDay = {};
-  if(bankCalKind==='gratitude'){
-    (state.gratitude||[]).filter(g=>g.source!=='purchase' && g.iso).forEach(g=>{
-      const k = dayKeyFromIso(g.iso);
-      (byDay[k]=byDay[k]||[]).push(g);
-    });
-  }else if(bankCalKind==='shop'){
-    (state.history||[]).filter(h=>h.iso).forEach(h=>{
-      const k = dayKeyFromIso(h.iso);
-      (byDay[k]=byDay[k]||[]).push(h);
-    });
-  }else if(bankCalKind==='beliefs'){
-    (state.futureReadDays||[]).forEach(k=>{ (byDay[k]=byDay[k]||[]).push({read:true}); });
-  }else if(bankCalKind==='tracking'){
-    // کلیدهای مسیر عصبی ردیابی به سبک todayKey (بدون صفر ابتدایی) هستن، ولی این
-    // تقویم با کلیدهای dayKeyFromDate (صفر‌دار) کار می‌کنه؛ اینجا تبدیلش می‌کنیم.
-    const tn = ensureTrackingNeural();
-    Object.keys(tn.logs||{}).forEach(function(k){
-      if(tn.logs[k]!==true) return;
-      const dk = dayKeyFromDate(ndKeyToDate(k));
-      (byDay[dk]=byDay[dk]||[]).push({tracked:true});
-    });
-  }
-  /* حس‌های قبل/بعد از تمرین‌ها هم به روز علامت می‌زنند */
+  const push = function(key, item){
+    if(!key) return;
+    (byDay[key] = byDay[key] || []).push(item);
+  };
+
+  /* ۱. شکرگذاری‌های دستی (نه خریدهای فروشگاه) */
+  (state.gratitude || []).filter(function(g){
+    return g.iso && g.source !== 'purchase';
+  }).forEach(function(g){
+    const k = dayKeyFromIso(g.iso);
+    push(k, { __kind: 'gratitude', data: g });
+  });
+
+  /* ۲. خریدهای فروشگاه */
+  (state.history || []).filter(function(h){ return h.iso; }).forEach(function(h){
+    const k = dayKeyFromIso(h.iso);
+    push(k, { __kind: 'shop', data: h });
+  });
+
+  /* ۳. روزهایی که متن آینده خونده شده */
+  (state.futureReadDays || []).forEach(function(k){
+    push(k, { __kind: 'beliefs', data: { read: true } });
+  });
+
+  /* ۴. پروتکل دیسپنزا */
+  const ddp = state.dispenzaDailyProgress || {};
+  Object.keys(ddp).forEach(function(k){
+    push(k, { __kind: 'dispenza', data: { steps: ddp[k] || [] } });
+  });
+
+  /* ۵. نشانه‌های RAS */
+  const trackItems = (state.currentBelief && state.currentBelief.trackingItems) || [];
+  trackItems.forEach(function(it){
+    const ts = Math.floor(it.id);
+    if(!isNaN(ts) && ts > 0){
+      const k = dayKeyFromDate(new Date(ts));
+      push(k, { __kind: 'tracking', data: it });
+    }
+  });
+
+  /* ۶. عکس‌های تصویرسازی */
+  const visualImgs = (state.currentBelief && state.currentBelief.visualImages) || [];
+  visualImgs.forEach(function(im){
+    const ts = Math.floor(im.id);
+    if(!isNaN(ts) && ts > 0){
+      const k = dayKeyFromDate(new Date(ts));
+      push(k, { __kind: 'visual', data: im });
+    }
+  });
+
+  /* ۷. حس‌های قبل/بعد از تمرین‌ها */
   const pem = state.practiceEmotions || {};
   Object.keys(pem).forEach(function(k){
     const day = pem[k];
     if(day && Object.keys(day).length){
-      (byDay[k] = byDay[k] || []).push({ __emotion: true });
+      push(k, { __kind: 'emotion', data: day });
     }
   });
+
   return byDay;
 }
 function renderBankCal(){
