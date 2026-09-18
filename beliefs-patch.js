@@ -506,7 +506,6 @@
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
-            '<span class="dp-step-num">۴</span>' +
             '<span class="dp-step-title"></span>' +
             '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="یادداشت بذر امروز">▾</button>' +
           '</div>' +
@@ -551,7 +550,7 @@
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
-            '<span class="dp-step-num">۵</span>' +
+            '<span class="dp-step-num">۴</span>' +
             '<span class="dp-step-title">تصویرسازی</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
@@ -574,7 +573,7 @@
         '<div class="dp-step">' +
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="6">○</button>' +
-            '<span class="dp-step-num">۶</span>' +
+            '<span class="dp-step-num">۵</span>' +
             '<span class="dp-step-title">احساس فراوانی</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
@@ -672,8 +671,8 @@
      ===================================================================== */
   function getStyles(){
     return '' +
-      '.future-rec-btn{position:absolute;bottom:8px;right:8px;min-width:32px;height:32px;padding:0 9px;border-radius:16px;border:none;background:var(--emerald-500,#2bbfab);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 3px 10px rgba(15,91,83,.25);}' +
-      '.future-rec-btn.recording{background:#e5484d;font-size:12px;animation:recPulse 1.2s ease-in-out infinite;}' +
+      '.future-rec-btn{position:absolute;bottom:8px;right:8px;min-width:32px;height:32px;padding:0 9px;border-radius:16px;border:none;background:transparent;color:var(--ink);font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:none;}' +
+      '.future-rec-btn.recording{background:#e5484d;color:#fff;font-size:12px;animation:recPulse 1.2s ease-in-out infinite;}' +
       '@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,.5);}50%{box-shadow:0 0 0 7px rgba(229,72,77,0);}}' +
       '.mini-cal-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:100%;}' +
       '.mini-cal-day{aspect-ratio:1;border-radius:4px;background:var(--surface-2);}' +
@@ -1238,7 +1237,6 @@
   }
   /* ---------- ضبط ویس ---------- */
   var recState = { rec: null, stream: null, chunks: [], timer: null, sec: 0 };
-  var REC_MAX_SEC = 120;
 
   function recPickMime(){
     if (typeof MediaRecorder === 'undefined') return null;
@@ -1317,7 +1315,6 @@
       recState.timer = setInterval(function(){
         recState.sec++;
         recSetBtn(true);
-        if (recState.sec >= REC_MAX_SEC && recState.rec){ try { recState.rec.stop(); } catch(e){ recCleanup(); } }
       }, 1000);
     }).catch(function(){
       if (typeof toast === 'function') toast('اجازه‌ی میکروفون داده نشد');
