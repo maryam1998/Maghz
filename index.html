@@ -7158,7 +7158,9 @@ function resetGratNewMedia(){
 function addGratitude(){
   const input = document.getElementById('grat-input');
   const val = (input.value||'').trim();
-  if(!val){ toast('یه چیزی بنویس 🌱'); return; }
+  const hasImages = gratNewImages.length > 0;
+  const hasAudios = gratNewAudios.length > 0;
+  if(!val && !hasImages && !hasAudios){ toast('یه متن، عکس یا صدا وارد کن 🌱'); return; }
   const visRadio = document.querySelector('input[name="grat-vis"]:checked');
   const shared = !!(visRadio && visRadio.value === 'public');
   const np = nowParts();
@@ -7184,6 +7186,7 @@ function addGratitude(){
   if(shared) syncGratitudeShare(newEntry);
 }
 function gratDisplayText(text){
+  if(!text || !text.trim()) return '🙏 شکرگذاری';
   return text.startsWith('خدایا شکرت که') ? text : `خدایا شکرت که: ${text}`;
 }
 function renderHistory(){
@@ -7320,7 +7323,9 @@ function saveGratEdit(){
   const g = (state.gratitude||[]).find(x=>x.id===editingGratId);
   if(!g) return;
   const newText = (document.getElementById('grat-edit-text').value||'').trim();
-  if(!newText){ toast('متن نمی‌تونه خالی باشه 🌱'); return; }
+  const hasImages = gratEditImages.length > 0;
+  const hasAudios = gratEditAudios.length > 0;
+  if(!newText && !hasImages && !hasAudios){ toast('یه متن، عکس یا صدا وارد کن 🌱'); return; }
   const wasShared = g.shared;
   const oldEntrySnapshot = Object.assign({}, g);
   g.text = newText;
