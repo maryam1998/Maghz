@@ -527,9 +527,25 @@
     display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;
   }
   .img-thumb{
-    width:32px;height:32px;border-radius:50%;object-fit:cover;
+    width:60px;height:60px;border-radius:50%;object-fit:cover;
     border:1px solid var(--panel-border);
     position:relative;
+  }
+  #img-viewer-modal{
+    position:fixed;inset:0;z-index:500;display:none;
+    align-items:center;justify-content:center;
+    background:rgba(0,0,0,.92);touch-action:none;overflow:hidden;
+  }
+  #img-viewer-modal.show{display:flex;}
+  #img-viewer-modal img{
+    max-width:92vw;max-height:92vh;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-user-drag:none;
+    will-change:transform;transform-origin:center center;
+  }
+  #img-viewer-close{
+    position:absolute;top:18px;left:18px;width:36px;height:36px;border-radius:50%;
+    background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;
   }
   .img-thumb .del{
     position:absolute;top:-6px;right:-6px;background:#c96b6b;color:#fff;
@@ -2512,7 +2528,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   <div class="modal" style="max-height:88vh;overflow-y:auto;">
     <h2>راهنمای اپ</h2>
     <p class="desc">
-  این اپ یه فضای شخصیه. سه بخش داره که با هم کار می‌کنن: توی <b>شناخت</b>، الگوهای ذهنی‌ات رو می‌شناسی؛ روی <b>نقشه</b>، هدف‌هات رو می‌بینی؛ و توی <b>تمرین</b>، حس و حالت درونت رو با چشم باز نگه می‌داری. تمرین‌های دیگه فقط ابزارن — هدف اصلی، شناختن خودته.
+  این اپ یه فضای شخصیه با سه بخش که کنار هم کار می‌کنن: توی <b>شناخت</b>، الگوهای ذهنی‌ات رو می‌شناسی؛ روی <b>نقشه</b>، هدف‌هات رو می‌بینی و پیش می‌بری؛ و توی <b>تمرین</b>، حس و حالت درونت رو با چشم باز نگه می‌داری.
 </p>
 
     <div class="help-section">
@@ -2559,15 +2575,9 @@ body.bg-mode-image #grat-root{background:transparent;}
   <ul>
     <li><b>رنگ هر هدف:</b> فرکانسی که براش انتخاب کردی.</li>
     <li><b>رنگ شاخه‌ها:</b> به رنگ هدف پیش‌فرض، ولی می‌تونی عوض کنی.</li>
-    <li><b>قطر هر شاخه:</b> اهمیت اون کار. شاخه‌ی کلفت‌تر = کار مهم‌تر.</li>
     <li><b>بوتونِ نوک شاخه:</b> نقطه‌ی آزادسازی پیام عصبی.</li>
   </ul>
 </div>
-
-    <div class="help-section">
-  <h3>💡 یه نکته‌ی مهم</h3>
-  <p>این تمرین‌ها یه <b>باشگاه ذهن</b> هستن، نه جایگزین درمان پزشکی. اگه افسردگی، اضطراب شدید یا هر مسئله‌ی سلامت روان داری — در کنار این تمرین‌ها، با یه متخصص هم حرف بزن. این دو با هم، بهترین نتیجه رو می‌دن.</p>
-    </div>
 
     <div class="modal-actions">
       <button class="btn gold full" id="help-close-btn">متوجه شدم</button>
@@ -5594,6 +5604,17 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       <textarea id="grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
 
+      <div class="image-picker">
+        <div class="lbl2">📎 عکس یا صدا (می‌تونی چندتا اضافه کنی)</div>
+        <input type="file" id="grat-media-input" accept="image/*,audio/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'new')">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="gallery-btn" onclick="document.getElementById('grat-media-input').click()">+ افزودن عکس یا صدا</button>
+          <button type="button" class="gallery-btn" id="grat-record-btn" onclick="toggleGratRecording('new')">⏺ شروع ضبط صدا</button>
+        </div>
+        <div class="img-thumbnails" id="grat-image-thumbs"></div>
+        <div id="grat-audio-list"></div>
+      </div>
+
       <div class="visibility-options">
         <label><input type="radio" name="grat-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط خدا بدونه</label>
         <label><input type="radio" name="grat-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> همه می‌تونن بدونن</label>
@@ -5878,6 +5899,18 @@ body.bg-mode-image #grat-root{background:transparent;}
       <div class="m-seal" style="text-align:center;">🙏</div>
       <h2 style="text-align:center;">ویرایش شکرگذاری</h2>
       <textarea id="grat-edit-text" rows="4" placeholder="متن شکرگذاری..."></textarea>
+
+      <div class="image-picker">
+        <div class="lbl2">📎 عکس یا صدا (می‌تونی چندتا اضافه کنی)</div>
+        <input type="file" id="grat-edit-media-input" accept="image/*,audio/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'edit')">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="gallery-btn" onclick="document.getElementById('grat-edit-media-input').click()">+ افزودن عکس یا صدا</button>
+          <button type="button" class="gallery-btn" id="grat-edit-record-btn" onclick="toggleGratRecording('edit')">⏺ شروع ضبط صدا</button>
+        </div>
+        <div class="img-thumbnails" id="grat-edit-image-thumbs"></div>
+        <div id="grat-edit-audio-list"></div>
+      </div>
+
       <button class="primary-btn" style="margin:16px 0 8px;" onclick="saveGratEdit()">ذخیره تغییرات</button>
       <button class="ghost-btn" style="margin:0 0 8px;" onclick="deleteGratEntry()">🗑 حذف این شکرگذاری</button>
       <button class="ghost-btn" style="margin:0;" onclick="closeGratEditor()">انصراف</button>
@@ -6408,6 +6441,67 @@ function iconOrImage(item){
   if(item.image) return `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;">`;
   return item.icon || '🌿';
 }
+function gratIconOrImage(item){
+  if(item.image) return `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="event.stopPropagation();openImageViewer('${item.image}')">`;
+  return item.icon || '🌿';
+}
+(function(){
+  var modal, imgEl, scale=1, startDist=0, startScale=1, lastX=0, lastY=0, offX=0, offY=0, dragging=false, lastTapTime=0;
+  function ensureViewer(){
+    if(modal) return;
+    modal = document.getElementById('img-viewer-modal');
+    imgEl = document.getElementById('img-viewer-img');
+    imgEl.addEventListener('touchstart', onTouchStart, {passive:false});
+    imgEl.addEventListener('touchmove', onTouchMove, {passive:false});
+    imgEl.addEventListener('touchend', onTouchEnd, {passive:false});
+  }
+  function dist(t1,t2){ return Math.hypot(t1.clientX-t2.clientX, t1.clientY-t2.clientY); }
+  function applyTransform(){
+    imgEl.style.transform = 'translate('+offX+'px,'+offY+'px) scale('+scale+')';
+  }
+  function onTouchStart(e){
+    if(e.touches.length===2){
+      startDist = dist(e.touches[0], e.touches[1]);
+      startScale = scale;
+    } else if(e.touches.length===1){
+      dragging = true;
+      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+      var now = Date.now();
+      if(now - lastTapTime < 300){
+        scale = scale>1 ? 1 : 2.5; offX=0; offY=0; applyTransform();
+      }
+      lastTapTime = now;
+    }
+    e.preventDefault();
+  }
+  function onTouchMove(e){
+    if(e.touches.length===2 && startDist){
+      var d = dist(e.touches[0], e.touches[1]);
+      scale = Math.min(5, Math.max(1, startScale * (d/startDist)));
+      applyTransform();
+    } else if(e.touches.length===1 && dragging && scale>1){
+      var dx = e.touches[0].clientX - lastX;
+      var dy = e.touches[0].clientY - lastY;
+      offX += dx; offY += dy;
+      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+      applyTransform();
+    }
+    e.preventDefault();
+  }
+  function onTouchEnd(e){
+    dragging = false; startDist = 0;
+    if(e.touches.length===0 && scale<1.02){ scale=1; offX=0; offY=0; applyTransform(); }
+  }
+  window.openImageViewer = function(src){
+    ensureViewer();
+    scale=1; offX=0; offY=0; applyTransform();
+    imgEl.src = src;
+    modal.classList.add('show');
+  };
+  window.closeImageViewer = function(){
+    if(modal) modal.classList.remove('show');
+  };
+})();
 
 /* ---------------- login modal ---------------- */
 let loginTab = 'phone';
@@ -6649,7 +6743,7 @@ function renderHome(){
       }
     };
     row.innerHTML = `
-      <div class="ic">${iconOrImage(g)}</div>
+      <div class="ic">${gratIconOrImage(g)}</div>
       <div class="mid">
         <div class="t1">${nl2br(escapeHtml(gratDisplayText(g.text)))}</div>
         <div class="t2">${g.day} ${g.date} - ${g.time}</div>
@@ -6916,6 +7010,150 @@ function showReceipt(r){
   });
 }
 
+/* ---------------- gratitude list: photo & voice attachments ---------------- */
+let gratNewImages = [];
+let gratEditImages = [];
+let gratNewAudios = [];
+let gratEditAudios = [];
+let gratRecorder = null;
+let gratRecordStream = null;
+let gratRecordChunks = [];
+let gratRecordingMode = null; // 'new' | 'edit'
+
+function gratImagesArr(mode){ return mode === 'edit' ? gratEditImages : gratNewImages; }
+function gratAudiosArr(mode){ return mode === 'edit' ? gratEditAudios : gratNewAudios; }
+
+function handleGratMedia(files, mode){
+  if(!files || !files.length) return;
+  const imgArr = gratImagesArr(mode);
+  const audArr = gratAudiosArr(mode);
+  let loaded = 0;
+  const total = files.length;
+  const finish = ()=>{
+    loaded++;
+    if(loaded === total){
+      renderGratImageThumbs(mode);
+      renderGratAudioList(mode);
+      const inputEl = document.getElementById(mode === 'edit' ? 'grat-edit-media-input' : 'grat-media-input');
+      if(inputEl) inputEl.value = '';
+    }
+  };
+  for(const file of files){
+    const isImage = file.type.indexOf('image/') === 0;
+    const isAudio = file.type.indexOf('audio/') === 0;
+    if(!isImage && !isAudio){
+      toast('فقط فایل عکس یا صدا قابل اضافه شدنه');
+      finish();
+      continue;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      if(isImage){
+        imgArr.push({ src: ev.target.result });
+      } else {
+        audArr.push({ src: ev.target.result, name: 'صدا ' + (audArr.length+1).toLocaleString('fa-IR') });
+      }
+      finish();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+function renderGratImageThumbs(mode){
+  const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-image-thumbs' : 'grat-image-thumbs');
+  if(!wrap) return;
+  const arr = gratImagesArr(mode);
+  wrap.innerHTML = arr.map((img, idx)=>`
+    <div class="img-thumb">
+      <img src="${img.src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:pointer;" onclick="openImageViewer('${img.src}')">
+      <button type="button" class="del" onclick="event.stopPropagation();removeGratImage(${idx}, '${mode}')">✕</button>
+    </div>
+  `).join('');
+}
+function removeGratImage(idx, mode){
+  const arr = gratImagesArr(mode);
+  arr.splice(idx, 1);
+  renderGratImageThumbs(mode);
+}
+
+function toggleGratRecording(mode){
+  if(gratRecorder && gratRecorder.state === 'recording'){
+    gratRecorder.stop();
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('دستگاهت از ضبط صدا پشتیبانی نمی‌کنه');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio:true }).then(stream=>{
+    gratRecordStream = stream;
+    gratRecordingMode = mode;
+    gratRecordChunks = [];
+    try{
+      gratRecorder = new MediaRecorder(stream);
+    }catch(e){
+      toast('ضبط صدا روی این دستگاه ممکن نیست');
+      stream.getTracks().forEach(t=>t.stop());
+      return;
+    }
+    gratRecorder.ondataavailable = (e)=>{ if(e.data && e.data.size) gratRecordChunks.push(e.data); };
+    gratRecorder.onstop = ()=>{
+      const blob = new Blob(gratRecordChunks, { type: gratRecorder.mimeType || 'audio/webm' });
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        const arr = gratAudiosArr(gratRecordingMode);
+        arr.push({ src: ev.target.result, name: 'صدا ' + (arr.length+1).toLocaleString('fa-IR') });
+        renderGratAudioList(gratRecordingMode);
+      };
+      reader.readAsDataURL(blob);
+      if(gratRecordStream) gratRecordStream.getTracks().forEach(t=>t.stop());
+      gratRecordStream = null;
+      gratRecorder = null;
+      setGratRecordBtn(mode, false);
+    };
+    gratRecorder.start();
+    setGratRecordBtn(mode, true);
+  }).catch(()=>{
+    toast('اجازه‌ی دسترسی به میکروفون داده نشد 🎙');
+  });
+}
+function setGratRecordBtn(mode, recording){
+  const btn = document.getElementById(mode === 'edit' ? 'grat-edit-record-btn' : 'grat-record-btn');
+  if(!btn) return;
+  btn.textContent = recording ? '⏹ پایان ضبط' : '⏺ شروع ضبط صدا';
+  if(recording){
+    btn.style.background = '#c0392b';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#c0392b';
+  } else {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }
+}
+function renderGratAudioList(mode){
+  const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-audio-list' : 'grat-audio-list');
+  if(!wrap) return;
+  const arr = gratAudiosArr(mode);
+  wrap.innerHTML = arr.map((a, idx)=>`
+    <div class="audio-player-box">
+      <audio controls src="${a.src}"></audio>
+      <span class="ap-name">${escapeHtmlSafe(a.name||'')}</span>
+      <button type="button" class="ap-rm" onclick="removeGratAudio(${idx}, '${mode}')">×</button>
+    </div>
+  `).join('');
+}
+function removeGratAudio(idx, mode){
+  const arr = gratAudiosArr(mode);
+  arr.splice(idx, 1);
+  renderGratAudioList(mode);
+}
+function resetGratNewMedia(){
+  gratNewImages = [];
+  gratNewAudios = [];
+  renderGratImageThumbs('new');
+  renderGratAudioList('new');
+}
+
 /* ---------------- gratitude list ---------------- */
 function addGratitude(){
   const input = document.getElementById('grat-input');
@@ -6926,7 +7164,8 @@ function addGratitude(){
   const np = nowParts();
   const newEntry = {
     id: Date.now()+Math.random(),
-    text: val, icon:'🙏', image:null, amount:null,
+    text: val, icon:'🙏', image: gratNewImages.length ? gratNewImages[0].src : null, amount:null,
+    images: gratNewImages.slice(), audios: gratNewAudios.slice(),
     date: np.date, day: np.day, time: np.time, iso: np.iso, source:'manual',
     shared: shared
   };
@@ -6937,6 +7176,7 @@ function addGratitude(){
   saveState();
   input.value='';
   autoGrowGratInput(input);
+  resetGratNewMedia();
   renderHistory();
   renderHome();
   renderAllNeuralPathways();
@@ -6979,10 +7219,12 @@ function renderHistory(){
     const displayText = gratDisplayText(g.text);
     itemsHTML += `
       <div class="tx-item" onclick="${g.txId ? `(function(){const tx=state.history.find(h=>h.id===${g.txId});if(tx){showReceipt(tx);goto('receipt');}})()` : ''}">
-        <div class="ic">${iconOrImage(g)}</div>
+        <div class="ic">${gratIconOrImage(g)}</div>
         <div class="mid">
           <div class="t1">${nl2br(escapeHtml(displayText))}</div>
           <div class="t2">${g.day} ${g.date} - ${g.time}</div>
+          ${(g.images && g.images.length) ? `<div class="img-thumbnails">${g.images.map(im=>`<div class="img-thumb"><img src="${im.src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:pointer;" onclick="event.stopPropagation();openImageViewer('${im.src}')"></div>`).join('')}</div>` : ''}
+          ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
         </div>
         <div class="grat-edit-actions">
           <button title="ویرایش" onclick="event.stopPropagation();openGratEditor(${g.id})">✏️</button>
@@ -7057,10 +7299,20 @@ function openGratEditor(id){
   if(rawText.startsWith('خدایا شکرت که: ')) rawText = rawText.replace('خدایا شکرت که: ', '');
   else if(rawText.startsWith('خدایا شکرت که')) rawText = rawText.replace('خدایا شکرت که', '');
   document.getElementById('grat-edit-text').value = rawText;
+  gratEditImages = (g.images || []).slice();
+  gratEditAudios = (g.audios || []).slice();
+  renderGratImageThumbs('edit');
+  renderGratAudioList('edit');
+  setGratRecordBtn('edit', false);
   document.getElementById('grat-edit-modal').classList.add('show');
 }
 function closeGratEditor(){
+  if(gratRecorder && gratRecorder.state === 'recording'){
+    gratRecorder.stop();
+  }
   editingGratId = null;
+  gratEditImages = [];
+  gratEditAudios = [];
   document.getElementById('grat-edit-modal').classList.remove('show');
 }
 function saveGratEdit(){
@@ -7072,6 +7324,9 @@ function saveGratEdit(){
   const wasShared = g.shared;
   const oldEntrySnapshot = Object.assign({}, g);
   g.text = newText;
+  g.images = gratEditImages.slice();
+  g.audios = gratEditAudios.slice();
+  g.image = g.images.length ? g.images[0].src : null;
   saveState();
   if(wasShared){
     // چون اشتراک‌گذاری بر اساس متن قبلی ثبت شده، اول نسخه‌ی قدیمی رو حذف و بعد نسخه‌ی جدید رو اضافه می‌کنیم
@@ -8568,6 +8823,10 @@ window.addEventListener('appinstalled', function(){
   deferredInstallPrompt = null;
 });
 </script>
+<div id="img-viewer-modal" onclick="if(event.target.id==='img-viewer-modal') closeImageViewer();">
+  <button id="img-viewer-close" onclick="closeImageViewer()">✕</button>
+  <img id="img-viewer-img" src="" alt="">
+</div>
 <script src="emotion-widget.js"></script>
 <script src="beliefs-patch.js"></script>
 <script src="emoji-to-svg.js"></script>
