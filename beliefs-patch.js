@@ -507,15 +507,14 @@
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="4">○</button>' +
             '<span class="dp-step-num">۴</span>' +
-            '<span class="dp-step-title">انتخاب واقعیت</span>' +
+            '<span class="dp-step-title"></span>' +
             '<button type="button" class="dp-expand-icon" data-toggle-box="dp-possibilities" title="یادداشت بذر امروز">▾</button>' +
           '</div>' +
-          '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>انتخاب واقعیت:</b> با خواسته‌ات هم‌فرکانس شو و از بین امکان‌های پیش‌رو، آینده‌ای رو که می‌خوای انتخاب کن.</span>' +
-            'با جمله‌ی «بسیار خوشحال و سپاسگزارم، حالا که...» شروع کن. طوری بنویس که انگار همین حالا بهش رسیدی.' +
-          '</div>' +
           '<div class="dp-step-content" style="margin-top:12px;">' +
-            '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;min-height:60px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
+            '<div id="future-box" style="position:relative;margin-bottom:10px;">' +
+              '<div id="future-display" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 42px;min-height:60px;font-size:13px;line-height:1.9;color:var(--ink);white-space:pre-wrap;font-style:italic;"></div>' +
+              '<button type="button" id="future-rec-btn" class="future-rec-btn" title="ضبط صدا">🎙️</button>' +
+            '</div>' +
             '<div id="future-editor" style="display:none;margin-bottom:10px;">' +
               '<textarea id="future-editor-input" rows="5" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:vertical;outline:none;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
               '<div style="display:flex;gap:6px;margin-top:8px;">' +
@@ -673,6 +672,9 @@
      ===================================================================== */
   function getStyles(){
     return '' +
+      '.future-rec-btn{position:absolute;bottom:8px;right:8px;min-width:32px;height:32px;padding:0 9px;border-radius:16px;border:none;background:var(--emerald-500,#2bbfab);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 3px 10px rgba(15,91,83,.25);}' +
+      '.future-rec-btn.recording{background:#e5484d;font-size:12px;animation:recPulse 1.2s ease-in-out infinite;}' +
+      '@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,.5);}50%{box-shadow:0 0 0 7px rgba(229,72,77,0);}}' +
       '.mini-cal-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:100%;}' +
       '.mini-cal-day{aspect-ratio:1;border-radius:4px;background:var(--surface-2);}' +
       '.mini-cal-day.done{background:var(--emerald-500);}' +
@@ -828,10 +830,13 @@
     var display = document.getElementById('future-display');
     var archiveCount = document.getElementById('archive-count');
     if (display){
-      if (v && v.text && v.text.trim()){
-        display.innerHTML = '«' + escapeHtml(v.text) + '»';
+      var hasText = v && v.text && v.text.trim();
+      var hasAudio = v && v.audio;
+      if (hasText || hasAudio){
+        display.innerHTML = (hasText ? '«' + escapeHtml(v.text) + '»' : '') +
+          (hasAudio ? '<audio controls preload="metadata" src="' + v.audio + '" style="width:100%;height:36px;display:block;' + (hasText ? 'margin-top:10px;' : '') + '"></audio>' : '');
       } else {
-        display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز متن خواسته‌ای ننوشتی.<br><span style="font-size:11px;">روی «✏️ ویرایش» بزن تا شروع کنی.</span></div>';
+        display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز چیزی ثبت نکردی.<br><span style="font-size:11px;">با «✏️ ویرایش» بنویس یا با 🎙️ ویس بگذار.</span></div>';
       }
     }
     if (archiveCount) archiveCount.textContent = toFa((state.futureTextVersions || []).length);
@@ -889,7 +894,8 @@
           '<span style="font-size:9.5px;color:var(--muted);">' + toFa(readCount) + ' روز</span>' +
         '</div>' +
         '<div style="font-size:10px;color:var(--muted);margin-bottom:6px;">' + v.startDate + ' تا ' + end + '</div>' +
-        '<div style="font-size:11px;color:var(--ink-soft);line-height:1.6;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-style:italic;margin-bottom:6px;">«' + escapeHtml(v.text.length > 100 ? v.text.slice(0, 100) + '...' : v.text) + '»</div>' +
+        (v.text ? '<div style="font-size:11px;color:var(--ink-soft);line-height:1.6;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-style:italic;margin-bottom:6px;">«' + escapeHtml(v.text.length > 100 ? v.text.slice(0, 100) + '...' : v.text) + '»</div>' : '') +
+        (v.audio ? '<audio controls preload="none" src="' + v.audio + '" style="width:100%;height:32px;display:block;margin-bottom:6px;"></audio>' : '') +
         (isActive ? '' : '<button type="button" class="btn tiny" data-activate-version="' + v.id + '" style="width:100%;font-size:10.5px;padding:6px;">فعال کردن</button>') +
       '</div>';
     });
@@ -1199,6 +1205,7 @@
     editorBox.style.display = 'block';
     if (display) display.style.display = 'none';
     if (actions) actions.style.display = 'none';
+    var recB = document.getElementById('future-rec-btn'); if (recB) recB.style.display = 'none';
     setTimeout(function(){ input.focus(); }, 50);
   }
   function closeFutureEditor(){
@@ -1208,6 +1215,7 @@
     if (editorBox) editorBox.style.display = 'none';
     if (display) display.style.display = 'block';
     if (actions) actions.style.display = 'flex';
+    var recB = document.getElementById('future-rec-btn'); if (recB) recB.style.display = 'flex';
   }
   function saveFutureText(){
     var input = document.getElementById('future-editor-input');
@@ -1228,6 +1236,94 @@
     closeFutureEditor(); renderFutureText(); dpRenderProgress();
     if (typeof toast === 'function') toast(v ? 'نسخه‌ی جدید ثبت شد 📚' : 'متن خواسته‌ات ثبت شد ✨');
   }
+  /* ---------- ضبط ویس ---------- */
+  var recState = { rec: null, stream: null, chunks: [], timer: null, sec: 0 };
+  var REC_MAX_SEC = 120;
+
+  function recPickMime(){
+    if (typeof MediaRecorder === 'undefined') return null;
+    var list = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    for (var i = 0; i < list.length; i++){
+      try { if (MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch(e){}
+    }
+    return '';
+  }
+
+  function recSetBtn(recording){
+    var btn = document.getElementById('future-rec-btn');
+    if (!btn) return;
+    btn.classList.toggle('recording', !!recording);
+    if (!recording){ btn.textContent = '🎙️'; btn.title = 'ضبط صدا'; return; }
+    var m = Math.floor(recState.sec / 60), s2 = recState.sec % 60;
+    btn.textContent = '⏹ ' + toFa(m) + ':' + toFa(s2 < 10 ? '0' + s2 : s2);
+    btn.title = 'پایان ضبط';
+  }
+
+  function recCleanup(){
+    if (recState.timer){ clearInterval(recState.timer); recState.timer = null; }
+    if (recState.stream){ recState.stream.getTracks().forEach(function(t){ try { t.stop(); } catch(e){} }); }
+    recState.stream = null; recState.rec = null; recState.sec = 0;
+    recSetBtn(false);
+  }
+
+  function saveFutureAudio(dataUrl){
+    var v = getActiveVersion();
+    if (v) v.endDate = dpTodayKey();
+    var newV = { id: 'v_' + Date.now(), text: '', audio: dataUrl, startDate: dpTodayKey(), endDate: null, readDays: [] };
+    if (!Array.isArray(state.futureTextVersions)) state.futureTextVersions = [];
+    state.futureTextVersions.push(newV);
+    state.activeFutureVersionId = newV.id;
+    state.futureText = '';
+    state.futureStartDate = newV.startDate;
+    state.futureReadDays = newV.readDays;
+    try { saveState(); } catch(e){}
+    renderFutureText(); dpRenderProgress();
+    if (typeof toast === 'function') toast('ویس ثبت شد 🎙️');
+  }
+
+  function toggleFutureRecording(){
+    if (recState.rec){
+      try { recState.rec.stop(); } catch(e){ recCleanup(); }
+      return;
+    }
+    var mime = recPickMime();
+    if (mime === null || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      if (typeof toast === 'function') toast('مرورگر از ضبط صدا پشتیبانی نمی‌کنه');
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+      var opts = { audioBitsPerSecond: 32000 };
+      if (mime) opts.mimeType = mime;
+      var rec;
+      try { rec = new MediaRecorder(stream, opts); }
+      catch(e){ try { rec = new MediaRecorder(stream); } catch(e2){
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        if (typeof toast === 'function') toast('ضبط صدا شروع نشد');
+        return;
+      } }
+      recState.stream = stream; recState.rec = rec; recState.chunks = []; recState.sec = 0;
+      rec.ondataavailable = function(ev){ if (ev.data && ev.data.size) recState.chunks.push(ev.data); };
+      rec.onstop = function(){
+        var type = rec.mimeType || mime || 'audio/webm';
+        var blob = new Blob(recState.chunks, { type: type });
+        recCleanup();
+        if (!blob.size) return;
+        var fr = new FileReader();
+        fr.onload = function(){ saveFutureAudio(fr.result); };
+        fr.readAsDataURL(blob);
+      };
+      rec.start();
+      recSetBtn(true);
+      recState.timer = setInterval(function(){
+        recState.sec++;
+        recSetBtn(true);
+        if (recState.sec >= REC_MAX_SEC && recState.rec){ try { recState.rec.stop(); } catch(e){ recCleanup(); } }
+      }, 1000);
+    }).catch(function(){
+      if (typeof toast === 'function') toast('اجازه‌ی میکروفون داده نشد');
+    });
+  }
+
   function toggleArchive(){ ARCHIVE_OPEN = !ARCHIVE_OPEN; renderArchiveBox(); }
   function activateVersion(id){
     var versions = state.futureTextVersions || [];
@@ -1246,7 +1342,7 @@
   function registerTodayRead(){
     var dk = dpTodayKey();
     var v = getActiveVersion();
-    if (!v || !v.text){ if (typeof toast === 'function') toast('اول متن خواسته‌ات را بنویس'); return; }
+    if (!v || (!v.text && !v.audio)){ if (typeof toast === 'function') toast('اول متن خواسته‌ات را بنویس یا ویس ضبط کن'); return; }
     if (!Array.isArray(v.readDays)) v.readDays = [];
     if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
     if (!state.futureReadDays) state.futureReadDays = [];
@@ -1343,6 +1439,7 @@
 
       if (t.id === 'breath-start-btn'){ startBreathing(); return; }
       if (t.id === 'dp-timer-btn'){ dpStartTimer(); return; }
+      if (t.closest('#future-rec-btn')){ toggleFutureRecording(); return; }
       if (t.id === 'edit-future-btn'){ openFutureEditor(); return; }
       if (t.id === 'future-save-btn'){ saveFutureText(); return; }
       if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
