@@ -1,5 +1,5 @@
 // App.jsx
-// نسخه 16.0 — کامل با تمام صفحات حرفه‌ای
+// نسخه 16.1 — افزودن لوگو در Shell و WelcomeView
 // OriginView حرفه‌ای + همه صفحات قبلی
 
 import React, { useState, useEffect, useMemo, useContext, createContext } from "react";
@@ -62,6 +62,24 @@ registerIdLabels(LABELS);
 
 const SearchContext = createContext(null);
 
+function Logo({ size = 28, radius = 8, style }) {
+  return (
+    <img
+      src="icons/icon-192.png"
+      alt="بی‌نهایت راه"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: radius,
+        flexShrink: 0,
+        objectFit: "cover",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+        ...style,
+      }}
+    />
+  );
+}
+
 function Shell({ children, title, onBack, showQuickButton, onQuick, showSOS, onSOS, hideSearch }) {
   const openSearch = useContext(SearchContext);
   const canSearch = !hideSearch && typeof openSearch === "function";
@@ -71,7 +89,7 @@ function Shell({ children, title, onBack, showQuickButton, onQuick, showSOS, onS
         {onBack ? (
           <button onClick={onBack} style={styles.backBtn}>→</button>
         ) : (
-          <div style={{ width: 32 }} />
+          <Logo size={28} />
         )}
         <div style={styles.headerTitle}>{title}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1467,6 +1485,14 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, on
           background: "rgba(255,255,255,.05)"
         }} />
         <div style={{ position: "relative" }}>
+          {/* ── لوگو + نام اپ ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <Logo size={44} radius={12} style={{ boxShadow: "0 6px 18px rgba(0,0,0,0.35)" }} />
+            <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, letterSpacing: 0.3 }}>
+              بی‌نهایت راه
+            </span>
+          </div>
+
           <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 8, letterSpacing: 1 }}>
             شناخت الگوهای تکرارشونده
           </div>
