@@ -136,11 +136,33 @@
   /* استایل‌های نشانگر مسیر عصبی روی نقشه (.goal-hud/.axon-core/.axon-myelin/.synaptic-bouton/.pruned-twig) به فایل neural-pathway.js منتقل شد. */
 
   #topbar{
-    position:fixed;top:16px;right:16px;left:16px;
-    display:flex;justify-content:flex-end;align-items:flex-start;
-    pointer-events:none;
-    z-index:20;
-  }
+  position:fixed;top:16px;right:16px;left:16px;
+  display:flex;justify-content:space-between;align-items:center;
+  pointer-events:none;
+  z-index:20;
+}
+
+/* استایل لوگو و اسم اپ */
+#topbar-brand{
+  pointer-events:all;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.app-logo{
+  width:32px;
+  height:32px;
+  border-radius:9px;
+  flex-shrink:0;
+  box-shadow:0 4px 12px rgba(0,0,0,0.25);
+}
+.app-title{
+  font-family:'Vazirmatn',Tahoma,sans-serif;
+  font-size:15px;
+  font-weight:800;
+  color:var(--text-main);
+  letter-spacing:.2px;
+}
   #title-block{pointer-events:none;}
   #title-block h1{
     margin:0;font-size:15px;font-weight:600;color:var(--text-main);
