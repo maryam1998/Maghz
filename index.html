@@ -5583,21 +5583,24 @@ body.bg-mode-image #grat-root{background:transparent;}
   <!-- ============ HOME ============ -->
   <section class="view active" id="view-home">
     <div class="greeting">
-      <div>
-        <p class="hi" id="home-hi">صبح بخیر ✦</p>
-        <p class="name" id="home-name">فراوانی</p>
-      </div>
-      <div class="greeting-actions">
-        <button class="icon-btn" id="pwa-install-btn" onclick="installPWA()" title="نصب اپ" style="display:none;">📲</button>
-        <button class="icon-btn theme-toggle-btn-grat" onclick="toggleAppTheme()" title="تغییر تم">
-          <svg class="ico" viewBox="0 0 24 24"><use href="#ico-moon"/></svg>
-        </button>
-        <button class="icon-btn" onclick="toggleCurrency()" title="تغییر واحد پول">
-          <svg class="ico" viewBox="0 0 24 24"><use href="#ico-settings"/></svg>
-        </button>
-      </div>
+    <div class="greeting">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="icons/icon-192.png" alt="" style="width:36px;height:36px;border-radius:10px;flex-shrink:0;box-shadow:0 4px 12px rgba(10,40,35,0.15);">
+    <div>
+      <p class="hi" id="home-hi">صبح بخیر ✦</p>
+      <p class="name" id="home-name">فراوانی</p>
     </div>
-
+  </div>
+  <div class="greeting-actions">
+    <button class="icon-btn" id="pwa-install-btn" onclick="installPWA()" title="نصب اپ" style="display:none;">📲</button>
+    <button class="icon-btn theme-toggle-btn-grat" onclick="toggleAppTheme()" title="تغییر تم">
+      <svg class="ico" viewBox="0 0 24 24"><use href="#ico-moon"/></svg>
+    </button>
+    <button class="icon-btn" onclick="toggleCurrency()" title="تغییر واحد پول">
+      <svg class="ico" viewBox="0 0 24 24"><use href="#ico-settings"/></svg>
+    </button>
+  </div>
+    </div>
     <div class="bank-card theme-emerald" id="home-bank-card">
       <button class="card-edit-btn" onclick="openCardEditor()" title="ویرایش کارت">✏️</button>
       <div class="row-top">
