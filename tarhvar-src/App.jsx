@@ -1485,24 +1485,16 @@ function WelcomeView({ analysis, onStart, onSkipToProfile, hasProfile, onSOS, on
           background: "rgba(255,255,255,.05)"
         }} />
         <div style={{ position: "relative" }}>
-          {/* ── لوگو + نام اپ ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <Logo size={44} radius={12} style={{ boxShadow: "0 6px 18px rgba(0,0,0,0.35)" }} />
-            <span style={{ fontSize: 13, fontWeight: 700, opacity: 0.85, letterSpacing: 0.3 }}>
-              بی‌نهایت راه
-            </span>
-          </div>
-
-          <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 8, letterSpacing: 1 }}>
-            شناخت الگوهای تکرارشونده
-          </div>
-          <h2 style={{ margin: "0 0 12px", fontSize: 24, lineHeight: 1.5, fontWeight: 700 }}>
-            چه چیزی در من<br />تکرار می‌شود؟
-          </h2>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
-            اینجا قرار نیست برچسبی به تو بزنیم. با هم می‌بینیم کجا فعال می‌شوی و چطور می‌توانی این بار جور دیگری پاسخ بدهی.
-          </p>
-        </div>
+  <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 8, letterSpacing: 1 }}>
+    شناخت الگوهای تکرارشونده
+  </div>
+  <h2 style={{ margin: "0 0 12px", fontSize: 24, lineHeight: 1.5, fontWeight: 700 }}>
+    چه چیزی در من<br />تکرار می‌شود؟
+  </h2>
+  <p style={{ margin: 0, fontSize: 13, lineHeight: 1.9, opacity: 0.85 }}>
+    اینجا قرار نیست برچسبی به تو بزنیم. با هم می‌بینیم کجا فعال می‌شوی و چطور می‌توانی این بار جور دیگری پاسخ بدهی.
+  </p>
+</div>
       </Card>
 
       {reminders && reminders.length > 0 && (
