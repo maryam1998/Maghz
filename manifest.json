@@ -1,27 +1,39 @@
 {
-  "name": "نقشه‌ی فرکانس",
-  "short_name": "نقشه فرکانس",
-  "description": "نقشه‌ی فرکانس و بانک فراوانی",
+  "name": "بی‌نهایت راه",
+  "short_name": "بی‌نهایت راه",
+  "description": "بی‌نهایت راه برای رسیدن به خواسته‌ها و اهداف",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0c18",
-  "theme_color": "#0a0c18",
-  "dir": "rtl",
+  "background_color": "#0a3d38",
+  "theme_color": "#0a3d38",
   "lang": "fa",
+  "dir": "rtl",
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
