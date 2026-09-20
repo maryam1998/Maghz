@@ -55,6 +55,54 @@
   }
   var CAL_SELECTED = null;
 
+  /* =====================================================================
+     تقویم عمومی و قابل‌تنظیم — مدت هر تب/نسخه (چند روزه) و نمایش گروه‌بندی‌شده به ماه
+     این بخش پایه‌ی مشترک هر تقویمی توی برنامه‌ست: طول دوره برای هر نسخه/تب جدا
+     قابل تغییره (پیش‌فرض ۹۰ روز) و نمایش همیشه به‌صورت «ماه اول»، «ماه دوم»، ... است.
+     ===================================================================== */
+  var DP_DEFAULT_DURATION = 90;
+  var DP_MIN_DURATION = 7;
+  var DP_MAX_DURATION = 365;
+  var DP_MONTH_ORDINALS_FA = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم'];
+
+  function dpClampDuration(n){
+    n = parseInt(n, 10);
+    if (!n || isNaN(n)) n = DP_DEFAULT_DURATION;
+    if (n < DP_MIN_DURATION) n = DP_MIN_DURATION;
+    if (n > DP_MAX_DURATION) n = DP_MAX_DURATION;
+    return n;
+  }
+  /* مدت دوره‌ی این نسخه/تب رو برمی‌گردونه (هر نسخه/تب مدت خودش رو جدا نگه می‌داره) */
+  function getVersionDuration(v){
+    return dpClampDuration(v && v.durationDays);
+  }
+  function dpMonthLabelFa(monthIdx){ /* monthIdx: صفرمبنا */
+    return DP_MONTH_ORDINALS_FA[monthIdx] || ('شمارهٔ ' + toFa(monthIdx + 1));
+  }
+  /* هسته‌ی مشترک هر تقویم توی برنامه: یک دوره‌ی N روزه رو از یک تاریخ شروع می‌گیره و
+     به‌صورت گروه‌های ماهانه (هر ماه ۳۰ روز، آخرین ماه هرچی مونده باشه) رندر می‌کنه.
+     buildCell(date, key, dayIdx) باید {cls, html, attrs} برگردونه. */
+  function dpBuildCalGridHtml(startDate, totalDays, buildCell){
+    var html = '';
+    for (var d = 0; d < totalDays; d++){
+      var date = new Date(startDate);
+      date.setDate(date.getDate() + d);
+      var key = dpKeyFromDate(date);
+      if (d % 30 === 0){
+        var endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + Math.min(d + 29, totalDays - 1));
+        html += '<div class="mini-cal-month"><b>ماه ' + dpMonthLabelFa(d / 30) + '</b><span>' +
+          dpFmtDateFa(date, { day: 'numeric', month: 'long' }) + ' تا ' + dpFmtDateFa(endDate, { day: 'numeric', month: 'long' }) + '</span></div>';
+      }
+      var cell = buildCell(date, key, d) || {};
+      var cls = 'mini-cal-day' + (cell.cls ? ' ' + cell.cls : '');
+      if ((d % 30 === 29) || (d === totalDays - 1)) cls += ' month-end';
+      var attrs = cell.attrs || '';
+      html += '<div class="' + cls + '"' + (attrs ? ' ' + attrs : '') + '>' + (cell.html || '') + '</div>';
+    }
+    return html;
+  }
+
   /* کانتینر مسیر عصبی «تمرین روزانه». اگه تابع اصلی برنامه (ensureDispenzaNeural) نبود یا
      چیزی برنگردوند، یک کانتینر خودمون توی state می‌سازیم تا ثبت روزانه حتماً رشته بسازه. */
   function dpGetNeural(){
@@ -82,7 +130,8 @@
         state.futureTextVersions.push({
           id: 'v_' + Date.now(), text: String(state.futureText),
           startDate: state.futureStartDate || dpTodayKey(), endDate: null,
-          readDays: (state.futureReadDays || []).slice()
+          readDays: (state.futureReadDays || []).slice(),
+          durationDays: DP_DEFAULT_DURATION
         });
         state.activeFutureVersionId = state.futureTextVersions[0].id;
       }
@@ -91,6 +140,10 @@
       var active = state.futureTextVersions.filter(function(v){ return !v.endDate; })[0];
       state.activeFutureVersionId = active ? active.id : null;
     }
+    /* نسخه‌های قدیمی‌تر مدت دوره نداشتن — پیش‌فرض ۹۰ روز بهشون می‌دیم تا تقویم درست کار کنه */
+    state.futureTextVersions.forEach(function(v){
+      if (!v.durationDays) v.durationDays = DP_DEFAULT_DURATION;
+    });
     if (!Array.isArray(state.dpSeedArchive)) state.dpSeedArchive = [];
     if (typeof defaultCurrentBelief === 'function'){
       if (!state.currentBelief) state.currentBelief = defaultCurrentBelief();
@@ -570,7 +623,18 @@
             '<div style="padding-top:12px;border-top:1px dashed var(--line);">' +
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
                 '<span style="font-size:11.5px;font-weight:700;">📅 پیشرفت روزانه</span>' +
-                '<span style="font-size:10.5px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از ۹۰</span>' +
+                '<span style="font-size:10.5px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از <b id="future-day-total" style="color:var(--ink);">۹۰</b></span>' +
+              '</div>' +
+              '<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-bottom:8px;">' +
+                '<label for="future-duration-select" style="font-size:10.5px;color:var(--muted);">مدت این دوره:</label>' +
+                '<select id="future-duration-select" class="dp-duration-select">' +
+                  '<option value="30">۳۰ روز</option>' +
+                  '<option value="60">۶۰ روز</option>' +
+                  '<option value="90">۹۰ روز</option>' +
+                  '<option value="120">۱۲۰ روز</option>' +
+                  '<option value="180">۱۸۰ روز</option>' +
+                  '<option value="365">۳۶۵ روز</option>' +
+                '</select>' +
               '</div>' +
               '<div class="tb-bar" style="margin:0 0 10px;height:4px;"><div class="tb-bar-fill" id="future-progress-bar" style="width:0%;"></div></div>' +
               '<div id="future-mini-cal" class="mini-cal-grid"></div>' +
@@ -732,6 +796,7 @@
       '#future-register-btn.is-done{background:var(--surface-2)!important;color:var(--emerald-700,#0f5b53)!important;border:1.5px solid var(--emerald-500)!important;box-shadow:none!important;}' +
       '.mini-cal-day.today{outline:1.5px solid var(--gold-500);outline-offset:0;}' +
       '.mini-cal-day.future{opacity:.25;}' +
+      '.dp-duration-select{font-family:inherit;font-size:10.5px;font-weight:700;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:4px 8px;cursor:pointer;}' +
       '.dp-step{margin-bottom:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;}' +
       '.dp-step-head{display:flex;align-items:center;gap:10px;}' +
       '.dp-step-num{width:26px;height:26px;border-radius:50%;background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none;}' +
@@ -908,32 +973,25 @@
     var startDate = ndKeyToDate(startKey);
     var today = new Date(); today.setHours(0,0,0,0);
     var todayKeyStr = dpTodayKey();
-    var monthNames = ['اول','دوم','سوم'];
-    var html = '';
-    for (var d = 0; d < 90; d++){
-      var date = new Date(startDate);
-      date.setDate(date.getDate() + d);
-      var key = dpKeyFromDate(date);
-      if (d % 30 === 0){
-        var endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + d + 29);
-        html += '<div class="mini-cal-month">' +
-          '<b>ماه ' + monthNames[d / 30] + '</b>' +
-          '<span>' + dpFmtDateFa(date, { day: 'numeric', month: 'long' }) + ' تا ' + dpFmtDateFa(endDate, { day: 'numeric', month: 'long' }) + '</span>' +
-        '</div>';
-      }
+    var totalDays = getVersionDuration(v);
+
+    var durSel = document.getElementById('future-duration-select');
+    if (durSel && document.activeElement !== durSel) durSel.value = String(totalDays);
+
+    wrap.innerHTML = dpBuildCalGridHtml(startDate, totalDays, function(date, key, d){
       var done = !!readSet[key];
       var isToday = key === todayKeyStr;
       var isFuture = date > today;
-      var cls = 'mini-cal-day';
+      var cls = '';
       if (done) cls += ' done';
       if (isToday) cls += ' today';
       if (isFuture) cls += ' future';
-      if (d % 30 === 29) cls += ' month-end';
       if (key === CAL_SELECTED) cls += ' selected';
-      html += '<div class="' + cls + '" data-cal-key="' + key + '" data-cal-idx="' + d + '">' + (done ? '✓' : '') + '</div>';
-    }
-    wrap.innerHTML = html;
+      return { cls: cls.trim(), html: done ? '✓' : '', attrs: 'data-cal-key="' + key + '" data-cal-idx="' + d + '"' };
+    });
+
+    var totalEl = document.getElementById('future-day-total');
+    if (totalEl) totalEl.textContent = toFa(totalDays);
 
     var info = document.getElementById('future-cal-info');
     if (!info){
@@ -948,11 +1006,11 @@
       var infoEl = document.getElementById('future-cal-info');
       infoEl.parentNode.insertBefore(rst, infoEl.nextSibling);
     }
-    var endOfCycle = new Date(startDate); endOfCycle.setDate(endOfCycle.getDate() + 90);
+    var endOfCycle = new Date(startDate); endOfCycle.setDate(endOfCycle.getDate() + totalDays);
     var finished = !!v && today >= endOfCycle;
     var doneCnt = readDays.filter(function(k){ return true; }).length;
     rst.innerHTML =
-      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ۹۰ روزه تموم شد — ' + toFa(Math.min(doneCnt, 90)) + ' روز از ۹۰ روز خوندی. برای شروع دوره‌ی تازه، تقویم رو ریست کن.</div>' : '') +
+      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ' + toFa(totalDays) + ' روزه تموم شد — ' + toFa(Math.min(doneCnt, totalDays)) + ' روز از ' + toFa(totalDays) + ' روز خوندی. برای شروع دوره‌ی تازه، تقویم رو ریست کن.</div>' : '') +
       '<button type="button" id="future-cal-reset-btn" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;">🔄 ریست تقویم</button>';
     renderCalInfo();
   }
@@ -1015,27 +1073,16 @@
     var startDate = ndKeyToDate(v ? v.startDate : dpTodayKey());
     var today = new Date(); today.setHours(0,0,0,0);
     var todayKeyStr = dpTodayKey();
-    var monthNames = ['اول','دوم','سوم'];
+    var totalDays = getVersionDuration(v);
     var html = '<div style="font-size:11.5px;font-weight:700;margin-bottom:8px;">📅 تقویم حس‌های ثبت‌شده</div><div class="mini-cal-grid">';
-    for (var d = 0; d < 90; d++){
-      var date = new Date(startDate);
-      date.setDate(date.getDate() + d);
-      var key = dpKeyFromDate(date);
-      if (d % 30 === 0){
-        var endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + d + 29);
-        html += '<div class="mini-cal-month"><b>ماه ' + monthNames[d / 30] + '</b><span>' +
-          dpFmtDateFa(date, { day: 'numeric', month: 'long' }) + ' تا ' + dpFmtDateFa(endDate, { day: 'numeric', month: 'long' }) + '</span></div>';
-      }
+    html += dpBuildCalGridHtml(startDate, totalDays, function(date, key, d){
       var rec = emoDayRecord(key);
-      var cls = 'mini-cal-day';
-      if (rec) cls += ' emo-' + rec.tier;
+      var cls = rec ? ('emo-' + rec.tier) : '';
       if (key === todayKeyStr) cls += ' today';
       if (date > today) cls += ' future';
-      if (d % 30 === 29) cls += ' month-end';
       if (key === EMO_SELECTED) cls += ' selected';
-      html += '<div class="' + cls + '" data-emo-key="' + key + '">' + (rec ? (rec.top.icon || '♥') : '') + '</div>';
-    }
+      return { cls: cls.trim(), html: rec ? (rec.top.icon || '♥') : '', attrs: 'data-emo-key="' + key + '"' };
+    });
     html += '</div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:10px;color:var(--muted);">' +
         '<span><i class="emo-dot" style="background:var(--emerald-500);"></i> پرقدرت</span>' +
@@ -1375,12 +1422,15 @@
     if (countEl) countEl.textContent = toFa(totalDays * 2) + ' جلسه';
 
     var v = getActiveVersion();
+    var versionTotalDays = getVersionDuration(v);
     var readDays = v && v.readDays ? v.readDays.length : 0;
-    var doneCount = Math.min(readDays, 90);
+    var doneCount = Math.min(readDays, versionTotalDays);
     var numEl = document.getElementById('future-day-num');
+    var totalNumEl = document.getElementById('future-day-total');
     var pbar = document.getElementById('future-progress-bar');
     if (numEl) numEl.textContent = toFa(doneCount);
-    if (pbar) pbar.style.width = (doneCount / 90 * 100) + '%';
+    if (totalNumEl) totalNumEl.textContent = toFa(versionTotalDays);
+    if (pbar) pbar.style.width = (doneCount / versionTotalDays * 100) + '%';
 
     var em = document.getElementById('dp-emotion-feedback');
     if (em){
@@ -1498,7 +1548,7 @@
     var v = getActiveVersion();
     if (v && newText === v.text){ closeFutureEditor(); return; }
     if (v) v.endDate = dpTodayKey();
-    var newV = { id: 'v_' + Date.now(), text: newText, startDate: dpTodayKey(), endDate: null, readDays: [] };
+    var newV = { id: 'v_' + Date.now(), text: newText, startDate: dpTodayKey(), endDate: null, readDays: [], durationDays: DP_DEFAULT_DURATION };
     if (!Array.isArray(state.futureTextVersions)) state.futureTextVersions = [];
     state.futureTextVersions.push(newV);
     state.activeFutureVersionId = newV.id;
@@ -1541,7 +1591,7 @@
   function saveFutureAudio(dataUrl){
     var v = getActiveVersion();
     if (v) v.endDate = dpTodayKey();
-    var newV = { id: 'v_' + Date.now(), text: '', audio: dataUrl, startDate: dpTodayKey(), endDate: null, readDays: [] };
+    var newV = { id: 'v_' + Date.now(), text: '', audio: dataUrl, startDate: dpTodayKey(), endDate: null, readDays: [], durationDays: DP_DEFAULT_DURATION };
     if (!Array.isArray(state.futureTextVersions)) state.futureTextVersions = [];
     state.futureTextVersions.push(newV);
     state.activeFutureVersionId = newV.id;
@@ -1788,6 +1838,19 @@
       if (id === 'seed-text-input'){ onSeedTextInput(e.target.value); }
     });
 
+    document.addEventListener('change', function(e){
+      if (!e.target) return;
+      if (e.target.id === 'future-duration-select'){
+        var v = getActiveVersion();
+        if (!v){ if (typeof toast === 'function') toast('اول متن خواسته‌ات را بنویس'); return; }
+        v.durationDays = dpClampDuration(e.target.value);
+        try { saveState(); } catch(e2){}
+        renderMiniCal();
+        dpRenderProgress();
+        if (typeof toast === 'function') toast('مدت دوره روی ' + toFa(v.durationDays) + ' روز تنظیم شد');
+      }
+    });
+
     document.addEventListener('visibilitychange', function(){
       if (document.hidden) stopNothingWaves();
       else startNothingWaves();
@@ -1802,6 +1865,30 @@
       if (el) el.value = state.dispenzaPossibilities[k];
     });
   }
+
+  /* =====================================================================
+     خروجی عمومی: موتور تقویمِ «ماه اول/دوم/سوم...» برای استفاده‌ی هر تب دیگه‌ای
+     توی برنامه (نه فقط باورها) — هر تب می‌تونه با DP_CAL.buildGridHtml یک
+     تقویم با مدت دلخواه و قابل‌تغییر بسازه، بدون اینکه کد رو تکرار کنه.
+     مثال استفاده از یک تب دیگه:
+       var html = window.DP_CAL.buildGridHtml(startDateObj, totalDays, function(date, key, dayIdx){
+         return { cls: done ? 'done' : '', html: done ? '✓' : '', attrs: 'data-key="' + key + '"' };
+       });
+     ===================================================================== */
+  window.DP_CAL = {
+    buildGridHtml: dpBuildCalGridHtml,
+    clampDuration: dpClampDuration,
+    monthLabelFa: dpMonthLabelFa,
+    todayKey: dpTodayKey,
+    keyFromDate: dpKeyFromDate,
+    dateFromKey: ndKeyToDate,
+    fmtDateFa: dpFmtDateFa,
+    fmtTime: dpFmtTime,
+    toFa: toFa,
+    defaultDuration: DP_DEFAULT_DURATION,
+    minDuration: DP_MIN_DURATION,
+    maxDuration: DP_MAX_DURATION
+  };
 
   function boot(){
     if (!ensureState()){ setTimeout(boot, 100); return; }
