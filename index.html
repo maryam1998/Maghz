@@ -1131,6 +1131,17 @@ html[data-theme="dark"] .np-emotion-row button{
     height:100%; border-radius:4px;
     background:linear-gradient(90deg, var(--gold-300), var(--gold-500));
   }
+/* تقویم روزهای دوره‌ی شکرگذاری: هم‌تراز با بقیه‌ی کارت‌های صفحه (margin ۱۸px) و داخل کادر */
+#grat-root #gratitude-mini-cal{
+    display:grid; grid-template-columns:repeat(15, minmax(0,1fr)); gap:3px;
+    margin:14px 18px 0; padding:14px;
+    width:auto; max-width:calc(100% - 36px); box-sizing:border-box; overflow:hidden;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  }
+#grat-root #gratitude-mini-cal .mini-cal-month{ min-width:0; padding:8px 2px 3px; }
+#grat-root #gratitude-mini-cal .mini-cal-month:first-child{ padding-top:0; }
+#grat-root #gratitude-mini-cal .mini-cal-day{ min-width:0; }
+#grat-root #gratitude-mini-cal-info{ margin:0 18px; }
 #grat-root .cta-buy{
     display:flex; align-items:center; justify-content:center; gap:8px;
     margin:16px 18px 4px;
@@ -6554,6 +6565,7 @@ function gratitudeDoneDaySet(){
 
 /* شبکه‌ی روزهای دوره، دقیقاً به سبک همون تقویم ۹۰ روزه‌ی تب باورها؛
    با این تفاوت که طول دوره را خودِ کاربر تعیین کرده. */
+const MONTH_ORDINALS_FA = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم'];
 function renderGratitudeMiniCal(){
   const wrap = document.getElementById('gratitude-mini-cal');
   const info2 = document.getElementById('gratitude-mini-cal-info');
@@ -6580,7 +6592,9 @@ function renderGratitudeMiniCal(){
         fromFa = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {day:'numeric', month:'long'}).format(date);
         toFa2  = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {day:'numeric', month:'long'}).format(endDate);
       }catch(e){ fromFa = ''; toFa2 = ''; }
-      html += '<div class="mini-cal-month"><b>ماه ' + (Math.floor(d/blockSize)+1).toLocaleString('fa-IR') + '</b>' +
+      const mIdx = Math.floor(d/blockSize);
+      const monthLabel = MONTH_ORDINALS_FA[mIdx] || (mIdx+1).toLocaleString('fa-IR');
+      html += '<div class="mini-cal-month"><b>ماه ' + monthLabel + '</b>' +
         '<span>' + fromFa + ' تا ' + toFa2 + '</span></div>';
     }
     const done = !!doneSet[key];

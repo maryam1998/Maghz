@@ -122,6 +122,28 @@
   }
   window.getTodayEmotionQualityFor = getTodayEmotionQualityFor;
 
+  /* سطح حسِ ثبت‌شده‌ی «تمرین روزانه» برای یک روز مشخص (برای تقویم ۹۰ روزه).
+     همان آستانه‌های پیام «حس پرقدرت / ضعیف» بالا: ≥۵۰۰ پرقدرت، <۲۰۰ ضعیف، بقیه معمولی.
+     اگر حسی ثبت نشده باشه null برمی‌گرده. */
+  var FEEL_LEVEL_FA = { strong: 'پرقدرت', normal: 'معمولی', weak: 'ضعیف' };
+  function dpDayEmotion(dk){
+    var em = state.practiceEmotions || {};
+    var rec = em[dk] && em[dk].dispenza;
+    if (!rec || !rec.after || !rec.after.length) return null;
+    var maxFreq = 0, names = [];
+    rec.after.forEach(function(id){
+      var e = (typeof EMOTION_BY_ID !== 'undefined') ? EMOTION_BY_ID[id] : null;
+      if (!e) return;
+      names.push(e.fa);
+      if (e.freq > maxFreq) maxFreq = e.freq;
+    });
+    if (maxFreq <= 0) return null;
+    var level = maxFreq >= 500 ? 'strong' : (maxFreq < 200 ? 'weak' : 'normal');
+    return { level: level, names: names };
+  }
+  var HEART_SVG = '<svg viewBox="0 0 24 24" width="62%" height="62%" aria-hidden="true" style="display:block;">' +
+    '<path fill="#fff" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+
   /* =====================================================================
      راهنما
      ===================================================================== */
@@ -715,6 +737,12 @@
       '.mini-cal-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:100%;}' +
       '.mini-cal-day{aspect-ratio:1;border-radius:4px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;line-height:1;cursor:pointer;}' +
       '.mini-cal-day.done{background:var(--emerald-500);}' +
+      '.mini-cal-day.feel-strong{background:var(--emerald-500);}' +
+      '.mini-cal-day.feel-normal{background:var(--emerald-300);}' +
+      '.mini-cal-day.feel-weak{background:var(--gold-500);}' +
+      '.cal-legend{display:flex;align-items:center;gap:14px;margin-top:10px;font-size:11px;color:var(--muted);}' +
+      '.cal-legend span{display:inline-flex;align-items:center;gap:5px;}' +
+      '.cal-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none;}' +
       '.mini-cal-day.month-end{box-shadow:inset 0 -3px 0 var(--gold-500);}' +
       '.mini-cal-day.selected{outline:2px solid var(--ink);outline-offset:1px;}' +
       '.mini-cal-day.just{animation:calPop .5s ease-out;}' +
@@ -918,24 +946,38 @@
         '</div>';
       }
       var done = !!readSet[key];
+      var feel = dpDayEmotion(key);
       var isToday = key === todayKeyStr;
       var isFuture = date > today;
       var cls = 'mini-cal-day';
       if (done) cls += ' done';
+      if (feel) cls += ' feel feel-' + feel.level;
       if (isToday) cls += ' today';
       if (isFuture) cls += ' future';
       if (d % 30 === 29) cls += ' month-end';
       if (key === CAL_SELECTED) cls += ' selected';
-      html += '<div class="' + cls + '" data-cal-key="' + key + '" data-cal-idx="' + d + '">' + (done ? '✓' : '') + '</div>';
+      html += '<div class="' + cls + '" data-cal-key="' + key + '" data-cal-idx="' + d + '">' + (feel ? HEART_SVG : (done ? '✓' : '')) + '</div>';
     }
     wrap.innerHTML = html;
+
+    var legend = document.getElementById('future-cal-legend');
+    if (!legend){
+      legend = document.createElement('div');
+      legend.id = 'future-cal-legend';
+      legend.className = 'cal-legend';
+      legend.innerHTML =
+        '<span><i style="background:var(--emerald-500);"></i>' + FEEL_LEVEL_FA.strong + '</span>' +
+        '<span><i style="background:var(--emerald-300);"></i>' + FEEL_LEVEL_FA.normal + '</span>' +
+        '<span><i style="background:var(--gold-500);"></i>' + FEEL_LEVEL_FA.weak + '</span>';
+    }
+    if (legend.previousSibling !== wrap) wrap.parentNode.insertBefore(legend, wrap.nextSibling);
 
     var info = document.getElementById('future-cal-info');
     if (!info){
       info = document.createElement('div');
       info.id = 'future-cal-info';
-      wrap.parentNode.insertBefore(info, wrap.nextSibling);
     }
+    if (info.previousSibling !== legend) wrap.parentNode.insertBefore(info, legend.nextSibling);
     var rst = document.getElementById('future-cal-reset');
     if (!rst){
       rst = document.createElement('div');
@@ -989,8 +1031,12 @@
     if (read) status = '<b style="color:var(--emerald-700,#0f5b53);">✓ خوانده شد</b> — ساعت ' + (ms ? dpFmtTime(ms) : '<span style="opacity:.6;">ثبت نشده (قدیمی)</span>');
     else if (date > today) status = '<span style="opacity:.7;">هنوز نرسیده</span>';
     else status = '<span style="opacity:.7;">خوانده نشده</span>';
+    var feel = dpDayEmotion(CAL_SELECTED);
+    var feelTxt = feel
+      ? '<div style="margin-top:3px;">💗 حس ثبت‌شده: <b>' + FEEL_LEVEL_FA[feel.level] + '</b>' + (feel.names.length ? ' — ' + feel.names.join('، ') : '') + '</div>'
+      : '';
     info.style.display = 'block';
-    info.innerHTML = '<div>' + dateTxt + '</div><div style="margin-top:3px;">' + status + '</div>';
+    info.innerHTML = '<div>' + dateTxt + '</div><div style="margin-top:3px;">' + status + '</div>' + feelTxt;
   }
 
   function updateRegisterBtn(){
@@ -1538,6 +1584,21 @@
     window.renderBeliefsView.__patchedV13 = true;
   }
 
+  /* وقتی کاربر «💗 ثبت حس» رو می‌زنه، تقویم ۹۰ روزه همون لحظه قلب رو نشون بده */
+  function wrapEmotionSave(){
+    if (typeof window.saveEmotionCaptureFromWidget !== 'function') return;
+    if (window.saveEmotionCaptureFromWidget.__calPatched) return;
+    var original = window.saveEmotionCaptureFromWidget;
+    window.saveEmotionCaptureFromWidget = function(){
+      var r;
+      try { r = original.apply(this, arguments); } catch(e){ console.warn('[emotion-save]', e); }
+      try { renderMiniCal(); } catch(e){}
+      try { dpRenderProgress(); } catch(e){}
+      return r;
+    };
+    window.saveEmotionCaptureFromWidget.__calPatched = true;
+  }
+
   function wireEvents(){
     document.addEventListener('click', function(e){
       var t = e.target;
@@ -1680,6 +1741,7 @@
     rebuildBeliefsView();
     overrideRenderAll();
     wrapRenderBeliefsView();
+    wrapEmotionSave();
     wireEvents();
     dpRestorePossibilities();
     try { renderFutureText(); } catch(e){}
