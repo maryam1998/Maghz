@@ -29,6 +29,32 @@
     return new Date(p[0], p[1]-1, p[2]);
   }
 
+  /* کلید روز دقیقاً هم‌فرمت dpTodayKey (با صفرِ ابتدایی) تا تقویم و ثبت روزها با هم بخوانند */
+  function dpKeyFromDate(date){
+    if (typeof dayKeyFromDate === 'function') return dayKeyFromDate(date);
+    return date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate();
+  }
+  function dpFmtTime(ms){
+    try { return new Date(ms).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false }); }
+    catch(e){ return ''; }
+  }
+  function dpFmtDateFa(date, opts){
+    try {
+      var parts = new Intl.DateTimeFormat('fa-IR-u-ca-persian', opts).formatToParts(date);
+      var m = {};
+      parts.forEach(function(p){ m[p.type] = p.value; });
+      return [m.weekday, m.day, m.month, m.year].filter(Boolean).join(' ');
+    } catch(e){ return date.toLocaleDateString(); }
+  }
+  function dpMarkRead(v, dk){
+    if (!v) return;
+    if (!Array.isArray(v.readDays)) v.readDays = [];
+    if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
+    if (!v.readTimes || typeof v.readTimes !== 'object') v.readTimes = {};
+    if (!v.readTimes[dk]) v.readTimes[dk] = Date.now();
+  }
+  var CAL_SELECTED = null;
+
   function ensureState(){
     if (typeof state === 'undefined' || !state) return false;
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
@@ -675,8 +701,17 @@
       '.future-rec-btn.recording{background:#e5484d;color:#fff;font-size:12px;animation:recPulse 1.2s ease-in-out infinite;}' +
       '@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(229,72,77,.5);}50%{box-shadow:0 0 0 7px rgba(229,72,77,0);}}' +
       '.mini-cal-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:100%;}' +
-      '.mini-cal-day{aspect-ratio:1;border-radius:4px;background:var(--surface-2);}' +
+      '.mini-cal-day{aspect-ratio:1;border-radius:4px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;line-height:1;cursor:pointer;}' +
       '.mini-cal-day.done{background:var(--emerald-500);}' +
+      '.mini-cal-day.month-end{box-shadow:inset 0 -3px 0 var(--gold-500);}' +
+      '.mini-cal-day.selected{outline:2px solid var(--ink);outline-offset:1px;}' +
+      '.mini-cal-day.just{animation:calPop .5s ease-out;}' +
+      '@keyframes calPop{0%{transform:scale(.4);}60%{transform:scale(1.3);}100%{transform:scale(1);}}' +
+      '.mini-cal-month{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--ink-soft);padding:6px 2px 2px;}' +
+      '.mini-cal-month:first-child{padding-top:0;}' +
+      '.mini-cal-month b{font-size:11px;color:var(--ink);}' +
+      '#future-cal-info{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:11px;line-height:1.7;color:var(--ink-soft);}' +
+      '#future-register-btn.is-done{background:var(--surface-2)!important;color:var(--emerald-700,#0f5b53)!important;border:1.5px solid var(--emerald-500)!important;box-shadow:none!important;}' +
       '.mini-cal-day.today{outline:1.5px solid var(--gold-500);outline-offset:0;}' +
       '.mini-cal-day.future{opacity:.25;}' +
       '.dp-step{margin-bottom:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;}' +
@@ -840,6 +875,7 @@
     }
     if (archiveCount) archiveCount.textContent = toFa((state.futureTextVersions || []).length);
     renderMiniCal();
+    updateRegisterBtn();
     renderArchiveBox();
   }
 
@@ -854,11 +890,20 @@
     var startDate = ndKeyToDate(startKey);
     var today = new Date(); today.setHours(0,0,0,0);
     var todayKeyStr = dpTodayKey();
+    var monthNames = ['اول','دوم','سوم'];
     var html = '';
     for (var d = 0; d < 90; d++){
       var date = new Date(startDate);
       date.setDate(date.getDate() + d);
-      var key = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate();
+      var key = dpKeyFromDate(date);
+      if (d % 30 === 0){
+        var endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + d + 29);
+        html += '<div class="mini-cal-month">' +
+          '<b>ماه ' + monthNames[d / 30] + '</b>' +
+          '<span>' + dpFmtDateFa(date, { day: 'numeric', month: 'long' }) + ' تا ' + dpFmtDateFa(endDate, { day: 'numeric', month: 'long' }) + '</span>' +
+        '</div>';
+      }
       var done = !!readSet[key];
       var isToday = key === todayKeyStr;
       var isFuture = date > today;
@@ -866,9 +911,51 @@
       if (done) cls += ' done';
       if (isToday) cls += ' today';
       if (isFuture) cls += ' future';
-      html += '<div class="' + cls + '" title="' + key + '"></div>';
+      if (d % 30 === 29) cls += ' month-end';
+      if (key === CAL_SELECTED) cls += ' selected';
+      html += '<div class="' + cls + '" data-cal-key="' + key + '" data-cal-idx="' + d + '">' + (done ? '✓' : '') + '</div>';
     }
     wrap.innerHTML = html;
+
+    var info = document.getElementById('future-cal-info');
+    if (!info){
+      info = document.createElement('div');
+      info.id = 'future-cal-info';
+      wrap.parentNode.insertBefore(info, wrap.nextSibling);
+    }
+    renderCalInfo();
+  }
+
+  function renderCalInfo(){
+    var info = document.getElementById('future-cal-info');
+    if (!info) return;
+    if (!CAL_SELECTED){ info.style.display = 'none'; info.innerHTML = ''; return; }
+    var v = getActiveVersion();
+    var date = ndKeyToDate(CAL_SELECTED);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var read = !!(v && (v.readDays || []).indexOf(CAL_SELECTED) !== -1);
+    var ms = read && v.readTimes ? v.readTimes[CAL_SELECTED] : null;
+    var dateTxt = dpFmtDateFa(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
+      ' <span style="opacity:.6;">(' + CAL_SELECTED + ')</span>';
+    var status;
+    if (read) status = '<b style="color:var(--emerald-700,#0f5b53);">✓ خوانده شد</b> — ساعت ' + (ms ? dpFmtTime(ms) : '<span style="opacity:.6;">ثبت نشده (قدیمی)</span>');
+    else if (date > today) status = '<span style="opacity:.7;">هنوز نرسیده</span>';
+    else status = '<span style="opacity:.7;">خوانده نشده</span>';
+    info.style.display = 'block';
+    info.innerHTML = '<div>' + dateTxt + '</div><div style="margin-top:3px;">' + status + '</div>';
+  }
+
+  function updateRegisterBtn(){
+    var btn = document.getElementById('future-register-btn');
+    if (!btn) return;
+    var v = getActiveVersion();
+    var dk = dpTodayKey();
+    var read = !!(v && (v.readDays || []).indexOf(dk) !== -1);
+    var ms = read && v.readTimes ? v.readTimes[dk] : null;
+    btn.classList.toggle('is-done', read);
+    btn.innerHTML = read
+      ? '✓ امروز ثبت شد' + (ms ? ' — ساعت ' + dpFmtTime(ms) : '')
+      : '✅ امروز خوندم — ثبت کن';
   }
 
   function renderArchiveBox(){
@@ -1359,8 +1446,8 @@
     var dk = dpTodayKey();
     var v = getActiveVersion();
     if (!v || (!v.text && !v.audio)){ if (typeof toast === 'function') toast('اول متن خواسته‌ات را بنویس یا ویس ضبط کن'); return; }
-    if (!Array.isArray(v.readDays)) v.readDays = [];
-    if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
+    dpMarkRead(v, dk);
+    CAL_SELECTED = dk;
     if (!state.futureReadDays) state.futureReadDays = [];
     if (state.futureReadDays.indexOf(dk) === -1) state.futureReadDays.push(dk);
     if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
@@ -1369,7 +1456,7 @@
     if (dn && typeof neuralAddFiber === 'function') neuralAddFiber(dn, {calendarLinked:false});
     try { saveState(); } catch(e){}
     renderFutureText(); dpRenderProgress(); renderOurNeuralPathways();
-    if (typeof toast === 'function') toast('✓ امروز ثبت شد — یک مسیر عصبی تازه ساخت شد');
+    if (typeof toast === 'function') toast('✓ امروز ثبت شد — ساعت ' + dpFmtTime(v.readTimes[dk]));
   }
 
   function renderOurNeuralPathways(){
@@ -1460,7 +1547,15 @@
       if (t.id === 'future-save-btn'){ saveFutureText(); return; }
       if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
       if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
-      if (t.id === 'future-register-btn'){ registerTodayRead(); return; }
+      if (t.closest('#future-register-btn')){ registerTodayRead(); return; }
+      var calCell = t.closest('.mini-cal-day[data-cal-key]');
+      if (calCell){
+        CAL_SELECTED = calCell.dataset.calKey;
+        document.querySelectorAll('.mini-cal-day.selected').forEach(function(x){ x.classList.remove('selected'); });
+        calCell.classList.add('selected');
+        renderCalInfo();
+        return;
+      }
       var delVerBtn = t.closest('[data-delete-version]');
       if (delVerBtn){ deleteFutureVersion(delVerBtn.dataset.deleteVersion); return; }
       var actBtn = t.closest('[data-activate-version]');
@@ -1494,10 +1589,7 @@
         if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
         if (state.dispenzaReadDays.indexOf(dk) === -1) state.dispenzaReadDays.push(dk);
         var v = getActiveVersion();
-        if (v){
-          if (!Array.isArray(v.readDays)) v.readDays = [];
-          if (v.readDays.indexOf(dk) === -1) v.readDays.push(dk);
-        }
+        if (v) dpMarkRead(v, dk);
         if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
         state.dispenzaDailyProgress[dk] = [];
         try { saveState(); } catch(e2){}
