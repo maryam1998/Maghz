@@ -55,6 +55,20 @@
   }
   var CAL_SELECTED = null;
 
+  /* کانتینر مسیر عصبی «تمرین روزانه». اگه تابع اصلی برنامه (ensureDispenzaNeural) نبود یا
+     چیزی برنگردوند، یک کانتینر خودمون توی state می‌سازیم تا ثبت روزانه حتماً رشته بسازه. */
+  function dpGetNeural(){
+    var dn = null;
+    try { if (typeof ensureDispenzaNeural === 'function') dn = ensureDispenzaNeural(); } catch(e){ console.warn('[dispenza-neural]', e); }
+    if (!dn || typeof dn !== 'object'){
+      if (!state.dispenzaNeural || typeof state.dispenzaNeural !== 'object') state.dispenzaNeural = {};
+      dn = state.dispenzaNeural;
+    }
+    if (!dn.logs || typeof dn.logs !== 'object') dn.logs = {};
+    if (!dn.pendingManual || typeof dn.pendingManual !== 'object') dn.pendingManual = {};
+    return dn;
+  }
+
   function ensureState(){
     if (typeof state === 'undefined' || !state) return false;
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
@@ -630,8 +644,6 @@
         '</div>' +
 
         /* دکمه نهایی */
-        '<button type="button" id="dp-complete-btn" style="width:100%;margin-top:16px;padding:14px;font-size:13.5px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px rgba(15,91,83,.2);">✨ ثبت جلسه‌ی امروز</button>' +
-        '<div id="dp-progress-hint" style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;">۰ از ۶ مرحله</div>' +
 
         /* ماموریت به ذهن */
         '<div class="dp-step dp-bonus-step" style="margin-top:18px;">' +
@@ -710,6 +722,7 @@
       '.mini-cal-month{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--ink-soft);padding:6px 2px 2px;}' +
       '.mini-cal-month:first-child{padding-top:0;}' +
       '.mini-cal-month b{font-size:11px;color:var(--ink);}' +
+      '.cal-finished{margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(244,197,66,.16);border:1px solid rgba(244,197,66,.45);font-size:11.5px;font-weight:700;line-height:1.8;color:var(--ink);}' +
       '#future-cal-info{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:11px;line-height:1.7;color:var(--ink-soft);}' +
       '#future-register-btn.is-done{background:var(--surface-2)!important;color:var(--emerald-700,#0f5b53)!important;border:1.5px solid var(--emerald-500)!important;box-shadow:none!important;}' +
       '.mini-cal-day.today{outline:1.5px solid var(--gold-500);outline-offset:0;}' +
@@ -923,7 +936,42 @@
       info.id = 'future-cal-info';
       wrap.parentNode.insertBefore(info, wrap.nextSibling);
     }
+    var rst = document.getElementById('future-cal-reset');
+    if (!rst){
+      rst = document.createElement('div');
+      rst.id = 'future-cal-reset';
+      var infoEl = document.getElementById('future-cal-info');
+      infoEl.parentNode.insertBefore(rst, infoEl.nextSibling);
+    }
+    var endOfCycle = new Date(startDate); endOfCycle.setDate(endOfCycle.getDate() + 90);
+    var finished = !!v && today >= endOfCycle;
+    var doneCnt = readDays.filter(function(k){ return true; }).length;
+    rst.innerHTML =
+      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ۹۰ روزه تموم شد — ' + toFa(Math.min(doneCnt, 90)) + ' روز از ۹۰ روز خوندی. برای شروع دوره‌ی تازه، تقویم رو ریست کن.</div>' : '') +
+      '<button type="button" id="future-cal-reset-btn" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;">🔄 ریست تقویم</button>';
     renderCalInfo();
+  }
+
+  function resetFutureCalendar(){
+    var v = getActiveVersion();
+    if (!v){ if (typeof toast === 'function') toast('اول متن خواسته‌ات را بنویس'); return; }
+    var msg = 'تقویم از امروز از نو شروع بشه؟\nثبت‌های این دوره در تاریخچه‌ی همین نسخه نگه داشته می‌شن. متن و مسیر عصبی دست نمی‌خورن.';
+    var ok = true;
+    try { ok = window.confirm(msg); } catch(e){}
+    if (!ok) return;
+    if (!Array.isArray(v.cycles)) v.cycles = [];
+    if ((v.readDays || []).length){
+      v.cycles.push({ startDate: v.startDate, endDate: dpTodayKey(), readDays: (v.readDays || []).slice(), readTimes: Object.assign({}, v.readTimes || {}) });
+    }
+    v.startDate = dpTodayKey();
+    v.readDays = [];
+    v.readTimes = {};
+    state.futureStartDate = v.startDate;
+    state.futureReadDays = v.readDays;
+    CAL_SELECTED = null;
+    try { saveState(); } catch(e){}
+    renderFutureText(); dpRenderProgress();
+    if (typeof toast === 'function') toast('تقویم ریست شد — دوره‌ی تازه از امروز 🌱');
   }
 
   function renderCalInfo(){
@@ -1452,8 +1500,9 @@
     if (state.futureReadDays.indexOf(dk) === -1) state.futureReadDays.push(dk);
     if (!state.dispenzaReadDays) state.dispenzaReadDays = [];
     if (state.dispenzaReadDays.indexOf(dk) === -1) state.dispenzaReadDays.push(dk);
-    var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
-    if (dn && typeof neuralAddFiber === 'function') neuralAddFiber(dn, {calendarLinked:false});
+    var dn = dpGetNeural();
+    if (typeof neuralAddFiber === 'function') neuralAddFiber(dn, {calendarLinked:false});
+    else { dn.logs['f' + Date.now() + '-' + Math.random().toString(36).slice(2,8)] = true; }
     try { saveState(); } catch(e){}
     renderFutureText(); dpRenderProgress(); renderOurNeuralPathways();
     if (typeof toast === 'function') toast('✓ امروز ثبت شد — ساعت ' + dpFmtTime(v.readTimes[dk]));
@@ -1463,8 +1512,7 @@
     if (typeof renderNeuralPathway !== 'function') return;
     if (!document.getElementById('np-dispenza-mount')) return;
     try {
-      var dn = (typeof ensureDispenzaNeural === 'function') ? ensureDispenzaNeural() : null;
-      if (!dn) return;
+      var dn = dpGetNeural();
       renderNeuralPathway('np-dispenza-mount', dn, {
         label: 'تمرین روزانه', practiceKey: 'dispenza', onChange: saveState
       });
@@ -1548,6 +1596,7 @@
       if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
       if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
       if (t.closest('#future-register-btn')){ registerTodayRead(); return; }
+      if (t.closest('#future-cal-reset-btn')){ resetFutureCalendar(); return; }
       var calCell = t.closest('.mini-cal-day[data-cal-key]');
       if (calCell){
         CAL_SELECTED = calCell.dataset.calKey;
