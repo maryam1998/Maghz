@@ -2779,27 +2779,6 @@ body.bg-mode-image #grat-root{background:transparent;}
   </div>
 </div>
 
-<!-- per-goal/branch progress calendar modal -->
-<div class="overlay hidden" id="cal-modal-overlay">
-  <div class="modal cal-modal">
-    <div class="cal-modal-head">
-      <h2 id="cal-modal-title">تقویم</h2>
-      <button class="cal-x" id="cal-close-btn">✕</button>
-    </div>
-    <div class="cal-tabs">
-      <button type="button" class="cal-tab" data-view="day">روزانه</button>
-      <button type="button" class="cal-tab" data-view="month">ماهانه</button>
-      <button type="button" class="cal-tab" data-view="year">سالانه</button>
-    </div>
-    <div class="cal-nav">
-      <button type="button" class="cal-nav-btn" id="cal-prev-btn">‹</button>
-      <span id="cal-nav-label"></span>
-      <button type="button" class="cal-nav-btn" id="cal-next-btn">›</button>
-    </div>
-    <div id="cal-body"></div>
-  </div>
-</div>
-
 <script>
 /* ===== ابزار برش عکس (Crop) — برای همه‌ی جاهایی که عکس اضافه می‌شود ===== */
 (function(){
@@ -3338,12 +3317,6 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   svg.addEventListener('pointerdown', (e)=>{
     if (e.target.closest('.feeling-textarea')) return;
-    const calIcon = e.target.closest('[data-cal-goal]');
-    if (calIcon){
-      e.preventDefault();
-      openCalendarForGoalId(calIcon.dataset.calGoal);
-      return;
-    }
     const routineToggle = e.target.closest('[data-routine-toggle]');
     if (routineToggle){
       e.preventDefault();
@@ -4494,11 +4467,6 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (g.reached){
         html += reachedFeelingSVG(g);
       }
-      const calIx = g.x + r*0.72 + 8, calIy = g.y + r*0.72 + 8;
-      html += `<g data-cal-goal="${g.id}" style="cursor:pointer;pointer-events:all;">
-        <circle cx="${calIx}" cy="${calIy}" r="11" fill="${NODE_FILL}" stroke="${g.color}" stroke-width="1.6"/>
-        <text x="${calIx}" y="${calIy+4}" text-anchor="middle" font-size="12" style="pointer-events:none;">📅</text>
-      </g>`;
     });
 
     state.rings.forEach(r=>{
@@ -5435,179 +5403,6 @@ body.bg-mode-image #grat-root{background:transparent;}
     try{ renderPanelPeriodCal(); }catch(e){}
   }
 
-  let calTarget = null;
-  let calView = 'day';
-  let calCursor = null;
-  let calTodayKey = '';
-
-  function getCalNode(){
-    if (!calTarget) return null;
-    if (calTarget.type === 'goal') return state.goals.find(g=>g.id===calTarget.id) || null;
-    if (calTarget.type === 'action'){
-      const g = state.goals.find(g=>g.id===calTarget.goalId);
-      if (!g) return null;
-      const found = findActionNode(g.actions, calTarget.actionId);
-      return found ? found.node : null;
-    }
-    return null;
-  }
-
-  // یه شاخه/زیرشاخه واقعی رو با متنِ همون روزِ ثبت‌شده در تقویم هماهنگ نگه می‌داره،
-  // تا لازم نباشه یک بار توی تقویم و یک بار به‌صورت جدا توی شاخه‌ها تایپ کنی.
-  function syncCalLogToBranch(node, key, txt){
-    if (!calTarget) return;
-    const parentList = calTarget.type === 'goal' ? node.actions
-      : (Array.isArray(node.children) ? node.children : (node.children = []));
-    if (!node.logBranchIds || typeof node.logBranchIds !== 'object') node.logBranchIds = {};
-    const existingId = node.logBranchIds[key];
-    const found = existingId ? findActionNode(parentList, existingId) : null;
-
-    if (!txt){
-      if (found) found.list.splice(found.list.indexOf(found.node), 1);
-      delete node.logBranchIds[key];
-      return;
-    }
-    if (found){
-      found.node.text = txt;
-      return;
-    }
-    const [jy,jm,jd] = key.split('-').map(Number);
-    const g = toGregorianCal(jy,jm,jd);
-    const a = { id:uid(), text:txt, weight:5, color:null, children:[], detached:false, images:[], radius:12, createdAt: new Date(g.gy, g.gm-1, g.gd).getTime() };
-    parentList.push(a);
-    node.logBranchIds[key] = a.id;
-  }
-
-  function openCalendarForTarget(target){
-    calTarget = target;
-    const node = getCalNode();
-    if (!node) return;
-    if (!node.logs || typeof node.logs !== 'object') node.logs = {};
-    const today = new Date();
-    const jt = toJalaali(today.getFullYear(), today.getMonth()+1, today.getDate());
-    calTodayKey = calDKey(jt.jy, jt.jm, jt.jd);
-    calCursor = { jy:jt.jy, jm:jt.jm, jd:jt.jd };
-    document.getElementById('cal-modal-title').textContent = '📅 ' + (node.text || node.name || 'تقویم پیشرفت');
-    document.getElementById('cal-modal-overlay').classList.remove('hidden');
-    setCalTab('day');
-  }
-
-  function openCalendarForCurrentPanel(){
-    if (!panelTarget) return;
-    if (panelTarget.type === 'goal') openCalendarForTarget({type:'goal', id: panelTarget.id});
-    else if (panelTarget.type === 'action') openCalendarForTarget({type:'action', goalId: panelTarget.goalId, actionId: panelTarget.actionId});
-  }
-
-  function openCalendarForGoalId(goalId){
-    openCalendarForTarget({type:'goal', id: goalId});
-  }
-
-  function setCalTab(view){
-    calView = view;
-    document.querySelectorAll('.cal-tab').forEach(b=> b.classList.toggle('active', b.dataset.view===view));
-    renderCalBody();
-  }
-
-  function calNavStep(delta){
-    if (!calCursor) return;
-    if (calView === 'day'){
-      const g = toGregorianCal(calCursor.jy, calCursor.jm, calCursor.jd);
-      const d = new Date(g.gy, g.gm-1, g.gd);
-      d.setDate(d.getDate()+delta);
-      const j = toJalaali(d.getFullYear(), d.getMonth()+1, d.getDate());
-      calCursor = {jy:j.jy, jm:j.jm, jd:j.jd};
-    } else if (calView === 'month'){
-      let jm = calCursor.jm + delta, jy = calCursor.jy;
-      if (jm > 12){ jm = 1; jy++; }
-      if (jm < 1){ jm = 12; jy--; }
-      calCursor = {jy, jm, jd: Math.min(calCursor.jd, jalaaliMonthLength(jy,jm))};
-    } else if (calView === 'year'){
-      calCursor = {jy: calCursor.jy+delta, jm: calCursor.jm, jd: calCursor.jd};
-    }
-    renderCalBody();
-  }
-
-  function renderCalBody(){
-    const node = getCalNode();
-    const body = document.getElementById('cal-body');
-    const navLabel = document.getElementById('cal-nav-label');
-    if (!node || !calCursor){ body.innerHTML=''; return; }
-    if (!node.logs || typeof node.logs !== 'object') node.logs = {};
-
-    if (calView === 'day'){
-      navLabel.textContent = toFa(calCursor.jd)+' '+JALALI_MONTHS[calCursor.jm-1]+' '+toFa(calCursor.jy);
-      const key = calDKey(calCursor.jy, calCursor.jm, calCursor.jd);
-      const val = node.logs[key] || '';
-      body.innerHTML = `
-        <label class="small" style="margin-top:4px;">چه کاری برای این هدف/شاخه انجام دادی؟</label>
-        <textarea id="cal-day-note" placeholder="مثلاً: ۲۰ دقیقه تمرین کردم...">${esc(val)}</textarea>
-        <button type="button" class="btn gold full" id="cal-day-save-btn">ثبت این روز</button>
-      `;
-      document.getElementById('cal-day-save-btn').addEventListener('click', ()=>{
-        const txt = document.getElementById('cal-day-note').value.trim();
-        if (txt) node.logs[key] = txt; else delete node.logs[key];
-        syncCalLogToBranch(node, key, txt);
-        // همین که تمرین واقعاً توی تقویم ثبت شد، مسیر عصبی همین شاخه/هدف هم
-        // خودکار (بدون نیاز به زدن دکمه‌ی جدا) با همون روز همگام و وصل می‌شه —
-        // دقیقاً همون کاری که toggleRoutineLog برای نوار هفتگی روی نقشه انجام می‌ده.
-        const parts = key.split('-').map(Number);
-        if (parts.length===3 && !parts.some(isNaN)){
-          const g = toGregorianCal(parts[0], parts[1], parts[2]);
-          const gKey = g.gy+'-'+g.gm+'-'+g.gd;
-          const nn = ensureNodeNeural(node);
-          if (txt) nn.logs[gKey] = true; else delete nn.logs[gKey];
-        }
-        scheduleMapSave();
-        render();
-        renderCalBody();
-        const gForRefresh = state.goals.find(g=>g.id===currentPanelGoalId);
-        if (gForRefresh) refreshActionsPanel(gForRefresh);
-        if (calTarget && calTarget.type==='action') renderPanelActionNeural(node);
-      });
-    } else if (calView === 'month'){
-      navLabel.textContent = JALALI_MONTHS[calCursor.jm-1]+' '+toFa(calCursor.jy);
-      const len = jalaaliMonthLength(calCursor.jy, calCursor.jm);
-      const firstWd = jalaaliWeekDay(calCursor.jy, calCursor.jm, 1);
-      let html = '<div class="cal-weekdays">'+JALALI_WEEKDAYS.map(w=>`<span>${w}</span>`).join('')+'</div>';
-      html += '<div class="cal-grid">';
-      for (let i=0;i<firstWd;i++) html += '<span class="cal-cell empty"></span>';
-      for (let d=1; d<=len; d++){
-        const key = calDKey(calCursor.jy, calCursor.jm, d);
-        const has = !!node.logs[key];
-        const isToday = key === calTodayKey;
-        html += `<button type="button" class="cal-cell${has?' has-log':''}${isToday?' is-today':''}" data-jd="${d}">${toFa(d)}${has?'<i class="cal-dot"></i>':''}</button>`;
-      }
-      html += '</div>';
-      body.innerHTML = html;
-      body.querySelectorAll('.cal-cell[data-jd]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          calCursor = {jy:calCursor.jy, jm:calCursor.jm, jd: +btn.dataset.jd};
-          setCalTab('day');
-        });
-      });
-    } else if (calView === 'year'){
-      navLabel.textContent = toFa(calCursor.jy);
-      let html = '<div class="cal-year-grid">';
-      for (let m=1; m<=12; m++){
-        let count = 0;
-        const len = jalaaliMonthLength(calCursor.jy, m);
-        for (let d=1; d<=len; d++){ if (node.logs[calDKey(calCursor.jy, m, d)]) count++; }
-        html += `<button type="button" class="cal-month-cell" data-jm="${m}">
-          <strong>${JALALI_MONTHS[m-1]}</strong>
-          <span>${count>0 ? (toFa(count)+' روز فعال') : 'بدون ثبت'}</span>
-        </button>`;
-      }
-      html += '</div>';
-      body.innerHTML = html;
-      body.querySelectorAll('.cal-month-cell').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          calCursor = {jy:calCursor.jy, jm:+btn.dataset.jm, jd:1};
-          setCalTab('month');
-        });
-      });
-    }
-  }
-
   /* ================= تقویم دوره‌ایِ هدف و شاخه (داخل پنل) =================
      • تقویم «هدف» ورودی جدا ندارد: هدف = مجموع کارهای شاخه‌ها و زیرشاخه‌هایش، پس هر روزی که
        حداقل یک شاخه/زیرشاخه‌اش انجام شده باشد (node.logs همون روز) پر می‌شه — فقط گزارشه.
@@ -5763,20 +5558,50 @@ body.bg-mode-image #grat-root{background:transparent;}
     if (el) el.addEventListener('click', pcOnClick);
   });
 
-  document.querySelectorAll('.panel-cal-btn').forEach(btn=>{
-    btn.addEventListener('click', openCalendarForCurrentPanel);
-  });
-  document.getElementById('cal-close-btn').addEventListener('click', ()=>{
-    document.getElementById('cal-modal-overlay').classList.add('hidden');
-  });
-  document.getElementById('cal-modal-overlay').addEventListener('click', (e)=>{
-    if (e.target.id === 'cal-modal-overlay') document.getElementById('cal-modal-overlay').classList.add('hidden');
-  });
-  document.querySelectorAll('.cal-tab').forEach(btn=>{
-    btn.addEventListener('click', ()=> setCalTab(btn.dataset.view));
-  });
-  document.getElementById('cal-prev-btn').addEventListener('click', ()=> calNavStep(-1));
-  document.getElementById('cal-next-btn').addEventListener('click', ()=> calNavStep(1));
+  /* پاکسازی یک‌باره‌ی «یادداشت روزانه»‌ی قدیمی (تقویم یادداشتی حذف شد):
+     • شاخه‌هایی که خودِ آن یادداشت‌ها ساخته بودن (logBranchIds) پاک می‌شن؛ مگر اینکه بعداً
+       زیرشاخه، ثبتِ روتین یا مسیر عصبی پیدا کرده باشن که در این صورت می‌مونن.
+     • متنِ یادداشت‌ها برداشته می‌شه ولی «روز انجام‌شده» می‌مونه (تقویم و مسیر عصبی خراب نشن). */
+  function cleanupLegacyCalNotes(){
+    let changed = false;
+    function hasContent(n){
+      return (Array.isArray(n.children) && n.children.length > 0) ||
+        (n.logs && Object.keys(n.logs).length > 0) ||
+        (n.neural && n.neural.logs && Object.keys(n.neural.logs).length > 0);
+    }
+    function dropTracked(owner, list){
+      const ids = owner.logBranchIds;
+      if (!ids || typeof ids !== 'object') return;
+      Object.keys(ids).forEach(key=>{
+        const f = findActionNode(list || [], ids[key]);
+        if (f && !hasContent(f.node)) f.list.splice(f.list.indexOf(f.node), 1);
+      });
+      delete owner.logBranchIds;
+      changed = true;
+    }
+    function stripNotes(owner){
+      if (!owner.logs || typeof owner.logs !== 'object') return;
+      Object.keys(owner.logs).forEach(k=>{
+        const v = owner.logs[k];
+        if (typeof v === 'string' && v !== ROUTINE_DONE_MARK){ owner.logs[k] = ROUTINE_DONE_MARK; changed = true; }
+      });
+    }
+    function walk(list){
+      (list || []).slice().forEach(n=>{
+        dropTracked(n, n.children);
+        stripNotes(n);
+        walk(n.children);
+      });
+    }
+    (state.goals || []).forEach(g=>{
+      dropTracked(g, g.actions);
+      if (g.logs && Object.keys(g.logs).length){ g.logs = {}; changed = true; }
+      walk(g.actions);
+    });
+    if (changed) scheduleMapSave();
+  }
+  try{ cleanupLegacyCalNotes(); }catch(e){ console.warn('[cal-cleanup]', e); }
+
 
   // هر چند دقیقه (و یک‌بار موقع باز شدن برنامه) مسیرهای عصبیِ همه‌ی شاخه‌ها و
   // زیرشاخه‌ها رو چک می‌کنه تا اگه یک ساعت از یک ثبتِ دستیِ تاییدنشده گذشته
@@ -8531,7 +8356,6 @@ function saveEmotionCaptureFromWidget(ids, ctx){
   if(typeof toast === 'function') toast('حس و حالت ثبت شد 💗');
 
   try{ if(document.getElementById('bank-cal-grid')) renderBankCal(); }catch(e){}
-  try{ if(typeof renderCalBody === 'function') renderCalBody(); }catch(e){}
 }
 
 window.openEmotionCapture = openEmotionCapture;
