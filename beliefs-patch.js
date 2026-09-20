@@ -55,6 +55,15 @@
   }
   var CAL_SELECTED = null;
 
+  /* طول دوره‌ی تقویم تب باورها را خودِ کاربر تعیین می‌کند (پیش‌فرض ۹۰ روز) */
+  var FUTURE_DEFAULT_DAYS = 90, FUTURE_MAX_DAYS = 365;
+  var MONTH_ORD_FA = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم','سیزدهم'];
+  function getFutureDays(){
+    var n = parseInt(state && state.futureCalDays, 10);
+    if (!n || n < 1) return FUTURE_DEFAULT_DAYS;
+    return Math.min(n, FUTURE_MAX_DAYS);
+  }
+
   /* کانتینر مسیر عصبی «تمرین روزانه». اگه تابع اصلی برنامه (ensureDispenzaNeural) نبود یا
      چیزی برنگردوند، یک کانتینر خودمون توی state می‌سازیم تا ثبت روزانه حتماً رشته بسازه. */
   function dpGetNeural(){
@@ -592,7 +601,7 @@
             '<div style="padding-top:12px;border-top:1px dashed var(--line);">' +
               '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
                 '<span style="font-size:11.5px;font-weight:700;">📅 پیشرفت روزانه</span>' +
-                '<span style="font-size:10.5px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از ۹۰</span>' +
+                '<span style="font-size:10.5px;color:var(--muted);"><b id="future-day-num" style="color:var(--ink);">۰</b> از <span id="future-day-total">۹۰</span></span>' +
               '</div>' +
               '<div class="tb-bar" style="margin:0 0 10px;height:4px;"><div class="tb-bar-fill" id="future-progress-bar" style="width:0%;"></div></div>' +
               '<div id="future-mini-cal" class="mini-cal-grid"></div>' +
@@ -931,17 +940,18 @@
     var startDate = ndKeyToDate(startKey);
     var today = new Date(); today.setHours(0,0,0,0);
     var todayKeyStr = dpTodayKey();
-    var monthNames = ['اول','دوم','سوم'];
+    var totalDays = getFutureDays();
     var html = '';
-    for (var d = 0; d < 90; d++){
+    for (var d = 0; d < totalDays; d++){
       var date = new Date(startDate);
       date.setDate(date.getDate() + d);
       var key = dpKeyFromDate(date);
       if (d % 30 === 0){
         var endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + d + 29);
+        endDate.setDate(endDate.getDate() + Math.min(d + 29, totalDays - 1));
+        var mIdx = d / 30;
         html += '<div class="mini-cal-month">' +
-          '<b>ماه ' + monthNames[d / 30] + '</b>' +
+          '<b>ماه ' + (MONTH_ORD_FA[mIdx] || toFa(mIdx + 1)) + '</b>' +
           '<span>' + dpFmtDateFa(date, { day: 'numeric', month: 'long' }) + ' تا ' + dpFmtDateFa(endDate, { day: 'numeric', month: 'long' }) + '</span>' +
         '</div>';
       }
@@ -954,7 +964,7 @@
       if (feel) cls += ' feel feel-' + feel.level;
       if (isToday) cls += ' today';
       if (isFuture) cls += ' future';
-      if (d % 30 === 29) cls += ' month-end';
+      if (d % 30 === 29 || d === totalDays - 1) cls += ' month-end';
       if (key === CAL_SELECTED) cls += ' selected';
       html += '<div class="' + cls + '" data-cal-key="' + key + '" data-cal-idx="' + d + '">' + (feel ? HEART_SVG : (done ? '✓' : '')) + '</div>';
     }
@@ -985,12 +995,15 @@
       var infoEl = document.getElementById('future-cal-info');
       infoEl.parentNode.insertBefore(rst, infoEl.nextSibling);
     }
-    var endOfCycle = new Date(startDate); endOfCycle.setDate(endOfCycle.getDate() + 90);
+    var endOfCycle = new Date(startDate); endOfCycle.setDate(endOfCycle.getDate() + totalDays);
     var finished = !!v && today >= endOfCycle;
     var doneCnt = readDays.filter(function(k){ return true; }).length;
     rst.innerHTML =
-      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ۹۰ روزه تموم شد — ' + toFa(Math.min(doneCnt, 90)) + ' روز از ۹۰ روز خوندی. برای شروع دوره‌ی تازه، تقویم رو ریست کن.</div>' : '') +
-      '<button type="button" id="future-cal-reset-btn" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;">🔄 ریست تقویم</button>';
+      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ' + toFa(totalDays) + ' روزه تموم شد — ' + toFa(Math.min(doneCnt, totalDays)) + ' روز از ' + toFa(totalDays) + ' روز خوندی. برای شروع دوره‌ی تازه، تقویم رو ریست کن.</div>' : '') +
+      '<div style="display:flex;gap:6px;margin-top:8px;">' +
+        '<button type="button" id="future-cal-days-btn" class="btn tiny" style="flex:1;font-size:11.5px;padding:9px;">⚙️ روزهای دوره (الان ' + toFa(totalDays) + ' روزه)</button>' +
+        '<button type="button" id="future-cal-reset-btn" class="btn tiny' + (finished ? ' gold' : '') + '" style="flex:1;font-size:11.5px;padding:9px;">🔄 ریست تقویم</button>' +
+      '</div>';
     renderCalInfo();
   }
 
@@ -1001,6 +1014,36 @@
     var ok = true;
     try { ok = window.confirm(msg); } catch(e){}
     if (!ok) return;
+    doResetFutureCalendar(v);
+  }
+
+  /* کاربر تعداد روزهای دوره را تعیین می‌کند؛ اگر عدد عوض شد می‌تونه دوره را از امروز از نو شروع کند */
+  function setFutureCalDays(){
+    var cur = getFutureDays();
+    var input = null;
+    try { input = window.prompt('دوره‌ی خواندن چند روزه باشه؟ (۱ تا ' + toFa(FUTURE_MAX_DAYS) + ')', String(cur)); } catch(e){}
+    if (input === null) return;
+    var fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+    var norm = String(input).replace(/[۰-۹]/g, function(c){ return fa.indexOf(c); }).replace(/[٠-٩]/g, function(c){ return ar.indexOf(c); });
+    var n = parseInt(norm, 10);
+    if (!n || n < 1 || n > FUTURE_MAX_DAYS){
+      if (typeof toast === 'function') toast('یه عدد بین ۱ تا ' + toFa(FUTURE_MAX_DAYS) + ' وارد کن');
+      return;
+    }
+    var changed = n !== cur;
+    state.futureCalDays = n;
+    var v = getActiveVersion();
+    if (changed && v){
+      var restart = false;
+      try { restart = window.confirm('دوره از امروز از نو شروع بشه؟\nثبت‌های این دوره در تاریخچه‌ی همین نسخه نگه داشته می‌شن.'); } catch(e){}
+      if (restart){ doResetFutureCalendar(v, true); }
+    }
+    try { saveState(); } catch(e){}
+    renderFutureText(); dpRenderProgress();
+    if (typeof toast === 'function') toast('دوره روی ' + toFa(n) + ' روز تنظیم شد 🌱');
+  }
+
+  function doResetFutureCalendar(v, silent){
     if (!Array.isArray(v.cycles)) v.cycles = [];
     if ((v.readDays || []).length){
       v.cycles.push({ startDate: v.startDate, endDate: dpTodayKey(), readDays: (v.readDays || []).slice(), readTimes: Object.assign({}, v.readTimes || {}) });
@@ -1013,7 +1056,7 @@
     CAL_SELECTED = null;
     try { saveState(); } catch(e){}
     renderFutureText(); dpRenderProgress();
-    if (typeof toast === 'function') toast('تقویم ریست شد — دوره‌ی تازه از امروز 🌱');
+    if (!silent && typeof toast === 'function') toast('تقویم ریست شد — دوره‌ی تازه از امروز 🌱');
   }
 
   function renderCalInfo(){
@@ -1297,17 +1340,20 @@
     var hint = document.getElementById('dp-progress-hint');
     if (hint) hint.textContent = toFa(done.length) + ' از ۶ مرحله';
 
-    var totalDays = Math.min((state.dispenzaReadDays || []).length, 90);
+    var periodDays = getFutureDays();
+    var totalDays = Math.min((state.dispenzaReadDays || []).length, periodDays);
     var countEl = document.getElementById('dp-session-count');
     if (countEl) countEl.textContent = toFa(totalDays * 2) + ' جلسه';
 
     var v = getActiveVersion();
     var readDays = v && v.readDays ? v.readDays.length : 0;
-    var doneCount = Math.min(readDays, 90);
+    var doneCount = Math.min(readDays, periodDays);
     var numEl = document.getElementById('future-day-num');
+    var totEl = document.getElementById('future-day-total');
     var pbar = document.getElementById('future-progress-bar');
     if (numEl) numEl.textContent = toFa(doneCount);
-    if (pbar) pbar.style.width = (doneCount / 90 * 100) + '%';
+    if (totEl) totEl.textContent = toFa(periodDays);
+    if (pbar) pbar.style.width = (doneCount / periodDays * 100) + '%';
 
     var em = document.getElementById('dp-emotion-feedback');
     if (em){
@@ -1658,6 +1704,7 @@
       if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
       if (t.closest('#future-register-btn')){ registerTodayRead(); return; }
       if (t.closest('#future-cal-reset-btn')){ resetFutureCalendar(); return; }
+      if (t.closest('#future-cal-days-btn')){ setFutureCalDays(); return; }
       var calCell = t.closest('.mini-cal-day[data-cal-key]');
       if (calCell){
         CAL_SELECTED = calCell.dataset.calKey;

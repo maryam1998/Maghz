@@ -1131,6 +1131,20 @@ html[data-theme="dark"] .np-emotion-row button{
     height:100%; border-radius:4px;
     background:linear-gradient(90deg, var(--gold-300), var(--gold-500));
   }
+/* تقویم دوره‌ی بازی فراوانی: همان کارتِ تقویم تب باورها/شکرگذاری */
+#grat-root .shop-period-card{
+    margin:0 0 12px; padding:14px; box-sizing:border-box; max-width:100%; overflow:hidden;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  }
+#grat-root .shop-period-head{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:12px; font-weight:800; color:var(--ink); margin-bottom:10px;
+  }
+#grat-root .shop-period-head .sp-prog{ font-size:10.5px; font-weight:700; color:var(--muted); }
+#grat-root #shop-mini-cal{ display:grid; grid-template-columns:repeat(15, minmax(0,1fr)); gap:3px; }
+#grat-root #shop-mini-cal .mini-cal-month{ min-width:0; padding:8px 2px 3px; }
+#grat-root #shop-mini-cal .mini-cal-month:first-child{ padding-top:0; }
+#grat-root #shop-mini-cal .mini-cal-day{ min-width:0; }
 /* تقویم روزهای دوره‌ی شکرگذاری: هم‌تراز با بقیه‌ی کارت‌های صفحه (margin ۱۸px) و داخل کادر */
 #grat-root #gratitude-mini-cal{
     display:grid; grid-template-columns:repeat(15, minmax(0,1fr)); gap:3px;
@@ -5733,7 +5747,14 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       <input id="custom-price" placeholder="مبلغ — مثلاً 300,000" inputmode="numeric" oninput="formatAmountInput(this)">
 
-      <button class="btn full" style="margin-bottom:10px;" onclick="openBankCalendar('shop')">📅 تقویم بازی فراوانی</button>
+      <div class="shop-period-card">
+        <div class="shop-period-head">
+          <span id="shop-period-title">🧭 دوره‌ی ۲۸ روزه</span>
+          <span class="sp-prog" id="shop-period-progress">روز ۱ / ۲۸</span>
+        </div>
+        <div id="shop-mini-cal" class="mini-cal-grid"></div>
+        <div id="shop-mini-cal-info"></div>
+      </div>
       <div class="section-label" style="margin:10px 0 6px;">
         <h2 style="font-size:13px;margin:0;"><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>انجام این تمرین</h2>
       </div>
@@ -6639,6 +6660,91 @@ function setGratitudePeriodDays(){
   if(typeof toast === 'function') toast('دوره روی ' + n.toLocaleString('fa-IR') + ' روز تنظیم شد 🌱');
 }
 
+/* ---------------- دوره‌ی بازی فراوانی با طول قابل‌تنظیم ----------------
+   دقیقاً هم‌سبک تقویم شکرگذاری/باورها: «دوره‌ی N روزه» + ماه اول، ماه دوم، ...
+   روزی «انجام‌شده» حساب می‌شه که توش خریدی ثبت شده باشه (state.history). */
+const MONTH_ORDINALS_FA_SHOP = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم','سیزدهم'];
+const SHOP_PERIOD_MAX_DAYS = 365;
+function ensureShopPeriod(){
+  if(!state.shopPeriod || typeof state.shopPeriod !== 'object') state.shopPeriod = { days: 28, startDate: null };
+  if(!state.shopPeriod.days || state.shopPeriod.days < 1) state.shopPeriod.days = 28;
+  if(!state.shopPeriod.startDate) state.shopPeriod.startDate = dayKeyFromDate(new Date());
+  return state.shopPeriod;
+}
+function renderShopMiniCal(){
+  const wrap = document.getElementById('shop-mini-cal');
+  if(!wrap) return;
+  const info = document.getElementById('shop-mini-cal-info');
+  const titleEl = document.getElementById('shop-period-title');
+  const progEl = document.getElementById('shop-period-progress');
+  const sp = ensureShopPeriod();
+  const totalDays = Math.min(sp.days, SHOP_PERIOD_MAX_DAYS);
+  const doneSet = {};
+  (state.history || []).forEach(function(h){ if(h && h.iso) doneSet[dayKeyFromIso(h.iso)] = true; });
+  const startDate = new Date(sp.startDate + 'T00:00:00');
+  const today = todayMidnight();
+  const todayKeyStr = dayKeyFromDate(new Date());
+  const blockSize = 30;
+  const fmt = function(dt){
+    try{ return new Intl.DateTimeFormat('fa-IR-u-ca-persian', {day:'numeric', month:'long'}).format(dt); }
+    catch(e){ return ''; }
+  };
+  let html = '';
+  let doneCount = 0;
+  for(let d=0; d<totalDays; d++){
+    const date = new Date(startDate);
+    date.setDate(date.getDate()+d);
+    const key = dayKeyFromDate(date);
+    if(d % blockSize === 0){
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + Math.min(d+blockSize, totalDays) - 1);
+      const mIdx = Math.floor(d/blockSize);
+      html += '<div class="mini-cal-month"><b>ماه ' + (MONTH_ORDINALS_FA_SHOP[mIdx] || (mIdx+1).toLocaleString('fa-IR')) + '</b>' +
+        '<span>' + fmt(date) + ' تا ' + fmt(endDate) + '</span></div>';
+    }
+    const done = !!doneSet[key];
+    if(done) doneCount++;
+    let cls = 'mini-cal-day';
+    if(done) cls += ' done';
+    if(key === todayKeyStr) cls += ' today';
+    if(date > today) cls += ' future';
+    if((d % blockSize) === blockSize-1 || d === totalDays-1) cls += ' month-end';
+    html += '<div class="' + cls + '" data-shop-key="' + key + '">' + (done ? '✓' : '') + '</div>';
+  }
+  wrap.innerHTML = html;
+
+  const passed = Math.floor((today - startDate)/86400000) + 1;
+  const dayNum = Math.max(1, Math.min(totalDays, passed));
+  if(titleEl) titleEl.textContent = '🧭 دوره‌ی ' + totalDays.toLocaleString('fa-IR') + ' روزه';
+  if(progEl)  progEl.textContent = 'روز ' + dayNum.toLocaleString('fa-IR') + ' / ' + totalDays.toLocaleString('fa-IR');
+
+  if(info){
+    const endOfPeriod = new Date(startDate); endOfPeriod.setDate(endOfPeriod.getDate() + totalDays);
+    const finished = today >= endOfPeriod;
+    info.innerHTML =
+      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ' + totalDays.toLocaleString('fa-IR') + ' روزه تموم شد — ' + Math.min(doneCount, totalDays).toLocaleString('fa-IR') + ' روز از ' + totalDays.toLocaleString('fa-IR') + ' روز خرید ثبت کردی. برای دوره‌ی تازه از دکمه‌ی «⚙️ روزهای دوره» استفاده کن.</div>' : '') +
+      '<button type="button" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;" onclick="setShopPeriodDays()">⚙️ روزهای دوره (الان ' + totalDays.toLocaleString('fa-IR') + ' روزه)</button>';
+  }
+}
+function setShopPeriodDays(){
+  const sp = ensureShopPeriod();
+  const input = window.prompt('دوره‌ی بازی فراوانی چند روزه باشه؟ (۱ تا ' + SHOP_PERIOD_MAX_DAYS.toLocaleString('fa-IR') + ')', String(sp.days));
+  if(input === null) return;
+  const n = parseInt(normalizeDigits(String(input)), 10);
+  if(!n || n < 1 || n > SHOP_PERIOD_MAX_DAYS){
+    if(typeof toast === 'function') toast('یه عدد بین ۱ تا ' + SHOP_PERIOD_MAX_DAYS.toLocaleString('fa-IR') + ' وارد کن');
+    return;
+  }
+  const changed = n !== sp.days;
+  sp.days = n;
+  if(changed && window.confirm('دوره از امروز از نو شروع بشه؟\nخریدهایی که قبلاً ثبت کردی همچنان توی تاریخچه می‌مونن.')){
+    sp.startDate = dayKeyFromDate(new Date());
+  }
+  try{ saveState(); }catch(e){}
+  renderShopMiniCal();
+  if(typeof toast === 'function') toast('دوره روی ' + n.toLocaleString('fa-IR') + ' روز تنظیم شد 🌱');
+}
+
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -6675,6 +6781,8 @@ function loadState(){
       if(!s.authUserId) s.authUserId = '';
       if(!s.gratitudePeriod || typeof s.gratitudePeriod !== 'object') s.gratitudePeriod = { days: 28, startDate: null };
       if(!s.gratitudePeriod.days || s.gratitudePeriod.days < 1) s.gratitudePeriod.days = 28;
+      if(!s.shopPeriod || typeof s.shopPeriod !== 'object') s.shopPeriod = { days: 28, startDate: null };
+      if(!s.shopPeriod.days || s.shopPeriod.days < 1) s.shopPeriod.days = 28;
       return s;
     }
   }catch(e){}
@@ -7020,7 +7128,7 @@ function goto(view){
   window.scrollTo(0,0);
   var __gr = document.getElementById('grat-root'); if (__gr) __gr.scrollTop = 0;
   if(view==='home') renderHome();
-  if(view==='store'){ renderPendingList(); renderCart(); renderShopNeural(); }
+  if(view==='store'){ renderPendingList(); renderCart(); renderShopNeural(); renderShopMiniCal(); }
   if(view==='shop-history') renderShopHistory();
   if(view==='pay') renderPay();
   if(view==='history') renderHistory();
