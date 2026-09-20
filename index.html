@@ -5663,6 +5663,9 @@ body.bg-mode-image #grat-root{background:transparent;}
       <div class="tb-bar"><div class="tb-bar-fill" id="tb-bar-fill" style="width:3.5%"></div></div>
     </div>
 
+    <div id="gratitude-mini-cal" class="mini-cal-grid"></div>
+    <div id="gratitude-mini-cal-info"></div>
+
     <button class="cta-buy" onclick="goto('store')"><span>🛍️</span> خرید جدید</button>
 
     <div class="quick-add">
@@ -6480,14 +6483,36 @@ const GRATITUDE_PHASES = [
 ];
 
 const GRATITUDE_THEMES = GRATITUDE_PHASES.map(p => ({ title: p.name, hint: p.prompts[0] }));
+const GRATITUDE_ALL_PROMPTS = GRATITUDE_PHASES.reduce(function(acc, p){ return acc.concat(p.prompts); }, []);
 
+/* ---------------- دوره‌ی شکرگذاری با طول قابل‌تنظیم ----------------
+   تعداد روزهای دوره دیگه ثابت روی ۲۸ نیست؛ کاربر خودش با setGratitudePeriodDays
+   تعیینش می‌کنه (state.gratitudePeriod.days). پرامپت‌های ۴ فاز × ۷ روز همچنان
+   به‌صورت چرخشی (هر ۲۸ روز یک دور کامل) استفاده می‌شن تا برای دوره‌های بلندتر
+   یا کوتاه‌تر از ۲۸ روز هم محتوا داشته باشیم. */
+function ensureGratitudePeriod(){
+  if(!state.gratitudePeriod || typeof state.gratitudePeriod !== 'object') state.gratitudePeriod = { days: 28, startDate: null };
+  if(!state.gratitudePeriod.days || state.gratitudePeriod.days < 1) state.gratitudePeriod.days = 28;
+  if(!state.gratitudePeriod.startDate) state.gratitudePeriod.startDate = state.startDate || new Date().toISOString().slice(0,10);
+  return state.gratitudePeriod;
+}
+function gratitudePeriodDaysPassed(){
+  const gp = ensureGratitudePeriod();
+  const start = new Date(gp.startDate+'T00:00:00');
+  const diff = Math.floor((todayMidnight()-start)/86400000)+1;
+  return Math.max(1, diff);
+}
 function getGratitudePhaseInfo(){
-  const day = Math.max(1, Math.min(28, daysPassed()));
-  const phaseIdx = Math.floor((day - 1) / 7);
-  const dayInPhase = (day - 1) % 7;
+  const gp = ensureGratitudePeriod();
+  const totalDays = gp.days;
+  const day = Math.max(1, Math.min(totalDays, gratitudePeriodDaysPassed()));
+  const idxInCycle = (day - 1) % GRATITUDE_ALL_PROMPTS.length;
+  const phaseIdx = Math.floor(idxInCycle / 7) % GRATITUDE_PHASES.length;
+  const dayInPhase = idxInCycle % 7;
   const phase = GRATITUDE_PHASES[phaseIdx];
   return {
     day,
+    totalDays,
     phaseName: phase.name,
     phaseShort: phase.short,
     phaseIndex: phaseIdx,
@@ -6506,14 +6531,98 @@ function renderThemeBanner(){
   const tbBarFill  = document.getElementById('tb-bar-fill');
   const tbDayLabel = document.querySelector('.theme-banner .tb-day');
 
-  if(tbProgress) tbProgress.textContent = 'روز ' + info.day.toLocaleString('fa-IR') + ' / ۲۸';
+  if(tbProgress) tbProgress.textContent = 'روز ' + info.day.toLocaleString('fa-IR') + ' / ' + info.totalDays.toLocaleString('fa-IR');
   if(tbTitle)    tbTitle.textContent = 'فاز ' + (info.phaseIndex + 1).toLocaleString('fa-IR') + ' — ' + info.phaseName;
   if(tbHint)     tbHint.textContent = '🎯 ' + info.prompt;
-  if(tbBarFill)  tbBarFill.style.width = (info.day / 28 * 100) + '%';
-  if(tbDayLabel) tbDayLabel.textContent = '🧭 دوره‌ی ۲۸ روزه — ' + info.phaseShort;
+  if(tbBarFill)  tbBarFill.style.width = (info.day / info.totalDays * 100) + '%';
+  if(tbDayLabel) tbDayLabel.textContent = '🧭 دوره‌ی ' + info.totalDays.toLocaleString('fa-IR') + ' روزه — ' + info.phaseShort;
 
   const input = document.getElementById('home-grat-input');
   if(input) input.placeholder = '🎯 ' + info.prompt;
+
+  renderGratitudeMiniCal();
+}
+
+/* روزهایی که واقعاً یک شکرگذاری (غیر از خریدهای بازی فراوانی) توشون ثبت شده */
+function gratitudeDoneDaySet(){
+  const set = {};
+  (state.gratitude || []).filter(function(g){ return g.iso && g.source !== 'purchase'; }).forEach(function(g){
+    set[dayKeyFromIso(g.iso)] = true;
+  });
+  return set;
+}
+
+/* شبکه‌ی روزهای دوره، دقیقاً به سبک همون تقویم ۹۰ روزه‌ی تب باورها؛
+   با این تفاوت که طول دوره را خودِ کاربر تعیین کرده. */
+function renderGratitudeMiniCal(){
+  const wrap = document.getElementById('gratitude-mini-cal');
+  const info2 = document.getElementById('gratitude-mini-cal-info');
+  if(!wrap) return;
+  const gp = ensureGratitudePeriod();
+  const totalDays = gp.days;
+  const doneSet = gratitudeDoneDaySet();
+  const startDate = new Date(gp.startDate+'T00:00:00');
+  const today = todayMidnight();
+  const todayKeyStr = dayKeyFromDate(new Date());
+  const blockSize = 30;
+  let html = '';
+  let doneCount = 0;
+  for(let d=0; d<totalDays; d++){
+    const date = new Date(startDate);
+    date.setDate(date.getDate()+d);
+    const key = dayKeyFromDate(date);
+    if(d % blockSize === 0){
+      const endIdx = Math.min(d+blockSize, totalDays)-1;
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate()+endIdx);
+      let fromFa, toFa2;
+      try{
+        fromFa = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {day:'numeric', month:'long'}).format(date);
+        toFa2  = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {day:'numeric', month:'long'}).format(endDate);
+      }catch(e){ fromFa = ''; toFa2 = ''; }
+      html += '<div class="mini-cal-month"><b>ماه ' + (Math.floor(d/blockSize)+1).toLocaleString('fa-IR') + '</b>' +
+        '<span>' + fromFa + ' تا ' + toFa2 + '</span></div>';
+    }
+    const done = !!doneSet[key];
+    if(done) doneCount++;
+    const isToday = key === todayKeyStr;
+    const isFuture = date > today;
+    let cls = 'mini-cal-day';
+    if(done) cls += ' done';
+    if(isToday) cls += ' today';
+    if(isFuture) cls += ' future';
+    if((d % blockSize) === blockSize-1) cls += ' month-end';
+    html += '<div class="' + cls + '" data-cal-key="' + key + '">' + (done ? '✓' : '') + '</div>';
+  }
+  wrap.innerHTML = html;
+
+  if(info2){
+    const finished = today >= (function(){ const e = new Date(startDate); e.setDate(e.getDate()+totalDays); return e; })();
+    info2.innerHTML =
+      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ' + totalDays.toLocaleString('fa-IR') + ' روزه تموم شد — ' + Math.min(doneCount, totalDays).toLocaleString('fa-IR') + ' روز از ' + totalDays.toLocaleString('fa-IR') + ' روز شکرگذاری کردی. برای دوره‌ی تازه از دکمه‌ی «⚙️ روزهای دوره» استفاده کن.</div>' : '') +
+      '<button type="button" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;" onclick="setGratitudePeriodDays()">⚙️ روزهای دوره (الان ' + totalDays.toLocaleString('fa-IR') + ' روزه)</button>';
+  }
+}
+
+/* کاربر خودش تعداد روزهای دوره‌ی شکرگذاری رو تعیین می‌کنه؛
+   اگه عدد عوض بشه، می‌تونه دوره رو از امروز از نو شروع کنه. */
+function setGratitudePeriodDays(){
+  const gp = ensureGratitudePeriod();
+  const input = window.prompt('دوره‌ی شکرگذاری چند روزه باشه؟', String(gp.days));
+  if(input === null) return;
+  const n = parseInt(input, 10);
+  if(!n || n < 1){
+    if(typeof toast === 'function') toast('یه عدد معتبر بزرگ‌تر از صفر وارد کن');
+    return;
+  }
+  const changed = n !== gp.days;
+  gp.days = n;
+  if(changed && window.confirm('دوره از امروز از نو شروع بشه؟\nشکرگذاری‌هایی که قبلاً ثبت کردی همچنان توی تاریخچه می‌مونن.')){
+    gp.startDate = new Date().toISOString().slice(0,10);
+  }
+  try{ saveState(); }catch(e){}
+  renderThemeBanner();
+  if(typeof toast === 'function') toast('دوره روی ' + n.toLocaleString('fa-IR') + ' روز تنظیم شد 🌱');
 }
 
 function loadState(){
@@ -6550,11 +6659,13 @@ function loadState(){
       if(!s.futureReadDays) s.futureReadDays = [];
       if(typeof s.shareGratitude !== 'boolean') s.shareGratitude = false;
       if(!s.authUserId) s.authUserId = '';
+      if(!s.gratitudePeriod || typeof s.gratitudePeriod !== 'object') s.gratitudePeriod = { days: 28, startDate: null };
+      if(!s.gratitudePeriod.days || s.gratitudePeriod.days < 1) s.gratitudePeriod.days = 28;
       return s;
     }
   }catch(e){}
   return { name:'', currency:'', startDate:'', history:[], gratitude:[], beliefs:[], currentBelief:defaultCurrentBelief(), evidenceLog:[], streakHistory:[], practiceLog:[], loginId:'local-guest', alarmEnabled:false, alarmTime:'20:00',
-    bankName:'بانک فراوانی', cardNumber:'5859 8312 8347 6690', cardExpiry:'∞ / ∞', cardCVV:'۱۴۰', cardTheme:'emerald', futureText:'', futureStartDate:null, futureReadDays:[], shareGratitude:false, authUserId:'', gratitudeNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, shopNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, dispenzaNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, nothingProgress:{}, nothingSoundOn:true };
+    bankName:'بانک فراوانی', cardNumber:'5859 8312 8347 6690', cardExpiry:'∞ / ∞', cardCVV:'۱۴۰', cardTheme:'emerald', futureText:'', futureStartDate:null, futureReadDays:[], shareGratitude:false, authUserId:'', gratitudeNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, shopNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, dispenzaNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, nothingProgress:{}, nothingSoundOn:true, gratitudePeriod:{ days: 28, startDate: null } };
 }
 function defaultCurrentBelief(){
   return { trackingItems:[], trackingActive:false, attentionLever:50, visualNote:'', visualImages:[], audioTrack:null, neural:{logs:{}, lastSyncKey:null, habitFormed:false}, trackingNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, visualNeural:{logs:{}, lastSyncKey:null, habitFormed:false} };
