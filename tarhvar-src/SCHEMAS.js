@@ -64,9 +64,9 @@ export const SCHEMAS = [
 
   replacement_responses: [
     { behaviorId: "repeated_messaging", text: "قبل از ارسال پیام دوم، ۳۰ دقیقه صبر می‌کنم." },
-    { behaviorId: "checking",           text: "قبل از چک کردن، از خودم می‌پرسم دنبال چه شواهدی هستم." },
+    { behaviorId: "checking_ab",           text: "قبل از چک کردن، از خودم می‌پرسم دنبال چه شواهدی هستم." },
     { behaviorId: "clinging",           text: "فعلاً پیام دیگری نمی‌فرستم و به کار خودم برمی‌گردم." },
-    { behaviorId: "testing",            text: "به جای آزمودن، نیازم را مستقیم و آرام بیان می‌کنم." },
+    { behaviorId: "testing_ab",            text: "به جای آزمودن، نیازم را مستقیم و آرام بیان می‌کنم." },
     { behaviorId: "preemptive_exit",    text: "قبل از قطع رابطه، سه شاهد واقعی می‌نویسم." }
   ],
 
@@ -111,9 +111,9 @@ export const SCHEMAS = [
   ],
 
   rules: [
-    { when: { trigger: "late_reply",     behavior: "checking" },          then: "showExercise:reality_vs_assumption" },
-    { when: { trigger: "distance",       behavior: "clinging" },          then: "showExercise:pause_30min" },
-    { when: { trigger: "unclear_future", behavior: "testing" },           then: "showExercise:need_expression" },
+    { when: { trigger: "late_reply",     behavior: "checking_ab" },          then: "showExercise:reality_vs_assumption" },
+    { when: { trigger: "distance_ab",       behavior: "clinging" },          then: "showExercise:pause_30min" },
+    { when: { trigger: "unclear_future", behavior: "testing_ab" },           then: "showExercise:need_expression" },
     { when: { behavior: "preemptive_exit" },                              then: "showExercise:reality_vs_assumption" },
     { when: { trigger: "late_reply",     behavior: "repeated_messaging" },then: "showExercise:pause_30min" }
   ]
@@ -367,7 +367,7 @@ export const SCHEMAS = [
   replacement_responses: [
     { behaviorId: "hide_weakness", text: "یک نقص کوچک را بدون پنهان کردن تحمل می‌کنم." },
     { behaviorId: "over_apology",  text: "قبل از عذرخواهی، از خودم می‌پرسم آیا واقعاً لازم است." },
-    { behaviorId: "perfectionism", text: "امروز یک کار را در سطح «کافی» رها می‌کنم." },
+    { behaviorId: "perfectionism_ds", text: "امروز یک کار را در سطح «کافی» رها می‌کنم." },
     { behaviorId: "comparison",    text: "به جای مقایسه، یک چیز قابل مشاهده در خودم می‌نویسم." }
   ],
 
@@ -460,7 +460,7 @@ export const SCHEMAS = [
 
   replacement_responses: [
     { behaviorId: "withdrawal",  text: "امروز فقط ۱۰ دقیقه در جمع می‌مانم." },
-    { behaviorId: "silence",     text: "یک سؤال کوچک از یک نفر می‌پرسم." },
+    { behaviorId: "silence_si",     text: "یک سؤال کوچک از یک نفر می‌پرسم." },
     { behaviorId: "skip_gather", text: "به یک موقعیت اجتماعی کوتاه می‌روم، بدون انتظار." }
   ],
 
@@ -547,7 +547,7 @@ export const SCHEMAS = [
   replacement_responses: [
     { behaviorId: "early_help",  text: "اول خودم ۱۰ دقیقه تلاش می‌کنم، بعد کمک می‌خواهم." },
     { behaviorId: "delegate",    text: "یک تصمیم کوچک را خودم می‌گیرم." },
-    { behaviorId: "reassurance", text: "به جای پرسیدن، یک بار خودم اقدام می‌کنم." }
+    { behaviorId: "reassurance_dp", text: "به جای پرسیدن، یک بار خودم اقدام می‌کنم." }
   ],
 
   exercises: [
@@ -578,7 +578,7 @@ export const SCHEMAS = [
   rules: [
     { when: { behavior: "delegate" },    then: "showExercise:small_step" },
     { when: { behavior: "early_help" },  then: "showExercise:small_wins" },
-    { when: { behavior: "reassurance" }, then: "showExercise:small_step" }
+    { when: { behavior: "reassurance_dp" }, then: "showExercise:small_step" }
   ]
 },
 
@@ -1446,7 +1446,7 @@ export const SCHEMAS = [
   healthy_response: "شناخت و بیان متناسب هیجان بدون انفجار یا سرکوب.",
 
   replacement_responses: [
-    { behaviorId: "silence",      text: "یک جمله کوتاه درباره احساسم می‌گویم." },
+    { behaviorId: "silence_ei",      text: "یک جمله کوتاه درباره احساسم می‌گویم." },
     { behaviorId: "hide_feeling", text: "احساس واقعی‌ام را با کلمات ساده بیان می‌کنم." },
     { behaviorId: "over_logic",   text: "به جای توضیح دادن، فقط نام احساس را می‌گویم." }
   ],
@@ -1478,7 +1478,7 @@ export const SCHEMAS = [
   ],
 
   rules: [
-    { when: { behavior: "silence" },      then: "showExercise:name_feeling" },
+    { when: { behavior: "silence_ei" },      then: "showExercise:name_feeling" },
     { when: { behavior: "hide_feeling" }, then: "showExercise:i_feel" },
     { when: { behavior: "over_logic" },   then: "showExercise:name_feeling" }
   ]

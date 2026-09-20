@@ -23,6 +23,7 @@ import {
 import { getLifeCycleDetail } from "./LIFE_CYCLES_DETAIL";
 import { mergeAdditions } from "./SCHEMAS_ADDITIONS";
 import { mergeTriggers } from "./TRIGGERS_EXTRA";
+import { applyCuratedOptions } from "./CURATED_OPTIONS";
 import { getTodayReminders } from "./DAILY_REMINDERS";
 import { CHECKIN_GROUPS, SHORT_CHECKIN_NAMES } from "./CHECKIN_OPTIONS";
 import AcceptanceView from "./AcceptanceView";
@@ -47,6 +48,8 @@ for (const s of SCHEMAS) {
 registerIdLabels(LABELS);
 mergeAdditions(SCHEMAS);
 mergeTriggers(SCHEMAS);
+// نسخهٔ نهایی و بدون تکرارِ گزینه‌های «شناخت»؛ idهای قدیمی برای تاریخچه حفظ می‌شوند
+Object.assign(LABELS, applyCuratedOptions(SCHEMAS));
 
 for (const s of SCHEMAS) {
   for (const t of s.triggers) LABELS[t.id] = t.text;
