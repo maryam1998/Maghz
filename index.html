@@ -2486,7 +2486,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     <h2>تنظیمات</h2>
     <div class="field">
       <label>ایمیل ورود</label>
-      <input type="text" id="settings-account-email" readonly dir="ltr" style="text-align:left;opacity:.8;" value="">
+      <div id="settings-account-email" dir="ltr" style="text-align:left;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font-size:13px;word-break:break-all;user-select:text;">—</div>
     </div>
     <div class="field">
       <label>نام شما (در بخش دوستان با همین نام نمایش داده می‌شود)</label>
@@ -4568,10 +4568,10 @@ body.bg-mode-image #grat-root{background:transparent;}
     try{
       const info = (window.getProfileInfo && window.getProfileInfo()) || {name:'', email:''};
       document.getElementById('settings-profile-name').value = info.name;
-      document.getElementById('settings-account-email').value = info.email;
+      document.getElementById('settings-account-email').textContent = info.email || '—';
       if(window.getProfileEmail){
         window.getProfileEmail().then(function(em){
-          if(em) document.getElementById('settings-account-email').value = em;
+          if(em) document.getElementById('settings-account-email').textContent = em;
         });
       }
     }catch(e){}
@@ -6649,6 +6649,16 @@ window.getProfileEmail = async function(){
       const { data } = await window.supabaseClient.auth.getSession();
       const em = data && data.session && data.session.user && data.session.user.email;
       if(em) return em;
+    }
+  }catch(e){}
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(/^sb-.*-auth-token$/.test(k)){
+        const v = JSON.parse(localStorage.getItem(k) || '{}');
+        const em = (v.user && v.user.email) || (v.currentSession && v.currentSession.user && v.currentSession.user.email);
+        if(em) return em;
+      }
     }
   }catch(e){}
   return /@/.test(state.loginId || '') ? state.loginId : '';
