@@ -895,7 +895,8 @@
         '<div style="font-size:10px;color:var(--muted);margin-bottom:6px;">' + v.startDate + ' تا ' + end + '</div>' +
         (v.text ? '<div style="font-size:11px;color:var(--ink-soft);line-height:1.6;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-style:italic;margin-bottom:6px;">«' + escapeHtml(v.text.length > 100 ? v.text.slice(0, 100) + '...' : v.text) + '»</div>' : '') +
         (v.audio ? '<audio controls preload="none" src="' + v.audio + '" style="width:100%;height:32px;display:block;margin-bottom:6px;"></audio>' : '') +
-        (isActive ? '' : '<button type="button" class="btn tiny" data-activate-version="' + v.id + '" style="width:100%;font-size:10.5px;padding:6px;">فعال کردن</button>') +
+        (isActive ? '' : '<div style="display:flex;gap:6px;"><button type="button" class="btn tiny" data-activate-version="' + v.id + '" style="flex:1;font-size:10.5px;padding:6px;">فعال کردن</button>' +
+          '<button type="button" class="btn tiny" data-delete-version="' + v.id + '" style="flex:0 0 auto;font-size:10.5px;padding:6px 12px;color:#c0392b;">🗑 حذف</button></div>') +
       '</div>';
     });
     box.innerHTML = html;
@@ -944,6 +945,23 @@
     if (typeof toast === 'function') toast('بذر قبلی آرشیو شد — بذر تازه شروع کن 🌱');
   }
 
+  function deleteSeedFromArchive(id){
+    if (!window.confirm('این بذر آرشیوشده برای همیشه حذف شود؟')) return;
+    state.dpSeedArchive = (state.dpSeedArchive || []).filter(function(v){ return v.id !== id; });
+    try { saveState(); } catch(e){}
+    renderSeedSection();
+    if (typeof toast === 'function') toast('بذر حذف شد');
+  }
+
+  function deleteFutureVersion(id){
+    if (id === state.activeFutureVersionId) return;
+    if (!window.confirm('این نسخه از آرشیو برای همیشه حذف شود؟')) return;
+    state.futureTextVersions = (state.futureTextVersions || []).filter(function(v){ return v.id !== id; });
+    try { saveState(); } catch(e){}
+    renderFutureText();
+    if (typeof toast === 'function') toast('نسخه حذف شد');
+  }
+
   function toggleSeedArchive(){ SEED_ARCHIVE_OPEN = !SEED_ARCHIVE_OPEN; renderSeedArchiveBox(); }
 
   function restoreSeedFromArchive(id){
@@ -985,7 +1003,8 @@
         '</div>' +
         (v.text ? '<div style="font-size:11px;color:var(--ink-soft);line-height:1.6;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-style:italic;margin-bottom:6px;">«' + escapeHtml(v.text.length > 100 ? v.text.slice(0, 100) + '...' : v.text) + '»</div>' : '') +
         (imgs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' + imgs.slice(0, 6).map(function(img){ return '<img src="' + img.src + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">'; }).join('') + '</div>' : '') +
-        '<button type="button" class="btn tiny" data-restore-seed="' + v.id + '" style="width:100%;font-size:10.5px;padding:6px;">بازگردانی</button>' +
+        '<div style="display:flex;gap:6px;"><button type="button" class="btn tiny" data-restore-seed="' + v.id + '" style="flex:1;font-size:10.5px;padding:6px;">بازگردانی</button>' +
+        '<button type="button" class="btn tiny" data-delete-seed="' + v.id + '" style="flex:0 0 auto;font-size:10.5px;padding:6px 12px;color:#c0392b;">🗑 حذف</button></div>' +
       '</div>';
     });
     box.innerHTML = html;
@@ -1442,11 +1461,15 @@
       if (t.id === 'future-cancel-btn'){ closeFutureEditor(); return; }
       if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
       if (t.id === 'future-register-btn'){ registerTodayRead(); return; }
+      var delVerBtn = t.closest('[data-delete-version]');
+      if (delVerBtn){ deleteFutureVersion(delVerBtn.dataset.deleteVersion); return; }
       var actBtn = t.closest('[data-activate-version]');
       if (actBtn){ activateVersion(actBtn.dataset.activateVersion); return; }
 
       if (t.id === 'new-seed-btn'){ archiveSeedVersion(); return; }
       if (t.id === 'archive-seed-btn'){ toggleSeedArchive(); return; }
+      var delSeedBtn = t.closest('[data-delete-seed]');
+      if (delSeedBtn){ deleteSeedFromArchive(delSeedBtn.dataset.deleteSeed); return; }
       var restoreSeedBtn = t.closest('[data-restore-seed]');
       if (restoreSeedBtn){ restoreSeedFromArchive(restoreSeedBtn.dataset.restoreSeed); return; }
 

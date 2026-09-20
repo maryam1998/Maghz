@@ -2483,7 +2483,15 @@ body.bg-mode-image #grat-root{background:transparent;}
 <!-- settings modal -->
 <div class="overlay hidden" id="settings-modal-overlay">
   <div class="modal">
-    <h2>تنظیمات ظاهری</h2>
+    <h2>تنظیمات</h2>
+    <div class="field">
+      <label>ایمیل ورود</label>
+      <input type="text" id="settings-account-email" readonly dir="ltr" style="text-align:left;opacity:.8;" value="">
+    </div>
+    <div class="field">
+      <label>نام شما (در بخش دوستان با همین نام نمایش داده می‌شود)</label>
+      <input type="text" id="settings-profile-name" maxlength="24" placeholder="مثلاً: مریم" style="direction:rtl;text-align:right;">
+    </div>
     <p class="desc">رنگ نوشته‌ها و اندازه فونت را انتخاب کن.</p>
     <div class="field">
       <label>رنگ نوشته‌ها</label>
@@ -4557,6 +4565,16 @@ body.bg-mode-image #grat-root{background:transparent;}
     settingsFontSizeVal.textContent = settingsFontSize.value;
     settingsShowDates.checked = state.showDateStamps !== false;
     settingsShowEmotionWidget.checked = state.showEmotionWidget !== false;
+    try{
+      const info = (window.getProfileInfo && window.getProfileInfo()) || {name:'', email:''};
+      document.getElementById('settings-profile-name').value = info.name;
+      document.getElementById('settings-account-email').value = info.email;
+      if(window.getProfileEmail){
+        window.getProfileEmail().then(function(em){
+          if(em) document.getElementById('settings-account-email').value = em;
+        });
+      }
+    }catch(e){}
     settingsOverlay.classList.remove('hidden');
   });
   document.getElementById('settings-cancel-btn').addEventListener('click', ()=>{
@@ -4567,6 +4585,9 @@ body.bg-mode-image #grat-root{background:transparent;}
     state.fontSize = +settingsFontSize.value;
     state.showDateStamps = !!settingsShowDates.checked;
     state.showEmotionWidget = !!settingsShowEmotionWidget.checked;
+    try{
+      if(window.setProfileName) window.setProfileName(document.getElementById('settings-profile-name').value);
+    }catch(e){}
     applyEmotionWidgetVisibility();
     scheduleMapSave();
     settingsOverlay.classList.add('hidden');
@@ -6616,6 +6637,37 @@ function saveCardEdit(){
   closeCardEditor();
   toast('کارتت ذخیره شد 💳');
 }
+
+/* ---------------- profile: email + editable name ---------------- */
+window.getProfileInfo = function(){
+  const id = state.loginId || '';
+  return { name: state.name || '', email: /@/.test(id) ? id : '' };
+};
+window.getProfileEmail = async function(){
+  try{
+    if(window.supabaseClient){
+      const { data } = await window.supabaseClient.auth.getSession();
+      const em = data && data.session && data.session.user && data.session.user.email;
+      if(em) return em;
+    }
+  }catch(e){}
+  return /@/.test(state.loginId || '') ? state.loginId : '';
+};
+window.setProfileName = async function(value){
+  const n = (value || '').trim().slice(0,24);
+  if(!n || n === state.name) return;
+  state.name = n;
+  saveState();
+  try{ renderHome(); }catch(e){}
+  try{
+    if(window.supabaseClient){
+      await window.supabaseClient.from('public_gratitude')
+        .update({ display_name: n })
+        .eq('device_id', state.authUserId || state.loginId || 'local-guest');
+    }
+  }catch(e){ console.warn('friends name sync failed', e); }
+  toast('نام ذخیره شد ✓');
+};
 
 /* ---------------- money / currency helpers ---------------- */
 function toman(n){ return Math.round(n).toLocaleString('fa-IR'); }
