@@ -648,6 +648,28 @@
   .cal-month-cell strong{font-size:12.5px;}
   .cal-month-cell span{font-size:10.5px;color:var(--text-dim);}
 
+  /* ---- تقویم دوره‌ایِ هدف/شاخه داخل پنل ---- */
+  .pc-card{flex:none;margin:2px 0 12px;padding:12px;border-radius:12px;border:1px solid var(--panel-border);background:rgba(255,255,255,0.035);}
+  .pc-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--text-main);margin-bottom:6px;}
+  .pc-head .pc-prog{font-size:10.5px;font-weight:600;color:var(--text-dim);}
+  .pc-hint{font-size:10.5px;line-height:1.8;color:var(--text-dim);margin-bottom:8px;}
+  .pc-grid{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:3px;max-height:210px;overflow-y:auto;}
+  .pc-month{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--text-dim);padding:6px 2px 2px;}
+  .pc-month:first-child{padding-top:0;}
+  .pc-month b{font-size:11px;color:var(--text-main);}
+  .pc-day{aspect-ratio:1;min-width:0;border-radius:4px;background:var(--input-bg);box-shadow:inset 0 0 0 1px var(--panel-border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#12142a;line-height:1;cursor:default;}
+  .pc-day.tap{cursor:pointer;}
+  .pc-day.done{box-shadow:none;}
+  .pc-day.sub{opacity:.5;box-shadow:none;}
+  .pc-day.month-end{box-shadow:inset 0 -3px 0 var(--accent);}
+  .pc-day.today{outline:1.5px solid var(--accent);outline-offset:0;}
+  .pc-day.future{opacity:.3;cursor:default;}
+  .pc-day.sel{outline:2px solid var(--text-main);outline-offset:1px;}
+  .pc-info{margin-top:8px;font-size:11px;line-height:1.9;color:var(--text-dim);}
+  .pc-info b{color:var(--text-main);}
+  .pc-info ul{margin:2px 0 0;padding:0 16px 0 0;}
+  .pc-finished{margin-top:8px;padding:9px 11px;border-radius:10px;background:rgba(244,197,66,0.14);border:1px solid rgba(244,197,66,0.4);font-size:11.5px;font-weight:700;line-height:1.8;color:var(--text-main);}
+
   #hint{
     position:fixed;bottom:78px;right:50%;transform:translateX(50%);
     font-size:11px;color:var(--text-dim);opacity:.7;pointer-events:none;
@@ -2692,7 +2714,12 @@ body.bg-mode-image #grat-root{background:transparent;}
       </label>
     </div>
     <label class="small" style="margin-top:4px;">شاخه‌های اقدام (هر شاخه می‌تواند زیرشاخه هم داشته باشد)</label>
-    <button class="btn full panel-cal-btn" style="margin-bottom:10px;">📅 تقویم پیشرفت این هدف</button>
+    <div class="pc-card" id="gp-goal-card">
+      <div class="pc-head"><span id="gp-goal-title">🧭 دوره‌ی ۲۸ روزه</span><span class="pc-prog" id="gp-goal-progress"></span></div>
+      <div class="pc-hint" id="gp-goal-hint"></div>
+      <div class="pc-grid" id="gp-goal-cal"></div>
+      <div id="gp-goal-info"></div>
+    </div>
     <label class="small" style="margin-top:6px;">باند فرکانسی غالب این هدف</label>
     <select id="panel-goal-freq" style="width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:13px;margin-bottom:10px;">
       <option value="delta">دلتا (۰.۵–۴ Hz) — بازسازی و درمان عمیق</option>
@@ -2736,7 +2763,12 @@ body.bg-mode-image #grat-root{background:transparent;}
       <span>این مسیر عصبی روی نقشه‌ی اصلی نشان داده شود</span>
     </label>
     <div class="neural-card" id="panel-action-neural-mount"></div>
-    <button class="btn full panel-cal-btn" style="margin-top:10px;">📅 یادداشت روزانه‌ی این شاخه</button>
+    <div class="pc-card" id="gp-action-card" style="margin-top:10px;">
+      <div class="pc-head"><span id="gp-action-title">🧭 دوره‌ی ۲۸ روزه</span><span class="pc-prog" id="gp-action-progress"></span></div>
+      <div class="pc-hint" id="gp-action-hint"></div>
+      <div class="pc-grid" id="gp-action-cal"></div>
+      <div id="gp-action-info"></div>
+    </div>
     <button class="btn full gold" id="panel-action-add-sub" style="margin-top:10px;">＋ زیرشاخه</button>
     <div id="panel-action-children-list" style="margin-top:8px;"></div>
   </div>
@@ -4910,6 +4942,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   }
 
   function refreshActionsPanel(g){
+    try{ renderPanelPeriodCal(); }catch(e){}
     actionsListEl.innerHTML = renderActionTree(g.actions, 0, g.color);
     actionsListEl.querySelectorAll('.img-upload input[type=file]').forEach(inp=>{
       inp.addEventListener('change', async (e)=>{
@@ -4954,6 +4987,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   }
 
   function refreshActionChildrenPanel(){
+    try{ renderPanelPeriodCal(); }catch(e){}
     if (!currentEditingAction) { panelActionChildrenListEl.innerHTML = ''; return; }
     const g = state.goals.find(g=>g.id===currentEditingAction.goalId);
     if (!g) return;
@@ -5398,6 +5432,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     scheduleMapSave();
     render();
     if (panelTarget && panelTarget.type==='action' && panelTarget.actionId===actionId) renderPanelActionNeural(node);
+    try{ renderPanelPeriodCal(); }catch(e){}
   }
 
   let calTarget = null;
@@ -5572,6 +5607,161 @@ body.bg-mode-image #grat-root{background:transparent;}
       });
     }
   }
+
+  /* ================= تقویم دوره‌ایِ هدف و شاخه (داخل پنل) =================
+     • تقویم «هدف» ورودی جدا ندارد: هدف = مجموع کارهای شاخه‌ها و زیرشاخه‌هایش، پس هر روزی که
+       حداقل یک شاخه/زیرشاخه‌اش انجام شده باشد (node.logs همون روز) پر می‌شه — فقط گزارشه.
+     • تقویم «شاخه»: با زدن روی هر روز، انجام‌شدن خودِ شاخه ثبت/برداشته می‌شه (همون
+       toggleRoutineLog که نوار هفتگی روی نقشه استفاده می‌کنه و مسیر عصبی رو هم همگام می‌کنه).
+       روزهایی که فقط زیرشاخه‌ها انجام شدن کم‌رنگ نشون داده می‌شن.
+     • طول دوره و روز شروعش روی خودِ هدف ذخیره می‌شه (goal.period) و برای همه‌ی شاخه‌هاش یکیه. */
+  var PC_MONTH_ORD = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم','سیزدهم'];
+  var PC_MAX_DAYS = 365;
+  var pcSelectedKey = null;
+
+  function pcLocalKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function pcParseKey(k){ const p = String(k).split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+  function pcJKey(date){ const j = toJalaali(date.getFullYear(), date.getMonth()+1, date.getDate()); return calDKey(j.jy, j.jm, j.jd); }
+  function pcFaDate(date){ const j = toJalaali(date.getFullYear(), date.getMonth()+1, date.getDate()); return toFa(j.jd)+' '+JALALI_MONTHS[j.jm-1]; }
+  function pcCollect(list, out){ (list||[]).forEach(n=>{ out.push(n); pcCollect(n.children, out); }); return out; }
+
+  function ensureGoalPeriod(g){
+    if (!g.period || typeof g.period !== 'object') g.period = { days: 28, startDate: null };
+    const n = parseInt(g.period.days, 10);
+    g.period.days = (n >= 1) ? Math.min(n, PC_MAX_DAYS) : 28;
+    if (!g.period.startDate){ g.period.startDate = pcLocalKey(new Date()); scheduleMapSave(); }
+    return g.period;
+  }
+
+  function pcContext(){
+    if (!panelTarget) return null;
+    if (panelTarget.type === 'goal'){
+      const g = state.goals.find(x=>x.id===panelTarget.id);
+      if (!g) return null;
+      return { kind:'goal', goal:g, node:null, p:'gp-goal', color:g.color, sources:pcCollect(g.actions, []) };
+    }
+    if (panelTarget.type === 'action'){
+      const g = state.goals.find(x=>x.id===panelTarget.goalId);
+      if (!g) return null;
+      const f = findActionNode(g.actions, panelTarget.actionId);
+      if (!f) return null;
+      return { kind:'action', goal:g, node:f.node, p:'gp-action', color:(f.node.color || g.color), sources:pcCollect(f.node.children, []) };
+    }
+    return null;
+  }
+
+  function renderPanelPeriodCal(){
+    const ctx = pcContext();
+    if (!ctx) return;
+    const grid = document.getElementById(ctx.p+'-cal');
+    if (!grid) return;
+    const gp = ensureGoalPeriod(ctx.goal);
+    const total = gp.days;
+    const start = pcParseKey(gp.startDate);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayKey = pcLocalKey(new Date());
+    const isGoal = ctx.kind === 'goal';
+    let html = '';
+    for (let d=0; d<total; d++){
+      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate()+d);
+      const gKey = pcLocalKey(date), jKey = pcJKey(date);
+      if (d % 30 === 0){
+        const endDate = new Date(start.getFullYear(), start.getMonth(), start.getDate()+Math.min(d+29, total-1));
+        const mIdx = d/30;
+        html += '<div class="pc-month"><b>ماه '+(PC_MONTH_ORD[mIdx] || toFa(mIdx+1))+'</b><span>'+pcFaDate(date)+' تا '+pcFaDate(endDate)+'</span></div>';
+      }
+      const own = !isGoal && !!(ctx.node.logs && ctx.node.logs[jKey]);
+      let subCnt = 0;
+      ctx.sources.forEach(n=>{ if (n.logs && n.logs[jKey]) subCnt++; });
+      const done = isGoal ? subCnt > 0 : own;
+      const sub = !isGoal && !own && subCnt > 0;
+      const future = date > today;
+      let cls = 'pc-day';
+      if (done) cls += ' done';
+      if (sub) cls += ' sub';
+      if (gKey === todayKey) cls += ' today';
+      if (future) cls += ' future';
+      if (!isGoal && !future) cls += ' tap';
+      if (isGoal && !future) cls += ' tap';
+      if (d % 30 === 29 || d === total-1) cls += ' month-end';
+      if (isGoal && gKey === pcSelectedKey) cls += ' sel';
+      html += '<div class="'+cls+'" data-pc-key="'+gKey+'"'+((done||sub) ? ' style="background:'+esc(ctx.color)+';"' : '')+'>'+((done||sub) ? '✓' : '')+'</div>';
+    }
+    grid.innerHTML = html;
+
+    const passed = Math.floor((today - start)/86400000) + 1;
+    const dayNum = Math.max(1, Math.min(total, passed));
+    document.getElementById(ctx.p+'-title').textContent = '🧭 دوره‌ی '+toFa(total)+' روزه';
+    document.getElementById(ctx.p+'-progress').textContent = 'روز '+toFa(dayNum)+' / '+toFa(total);
+    document.getElementById(ctx.p+'-hint').textContent = isGoal
+      ? 'گزارشِ کارهای همه‌ی شاخه‌ها و زیرشاخه‌های این هدف. کار را داخل هر شاخه ثبت کن؛ برای دیدن جزئیات هر روز، روی آن بزن.'
+      : ('روی هر روز بزن تا انجام‌شدنِ این شاخه ثبت یا برداشته شود.' + (ctx.sources.length ? ' روزهای کم‌رنگ یعنی فقط زیرشاخه‌ها انجام شده‌اند.' : ''));
+
+    let info = '';
+    if (isGoal && pcSelectedKey){
+      const date = pcParseKey(pcSelectedKey), jKey = pcJKey(date);
+      const rows = ctx.sources.filter(n=>n.logs && n.logs[jKey]);
+      info += '<div class="pc-info"><b>'+pcFaDate(date)+'</b> — ' + (rows.length ? (toFa(rows.length)+' کار انجام شد') : 'کاری ثبت نشده') +
+        (rows.length ? '<ul>'+rows.map(n=>{
+          const v = n.logs[jKey];
+          return '<li>'+esc(n.text || 'بدون نام')+(v && v !== ROUTINE_DONE_MARK ? ' — '+esc(v) : '')+'</li>';
+        }).join('')+'</ul>' : '') + '</div>';
+    }
+    const endOfPeriod = new Date(start.getFullYear(), start.getMonth(), start.getDate()+total);
+    const finished = today >= endOfPeriod;
+    if (finished) info += '<div class="pc-finished">🎉 این دوره‌ی '+toFa(total)+' روزه تموم شد. برای دوره‌ی تازه از دکمه‌ی «⚙️ روزهای دوره» استفاده کن.</div>';
+    info += '<button type="button" class="btn full'+(finished ? ' gold' : '')+'" data-pc-settings="1" style="margin-top:8px;font-size:11.5px;padding:9px;">⚙️ روزهای دوره (الان '+toFa(total)+' روزه)</button>';
+    document.getElementById(ctx.p+'-info').innerHTML = info;
+  }
+
+  function pcSetDays(){
+    const ctx = pcContext();
+    if (!ctx) return;
+    const gp = ensureGoalPeriod(ctx.goal);
+    const input = window.prompt('دوره‌ی این هدف چند روزه باشه؟ (۱ تا '+toFa(PC_MAX_DAYS)+' — برای همه‌ی شاخه‌هاش یکسانه)', String(gp.days));
+    if (input === null) return;
+    const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+    const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); });
+    const n = parseInt(norm, 10);
+    if (!n || n < 1 || n > PC_MAX_DAYS){
+      if (typeof toast === 'function') toast('یه عدد بین ۱ تا '+toFa(PC_MAX_DAYS)+' وارد کن');
+      return;
+    }
+    const changed = n !== gp.days;
+    gp.days = n;
+    if (changed && window.confirm('دوره از امروز از نو شروع بشه؟\nکارهایی که قبلاً ثبت کردی همچنان توی شاخه‌ها می‌مونن.')){
+      gp.startDate = pcLocalKey(new Date());
+      pcSelectedKey = null;
+    }
+    scheduleMapSave();
+    renderPanelPeriodCal();
+    if (typeof toast === 'function') toast('دوره روی '+toFa(n)+' روز تنظیم شد 🌱');
+  }
+
+  function pcOnClick(e){
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest('[data-pc-settings]')){ pcSetDays(); return; }
+    const cell = t.closest('.pc-day[data-pc-key]');
+    if (!cell || cell.classList.contains('future')) return;
+    const ctx = pcContext();
+    if (!ctx) return;
+    if (ctx.kind === 'action'){
+      const jk = pcJKey(pcParseKey(cell.dataset.pcKey));
+      const cur = ctx.node.logs && ctx.node.logs[jk];
+      // اگه برای این روز یادداشتِ متنی ثبت شده (از تقویم قدیمی)، بدون تایید پاکش نمی‌کنیم
+      if (cur && cur !== ROUTINE_DONE_MARK && !window.confirm('برای این روز یک یادداشت ثبت شده:\n«'+String(cur).slice(0,80)+'»\nبرداشته بشه؟')) return;
+      // toggleRoutineLog خودش ذخیره، رندر نقشه، همگام‌سازی مسیر عصبی و رندر دوباره‌ی همین تقویم را انجام می‌دهد
+      toggleRoutineLog(panelTarget.actionId, jk);
+    } else {
+      pcSelectedKey = (pcSelectedKey === cell.dataset.pcKey) ? null : cell.dataset.pcKey;
+      renderPanelPeriodCal();
+    }
+  }
+  ['gp-goal-card','gp-action-card'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', pcOnClick);
+  });
 
   document.querySelectorAll('.panel-cal-btn').forEach(btn=>{
     btn.addEventListener('click', openCalendarForCurrentPanel);
