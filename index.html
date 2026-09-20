@@ -665,6 +665,11 @@
   .pc-day.today{outline:1.5px solid var(--accent);outline-offset:0;}
   .pc-day.future{opacity:.3;cursor:default;}
   .pc-day.sel{outline:2px solid var(--text-main);outline-offset:1px;}
+  .pc-past-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .pc-past{border-radius:10px;border:1px solid var(--panel-border);background:rgba(255,255,255,0.03);padding:8px 10px;}
+  .pc-past summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700;color:var(--text-main);list-style:none;}
+  .pc-past summary::-webkit-details-marker{display:none;}
+  .pc-hgrid{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:3px;margin-top:8px;}
   .pc-info{margin-top:8px;font-size:11px;line-height:1.9;color:var(--text-dim);}
   .pc-info b{color:var(--text-main);}
   .pc-info ul{margin:2px 0 0;padding:0 16px 0 0;}
@@ -1178,6 +1183,32 @@ html[data-theme="dark"] .np-emotion-row button{
 #grat-root #gratitude-mini-cal .mini-cal-month:first-child{ padding-top:0; }
 #grat-root #gratitude-mini-cal .mini-cal-day{ min-width:0; }
 #grat-root #gratitude-mini-cal-info{ margin:0 18px; }
+/* استایل پایه‌ی روزها/ماه‌های تقویم‌های دوره‌ای (شکرگذاری، بازی فراوانی و دوره‌های قبلی) */
+#grat-root .mini-cal-month{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; font-size:10.5px; color:var(--muted); }
+#grat-root .mini-cal-month b{ font-size:11px; color:var(--ink); }
+#grat-root .mini-cal-day{
+    aspect-ratio:1; min-width:0; border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:800; line-height:1; color:#fff;
+    box-shadow:inset 0 0 0 1px var(--line);
+  }
+#grat-root .mini-cal-day.done{ background:linear-gradient(135deg, var(--emerald-700), var(--emerald-500)); box-shadow:none; }
+#grat-root .mini-cal-day.today{ outline:1.5px solid var(--emerald-500); }
+#grat-root .mini-cal-day.future{ opacity:.3; }
+#grat-root .mini-cal-day.month-end{ box-shadow:inset 0 -3px 0 var(--gold-500); }
+#grat-root .cal-finished{
+    margin-top:8px; padding:9px 11px; border-radius:10px;
+    background:rgba(230,205,142,.25); border:1px solid var(--gold-300);
+    font-size:11.5px; font-weight:700; line-height:1.8; color:var(--ink);
+  }
+#grat-root .mini-cal-past-list{ margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+#grat-root .mini-cal-past{ background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:9px 12px; }
+#grat-root .mini-cal-past summary{
+    cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:8px;
+    font-size:11.5px; font-weight:800; color:var(--ink);
+  }
+#grat-root .mini-cal-past summary::-webkit-details-marker{ display:none; }
+#grat-root .mini-cal-inner{ display:grid; grid-template-columns:repeat(15, minmax(0,1fr)); gap:3px; margin-top:10px; }
 #grat-root .cta-buy{
     display:flex; align-items:center; justify-content:center; gap:8px;
     margin:16px 18px 4px;
@@ -5425,6 +5456,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     const n = parseInt(g.period.days, 10);
     g.period.days = (n >= 1) ? Math.min(n, PC_MAX_DAYS) : 28;
     if (!g.period.startDate){ g.period.startDate = pcLocalKey(new Date()); scheduleMapSave(); }
+    // دوره‌های تمام‌شده (دوره‌ی اول، دوم، ...) اینجا می‌مونن و هیچ‌وقت پاک نمی‌شن
+    if (!Array.isArray(g.period.past)) g.period.past = [];
     return g.period;
   }
 
@@ -5445,6 +5478,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     return null;
   }
 
+  function pcOrd(i){ return PC_MONTH_ORD[i] || toFa(i+1); }
+
   function renderPanelPeriodCal(){
     const ctx = pcContext();
     if (!ctx) return;
@@ -5452,45 +5487,59 @@ body.bg-mode-image #grat-root{background:transparent;}
     if (!grid) return;
     const gp = ensureGoalPeriod(ctx.goal);
     const total = gp.days;
+    const past = gp.past;
     const start = pcParseKey(gp.startDate);
     const today = new Date(); today.setHours(0,0,0,0);
     const todayKey = pcLocalKey(new Date());
     const isGoal = ctx.kind === 'goal';
-    let html = '';
-    for (let d=0; d<total; d++){
-      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate()+d);
-      const gKey = pcLocalKey(date), jKey = pcJKey(date);
-      if (d % 30 === 0){
-        const endDate = new Date(start.getFullYear(), start.getMonth(), start.getDate()+Math.min(d+29, total-1));
-        const mIdx = d/30;
-        html += '<div class="pc-month"><b>ماه '+(PC_MONTH_ORD[mIdx] || toFa(mIdx+1))+'</b><span>'+pcFaDate(date)+' تا '+pcFaDate(endDate)+'</span></div>';
+
+    // یک دوره (روز شروع + تعداد روز) → شبکه‌ی «ماه اول، ماه دوم، ...»؛ هم برای دوره‌ی جاری، هم دوره‌های قبلی
+    function gridFor(startKey, days){
+      const st = pcParseKey(startKey);
+      let html = '', doneCount = 0;
+      for (let d=0; d<days; d++){
+        const date = new Date(st.getFullYear(), st.getMonth(), st.getDate()+d);
+        const gKey = pcLocalKey(date), jKey = pcJKey(date);
+        if (d % 30 === 0){
+          const endDate = new Date(st.getFullYear(), st.getMonth(), st.getDate()+Math.min(d+29, days-1));
+          const mIdx = d/30;
+          html += '<div class="pc-month"><b>ماه '+pcOrd(mIdx)+'</b><span>'+pcFaDate(date)+' تا '+pcFaDate(endDate)+'</span></div>';
+        }
+        const own = !isGoal && !!(ctx.node.logs && ctx.node.logs[jKey]);
+        let subCnt = 0;
+        ctx.sources.forEach(n=>{ if (n.logs && n.logs[jKey]) subCnt++; });
+        const done = isGoal ? subCnt > 0 : own;
+        const sub = !isGoal && !own && subCnt > 0;
+        if (done || sub) doneCount++;
+        const future = date > today;
+        let cls = 'pc-day';
+        if (done) cls += ' done';
+        if (sub) cls += ' sub';
+        if (gKey === todayKey) cls += ' today';
+        if (future) cls += ' future';
+        if (!future) cls += ' tap';
+        if (d % 30 === 29 || d === days-1) cls += ' month-end';
+        if (isGoal && gKey === pcSelectedKey) cls += ' sel';
+        html += '<div class="'+cls+'" data-pc-key="'+gKey+'"'+((done||sub) ? ' style="background:'+esc(ctx.color)+';"' : '')+'>'+((done||sub) ? '✓' : '')+'</div>';
       }
-      const own = !isGoal && !!(ctx.node.logs && ctx.node.logs[jKey]);
-      let subCnt = 0;
-      ctx.sources.forEach(n=>{ if (n.logs && n.logs[jKey]) subCnt++; });
-      const done = isGoal ? subCnt > 0 : own;
-      const sub = !isGoal && !own && subCnt > 0;
-      const future = date > today;
-      let cls = 'pc-day';
-      if (done) cls += ' done';
-      if (sub) cls += ' sub';
-      if (gKey === todayKey) cls += ' today';
-      if (future) cls += ' future';
-      if (!isGoal && !future) cls += ' tap';
-      if (isGoal && !future) cls += ' tap';
-      if (d % 30 === 29 || d === total-1) cls += ' month-end';
-      if (isGoal && gKey === pcSelectedKey) cls += ' sel';
-      html += '<div class="'+cls+'" data-pc-key="'+gKey+'"'+((done||sub) ? ' style="background:'+esc(ctx.color)+';"' : '')+'>'+((done||sub) ? '✓' : '')+'</div>';
+      return { html: html, doneCount: doneCount };
     }
-    grid.innerHTML = html;
+
+    const cur = gridFor(gp.startDate, total);
+    grid.innerHTML = cur.html;
 
     const passed = Math.floor((today - start)/86400000) + 1;
     const dayNum = Math.max(1, Math.min(total, passed));
-    document.getElementById(ctx.p+'-title').textContent = '🧭 دوره‌ی '+toFa(total)+' روزه';
+    document.getElementById(ctx.p+'-title').textContent = '🧭 دوره‌ی '+(past.length ? pcOrd(past.length)+' — ' : '')+toFa(total)+' روزه';
     document.getElementById(ctx.p+'-progress').textContent = 'روز '+toFa(dayNum)+' / '+toFa(total);
     document.getElementById(ctx.p+'-hint').textContent = isGoal
       ? 'گزارشِ کارهای همه‌ی شاخه‌ها و زیرشاخه‌های این هدف. کار را داخل هر شاخه ثبت کن؛ برای دیدن جزئیات هر روز، روی آن بزن.'
       : ('روی هر روز بزن تا انجام‌شدنِ این شاخه ثبت یا برداشته شود.' + (ctx.sources.length ? ' روزهای کم‌رنگ یعنی فقط زیرشاخه‌ها انجام شده‌اند.' : ''));
+
+    const infoEl = document.getElementById(ctx.p+'-info');
+    // باز/بسته بودنِ دوره‌های قبلی با هر رندر از نو نپره
+    const openPast = {};
+    infoEl.querySelectorAll('details.pc-past[open]').forEach(el=>{ openPast[el.dataset.i] = true; });
 
     let info = '';
     if (isGoal && pcSelectedKey){
@@ -5504,39 +5553,70 @@ body.bg-mode-image #grat-root{background:transparent;}
     }
     const endOfPeriod = new Date(start.getFullYear(), start.getMonth(), start.getDate()+total);
     const finished = today >= endOfPeriod;
-    if (finished) info += '<div class="pc-finished">🎉 این دوره‌ی '+toFa(total)+' روزه تموم شد. برای دوره‌ی تازه از دکمه‌ی «⚙️ روزهای دوره» استفاده کن.</div>';
-    info += '<button type="button" class="btn full'+(finished ? ' gold' : '')+'" data-pc-settings="1" style="margin-top:8px;font-size:11.5px;padding:9px;">⚙️ روزهای دوره (الان '+toFa(total)+' روزه)</button>';
-    document.getElementById(ctx.p+'-info').innerHTML = info;
+    if (finished){
+      info += '<div class="pc-finished">🎉🥳 دوره‌ی '+pcOrd(past.length)+' رو تموم کردی! '+toFa(Math.min(cur.doneCount, total))+' روز از '+toFa(total)+' روز انجام دادی.<br>برای ادامه دوره‌ی بعدی رو شروع کن — دوره‌های قبلی همین‌جا می‌مونن.</div>';
+      info += '<button type="button" class="btn full gold" data-pc-new="1" style="margin-top:8px;font-size:11.5px;padding:9px;">▶️ شروع دوره‌ی '+pcOrd(past.length+1)+'</button>';
+    } else {
+      info += '<button type="button" class="btn full" data-pc-settings="1" style="margin-top:8px;font-size:11.5px;padding:9px;">⚙️ روزهای دوره (الان '+toFa(total)+' روزه)</button>';
+    }
+    if (past.length){
+      info += '<div class="pc-past-list">';
+      for (let i=past.length-1; i>=0; i--){
+        const r = gridFor(past[i].startDate, past[i].days);
+        info += '<details class="pc-past" data-i="'+i+'"'+(openPast[i] ? ' open' : '')+'><summary><span>✅ دوره‌ی '+pcOrd(i)+' — '+toFa(past[i].days)+' روزه</span><span>'+toFa(r.doneCount)+' / '+toFa(past[i].days)+'</span></summary><div class="pc-hgrid">'+r.html+'</div></details>';
+      }
+      info += '</div>';
+    }
+    infoEl.innerHTML = info;
   }
 
-  function pcSetDays(){
-    const ctx = pcContext();
-    if (!ctx) return;
-    const gp = ensureGoalPeriod(ctx.goal);
-    const input = window.prompt('دوره‌ی این هدف چند روزه باشه؟ (۱ تا '+toFa(PC_MAX_DAYS)+' — برای همه‌ی شاخه‌هاش یکسانه)', String(gp.days));
-    if (input === null) return;
+  function pcAskDays(question){
+    const input = window.prompt(question, String(pcContext() ? ensureGoalPeriod(pcContext().goal).days : 28));
+    if (input === null) return 0;
     const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
     const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); });
     const n = parseInt(norm, 10);
     if (!n || n < 1 || n > PC_MAX_DAYS){
       if (typeof toast === 'function') toast('یه عدد بین ۱ تا '+toFa(PC_MAX_DAYS)+' وارد کن');
-      return;
+      return 0;
     }
-    const changed = n !== gp.days;
+    return n;
+  }
+
+  // «⚙️ روزهای دوره»: فقط طولِ همین دوره‌ی جاری رو عوض می‌کنه (برای همه‌ی شاخه‌های هدف یکسانه)
+  function pcSetDays(){
+    const ctx = pcContext();
+    if (!ctx) return;
+    const gp = ensureGoalPeriod(ctx.goal);
+    const n = pcAskDays('دوره‌ی '+pcOrd(gp.past.length)+' چند روزه باشه؟ (۱ تا '+toFa(PC_MAX_DAYS)+' — برای همه‌ی شاخه‌های این هدف یکسانه)');
+    if (!n) return;
     gp.days = n;
-    if (changed && window.confirm('دوره از امروز از نو شروع بشه؟\nکارهایی که قبلاً ثبت کردی همچنان توی شاخه‌ها می‌مونن.')){
-      gp.startDate = pcLocalKey(new Date());
-      pcSelectedKey = null;
-    }
     scheduleMapSave();
     renderPanelPeriodCal();
     if (typeof toast === 'function') toast('دوره روی '+toFa(n)+' روز تنظیم شد 🌱');
+  }
+
+  // «▶️ شروع دوره‌ی بعدی»: دوره‌ی تمام‌شده به past می‌ره (پاک نمی‌شه) و دوره‌ی تازه از امروز شروع می‌شه
+  function pcNewPeriod(){
+    const ctx = pcContext();
+    if (!ctx) return;
+    const gp = ensureGoalPeriod(ctx.goal);
+    const n = pcAskDays('دوره‌ی '+pcOrd(gp.past.length+1)+' چند روزه باشه؟ (۱ تا '+toFa(PC_MAX_DAYS)+')');
+    if (!n) return;
+    gp.past.push({ days: gp.days, startDate: gp.startDate });
+    gp.days = n;
+    gp.startDate = pcLocalKey(new Date());
+    pcSelectedKey = null;
+    scheduleMapSave();
+    renderPanelPeriodCal();
+    if (typeof toast === 'function') toast('دوره‌ی '+pcOrd(gp.past.length)+' شروع شد 🌱');
   }
 
   function pcOnClick(e){
     const t = e.target;
     if (!t || !t.closest) return;
     if (t.closest('[data-pc-settings]')){ pcSetDays(); return; }
+    if (t.closest('[data-pc-new]')){ pcNewPeriod(); return; }
     const cell = t.closest('.pc-day[data-pc-key]');
     if (!cell || cell.classList.contains('future')) return;
     const ctx = pcContext();
@@ -6541,6 +6621,8 @@ function ensureGratitudePeriod(){
   if(!state.gratitudePeriod || typeof state.gratitudePeriod !== 'object') state.gratitudePeriod = { days: 28, startDate: null };
   if(!state.gratitudePeriod.days || state.gratitudePeriod.days < 1) state.gratitudePeriod.days = 28;
   if(!state.gratitudePeriod.startDate) state.gratitudePeriod.startDate = state.startDate || new Date().toISOString().slice(0,10);
+  // دوره‌های تمام‌شده (دوره‌ی اول، دوم، ...) توی past می‌مونن و هیچ‌وقت پاک نمی‌شن
+  if(!Array.isArray(state.gratitudePeriod.past)) state.gratitudePeriod.past = [];
   return state.gratitudePeriod;
 }
 function gratitudePeriodDaysPassed(){
@@ -6582,7 +6664,10 @@ function renderThemeBanner(){
   if(tbTitle)    tbTitle.textContent = 'فاز ' + (info.phaseIndex + 1).toLocaleString('fa-IR') + ' — ' + info.phaseName;
   if(tbHint)     tbHint.textContent = '🎯 ' + info.prompt;
   if(tbBarFill)  tbBarFill.style.width = (info.day / info.totalDays * 100) + '%';
-  if(tbDayLabel) tbDayLabel.textContent = '🧭 دوره‌ی ' + info.totalDays.toLocaleString('fa-IR') + ' روزه — ' + info.phaseShort;
+  if(tbDayLabel){
+    const pastCount = ensureGratitudePeriod().past.length;
+    tbDayLabel.textContent = '🧭 دوره‌ی ' + (pastCount ? periodOrdFa(pastCount) + ' — ' : '') + info.totalDays.toLocaleString('fa-IR') + ' روزه — ' + info.phaseShort;
+  }
 
   const input = document.getElementById('home-grat-input');
   if(input) input.placeholder = '🎯 ' + info.prompt;
@@ -6602,101 +6687,17 @@ function gratitudeDoneDaySet(){
 /* شبکه‌ی روزهای دوره، دقیقاً به سبک همون تقویم ۹۰ روزه‌ی تب باورها؛
    با این تفاوت که طول دوره را خودِ کاربر تعیین کرده. */
 const MONTH_ORDINALS_FA = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم'];
-function renderGratitudeMiniCal(){
-  const wrap = document.getElementById('gratitude-mini-cal');
-  const info2 = document.getElementById('gratitude-mini-cal-info');
-  if(!wrap) return;
-  const gp = ensureGratitudePeriod();
-  const totalDays = gp.days;
-  const doneSet = gratitudeDoneDaySet();
-  const startDate = new Date(gp.startDate+'T00:00:00');
-  const today = todayMidnight();
-  const todayKeyStr = dayKeyFromDate(new Date());
-  const blockSize = 30;
-  let html = '';
-  let doneCount = 0;
-  for(let d=0; d<totalDays; d++){
-    const date = new Date(startDate);
-    date.setDate(date.getDate()+d);
-    const key = dayKeyFromDate(date);
-    if(d % blockSize === 0){
-      const endIdx = Math.min(d+blockSize, totalDays)-1;
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate()+endIdx);
-      let fromFa, toFa2;
-      try{
-        fromFa = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {day:'numeric', month:'long'}).format(date);
-        toFa2  = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {day:'numeric', month:'long'}).format(endDate);
-      }catch(e){ fromFa = ''; toFa2 = ''; }
-      const mIdx = Math.floor(d/blockSize);
-      const monthLabel = MONTH_ORDINALS_FA[mIdx] || (mIdx+1).toLocaleString('fa-IR');
-      html += '<div class="mini-cal-month"><b>ماه ' + monthLabel + '</b>' +
-        '<span>' + fromFa + ' تا ' + toFa2 + '</span></div>';
-    }
-    const done = !!doneSet[key];
-    if(done) doneCount++;
-    const isToday = key === todayKeyStr;
-    const isFuture = date > today;
-    let cls = 'mini-cal-day';
-    if(done) cls += ' done';
-    if(isToday) cls += ' today';
-    if(isFuture) cls += ' future';
-    if((d % blockSize) === blockSize-1) cls += ' month-end';
-    html += '<div class="' + cls + '" data-cal-key="' + key + '">' + (done ? '✓' : '') + '</div>';
-  }
-  wrap.innerHTML = html;
-
-  if(info2){
-    const finished = today >= (function(){ const e = new Date(startDate); e.setDate(e.getDate()+totalDays); return e; })();
-    info2.innerHTML =
-      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ' + totalDays.toLocaleString('fa-IR') + ' روزه تموم شد — ' + Math.min(doneCount, totalDays).toLocaleString('fa-IR') + ' روز از ' + totalDays.toLocaleString('fa-IR') + ' روز شکرگذاری کردی. برای دوره‌ی تازه از دکمه‌ی «⚙️ روزهای دوره» استفاده کن.</div>' : '') +
-      '<button type="button" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;" onclick="setGratitudePeriodDays()">⚙️ روزهای دوره (الان ' + totalDays.toLocaleString('fa-IR') + ' روزه)</button>';
-  }
+/* ---------------- دوره‌های پشت‌سرهم (دوره‌ی اول، دوم، ...) ----------------
+   دوره‌ی جاری همیشه توی {days, startDate} می‌مونه؛ وقتی تموم شد و کاربر «دوره‌ی بعدی» رو زد،
+   همون به past اضافه می‌شه و هیچ‌وقت پاک نمی‌شه. برای شکرگذاری و بازی فراوانی مشترکه. */
+function periodOrdFa(i){ return MONTH_ORDINALS_FA[i] || (i+1).toLocaleString('fa-IR'); }
+function periodParseDays(input, max){
+  const n = parseInt(normalizeDigits(String(input)), 10);
+  return (n && n >= 1 && n <= max) ? n : 0;
 }
-
-/* کاربر خودش تعداد روزهای دوره‌ی شکرگذاری رو تعیین می‌کنه؛
-   اگه عدد عوض بشه، می‌تونه دوره رو از امروز از نو شروع کنه. */
-function setGratitudePeriodDays(){
-  const gp = ensureGratitudePeriod();
-  const input = window.prompt('دوره‌ی شکرگذاری چند روزه باشه؟', String(gp.days));
-  if(input === null) return;
-  const n = parseInt(input, 10);
-  if(!n || n < 1){
-    if(typeof toast === 'function') toast('یه عدد معتبر بزرگ‌تر از صفر وارد کن');
-    return;
-  }
-  const changed = n !== gp.days;
-  gp.days = n;
-  if(changed && window.confirm('دوره از امروز از نو شروع بشه؟\nشکرگذاری‌هایی که قبلاً ثبت کردی همچنان توی تاریخچه می‌مونن.')){
-    gp.startDate = new Date().toISOString().slice(0,10);
-  }
-  try{ saveState(); }catch(e){}
-  renderThemeBanner();
-  if(typeof toast === 'function') toast('دوره روی ' + n.toLocaleString('fa-IR') + ' روز تنظیم شد 🌱');
-}
-
-/* ---------------- دوره‌ی بازی فراوانی با طول قابل‌تنظیم ----------------
-   دقیقاً هم‌سبک تقویم شکرگذاری/باورها: «دوره‌ی N روزه» + ماه اول، ماه دوم، ...
-   روزی «انجام‌شده» حساب می‌شه که توش خریدی ثبت شده باشه (state.history). */
-const MONTH_ORDINALS_FA_SHOP = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم','سیزدهم'];
-const SHOP_PERIOD_MAX_DAYS = 365;
-function ensureShopPeriod(){
-  if(!state.shopPeriod || typeof state.shopPeriod !== 'object') state.shopPeriod = { days: 28, startDate: null };
-  if(!state.shopPeriod.days || state.shopPeriod.days < 1) state.shopPeriod.days = 28;
-  if(!state.shopPeriod.startDate) state.shopPeriod.startDate = dayKeyFromDate(new Date());
-  return state.shopPeriod;
-}
-function renderShopMiniCal(){
-  const wrap = document.getElementById('shop-mini-cal');
-  if(!wrap) return;
-  const info = document.getElementById('shop-mini-cal-info');
-  const titleEl = document.getElementById('shop-period-title');
-  const progEl = document.getElementById('shop-period-progress');
-  const sp = ensureShopPeriod();
-  const totalDays = Math.min(sp.days, SHOP_PERIOD_MAX_DAYS);
-  const doneSet = {};
-  (state.history || []).forEach(function(h){ if(h && h.iso) doneSet[dayKeyFromIso(h.iso)] = true; });
-  const startDate = new Date(sp.startDate + 'T00:00:00');
+/* یک دوره (روز شروع + تعداد روز) → شبکه‌ی «ماه اول، ماه دوم، ...» */
+function periodGridHtml(startKey, totalDays, doneSet, keyAttr){
+  const startDate = new Date(startKey+'T00:00:00');
   const today = todayMidnight();
   const todayKeyStr = dayKeyFromDate(new Date());
   const blockSize = 30;
@@ -6713,8 +6714,7 @@ function renderShopMiniCal(){
     if(d % blockSize === 0){
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + Math.min(d+blockSize, totalDays) - 1);
-      const mIdx = Math.floor(d/blockSize);
-      html += '<div class="mini-cal-month"><b>ماه ' + (MONTH_ORDINALS_FA_SHOP[mIdx] || (mIdx+1).toLocaleString('fa-IR')) + '</b>' +
+      html += '<div class="mini-cal-month"><b>ماه ' + periodOrdFa(Math.floor(d/blockSize)) + '</b>' +
         '<span>' + fmt(date) + ' تا ' + fmt(endDate) + '</span></div>';
     }
     const done = !!doneSet[key];
@@ -6724,40 +6724,165 @@ function renderShopMiniCal(){
     if(key === todayKeyStr) cls += ' today';
     if(date > today) cls += ' future';
     if((d % blockSize) === blockSize-1 || d === totalDays-1) cls += ' month-end';
-    html += '<div class="' + cls + '" data-shop-key="' + key + '">' + (done ? '✓' : '') + '</div>';
+    html += '<div class="' + cls + '" ' + keyAttr + '="' + key + '">' + (done ? '✓' : '') + '</div>';
   }
-  wrap.innerHTML = html;
+  return { html: html, doneCount: doneCount };
+}
+/* لیستِ دوره‌های قبلی (تاشو)؛ باز/بسته بودنشون با رندر دوباره از نو نمی‌پره */
+function periodOpenState(container){
+  const m = {};
+  container.querySelectorAll('details.mini-cal-past[open]').forEach(function(el){ m[el.dataset.i] = true; });
+  return m;
+}
+function periodPastHtml(past, doneSet, keyAttr, openMap){
+  if(!past || !past.length) return '';
+  let html = '<div class="mini-cal-past-list">';
+  for(let i=past.length-1; i>=0; i--){
+    const r = periodGridHtml(past[i].startDate, past[i].days, doneSet, keyAttr);
+    html += '<details class="mini-cal-past" data-i="' + i + '"' + (openMap && openMap[i] ? ' open' : '') + '>' +
+      '<summary><span>✅ دوره‌ی ' + periodOrdFa(i) + ' — ' + past[i].days.toLocaleString('fa-IR') + ' روزه</span>' +
+      '<span>' + r.doneCount.toLocaleString('fa-IR') + ' / ' + past[i].days.toLocaleString('fa-IR') + '</span></summary>' +
+      '<div class="mini-cal-inner">' + r.html + '</div></details>';
+  }
+  return html + '</div>';
+}
+/* پایینِ تقویم: پیامِ پایان + دکمه‌ی دوره‌ی بعدی (وقتی تموم شده) یا دکمه‌ی تنظیم روزها (وقتی جاریه) + دوره‌های قبلی */
+function periodInfoHtml(pd, finished, doneCount, doneWord, doneSet, keyAttr, newFn, setFn, openMap){
+  const totalDays = pd.days;
+  const ord = periodOrdFa(pd.past.length);
+  let html = '';
+  if(finished){
+    html += '<div class="cal-finished">🎉🥳 دوره‌ی ' + ord + ' رو تموم کردی! ' + Math.min(doneCount, totalDays).toLocaleString('fa-IR') + ' روز از ' + totalDays.toLocaleString('fa-IR') + ' روز ' + doneWord + ' کردی.<br>برای ادامه دوره‌ی بعدی رو شروع کن — دوره‌های قبلی همین‌جا می‌مونن.</div>' +
+      '<button type="button" class="btn tiny gold" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;" onclick="' + newFn + '()">▶️ شروع دوره‌ی ' + periodOrdFa(pd.past.length+1) + '</button>';
+  } else {
+    html += '<button type="button" class="btn tiny" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;" onclick="' + setFn + '()">⚙️ روزهای دوره (الان ' + totalDays.toLocaleString('fa-IR') + ' روزه)</button>';
+  }
+  return html + periodPastHtml(pd.past, doneSet, keyAttr, openMap);
+}
+/* «دوره‌ی بعدی»: دوره‌ی تمام‌شده می‌ره توی past و دوره‌ی تازه از امروز شروع می‌شه */
+function periodStartNext(pd, input, max){
+  const n = periodParseDays(input, max);
+  if(!n) return 0;
+  pd.past.push({ days: pd.days, startDate: pd.startDate });
+  pd.days = n;
+  pd.startDate = dayKeyFromDate(new Date());
+  return n;
+}
+
+function renderGratitudeMiniCal(){
+  const wrap = document.getElementById('gratitude-mini-cal');
+  const info2 = document.getElementById('gratitude-mini-cal-info');
+  if(!wrap) return;
+  const gp = ensureGratitudePeriod();
+  const totalDays = gp.days;
+  const doneSet = gratitudeDoneDaySet();
+  const startDate = new Date(gp.startDate+'T00:00:00');
+  const today = todayMidnight();
+  const cur = periodGridHtml(gp.startDate, totalDays, doneSet, 'data-cal-key');
+  wrap.innerHTML = cur.html;
+
+  if(info2){
+    const finished = today >= (function(){ const e = new Date(startDate); e.setDate(e.getDate()+totalDays); return e; })();
+    info2.innerHTML = periodInfoHtml(gp, finished, cur.doneCount, 'شکرگذاری', doneSet, 'data-cal-key', 'startNewGratitudePeriod', 'setGratitudePeriodDays', periodOpenState(info2));
+  }
+}
+
+/* کاربر خودش تعداد روزهای دوره‌ی شکرگذاری رو تعیین می‌کنه (فقط طولِ همین دوره‌ی جاری). */
+function setGratitudePeriodDays(){
+  const gp = ensureGratitudePeriod();
+  const input = window.prompt('دوره‌ی ' + periodOrdFa(gp.past.length) + ' چند روزه باشه؟', String(gp.days));
+  if(input === null) return;
+  const n = periodParseDays(input, Infinity);
+  if(!n){
+    if(typeof toast === 'function') toast('یه عدد معتبر بزرگ‌تر از صفر وارد کن');
+    return;
+  }
+  gp.days = n;
+  try{ saveState(); }catch(e){}
+  renderThemeBanner();
+  if(typeof toast === 'function') toast('دوره روی ' + n.toLocaleString('fa-IR') + ' روز تنظیم شد 🌱');
+}
+
+/* دوره‌ی تمام‌شده می‌ره توی past (پاک نمی‌شه) و دوره‌ی بعدی از امروز شروع می‌شه. */
+function startNewGratitudePeriod(){
+  const gp = ensureGratitudePeriod();
+  const input = window.prompt('دوره‌ی ' + periodOrdFa(gp.past.length+1) + ' چند روزه باشه؟', String(gp.days));
+  if(input === null) return;
+  const n = periodStartNext(gp, input, Infinity);
+  if(!n){
+    if(typeof toast === 'function') toast('یه عدد معتبر بزرگ‌تر از صفر وارد کن');
+    return;
+  }
+  try{ saveState(); }catch(e){}
+  renderThemeBanner();
+  if(typeof toast === 'function') toast('دوره‌ی ' + periodOrdFa(gp.past.length) + ' شروع شد 🌱');
+}
+
+/* ---------------- دوره‌ی بازی فراوانی با طول قابل‌تنظیم ----------------
+   دقیقاً هم‌سبک تقویم شکرگذاری/باورها: «دوره‌ی N روزه» + ماه اول، ماه دوم، ...
+   روزی «انجام‌شده» حساب می‌شه که توش خریدی ثبت شده باشه (state.history). */
+const MONTH_ORDINALS_FA_SHOP = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم','سیزدهم'];
+const SHOP_PERIOD_MAX_DAYS = 365;
+function ensureShopPeriod(){
+  if(!state.shopPeriod || typeof state.shopPeriod !== 'object') state.shopPeriod = { days: 28, startDate: null };
+  if(!state.shopPeriod.days || state.shopPeriod.days < 1) state.shopPeriod.days = 28;
+  if(!state.shopPeriod.startDate) state.shopPeriod.startDate = dayKeyFromDate(new Date());
+  if(!Array.isArray(state.shopPeriod.past)) state.shopPeriod.past = [];
+  return state.shopPeriod;
+}
+function renderShopMiniCal(){
+  const wrap = document.getElementById('shop-mini-cal');
+  if(!wrap) return;
+  const info = document.getElementById('shop-mini-cal-info');
+  const titleEl = document.getElementById('shop-period-title');
+  const progEl = document.getElementById('shop-period-progress');
+  const sp = ensureShopPeriod();
+  const totalDays = Math.min(sp.days, SHOP_PERIOD_MAX_DAYS);
+  const doneSet = {};
+  (state.history || []).forEach(function(h){ if(h && h.iso) doneSet[dayKeyFromIso(h.iso)] = true; });
+  const startDate = new Date(sp.startDate + 'T00:00:00');
+  const today = todayMidnight();
+  const cur = periodGridHtml(sp.startDate, totalDays, doneSet, 'data-shop-key');
+  wrap.innerHTML = cur.html;
 
   const passed = Math.floor((today - startDate)/86400000) + 1;
   const dayNum = Math.max(1, Math.min(totalDays, passed));
-  if(titleEl) titleEl.textContent = '🧭 دوره‌ی ' + totalDays.toLocaleString('fa-IR') + ' روزه';
+  if(titleEl) titleEl.textContent = '🧭 دوره‌ی ' + (sp.past.length ? periodOrdFa(sp.past.length) + ' — ' : '') + totalDays.toLocaleString('fa-IR') + ' روزه';
   if(progEl)  progEl.textContent = 'روز ' + dayNum.toLocaleString('fa-IR') + ' / ' + totalDays.toLocaleString('fa-IR');
 
   if(info){
     const endOfPeriod = new Date(startDate); endOfPeriod.setDate(endOfPeriod.getDate() + totalDays);
     const finished = today >= endOfPeriod;
-    info.innerHTML =
-      (finished ? '<div class="cal-finished">🎉 این دوره‌ی ' + totalDays.toLocaleString('fa-IR') + ' روزه تموم شد — ' + Math.min(doneCount, totalDays).toLocaleString('fa-IR') + ' روز از ' + totalDays.toLocaleString('fa-IR') + ' روز خرید ثبت کردی. برای دوره‌ی تازه از دکمه‌ی «⚙️ روزهای دوره» استفاده کن.</div>' : '') +
-      '<button type="button" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;" onclick="setShopPeriodDays()">⚙️ روزهای دوره (الان ' + totalDays.toLocaleString('fa-IR') + ' روزه)</button>';
+    info.innerHTML = periodInfoHtml(sp, finished, cur.doneCount, 'خرید ثبت', doneSet, 'data-shop-key', 'startNewShopPeriod', 'setShopPeriodDays', periodOpenState(info));
   }
 }
 function setShopPeriodDays(){
   const sp = ensureShopPeriod();
-  const input = window.prompt('دوره‌ی بازی فراوانی چند روزه باشه؟ (۱ تا ' + SHOP_PERIOD_MAX_DAYS.toLocaleString('fa-IR') + ')', String(sp.days));
+  const input = window.prompt('دوره‌ی ' + periodOrdFa(sp.past.length) + ' چند روزه باشه؟ (۱ تا ' + SHOP_PERIOD_MAX_DAYS.toLocaleString('fa-IR') + ')', String(sp.days));
   if(input === null) return;
-  const n = parseInt(normalizeDigits(String(input)), 10);
-  if(!n || n < 1 || n > SHOP_PERIOD_MAX_DAYS){
+  const n = periodParseDays(input, SHOP_PERIOD_MAX_DAYS);
+  if(!n){
     if(typeof toast === 'function') toast('یه عدد بین ۱ تا ' + SHOP_PERIOD_MAX_DAYS.toLocaleString('fa-IR') + ' وارد کن');
     return;
   }
-  const changed = n !== sp.days;
   sp.days = n;
-  if(changed && window.confirm('دوره از امروز از نو شروع بشه؟\nخریدهایی که قبلاً ثبت کردی همچنان توی تاریخچه می‌مونن.')){
-    sp.startDate = dayKeyFromDate(new Date());
-  }
   try{ saveState(); }catch(e){}
   renderShopMiniCal();
   if(typeof toast === 'function') toast('دوره روی ' + n.toLocaleString('fa-IR') + ' روز تنظیم شد 🌱');
+}
+/* دوره‌ی تمام‌شده می‌ره توی past (پاک نمی‌شه) و دوره‌ی بعدی از امروز شروع می‌شه. */
+function startNewShopPeriod(){
+  const sp = ensureShopPeriod();
+  const input = window.prompt('دوره‌ی ' + periodOrdFa(sp.past.length+1) + ' چند روزه باشه؟ (۱ تا ' + SHOP_PERIOD_MAX_DAYS.toLocaleString('fa-IR') + ')', String(sp.days));
+  if(input === null) return;
+  const n = periodStartNext(sp, input, SHOP_PERIOD_MAX_DAYS);
+  if(!n){
+    if(typeof toast === 'function') toast('یه عدد بین ۱ تا ' + SHOP_PERIOD_MAX_DAYS.toLocaleString('fa-IR') + ' وارد کن');
+    return;
+  }
+  try{ saveState(); }catch(e){}
+  renderShopMiniCal();
+  if(typeof toast === 'function') toast('دوره‌ی ' + periodOrdFa(sp.past.length) + ' شروع شد 🌱');
 }
 
 function loadState(){
