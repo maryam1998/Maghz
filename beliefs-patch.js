@@ -722,6 +722,11 @@
       '.mini-cal-month{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--ink-soft);padding:6px 2px 2px;}' +
       '.mini-cal-month:first-child{padding-top:0;}' +
       '.mini-cal-month b{font-size:11px;color:var(--ink);}' +
+      '.mini-cal-day.emo-warm{background:var(--emerald-500);}' +
+      '.mini-cal-day.emo-mid{background:var(--emerald-300,#7fd9cb);}' +
+      '.mini-cal-day.emo-weak{background:var(--gold-500);}' +
+      '.emo-dot{display:inline-block;width:9px;height:9px;border-radius:3px;vertical-align:middle;margin-left:3px;}' +
+      '#dp-emo-cal-info{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:11px;line-height:1.7;color:var(--ink-soft);}' +
       '.cal-finished{margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(244,197,66,.16);border:1px solid rgba(244,197,66,.45);font-size:11.5px;font-weight:700;line-height:1.8;color:var(--ink);}' +
       '#future-cal-info{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--surface-2);font-size:11px;line-height:1.7;color:var(--ink-soft);}' +
       '#future-register-btn.is-done{background:var(--surface-2)!important;color:var(--emerald-700,#0f5b53)!important;border:1.5px solid var(--emerald-500)!important;box-shadow:none!important;}' +
@@ -950,6 +955,120 @@
       (finished ? '<div class="cal-finished">🎉 این دوره‌ی ۹۰ روزه تموم شد — ' + toFa(Math.min(doneCnt, 90)) + ' روز از ۹۰ روز خوندی. برای شروع دوره‌ی تازه، تقویم رو ریست کن.</div>' : '') +
       '<button type="button" id="future-cal-reset-btn" class="btn tiny' + (finished ? ' gold' : '') + '" style="width:100%;margin-top:8px;font-size:11.5px;padding:9px;">🔄 ریست تقویم</button>';
     renderCalInfo();
+  }
+
+  /* ---------- تقویم «ثبت حس» ---------- */
+  var EMO_SELECTED = null;
+  var EMO_BASELINED = false;
+
+  function emoInfoFor(id){
+    var e = (typeof EMOTION_BY_ID !== 'undefined' && EMOTION_BY_ID) ? EMOTION_BY_ID[id] : null;
+    return {
+      id: id,
+      name: (e && (e.name || e.label || e.title || e.fa || e.text)) || String(id),
+      icon: (e && (e.emoji || e.icon || e.em)) || '',
+      freq: (e && typeof e.freq === 'number') ? e.freq : null
+    };
+  }
+  function emoDayRecord(dk){
+    var em = state.practiceEmotions || {};
+    var rec = em[dk] && em[dk].dispenza;
+    var ids = (rec && Array.isArray(rec.after)) ? rec.after : [];
+    if (!ids.length) return null;
+    var items = ids.map(emoInfoFor);
+    var maxF = null, top = items[0];
+    items.forEach(function(it){ if (it.freq !== null && (maxF === null || it.freq > maxF)){ maxF = it.freq; top = it; } });
+    var tier = maxF === null ? 'mid' : (maxF >= 500 ? 'warm' : (maxF < 200 ? 'weak' : 'mid'));
+    return { items: items, top: top, tier: tier };
+  }
+  /* زمان ثبت حس رو از لحظه‌ای که تغییرش برای اولین بار دیده می‌شه می‌گیریم (حداکثر چند ثانیه اختلاف) */
+  function emoSync(){
+    if (typeof state === 'undefined' || !state) return;
+    var dk = dpTodayKey();
+    var rec = emoDayRecord(dk);
+    if (!state.dispenzaEmotionSeen || typeof state.dispenzaEmotionSeen !== 'object') state.dispenzaEmotionSeen = {};
+    var seen = state.dispenzaEmotionSeen[dk];
+    if (!rec){ EMO_BASELINED = true; return; }
+    var sig = rec.items.map(function(i){ return i.id; }).join(',');
+    if (!seen){
+      state.dispenzaEmotionSeen[dk] = { sig: sig, ts: EMO_BASELINED ? Date.now() : null };
+    } else if (seen.sig !== sig){
+      state.dispenzaEmotionSeen[dk] = { sig: sig, ts: Date.now() };
+    } else { EMO_BASELINED = true; return; }
+    EMO_BASELINED = true;
+    EMO_SELECTED = dk;
+    try { saveState(); } catch(e){}
+    renderEmoCal();
+  }
+
+  function renderEmoCal(){
+    var fb = document.getElementById('dp-emotion-feedback');
+    if (!fb) return;
+    var mount = document.getElementById('dp-emo-cal');
+    if (!mount){
+      mount = document.createElement('div');
+      mount.id = 'dp-emo-cal';
+      mount.style.marginTop = '14px';
+      fb.parentNode.parentNode.appendChild(mount);
+    }
+    var v = getActiveVersion();
+    var startDate = ndKeyToDate(v ? v.startDate : dpTodayKey());
+    var today = new Date(); today.setHours(0,0,0,0);
+    var todayKeyStr = dpTodayKey();
+    var monthNames = ['اول','دوم','سوم'];
+    var html = '<div style="font-size:11.5px;font-weight:700;margin-bottom:8px;">📅 تقویم حس‌های ثبت‌شده</div><div class="mini-cal-grid">';
+    for (var d = 0; d < 90; d++){
+      var date = new Date(startDate);
+      date.setDate(date.getDate() + d);
+      var key = dpKeyFromDate(date);
+      if (d % 30 === 0){
+        var endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + d + 29);
+        html += '<div class="mini-cal-month"><b>ماه ' + monthNames[d / 30] + '</b><span>' +
+          dpFmtDateFa(date, { day: 'numeric', month: 'long' }) + ' تا ' + dpFmtDateFa(endDate, { day: 'numeric', month: 'long' }) + '</span></div>';
+      }
+      var rec = emoDayRecord(key);
+      var cls = 'mini-cal-day';
+      if (rec) cls += ' emo-' + rec.tier;
+      if (key === todayKeyStr) cls += ' today';
+      if (date > today) cls += ' future';
+      if (d % 30 === 29) cls += ' month-end';
+      if (key === EMO_SELECTED) cls += ' selected';
+      html += '<div class="' + cls + '" data-emo-key="' + key + '">' + (rec ? (rec.top.icon || '♥') : '') + '</div>';
+    }
+    html += '</div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:10px;color:var(--muted);">' +
+        '<span><i class="emo-dot" style="background:var(--emerald-500);"></i> پرقدرت</span>' +
+        '<span><i class="emo-dot" style="background:var(--emerald-300,#7fd9cb);"></i> معمولی</span>' +
+        '<span><i class="emo-dot" style="background:var(--gold-500);"></i> ضعیف</span>' +
+      '</div>' +
+      '<div id="dp-emo-cal-info"></div>';
+    mount.innerHTML = html;
+    renderEmoInfo();
+  }
+
+  function renderEmoInfo(){
+    var box = document.getElementById('dp-emo-cal-info');
+    if (!box) return;
+    if (!EMO_SELECTED){ box.style.display = 'none'; return; }
+    var date = ndKeyToDate(EMO_SELECTED);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var rec = emoDayRecord(EMO_SELECTED);
+    var dateTxt = dpFmtDateFa(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
+      ' <span style="opacity:.6;">(' + EMO_SELECTED + ')</span>';
+    var body;
+    if (rec){
+      var seen = state.dispenzaEmotionSeen && state.dispenzaEmotionSeen[EMO_SELECTED];
+      var tm = seen && seen.ts ? ' — ساعت ' + dpFmtTime(seen.ts) : ' — <span style="opacity:.6;">ساعت ثبت نشده</span>';
+      var tierTxt = rec.tier === 'warm' ? '🔥 پرقدرت' : (rec.tier === 'weak' ? '⚠️ ضعیف' : '✓ معمولی');
+      body = '<div style="margin-top:3px;"><b style="color:var(--emerald-700,#0f5b53);">' +
+        rec.items.map(function(it){ return (it.icon ? it.icon + ' ' : '') + escapeHtml(it.name); }).join('، ') +
+        '</b>' + tm + '</div><div style="margin-top:3px;opacity:.8;">' + tierTxt + '</div>';
+    } else {
+      body = '<div style="margin-top:3px;opacity:.7;">' + (date > today ? 'هنوز نرسیده' : 'حسی ثبت نشده') + '</div>';
+    }
+    box.style.display = 'block';
+    box.innerHTML = '<div>' + dateTxt + '</div>' + body;
   }
 
   function resetFutureCalendar(){
@@ -1273,6 +1392,7 @@
     }
 
     try { rasRenderSignals(); } catch(e){}
+    try { emoSync(); renderEmoCal(); } catch(e){ console.warn('[emo-cal]', e); }
 
     try { refreshNothingVisual(); } catch(e){}
   }
@@ -1597,10 +1717,19 @@
       if (t.id === 'archive-future-btn'){ toggleArchive(); return; }
       if (t.closest('#future-register-btn')){ registerTodayRead(); return; }
       if (t.closest('#future-cal-reset-btn')){ resetFutureCalendar(); return; }
+      var emoCell = t.closest('.mini-cal-day[data-emo-key]');
+      if (emoCell){
+        EMO_SELECTED = emoCell.dataset.emoKey;
+        document.querySelectorAll('.mini-cal-day.selected[data-emo-key]').forEach(function(x){ x.classList.remove('selected'); });
+        emoCell.classList.add('selected');
+        renderEmoInfo();
+        return;
+      }
+      setTimeout(function(){ try { emoSync(); } catch(e){} }, 700);
       var calCell = t.closest('.mini-cal-day[data-cal-key]');
       if (calCell){
         CAL_SELECTED = calCell.dataset.calKey;
-        document.querySelectorAll('.mini-cal-day.selected').forEach(function(x){ x.classList.remove('selected'); });
+        document.querySelectorAll('.mini-cal-day.selected[data-cal-key]').forEach(function(x){ x.classList.remove('selected'); });
         calCell.classList.add('selected');
         renderCalInfo();
         return;
@@ -1682,6 +1811,7 @@
     wrapRenderBeliefsView();
     wireEvents();
     dpRestorePossibilities();
+    setInterval(function(){ try { emoSync(); } catch(e){} }, 2000);
     try { renderFutureText(); } catch(e){}
     try { renderSeedSection(); } catch(e){}
     try { dpRenderProgress(); } catch(e){}
