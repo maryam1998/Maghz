@@ -543,6 +543,16 @@
   window.__echwEndCapture = function(){ endCapture(false); };
   window.__echwIsCapturing = function(){ return !!captureCtx; };
 
+  /* حس انتخاب‌شده روی ادمک، بعد از اینکه یک مسیر عصبی مصرفش کرد (رشته‌ی
+     جدید با همون رنگ ساخته شد)، پاک می‌شه — ادمک برمی‌گرده به حالت «ریست»
+     (بدون حس ثبت‌شده) تا برای دفعه‌ی بعد آماده باشه. */
+  window.__echwResetSelection = function(){
+    if (!selected.size) return;
+    selected.clear();
+    saveSelection();
+    if (isPanelOpen()) render();
+  };
+
   function render() {
     var container = document.getElementById('echw-chart');
     if (!container) return;

@@ -99,6 +99,7 @@ function neuralCleanupPending(container, opts){
       delete container.pendingManual[key];
     }else{
       if(container.logs[key] === true) delete container.logs[key];
+      if(container.fiberEmotions) delete container.fiberEmotions[key];
       delete container.pendingManual[key];
       changed = true;
     }
@@ -125,6 +126,28 @@ function neuralAddFiber(container, opts){
   if(opts && opts.calendarLinked){
     container.pendingManual[key] = { ts: Date.now(), dayKey: todayKey() };
   }
+
+  /* اگه همین الان روی ادمک شناور یک یا چند حس انتخاب شده باشه («ثبت» شده
+     باشه)، همین رشته‌ی تازه رو به رنگِ فرکانسِ قوی‌ترین حسِ انتخابی می‌چسبونیم
+     (رشته‌ی ضخیم و رنگی). اگه هیچ حسی انتخاب نشده بود (ادمک در حالت «ریست»)،
+     رشته به همون شکل پیش‌فرضِ نازک می‌مونه. بعد از مصرف، انتخاب پاک می‌شه تا
+     ادمک برای دفعه‌ی بعد ریست باشه. */
+  try{
+    const ids = (typeof window.getSelectedEmotions === 'function') ? window.getSelectedEmotions() : [];
+    if(ids && ids.length){
+      let dominant = null;
+      ids.forEach(function(id){
+        const e = (typeof EMOTION_BY_ID !== 'undefined') ? EMOTION_BY_ID[id] : null;
+        if(e && (!dominant || e.freq > dominant.freq)) dominant = e;
+      });
+      if(dominant){
+        if(!container.fiberEmotions || typeof container.fiberEmotions !== 'object') container.fiberEmotions = {};
+        container.fiberEmotions[key] = { ids: ids.slice(), color: dominant.color, freq: dominant.freq };
+      }
+      if(typeof window.__echwResetSelection === 'function') window.__echwResetSelection();
+    }
+  }catch(e){}
+
   return key;
 }
 
@@ -253,13 +276,18 @@ function renderNeuralPathway(mountId, container, opts){
   }
   const warm = quality !== null && quality >= 500;
   const weak = quality !== null && quality < 200;
-  const fiberColor = warm ? 'var(--emerald-500,#2bbfab)'
-                     : weak ? 'var(--gold-500,#c9a24b)'
-                     : 'var(--accent)';
-  const fiberOpacity = warm ? 0.78 : weak ? 0.32 : 0.55;
-  const fiberWidth   = warm ? 1.6  : weak ? 0.8  : 1;
 
   // ---- رشته‌ها — به تعداد واقعی، با فاصله‌ی چرخشی از هم ----
+  // هر رشته‌ای که موقع ساخته‌شدنش یک «حس ثبت‌شده» (از ادمک شناور) همراهش بوده،
+  // به رنگِ فرکانسِ همون حس و ضخیم کشیده می‌شه؛ رشته‌هایی که بدون ثبت حس ساخته
+  // شدن، به همون رنگ و ضخامتِ پیش‌فرضِ قبلی (نازک) می‌مونن.
+  const DEFAULT_FIBER_COLOR   = 'var(--accent)';
+  const DEFAULT_FIBER_OPACITY = 0.55;
+  const DEFAULT_FIBER_WIDTH   = 1;
+  const FELT_FIBER_OPACITY    = 0.88;
+  const FELT_FIBER_WIDTH      = 2.2;
+  const feltKeys = Object.keys(container.fiberEmotions || {}).filter(function(k){ return container.logs[k] === true; });
+
   const drawnFibers = fiberCount;
   const SPREAD_CYCLE = 9;
   let fibersSvg = '';
@@ -268,7 +296,11 @@ function renderNeuralPathway(mountId, container, opts){
     const mag = 3 + 6*pairIdx;
     const off = (i%2===0 ? -1 : 1) * mag;
     const sY = 90+off*0.4, mY = 90+off, eY = 90+off*0.4;
-    fibersSvg += '<path class="np-fiber" d="M71 '+sY+' Q190 '+mY+' 309 '+eY+'" fill="none" stroke="'+fiberColor+'" stroke-width="'+fiberWidth+'" stroke-linecap="round" opacity="'+fiberOpacity+'"/>';
+    const felt = feltKeys.length > i ? container.fiberEmotions[feltKeys[i]] : null;
+    const fColor   = felt ? felt.color        : DEFAULT_FIBER_COLOR;
+    const fWidth   = felt ? FELT_FIBER_WIDTH  : DEFAULT_FIBER_WIDTH;
+    const fOpacity = felt ? FELT_FIBER_OPACITY: DEFAULT_FIBER_OPACITY;
+    fibersSvg += '<path class="np-fiber" d="M71 '+sY+' Q190 '+mY+' 309 '+eY+'" fill="none" stroke="'+fColor+'" stroke-width="'+fWidth+'" stroke-linecap="round" opacity="'+fOpacity+'"/>';
   }
 
   // ---- تیِرهای رشد دو نورون ----

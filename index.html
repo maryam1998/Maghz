@@ -575,8 +575,30 @@
   #img-viewer-close{
     position:absolute;top:18px;left:18px;width:36px;height:36px;border-radius:50%;
     background:rgba(255,255,255,.15);color:#fff;border:none;font-size:18px;
-    cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:4;
   }
+  #img-viewer-grid-btn{
+    position:absolute;top:18px;right:18px;width:36px;height:36px;border-radius:50%;
+    background:rgba(255,255,255,.15);color:#fff;border:none;font-size:16px;
+    cursor:pointer;align-items:center;justify-content:center;z-index:4;display:none;
+  }
+  #img-viewer-counter{
+    position:absolute;top:24px;left:50%;transform:translateX(-50%);
+    color:#fff;font-size:12.5px;background:rgba(255,255,255,.15);
+    padding:4px 12px;border-radius:20px;z-index:4;display:none;
+  }
+  #img-viewer-grid{
+    position:absolute;inset:0;z-index:3;display:none;
+    grid-template-columns:repeat(3,1fr);gap:6px;padding:64px 12px 20px;
+    overflow-y:auto;background:rgba(0,0,0,.96);
+  }
+  #img-viewer-grid.show{display:grid;}
+  .ivg-item{
+    border-radius:10px;overflow:hidden;aspect-ratio:1;cursor:pointer;
+    border:2px solid transparent;
+  }
+  .ivg-item.active{border-color:#fff;}
+  .ivg-item img{width:100%;height:100%;object-fit:cover;display:block;}
   .img-thumb .del{
     position:absolute;top:-6px;right:-6px;background:#c96b6b;color:#fff;
     border-radius:50%;width:14px;height:14px;font-size:9px;line-height:14px;
@@ -1182,7 +1204,17 @@ html[data-theme="dark"] .np-emotion-row button{
 #grat-root #gratitude-mini-cal .mini-cal-month{ min-width:0; padding:8px 2px 3px; }
 #grat-root #gratitude-mini-cal .mini-cal-month:first-child{ padding-top:0; }
 #grat-root #gratitude-mini-cal .mini-cal-day{ min-width:0; }
+#grat-root #bank-cal-period-grid .mini-cal-month{ min-width:0; padding:8px 2px 3px; }
+#grat-root #bank-cal-period-grid .mini-cal-month:first-child{ padding-top:0; }
+#grat-root #bank-cal-period-grid .mini-cal-day{ min-width:0; }
 #grat-root #gratitude-mini-cal-info{ margin:0 18px; }
+#grat-root #bank-cal-period-grid{
+    display:grid; grid-template-columns:repeat(15, minmax(0,1fr)); gap:3px;
+    margin:14px 0 0; padding:14px;
+    width:auto; max-width:100%; box-sizing:border-box; overflow:hidden;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  }
+#grat-root #bank-cal-period-info{ margin:10px 0 0; text-align:right; }
 /* استایل پایه‌ی روزها/ماه‌های تقویم‌های دوره‌ای (شکرگذاری، بازی فراوانی و دوره‌های قبلی) */
 #grat-root .mini-cal-month{ grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; font-size:10.5px; color:var(--muted); }
 #grat-root .mini-cal-month b{ font-size:11px; color:var(--ink); }
@@ -1246,12 +1278,12 @@ html[data-theme="dark"] .np-emotion-row button{
     flex:none; overflow:hidden;
   }
 #grat-root .tx-item .mid{flex:1; min-width:0;}
-#grat-root .tx-item .mid .t1{font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+#grat-root .tx-item .mid .t1{font-size:13.5px; font-weight:700; white-space:pre-wrap; word-break:break-word;}
 #grat-root .tx-item .mid .t2{font-size:11.5px; color:var(--muted); margin-top:2px;}
 #grat-root .tx-item .amt{font-size:13px; font-weight:800; color:var(--emerald-700); white-space:nowrap;}
 #grat-root .tx-item .badge-manual{font-size:10px; color:var(--emerald-700); background:#eaf5f2; border-radius:8px; padding:2px 7px; font-weight:700;}
 #grat-root .tx-item .share-toggle-btn{
-  flex-shrink:0; width:28px; height:28px; border-radius:50%; border:1px solid var(--line);
+  flex-shrink:0; width:23px; height:23px; border-radius:50%; border:1px solid var(--line);
   background:var(--surface-2); font-size:14px; cursor:pointer;
   display:flex; align-items:center; justify-content:center; padding:0; margin-inline-start:4px;
 }
@@ -1596,10 +1628,10 @@ html[data-theme="dark"] .np-emotion-row button{
     font-size:12.5px; color:var(--ink-soft);
   }
 #grat-root .grat-count-badge b{font-size:15px; color:var(--emerald-300);}
-#grat-root .grat-edit-actions{display:flex; gap:4px;}
+#grat-root .grat-edit-actions{display:flex; gap:2px;}
 #grat-root .grat-edit-actions button{
-    border:none; background:transparent; cursor:pointer; font-size:14px;
-    padding:4px 6px; border-radius:8px; color:var(--muted);
+    border:none; background:transparent; cursor:pointer; font-size:11px;
+    padding:3px 4px; border-radius:7px; color:var(--muted);
   }
 #grat-root .grat-edit-actions button:hover{background:rgba(255,255,255,0.08);}
 #grat-root .tx-item .t1{white-space:pre-wrap; word-break:break-word;}
@@ -6324,14 +6356,18 @@ body.bg-mode-image #grat-root{background:transparent;}
         <h2 id="bank-cal-title">📅 تقویم</h2>
         <button class="cal-x" onclick="closeBankCalendar()">✕</button>
       </div>
-      <div class="cal-nav">
+      <div class="cal-nav" id="bank-cal-nav">
         <button type="button" class="cal-nav-btn" onclick="bankCalNav(-1)">‹</button>
         <span id="bank-cal-label"></span>
         <button type="button" class="cal-nav-btn" onclick="bankCalNav(1)">›</button>
       </div>
-      <div class="cal-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+      <div class="cal-weekdays" id="bank-cal-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
       <div class="cal-grid" id="bank-cal-grid"></div>
       <div id="bank-cal-day-detail"></div>
+      <div id="bank-cal-period-wrap" style="display:none;">
+        <div id="bank-cal-period-grid" class="mini-cal-grid"></div>
+        <div id="bank-cal-period-info"></div>
+      </div>
     </div>
   </div>
 
@@ -6770,21 +6806,26 @@ function periodStartNext(pd, input, max){
 }
 
 function renderGratitudeMiniCal(){
-  const wrap = document.getElementById('gratitude-mini-cal');
-  const info2 = document.getElementById('gratitude-mini-cal-info');
-  if(!wrap) return;
   const gp = ensureGratitudePeriod();
   const totalDays = gp.days;
   const doneSet = gratitudeDoneDaySet();
   const startDate = new Date(gp.startDate+'T00:00:00');
   const today = todayMidnight();
   const cur = periodGridHtml(gp.startDate, totalDays, doneSet, 'data-cal-key');
-  wrap.innerHTML = cur.html;
+  const finished = today >= (function(){ const e = new Date(startDate); e.setDate(e.getDate()+totalDays); return e; })();
 
-  if(info2){
-    const finished = today >= (function(){ const e = new Date(startDate); e.setDate(e.getDate()+totalDays); return e; })();
-    info2.innerHTML = periodInfoHtml(gp, finished, cur.doneCount, 'شکرگذاری', doneSet, 'data-cal-key', 'startNewGratitudePeriod', 'setGratitudePeriodDays', periodOpenState(info2));
-  }
+  /* هر جایی از اپ که این تقویم دوره‌ای شکرگذاری نشون داده می‌شه (صفحه‌ی خانه +
+     مودال «تقویم شکرگذاری» توی تب تمرین) از همین یک منبع (state.gratitudePeriod)
+     پر می‌شه تا همیشه با هم هماهنگ بمونن. */
+  [['gratitude-mini-cal','gratitude-mini-cal-info'], ['bank-cal-period-grid','bank-cal-period-info']].forEach(function(ids){
+    const wrap = document.getElementById(ids[0]);
+    const info2 = document.getElementById(ids[1]);
+    if(!wrap) return;
+    wrap.innerHTML = cur.html;
+    if(info2){
+      info2.innerHTML = periodInfoHtml(gp, finished, cur.doneCount, 'شکرگذاری', doneSet, 'data-cal-key', 'startNewGratitudePeriod', 'setGratitudePeriodDays', periodOpenState(info2));
+    }
+  });
 }
 
 /* کاربر خودش تعداد روزهای دوره‌ی شکرگذاری رو تعیین می‌کنه (فقط طولِ همین دوره‌ی جاری). */
@@ -7126,11 +7167,17 @@ function iconOrImage(item){
   return item.icon || '🌿';
 }
 function gratIconOrImage(item){
-  if(item.image) return `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="event.stopPropagation();openImageViewer('${item.image}')">`;
+  if(item.image) return `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="event.stopPropagation();openGratImageViewer(${item.id},0)">`;
   return item.icon || '🌿';
 }
+window.openGratImageViewer = function(gid, idx){
+  const g = (state.gratitude||[]).find(x=>x.id===gid);
+  if(!g || !g.images || !g.images.length) return;
+  openImageViewer(g.images.map(im=>im.src), idx||0);
+};
 (function(){
   var modal, imgEl, scale=1, startDist=0, startScale=1, lastX=0, lastY=0, offX=0, offY=0, dragging=false, lastTapTime=0;
+  var viewerImages=[], viewerIndex=0, swipeStartX=0, swipeStartY=0;
   function ensureViewer(){
     if(modal) return;
     modal = document.getElementById('img-viewer-modal');
@@ -7150,6 +7197,7 @@ function gratIconOrImage(item){
     } else if(e.touches.length===1){
       dragging = true;
       lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+      swipeStartX = lastX; swipeStartY = lastY;
       var now = Date.now();
       if(now - lastTapTime < 300){
         scale = scale>1 ? 1 : 2.5; offX=0; offY=0; applyTransform();
@@ -7174,16 +7222,76 @@ function gratIconOrImage(item){
   }
   function onTouchEnd(e){
     dragging = false; startDist = 0;
-    if(e.touches.length===0 && scale<1.02){ scale=1; offX=0; offY=0; applyTransform(); }
+    if(e.touches.length===0){
+      var t = (e.changedTouches && e.changedTouches[0]) || null;
+      var endX = t ? t.clientX : lastX, endY = t ? t.clientY : lastY;
+      if(scale<1.02){
+        scale=1; offX=0; offY=0; applyTransform();
+        if(viewerImages.length>1){
+          var dx = endX - swipeStartX, dy = endY - swipeStartY;
+          if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)*1.5){
+            if(dx < 0) showNextViewerImage(); else showPrevViewerImage();
+          }
+        }
+      }
+    }
   }
-  window.openImageViewer = function(src){
-    ensureViewer();
+  function updateViewerImage(){
+    imgEl.src = viewerImages[viewerIndex];
+    var counterEl = document.getElementById('img-viewer-counter');
+    var gridBtn = document.getElementById('img-viewer-grid-btn');
+    var multi = viewerImages.length > 1;
+    if(counterEl){
+      counterEl.style.display = multi ? 'block' : 'none';
+      counterEl.textContent = multi ? ((viewerIndex+1).toLocaleString('fa-IR') + ' / ' + viewerImages.length.toLocaleString('fa-IR')) : '';
+    }
+    if(gridBtn) gridBtn.style.display = multi ? 'flex' : 'none';
+  }
+  function hideViewerGrid(){
+    var gridEl = document.getElementById('img-viewer-grid');
+    if(gridEl) gridEl.classList.remove('show');
+  }
+  function showNextViewerImage(){
+    if(!viewerImages.length) return;
+    viewerIndex = (viewerIndex + 1) % viewerImages.length;
     scale=1; offX=0; offY=0; applyTransform();
-    imgEl.src = src;
+    updateViewerImage();
+  }
+  function showPrevViewerImage(){
+    if(!viewerImages.length) return;
+    viewerIndex = (viewerIndex - 1 + viewerImages.length) % viewerImages.length;
+    scale=1; offX=0; offY=0; applyTransform();
+    updateViewerImage();
+  }
+  window.openImageViewer = function(srcOrArr, startIndex){
+    ensureViewer();
+    viewerImages = Array.isArray(srcOrArr) ? srcOrArr : [srcOrArr];
+    viewerIndex = startIndex || 0;
+    if(viewerIndex < 0) viewerIndex = 0;
+    if(viewerIndex >= viewerImages.length) viewerIndex = viewerImages.length - 1;
+    scale=1; offX=0; offY=0; applyTransform();
+    updateViewerImage();
+    hideViewerGrid();
     modal.classList.add('show');
   };
   window.closeImageViewer = function(){
     if(modal) modal.classList.remove('show');
+    hideViewerGrid();
+  };
+  window.toggleImageViewerGrid = function(){
+    var gridEl = document.getElementById('img-viewer-grid');
+    if(!gridEl) return;
+    if(gridEl.classList.contains('show')){ hideViewerGrid(); return; }
+    gridEl.innerHTML = viewerImages.map(function(src, i){
+      return '<div class="ivg-item' + (i===viewerIndex ? ' active' : '') + '" onclick="event.stopPropagation();selectViewerImage(' + i + ')"><img src="' + src + '"></div>';
+    }).join('');
+    gridEl.classList.add('show');
+  };
+  window.selectViewerImage = function(i){
+    viewerIndex = i;
+    scale=1; offX=0; offY=0; applyTransform();
+    updateViewerImage();
+    hideViewerGrid();
   };
 })();
 
@@ -7437,7 +7545,7 @@ function renderHome(){
         <button title="ویرایش" onclick="event.stopPropagation();goto('history');openGratEditor(${g.id})">✏️</button>
         <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">${g.shared ? '🌍' : '🔒'}</button>
       </div>` : ''}
-      ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : `<span class="badge-manual">شکرگذاری</span>`}`;
+      ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}`;
     wrap.appendChild(row);
   });
 }
@@ -7910,18 +8018,18 @@ function renderHistory(){
         <div class="mid">
           <div class="t1">${nl2br(escapeHtml(displayText))}</div>
           <div class="t2">${g.day} ${g.date} - ${g.time}</div>
-          ${(g.images && g.images.length) ? `<div class="img-thumbnails">${g.images.map(im=>`<div class="img-thumb"><img src="${im.src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:pointer;" onclick="event.stopPropagation();openImageViewer('${im.src}')"></div>`).join('')}</div>` : ''}
+          ${(g.images && g.images.length) ? `<div class="img-thumbnails">${g.images.map((im,idx)=>`<div class="img-thumb"><img src="${im.src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:pointer;" onclick="event.stopPropagation();openGratImageViewer(${g.id},${idx})"></div>`).join('')}</div>` : ''}
           ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
         </div>
         <div class="grat-edit-actions">
           <button title="ویرایش" onclick="event.stopPropagation();openGratEditor(${g.id})">✏️</button>
           <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">
             ${g.shared
-              ? `<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--emerald-700);"><use href="#ico-globe"/></svg>`
-              : `<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px;color:var(--muted);"><use href="#ico-lock"/></svg>`}
+              ? `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--emerald-700);"><use href="#ico-globe"/></svg>`
+              : `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--muted);"><use href="#ico-lock"/></svg>`}
           </button>
         </div>
-        ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : `<span class="badge-manual">شکرگذاری</span>`}
+        ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}
       </div>
     `;
   });
@@ -8573,7 +8681,21 @@ function openBankCalendar(kind){
   const titles = { gratitude:'📅 تقویم شکرگذاری', shop:'📅 تقویم بازی فراوانی', beliefs:'📅 تقویم خواندن متن آینده', tracking:'📅 تقویم ردیابی' };
   document.getElementById('bank-cal-title').textContent = titles[kind] || '📅 تقویم';
   document.getElementById('bank-cal-modal').classList.add('show');
-  renderBankCal();
+
+  const isPeriod = kind === 'gratitude';
+  const nav = document.getElementById('bank-cal-nav');
+  const weekdays = document.getElementById('bank-cal-weekdays');
+  const grid = document.getElementById('bank-cal-grid');
+  const dayDetail = document.getElementById('bank-cal-day-detail');
+  const periodWrap = document.getElementById('bank-cal-period-wrap');
+  if(nav) nav.style.display = isPeriod ? 'none' : 'flex';
+  if(weekdays) weekdays.style.display = isPeriod ? 'none' : 'grid';
+  if(grid) grid.style.display = isPeriod ? 'none' : 'grid';
+  if(dayDetail) dayDetail.style.display = isPeriod ? 'none' : 'block';
+  if(periodWrap) periodWrap.style.display = isPeriod ? 'block' : 'none';
+
+  if(isPeriod) renderGratitudeMiniCal();
+  else renderBankCal();
 }
 function closeBankCalendar(){
   document.getElementById('bank-cal-modal').classList.remove('show');
@@ -9506,7 +9628,10 @@ window.addEventListener('appinstalled', function(){
 </script>
 <div id="img-viewer-modal" onclick="if(event.target.id==='img-viewer-modal') closeImageViewer();">
   <button id="img-viewer-close" onclick="closeImageViewer()">✕</button>
+  <button id="img-viewer-grid-btn" onclick="event.stopPropagation();toggleImageViewerGrid()" title="مشاهده همه">▦</button>
+  <div id="img-viewer-counter"></div>
   <img id="img-viewer-img" src="" alt="">
+  <div id="img-viewer-grid"></div>
 </div>
 <script src="emotion-widget.js"></script>
 <script src="beliefs-patch.js"></script>
