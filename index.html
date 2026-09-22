@@ -1208,6 +1208,17 @@ html[data-theme="dark"] .np-emotion-row button{
 #grat-root #bank-cal-period-grid .mini-cal-month:first-child{ padding-top:0; }
 #grat-root #bank-cal-period-grid .mini-cal-day{ min-width:0; }
 #grat-root #gratitude-mini-cal-info{ margin:0 18px; }
+/* همون تقویمِ دوره‌ی شکرگذاری، این‌بار داخل تبِ لیست/ثبت شکرگذاری — بدون مودال، همیشه کامل دیده می‌شه */
+#grat-root #hist-gratitude-mini-cal{
+    display:grid; grid-template-columns:repeat(15, minmax(0,1fr)); gap:3px;
+    margin:14px 0 0; padding:14px;
+    width:auto; max-width:100%; box-sizing:border-box; overflow:hidden;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  }
+#grat-root #hist-gratitude-mini-cal .mini-cal-month{ min-width:0; padding:8px 2px 3px; }
+#grat-root #hist-gratitude-mini-cal .mini-cal-month:first-child{ padding-top:0; }
+#grat-root #hist-gratitude-mini-cal .mini-cal-day{ min-width:0; }
+#grat-root #hist-gratitude-mini-cal-info{ margin:10px 0 0; }
 #grat-root #bank-cal-period-grid{
     display:grid; grid-template-columns:repeat(15, minmax(0,1fr)); gap:3px;
     margin:14px 0 0; padding:14px;
@@ -6055,7 +6066,9 @@ body.bg-mode-image #grat-root{background:transparent;}
       <button onclick="addGratitude()" style="margin-top:12px; width:100%;">ثبت شکرگذاری</button>
     </div>
 
-    <button class="btn full" style="margin:10px 0;" onclick="openBankCalendar('gratitude')">📅 تقویم شکرگذاری</button>
+    <div class="items-title" style="margin-top:10px;">📅 تقویم شکرگذاری</div>
+    <div id="hist-gratitude-mini-cal" class="mini-cal-grid"></div>
+    <div id="hist-gratitude-mini-cal-info"></div>
 
     <!-- کادر مجموع فراوانی (hist-total) به طور کامل حذف شد -->
 
@@ -6817,7 +6830,7 @@ function renderGratitudeMiniCal(){
   /* هر جایی از اپ که این تقویم دوره‌ای شکرگذاری نشون داده می‌شه (صفحه‌ی خانه +
      مودال «تقویم شکرگذاری» توی تب تمرین) از همین یک منبع (state.gratitudePeriod)
      پر می‌شه تا همیشه با هم هماهنگ بمونن. */
-  [['gratitude-mini-cal','gratitude-mini-cal-info'], ['bank-cal-period-grid','bank-cal-period-info']].forEach(function(ids){
+  [['gratitude-mini-cal','gratitude-mini-cal-info'], ['bank-cal-period-grid','bank-cal-period-info'], ['hist-gratitude-mini-cal','hist-gratitude-mini-cal-info']].forEach(function(ids){
     const wrap = document.getElementById(ids[0]);
     const info2 = document.getElementById(ids[1]);
     if(!wrap) return;
@@ -7984,6 +7997,7 @@ function gratDisplayText(text){
 function renderHistory(){
   if(ensureSetup()) return;
   updateGratitudeNumbers();
+  renderGratitudeMiniCal();
 
   const list = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
