@@ -1364,6 +1364,15 @@
       else em.textContent = '✓ ثبت شد';
     }
 
+    var bem = document.getElementById('belief-emotion-feedback');
+    if (bem){
+      var bq = getTodayEmotionQualityFor('belief');
+      if (bq === null) bem.textContent = '';
+      else if (bq >= 500) bem.textContent = '🔥 حس پرقدرت';
+      else if (bq < 200) bem.textContent = '⚠️ حس ضعیف';
+      else bem.textContent = '✓ ثبت شد';
+    }
+
     try { rasRenderSignals(); } catch(e){}
 
     try { refreshNothingVisual(); } catch(e){}
