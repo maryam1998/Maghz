@@ -5843,8 +5843,8 @@ body.bg-mode-image #grat-root{background:transparent;}
       <textarea id="home-grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
 
       <div class="visibility-options">
-        <label><input type="radio" name="home-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط بین من و خدا</label>
-        <label><input type="radio" name="home-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> با بقیه، توی استریک مشترک</label>
+        <label><input type="radio" name="home-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
+        <label><input type="radio" name="home-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
       </div>
 
       <button onclick="addGratitudeHome()" style="margin-top:12px; width:100%;">ثبت شکرگذاری</button>
@@ -6059,8 +6059,8 @@ body.bg-mode-image #grat-root{background:transparent;}
       </div>
 
       <div class="visibility-options">
-        <label><input type="radio" name="grat-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط بین من و خدا</label>
-        <label><input type="radio" name="grat-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> با بقیه، توی استریک مشترک</label>
+        <label><input type="radio" name="grat-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
+        <label><input type="radio" name="grat-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
       </div>
 
       <button onclick="addGratitude()" style="margin-top:12px; width:100%;">ثبت شکرگذاری</button>
@@ -7588,7 +7588,7 @@ function addGratitudeHome(){
   autoGrowGratInput(input);
   renderHome();
   renderHistory();
-  toast(shared ? 'ثبت شد — توی استریک مشترک با بقیه 🌍' : 'ثبت شد — فقط بین من و خدا 🤫');
+  toast(shared ? 'ثبت شد و با بقیه به اشتراک گذاشته شد 🌍' : 'ثبت شد — فقط برای خودم 🤫');
   if(shared) syncGratitudeShare(newEntry);
 }
 
@@ -7991,7 +7991,7 @@ function addGratitude(){
   renderHistory();
   renderHome();
   renderAllNeuralPathways();
-  toast(shared ? 'ثبت شد — توی استریک مشترک با بقیه 🌍' : 'ثبت شد — فقط بین من و خدا 🤫');
+  toast(shared ? 'ثبت شد و با بقیه به اشتراک گذاشته شد 🌍' : 'ثبت شد — فقط برای خودم 🤫');
   if(shared) syncGratitudeShare(newEntry);
 }
 function gratDisplayText(text){
