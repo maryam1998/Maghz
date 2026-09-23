@@ -596,6 +596,10 @@
               '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:80px;">✏️ ویرایش</button>' +
               '<button type="button" id="archive-future-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="archive-count">۰</span>)</button>' +
             '</div>' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
+              '<button type="button" class="btn tiny" onclick="openEmotionCapture(\'dispenza\',\'after\',\'تمرین روزانه\')">💗 ثبت حس</button>' +
+              '<span id="future-emotion-feedback" style="font-size:11px;color:var(--muted);"></span>' +
+            '</div>' +
             '<button type="button" id="future-register-btn" style="width:100%;padding:12px;font-size:13px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(15,91,83,.18);margin-bottom:12px;">✅ امروز خوندم — ثبت کن</button>' +
             '<div id="future-archive-box" style="display:none;margin-bottom:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
             '<div style="padding-top:12px;border-top:1px dashed var(--line);">' +
@@ -1362,6 +1366,15 @@
       else if (q >= 500) em.textContent = '🔥 حس پرقدرت';
       else if (q < 200) em.textContent = '⚠️ حس ضعیف';
       else em.textContent = '✓ ثبت شد';
+    }
+
+    var fem = document.getElementById('future-emotion-feedback');
+    if (fem){
+      var fq = getTodayEmotionQualityFor('dispenza');
+      if (fq === null) fem.textContent = '';
+      else if (fq >= 500) fem.textContent = '🔥 حس پرقدرت — رشته‌ی بعدی ضخیم‌تر می‌شه';
+      else if (fq < 200) fem.textContent = '⚠️ حس ضعیف';
+      else fem.textContent = '✓ ثبت شد';
     }
 
     var bem = document.getElementById('belief-emotion-feedback');
