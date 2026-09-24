@@ -9,6 +9,9 @@
   var waveAnimFrame = null;
   var wavePhase = 0;
   var lastWaveFrame = 0;
+  var waveAmpCurrent = {};   /* دامنه‌ی فعلیِ در حالِ نرم‌شدنِ هر لایه (برای گذار تدریجی، نه پرش آنی) */
+  var pureAmpCurrent = null; /* دامنه‌ی فعلیِ در حالِ نرم‌شدنِ حلقه‌ی آگاهی خالص */
+  var WAVE_EASE = 0.09;      /* هرچه کوچیک‌تر، گذار کندتر و نرم‌تر */
 
   function escapeHtml(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -253,19 +256,40 @@
         var isDone = done.indexOf(k) !== -1;
         var path = document.getElementById('nw-' + k);
         if (!path) return;
-        var amp = isDone ? 0 : p.amp;
-        var freq = isDone ? PURE_WAVE.freq : p.freq;
-        var basePhase = isDone ? PURE_WAVE.phase : p.phase;
-        var phase = basePhase + wavePhase * (isDone ? 1.8 : 1);
+
+        /* اولین اجرا: دامنه رو مستقیم روی وضعیتِ فعلی (بدون انیمیشن) بنشون تا هنگام بازکردنِ
+           برنامه در روزی که قبلاً چند لایه تیک خورده، موج از حالت پُر شروع به باز شدن نکنه */
+        if (waveAmpCurrent[k] === undefined) waveAmpCurrent[k] = isDone ? 0 : p.amp;
+
+        var targetAmp = isDone ? 0 : p.amp;
+        waveAmpCurrent[k] += (targetAmp - waveAmpCurrent[k]) * WAVE_EASE;
+        if (Math.abs(waveAmpCurrent[k] - targetAmp) < 0.02) waveAmpCurrent[k] = targetAmp;
+        var amp = waveAmpCurrent[k];
+
+        /* تا وقتی دامنه کاملاً به صفر ننشسته با فرکانسِ خودِ لایه بچرخ (گذار نرم)،
+           و فقط وقتی واقعاً به دایره‌ی کامل رسید، ریتم آرومِ «آگاهی خالص» رو بگیر */
+        var settled = isDone && amp <= 0.03;
+        var freq = settled ? PURE_WAVE.freq : p.freq;
+        var basePhase = settled ? PURE_WAVE.phase : p.phase;
+        var phase = basePhase + wavePhase * (settled ? 1.8 : 1);
         path.setAttribute('d', buildSinePath(p.baseR, amp, freq, phase));
-        path.style.opacity = isDone ? 0.4 : 0.78;
+
+        /* شفافیت هم به همون نسبت دامنه محو می‌شه، نه با یک پرش ناگهانی */
+        var ratio = p.amp > 0 ? Math.max(0, Math.min(1, amp / p.amp)) : 0;
+        path.style.opacity = (0.4 + ratio * 0.38).toFixed(2);
       });
       var pure = document.getElementById('nw-pure');
       if (pure){
         var allDone = done.length >= 5;
+        if (pureAmpCurrent === null) pureAmpCurrent = allDone ? 0 : PURE_WAVE.amp;
+        var targetPureAmp = allDone ? 0 : PURE_WAVE.amp;
+        pureAmpCurrent += (targetPureAmp - pureAmpCurrent) * WAVE_EASE;
+        if (Math.abs(pureAmpCurrent - targetPureAmp) < 0.02) pureAmpCurrent = targetPureAmp;
+        /* لرزشِ تنفس‌مانند هم به همون نسبت که هسته آروم می‌گیره، کم‌رنگ‌تر می‌شه */
+        var wiggle = Math.sin(wavePhase * 2) * 0.5 * (pureAmpCurrent / PURE_WAVE.amp);
         pure.setAttribute('d', buildSinePath(
           PURE_WAVE.baseR,
-          allDone ? 0 : PURE_WAVE.amp + Math.sin(wavePhase * 2) * 0.5,
+          pureAmpCurrent + wiggle,
           PURE_WAVE.freq,
           PURE_WAVE.phase + wavePhase * 2.4
         ));
