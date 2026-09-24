@@ -590,8 +590,11 @@
     transition:transform .25s ease;
     display:flex;flex-direction:column;
     padding:20px 18px;
+    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   }
   #panel.open{transform:translateX(0);}
+  /* بخش هدف: به‌جای فشرده‌شدن لیست شاخه‌ها به ارتفاع صفر، کل پنل اسکرول می‌شه */
+  #panel-goal-only{flex:none !important;min-height:auto !important;}
   #panel .panel-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   #panel .panel-top .dot{width:12px;height:12px;border-radius:50%;}
   #panel-close{
@@ -610,7 +613,7 @@
   }
   #panel label.small{font-size:11px;color:var(--text-dim);display:block;margin:0 0 6px;}
   #panel-actions-list{
-    overflow-y:auto;flex:1;margin:6px 0 10px;padding-left:4px;
+    flex:none;margin:6px 0 10px;padding-left:4px;
   }
   .action-node{
     background:rgba(255,255,255,0.035);border-radius:10px;
@@ -635,6 +638,9 @@
     padding:5px 9px;font-size:11px;border-radius:7px;width:auto;
   }
   .action-node .children{margin-top:6px;}
+  .a-sw-row{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px;}
+  .a-sw{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;touch-action:manipulation;}
+  .a-sw.active{border-color:#fff;}
 
   .img-upload{
     display:flex;align-items:center;gap:8px;margin:8px 0 6px;flex-wrap:wrap;
@@ -707,6 +713,7 @@
   #panel-danger{
     margin-top:auto;padding-top:12px;border-top:1px solid var(--panel-border);
     display:flex;gap:8px;
+    position:sticky;bottom:0;z-index:2;background:var(--panel-bg);padding-bottom:4px;flex:none;
   }
   #panel-danger button{flex:1;}
   .btn{
@@ -5097,6 +5104,7 @@ body.bg-mode-image #grat-root{background:transparent;}
           <input type="text" class="a-text" data-aid="${a.id}" value="${esc(a.text)}" placeholder="این اقدام چی بود؟">
           <button class="adel" data-aid="${a.id}" title="حذف">×</button>
         </div>
+        <div class="a-sw-row">${PALETTE.map(c=>`<span class="a-sw${(a.color||goalColor).toLowerCase()===c.toLowerCase()?' active':''}" data-aid="${a.id}" data-color="${c}" style="background:${c}"></span>`).join('')}</div>
         <div class="weight-row-mini">
           <span class="small">قطر شاخه</span>
           <input type="range" class="a-weight" data-aid="${a.id}" min="1" max="10" value="${a.weight}">
@@ -5111,6 +5119,10 @@ body.bg-mode-image #grat-root{background:transparent;}
         <label class="small" style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:4px 0;">
           <input type="checkbox" class="a-routine" data-aid="${a.id}" style="width:14px;height:14px;" ${a.isRoutine ? 'checked' : ''}>
           <span style="font-size:11px;">این یه کار روتینه</span>
+        </label>
+        <label class="small" style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:4px 0;">
+          <input type="checkbox" class="a-neural" data-aid="${a.id}" style="width:14px;height:14px;" ${a.showNeuralOnMap ? 'checked' : ''}>
+          <span style="font-size:11px;">نمایش مسیر عصبی روی نقشه</span>
         </label>
         <button class="btn tiny add-sub" data-aid="${a.id}">＋ زیرشاخه</button>
         <div class="children">${renderActionTree(a.children||[], depth+1, a.color||goalColor)}</div>
@@ -5152,14 +5164,14 @@ body.bg-mode-image #grat-root{background:transparent;}
   function focusNewField(id){
     setTimeout(()=>{
       const inp = actionsListEl.querySelector(`.a-text[data-aid="${id}"]`);
-      if (inp) inp.focus();
+      if (inp){ inp.focus(); try{ inp.scrollIntoView({block:'center', behavior:'smooth'}); }catch(_){} }
     }, 30);
   }
 
   function focusNewFieldIn(containerEl, id){
     setTimeout(()=>{
       const inp = containerEl.querySelector(`.a-text[data-aid="${id}"]`);
-      if (inp) inp.focus();
+      if (inp){ inp.focus(); try{ inp.scrollIntoView({block:'center', behavior:'smooth'}); }catch(_){} }
     }, 30);
   }
 
@@ -5201,10 +5213,25 @@ body.bg-mode-image #grat-root{background:transparent;}
     });
   }
 
+  function quickSwatchClick(e, g, container){
+    const sw = e.target.closest('.a-sw');
+    if (!sw) return false;
+    const found = findActionNode(g.actions, sw.dataset.aid);
+    if (!found) return true;
+    found.node.color = sw.dataset.color;
+    const row = sw.parentNode;
+    [...row.children].forEach(x=>x.classList.toggle('active', x===sw));
+    const ci = container.querySelector(`.a-color[data-aid="${sw.dataset.aid}"]`);
+    if (ci) ci.value = sw.dataset.color;
+    debouncedRender();
+    return true;
+  }
+
   panelActionChildrenListEl.addEventListener('click', (e)=>{
     if (!currentEditingAction) return;
     const g = state.goals.find(g=>g.id===currentEditingAction.goalId);
     if (!g) return;
+    if (quickSwatchClick(e, g, panelActionChildrenListEl)) return;
     const delBtn = e.target.closest('.adel');
     const addSubBtn = e.target.closest('.add-sub');
     if (delBtn){
@@ -5247,6 +5274,9 @@ body.bg-mode-image #grat-root{background:transparent;}
     } else if (t.classList.contains('a-routine')){
       const found = findActionNode(g.actions, t.dataset.aid);
       if (found){ found.node.isRoutine = t.checked; render(); }
+    } else if (t.classList.contains('a-neural')){
+      const found = findActionNode(g.actions, t.dataset.aid);
+      if (found){ found.node.showNeuralOnMap = t.checked; render(); }
     }
   });
 
@@ -5264,6 +5294,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   actionsListEl.addEventListener('click', (e)=>{
     const g = state.goals.find(g=>g.id===currentPanelGoalId);
     if (!g) return;
+    if (quickSwatchClick(e, g, actionsListEl)) return;
     const delBtn = e.target.closest('.adel');
     const addSubBtn = e.target.closest('.add-sub');
     if (delBtn){
@@ -5305,6 +5336,9 @@ body.bg-mode-image #grat-root{background:transparent;}
     } else if (t.classList.contains('a-routine')){
       const found = findActionNode(g.actions, t.dataset.aid);
       if (found){ found.node.isRoutine = t.checked; render(); }
+    } else if (t.classList.contains('a-neural')){
+      const found = findActionNode(g.actions, t.dataset.aid);
+      if (found){ found.node.showNeuralOnMap = t.checked; render(); }
     }
   });
 
