@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'c3abfca';
+const CACHE_VERSION = 'fix-20260924';
 const CACHE_NAME = 'faravani-cache-' + CACHE_VERSION;
 const PRECACHE_URLS = [
   './',

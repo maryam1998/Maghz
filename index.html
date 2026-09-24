@@ -20,6 +20,105 @@
     }
   }catch(e){ console.warn('Supabase init failed', e); }
 </script>
+<script>
+/* ===== ذخیره‌ی ماندگار: localStorage + IndexedDB =====
+   localStorage فقط ~۵ مگابایت جا دارد. عکس/صدای شکرگذاری و نقشه هم‌جا پر می‌شود و دیگر هیچ چیز ذخیره نمی‌شد.
+   حالا هر بار نسخه‌ی کامل در IndexedDB (ظرفیت خیلی بزرگ‌تر) هم ذخیره می‌شود و اگر localStorage پر بود،
+   نسخه‌ی سبک (بدون عکس/صدا) در آن می‌نشیند تا متن‌ها و تمرین‌ها هرگز از دست نروند. */
+(function(){
+  var DB_NAME='maghz-durable', STORE='kv', dbp=null;
+  var DS = window.DS = { ok:null };
+  var timers={}, pending={}, held={};
+
+  function open(){
+    if(dbp) return dbp;
+    dbp = new Promise(function(resolve){
+      try{
+        if(!window.indexedDB){ DS.ok=false; return resolve(null); }
+        var rq = indexedDB.open(DB_NAME,1);
+        rq.onupgradeneeded=function(){ try{ rq.result.createObjectStore(STORE); }catch(e){} };
+        rq.onsuccess=function(){ DS.ok=true; resolve(rq.result); };
+        rq.onerror=function(){ DS.ok=false; resolve(null); };
+        rq.onblocked=function(){ DS.ok=false; resolve(null); };
+      }catch(e){ DS.ok=false; resolve(null); }
+    });
+    return dbp;
+  }
+  DS.get = function(key){
+    return open().then(function(db){
+      if(!db) return null;
+      return new Promise(function(resolve){
+        try{
+          var rq = db.transaction(STORE,'readonly').objectStore(STORE).get(key);
+          rq.onsuccess=function(){ resolve(rq.result==null?null:rq.result); };
+          rq.onerror=function(){ resolve(null); };
+        }catch(e){ resolve(null); }
+      });
+    });
+  };
+  function write(key, rec){
+    return open().then(function(db){
+      if(!db) return false;
+      return new Promise(function(resolve){
+        try{
+          var tx = db.transaction(STORE,'readwrite');
+          tx.objectStore(STORE).put(rec, key);
+          tx.oncomplete=function(){ resolve(true); };
+          tx.onerror=tx.onabort=function(){ resolve(false); };
+        }catch(e){ resolve(false); }
+      });
+    });
+  }
+  function flushKey(key){
+    clearTimeout(timers[key]);
+    var rec = pending[key];
+    if(!rec) return Promise.resolve(false);
+    delete pending[key];
+    return write(key, rec);
+  }
+  DS.save = function(key, json, t){
+    pending[key] = { t:t, json:json };
+    if(held[key]) return;
+    clearTimeout(timers[key]);
+    timers[key] = setTimeout(function(){ flushKey(key); }, 200);
+  };
+  DS.flush = function(){
+    return Promise.all(Object.keys(pending).map(function(k){ return held[k] ? false : flushKey(k); }));
+  };
+  /* تا وقتی خواندن اولیه‌ی IndexedDB تمام نشده، روی نسخه‌ی کامل قبلی چیزی ننویس */
+  DS.hold = function(key){ held[key] = true; };
+  DS.release = function(key, keepPending){
+    delete held[key];
+    if(!keepPending){ delete pending[key]; clearTimeout(timers[key]); }
+    else if(pending[key]){ timers[key] = setTimeout(function(){ flushKey(key); }, 50); }
+  };
+  /* نسخه‌ی سبک: هر رشته‌ی data: بزرگ (عکس/صدا) حذف می‌شود */
+  DS.lite = function(obj){
+    return JSON.stringify(obj, function(k,v){
+      return (typeof v==='string' && v.length>3000 && v.indexOf('data:')===0) ? '' : v;
+    });
+  };
+  /* برمی‌گرداند: 'full' | 'lite' | 'fail' (وضعیت localStorage؛ IndexedDB جداگانه و ناهمزمان ذخیره می‌شود) */
+  DS.persist = function(lsKey, idbKey, obj){
+    obj._savedAt = Date.now();
+    var json = JSON.stringify(obj), res = 'full';
+    try{ localStorage.setItem(lsKey, json); }
+    catch(e){
+      try{ localStorage.setItem(lsKey, DS.lite(Object.assign({}, obj, { _lite:true }))); res = 'lite'; }
+      catch(e2){ res = 'fail'; }
+    }
+    DS.save(idbKey, json, obj._savedAt);
+    /* اگر localStorage جا نداشت، نسخه‌ی کامل را همین الان (بدون تاخیر) در IndexedDB بنویس */
+    if(res !== 'full' && !held[idbKey]) flushKey(idbKey);
+    return res;
+  };
+
+  DS.hold('state:abundanceBankData');
+  DS.hold('map:frequencyMapData');
+  open();
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+})();
+</script>
 <script>try{document.documentElement.setAttribute('data-theme', localStorage.getItem('appTheme')||'light');}catch(e){}</script>
 <script>try{
   var _ap = JSON.parse(localStorage.getItem('appAppearance')||'null');
@@ -3274,12 +3373,15 @@ body.bg-mode-image #grat-root{background:transparent;}
   }
 
   const MAP_STORAGE_KEY = 'frequencyMapData';
+  let mapBoot = { t:0, lite:false };
   function loadMapState(){
     try{
       const raw = localStorage.getItem(MAP_STORAGE_KEY);
       if (raw){
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object'){
+          mapBoot = { t: parsed._savedAt || 0, lite: !!parsed._lite };
+          delete parsed._lite;
           state = parsed;
           return;
         }
@@ -3288,17 +3390,21 @@ body.bg-mode-image #grat-root{background:transparent;}
     loadDefault();
   }
   function saveMapState(){
-    try{ localStorage.setItem(MAP_STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+    try{ DS.persist(MAP_STORAGE_KEY, 'map:' + MAP_STORAGE_KEY, state); }catch(e){}
   }
   let mapSaveTimer = null;
   function scheduleMapSave(){
     clearTimeout(mapSaveTimer);
     mapSaveTimer = setTimeout(saveMapState, 400);
   }
-  window.addEventListener('beforeunload', function(){
+  function flushMapNow(){
     clearTimeout(mapSaveTimer);
     saveMapState();
-  });
+    try{ DS.flush(); }catch(e){}
+  }
+  window.addEventListener('beforeunload', flushMapNow);
+  window.addEventListener('pagehide', flushMapNow);
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') flushMapNow(); });
 
   function applyEmotionWidgetVisibility(){
     document.body.classList.toggle('echw-hidden-by-setting', state.showEmotionWidget === false);
@@ -3307,6 +3413,35 @@ body.bg-mode-image #grat-root{background:transparent;}
   loadMapState();
   normalizeState();
   applyEmotionWidgetVisibility();
+
+  /* اگر نسخه‌ی کامل‌تر/جدیدتر نقشه در IndexedDB باشد همان را برمی‌دارد */
+  (function hydrateMapState(){
+    const KEY = 'map:' + MAP_STORAGE_KEY;
+    function go(){
+      DS.get(KEY).then(function(rec){
+        const adopt = !!(rec && rec.json && (mapBoot.lite || rec.t > mapBoot.t));
+        if(adopt){
+          try{
+            const parsed = JSON.parse(rec.json);
+            if(parsed && typeof parsed === 'object'){
+              delete parsed._lite;
+              state = parsed;
+              normalizeState();
+              applyEmotionWidgetVisibility();
+              DS.release(KEY, false);
+              saveMapState();
+              render();
+              return;
+            }
+          }catch(e){ console.warn('map hydrate failed', e); }
+        }
+        const inSync = rec && rec.json && rec.t === mapBoot.t && !mapBoot.lite;
+        DS.release(KEY, true);
+        if(!inSync) saveMapState();
+      });
+    }
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  })();
 
   const svg = document.getElementById('stage');
   const viewport = document.getElementById('viewport');
@@ -6943,11 +7078,13 @@ function startNewShopPeriod(){
   if(typeof toast === 'function') toast('دوره‌ی ' + periodOrdFa(sp.past.length) + ' شروع شد 🌱');
 }
 
-function loadState(){
+function loadState(rawOverride){
   try{
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = rawOverride || localStorage.getItem(STORAGE_KEY);
     if(raw){
       const s = JSON.parse(raw);
+      loadState.meta = { t: s._savedAt || 0, lite: !!s._lite };
+      delete s._lite;
       if(!s.gratitude) s.gratitude = [];
       if(!s.history) s.history = [];
       if(!s.beliefs) s.beliefs = [];
@@ -6983,7 +7120,10 @@ function loadState(){
       if(!s.shopPeriod.days || s.shopPeriod.days < 1) s.shopPeriod.days = 28;
       return s;
     }
-  }catch(e){}
+  }catch(e){
+    /* فایل خراب شد؟ قبل از اینکه با یک حالت خالی رونویسی شود، یک نسخه‌ی پشتیبان کنار بگذار */
+    try{ const bad = localStorage.getItem(STORAGE_KEY); if(bad) localStorage.setItem(STORAGE_KEY + '_corrupt', bad); }catch(e2){}
+  }
   return { name:'', currency:'', startDate:'', history:[], gratitude:[], beliefs:[], currentBelief:defaultCurrentBelief(), evidenceLog:[], streakHistory:[], practiceLog:[], loginId:'local-guest', alarmEnabled:false, alarmTime:'20:00',
     bankName:'بانک فراوانی', cardNumber:'5859 8312 8347 6690', cardExpiry:'∞ / ∞', cardCVV:'۱۴۰', cardTheme:'emerald', futureText:'', futureStartDate:null, futureReadDays:[], shareGratitude:false, authUserId:'', gratitudeNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, shopNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, dispenzaNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, nothingProgress:{}, nothingSoundOn:true, gratitudePeriod:{ days: 28, startDate: null } };
 }
@@ -6991,15 +7131,52 @@ function defaultCurrentBelief(){
   return { trackingItems:[], trackingActive:false, attentionLever:50, visualNote:'', visualImages:[], audioTrack:null, neural:{logs:{}, lastSyncKey:null, habitFormed:false}, trackingNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, visualNeural:{logs:{}, lastSyncKey:null, habitFormed:false} };
 }
 function saveState(){
+  let res = 'fail';
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    res = DS.persist(STORAGE_KEY, 'state:' + STORAGE_KEY, state);
   } catch(e){
     console.error('saveState failed:', e);
-    if (typeof toast === 'function') {
-      toast('⚠️ حجم فایل زیاده و ذخیره نشد — یک فایل کوچیک‌تر انتخاب کن');
-    }
   }
+  /* فقط وقتی هر دو محل ذخیره کار نکنند هشدار بده */
+  if (res === 'fail' && DS.ok === false && typeof toast === 'function') {
+    toast('⚠️ حافظه‌ی گوشی پره و ذخیره نشد — چند عکس یا صدای قدیمی رو پاک کن');
+  }
+  return res;
 }
+/* اگر نسخه‌ی کامل‌تر/جدیدتری در IndexedDB باشد (مثلاً چون localStorage پر بود) همان را برمی‌دارد */
+(function hydrateMainState(){
+  const KEY = 'state:' + STORAGE_KEY;
+  const meta = loadState.meta || { t:0, lite:false };
+  function go(){
+    DS.get(KEY).then(function(rec){
+      const adopt = !!(rec && rec.json && (meta.lite || rec.t > meta.t));
+      if(adopt){
+        try{
+          const cur = state;
+          const s = loadState(rec.json);
+          if(cur.loginId && cur.loginId !== 'local-guest') s.loginId = cur.loginId;
+          if(cur.authUserId) s.authUserId = cur.authUserId;
+          state = s;
+          DS.release(KEY, false);
+          saveState();
+          try{ refreshCurrentView(); }catch(e){}
+          try{ renderAllNeuralPathways(); }catch(e){}
+          return;
+        }catch(e){ console.warn('hydrate failed', e); }
+      }
+      const inSync = rec && rec.json && rec.t === meta.t && !meta.lite;
+      DS.release(KEY, true);
+      if(!inSync) saveState();
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();
+function flushStateNow(){
+  try{ saveState(); }catch(e){}
+  try{ DS.flush(); }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') flushStateNow(); });
+window.addEventListener('pagehide', flushStateNow);
 
 /* ---------------- digit helpers ---------------- */
 function normalizeDigits(str){
@@ -8244,13 +8421,8 @@ function handleMeditationAudio(files){
     state.currentBelief.audioTrack = { name: f.name, src: r.result };
     renderMeditationAudio();
     document.getElementById('meditation-audio-input').value = '';
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      toast('موسیقی اضافه شد 🎵');
-    } catch(e){
-      console.error('saveState failed:', e);
-      toast('⚠️ موسیقی پخش می‌شه ولی حجمش زیاده و ذخیره نشد — با بستن صفحه از بین می‌ره');
-    }
+    const res = saveState();
+    if(!(res === 'fail' && DS.ok === false)) toast('موسیقی اضافه شد 🎵');
   };
   r.readAsDataURL(f);
 }
@@ -9610,7 +9782,20 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', function(){
       if(refreshing) return;
       refreshing = true;
-      window.location.reload();
+      function doReload(){
+        try{ if(typeof flushStateNow === 'function') flushStateNow(); }catch(e){}
+        var done = function(){ window.location.reload(); };
+        try{ (window.DS ? DS.flush() : Promise.resolve()).then(done, done); }catch(e){ done(); }
+      }
+      /* اگر وسط نوشتن هستی، صفحه رو ریفرش نکن تا نوشته‌ات نپره؛ بعد از بستن/رفتن به پس‌زمینه ریفرش می‌شه */
+      var ae = document.activeElement;
+      if(ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName) && ae.value){
+        document.addEventListener('visibilitychange', function h(){
+          if(document.visibilityState === 'hidden'){ document.removeEventListener('visibilitychange', h); doReload(); }
+        });
+        return;
+      }
+      doReload();
     });
   });
 }
