@@ -108,6 +108,7 @@
       if (!state.currentBelief) state.currentBelief = defaultCurrentBelief();
       if (!Array.isArray(state.currentBelief.visualImages)) state.currentBelief.visualImages = [];
       if (typeof state.currentBelief.visualNote !== 'string') state.currentBelief.visualNote = '';
+      if (!Array.isArray(state.currentBelief.visualVideos)) state.currentBelief.visualVideos = [];
     }
     try { if (typeof saveState === 'function') saveState(); } catch(e){}
     return true;
@@ -309,6 +310,144 @@
     else if (a === 'italic') f.italic = !f.italic;
     else if (a.indexOf('align-') === 0) f.align = a.slice(6);
     saveFutureFmt(f);
+  }
+
+  /* =====================================================================
+     ویدیو در تصویرسازی
+     فایل ویدیو توی IndexedDB نگه داشته می‌شه (نه توی state) تا حافظه‌ی برنامه پر نشه؛
+     توی state فقط مشخصاتش (id، اسم، حجم) می‌مونه.
+     ===================================================================== */
+  var VV_MAX_MB = 300;
+  var vvDbPromise = null;
+  var vvUrls = {};
+
+  function vvDb(){
+    if (vvDbPromise) return vvDbPromise;
+    vvDbPromise = new Promise(function(resolve, reject){
+      if (!window.indexedDB){ reject(new Error('no-idb')); return; }
+      var req = indexedDB.open('beliefs-patch-media', 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore('videos'); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+    vvDbPromise.catch(function(){ vvDbPromise = null; });
+    return vvDbPromise;
+  }
+  function vvTx(mode, fn){
+    return vvDb().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction('videos', mode);
+        var out = fn(tx.objectStore('videos'));
+        tx.oncomplete = function(){ resolve(out && out.result); };
+        tx.onerror = function(){ reject(tx.error); };
+        tx.onabort = function(){ reject(tx.error); };
+      });
+    });
+  }
+  function vvPut(id, blob){ return vvTx('readwrite', function(st){ return st.put(blob, id); }); }
+  function vvGet(id){ return vvTx('readonly', function(st){ return st.get(id); }); }
+  function vvDel(id){ return vvTx('readwrite', function(st){ return st.delete(id); }); }
+
+  function vvList(){
+    var cb = state && state.currentBelief;
+    if (!cb) return [];
+    if (!Array.isArray(cb.visualVideos)) cb.visualVideos = [];
+    return cb.visualVideos;
+  }
+  function vvIsReferenced(id){
+    if (vvList().some(function(v){ return v.id === id; })) return true;
+    return (state.dpSeedArchive || []).some(function(it){
+      return (it.videos || []).some(function(v){ return v.id === id; });
+    });
+  }
+  /* بعد از حذف: اگه هیچ‌جا (نه لیست فعلی نه آرشیو) به این ویدیوها اشاره نمی‌کنه، فایلشون پاک بشه */
+  function vvCleanup(list){
+    (list || []).forEach(function(v){
+      if (vvIsReferenced(v.id)) return;
+      if (vvUrls[v.id]){ try { URL.revokeObjectURL(vvUrls[v.id]); } catch(e){} delete vvUrls[v.id]; }
+      vvDel(v.id).catch(function(){});
+    });
+  }
+  function vvFmtSize(b){
+    if (!b) return '';
+    var mb = b / 1048576;
+    return toFa(mb >= 10 ? Math.round(mb) : Math.round(mb * 10) / 10) + ' مگابایت';
+  }
+
+  function vvAddFiles(files){
+    if (!files || !files.length) return;
+    var list = Array.prototype.slice.call(files).filter(function(f){
+      return f && ((f.type && f.type.indexOf('video/') === 0) || /\.(mp4|mov|m4v|webm|3gp|mkv)$/i.test(f.name || ''));
+    });
+    if (!list.length){ if (typeof toast === 'function') toast('فقط فایل ویدیو انتخاب کن'); return; }
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+    var added = 0, tooBig = 0, failed = 0;
+    list.reduce(function(chain, f){
+      return chain.then(function(){
+        if (f.size > VV_MAX_MB * 1048576){ tooBig++; return; }
+        var id = 'vid_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        return vvPut(id, f).then(function(){
+          vvList().push({ id: id, name: f.name || 'video', type: f.type || 'video/mp4', size: f.size, date: dpTodayKey() });
+          added++;
+        }).catch(function(){ failed++; });
+      });
+    }, Promise.resolve()).then(function(){
+      if (added){ try { saveState(); } catch(e){} }
+      renderVisualVideos();
+      if (typeof toast !== 'function') return;
+      if (added && !tooBig && !failed) toast(added > 1 ? toFa(added) + ' ویدیو اضافه شد 🎬' : 'ویدیو اضافه شد 🎬');
+      else if (tooBig) toast('ویدیو بزرگ‌تر از ' + toFa(VV_MAX_MB) + ' مگابایت اضافه نمی‌شه');
+      else if (failed) toast('ذخیره‌ی ویدیو ممکن نشد (حافظه یا مرورگر)');
+    });
+  }
+
+  function vvRemove(id){
+    if (!window.confirm('این ویدیو حذف شود؟')) return;
+    var arr = vvList();
+    var removed = arr.filter(function(v){ return v.id === id; });
+    var cb = state.currentBelief;
+    cb.visualVideos = arr.filter(function(v){ return v.id !== id; });
+    try { saveState(); } catch(e){}
+    vvCleanup(removed);
+    renderVisualVideos();
+    if (typeof toast === 'function') toast('ویدیو حذف شد');
+  }
+
+  function renderVisualVideos(){
+    var box = document.getElementById('visual-video-gallery');
+    if (!box) return;
+    var vids = vvList();
+    var sig = vids.map(function(v){ return v.id; }).join('|');
+    /* اگه چیزی عوض نشده دست نزن تا ویدیوی در حال پخش نپره */
+    if (box.getAttribute('data-sig') === sig && box.getAttribute('data-built') === '1') return;
+    box.setAttribute('data-sig', sig);
+    box.setAttribute('data-built', '1');
+    if (!vids.length){ box.innerHTML = ''; return; }
+    box.innerHTML = vids.map(function(v){
+      return '<div class="vv-item">' +
+        '<video controls playsinline preload="metadata" data-vv="' + v.id + '"></video>' +
+        '<button type="button" class="vv-del" data-vv-del="' + v.id + '" title="حذف ویدیو">×</button>' +
+        '<div class="vv-cap">🎬 ' + escapeHtml(v.name || 'video') + (v.size ? ' • ' + vvFmtSize(v.size) : '') + '</div>' +
+      '</div>';
+    }).join('');
+    vids.forEach(function(v){
+      var el = box.querySelector('video[data-vv="' + v.id + '"]');
+      if (!el) return;
+      if (vvUrls[v.id]){ el.src = vvUrls[v.id]; return; }
+      vvGet(v.id).then(function(blob){
+        if (!blob) throw new Error('missing');
+        vvUrls[v.id] = URL.createObjectURL(blob);
+        el.src = vvUrls[v.id];
+      }).catch(function(){
+        var item = el.closest('.vv-item');
+        if (item){
+          var msg = document.createElement('div');
+          msg.className = 'vv-missing';
+          msg.textContent = 'فایل این ویدیو روی این دستگاه پیدا نشد.';
+          el.replaceWith(msg);
+        }
+      });
+    });
   }
 
   /* =====================================================================
@@ -751,13 +890,16 @@
           '</div>' +
           '<div class="dp-why-box">' +
             '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> یه تصویر واضح از واقعیت دلخواهت توی ذهن می‌کاری — بدون حس نیاز یا کمبود.</span>' +
-            'خودت رو توی صحنه‌ای ببین که به خواسته‌ات رسیدی. هر تعداد عکس که دوست داری اضافه کن.' +
+            'خودت رو توی صحنه‌ای ببین که به خواسته‌ات رسیدی. هر تعداد عکس یا ویدیو که دوست داری اضافه کن.' +
           '</div>' +
           '<div class="dp-step-content">' +
             '<textarea id="seed-text-input" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;" placeholder="توضیح این تصویرسازی (اختیاری)..."></textarea>' +
             '<label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>' +
             '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
+            '<label class="visual-upload-btn" for="visual-video-input" style="margin-inline-start:6px;">+ افزودن ویدیو</label>' +
+            '<input type="file" id="visual-video-input" accept="video/*" multiple style="display:none">' +
             '<div class="visual-gallery" id="visual-gallery" style="margin-top:10px;"></div>' +
+            '<div class="vv-gallery" id="visual-video-gallery"></div>' +
             '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
               '<button type="button" id="archive-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="seed-archive-count">۰</span>)</button>' +
             '</div>' +
@@ -912,6 +1054,13 @@
       '.fmt-btn.active{background:var(--emerald-500);border-color:var(--emerald-500);color:#fff;}' +
       '.fmt-size-val{min-width:26px;text-align:center;font-size:12.5px;font-weight:800;color:var(--ink);}' +
       '.fmt-sep{width:1px;height:22px;background:var(--line);margin:0 2px;}' +
+      '.vv-gallery{display:flex;flex-direction:column;gap:10px;margin-top:10px;}' +
+      '.vv-gallery:empty{display:none;}' +
+      '.vv-item{position:relative;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--line);}' +
+      '.vv-item video{width:100%;max-height:320px;display:block;background:#000;}' +
+      '.vv-del{position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:17px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;}' +
+      '.vv-cap{padding:6px 10px;font-size:10.5px;color:#d8dbe6;background:rgba(18,20,38,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.vv-missing{padding:18px 12px;font-size:11.5px;color:var(--muted);text-align:center;background:var(--surface-2);}' +
       '.breath-wrap{display:flex;flex-direction:column;align-items:center;margin-top:16px;gap:14px;}' +
       '.breath-circle{position:relative;width:172px;height:172px;border-radius:50%;background:radial-gradient(circle, rgba(43,191,171,.10), transparent 72%);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out;will-change:transform;}' +
       '.breath-circle.inhale{transform:scale(1.14);transition-timing-function:ease-out;}' +
@@ -1273,6 +1422,7 @@
     }
     var archiveCount = document.getElementById('seed-archive-count');
     if (archiveCount) archiveCount.textContent = toFa((state.dpSeedArchive || []).length);
+    try { renderVisualVideos(); } catch(e){}
     renderSeedArchiveBox();
   }
 
@@ -1290,25 +1440,30 @@
     if (!cb) return;
     var text = (cb.visualNote || '').trim();
     var images = (cb.visualImages || []).slice();
-    if (!text && !images.length){
-      if (typeof toast === 'function') toast('اول متن یا عکسی اضافه کن');
+    var videos = vvList().slice();
+    if (!text && !images.length && !videos.length){
+      if (typeof toast === 'function') toast('اول متن، عکس یا ویدیویی اضافه کن');
       return;
     }
     if (!Array.isArray(state.dpSeedArchive)) state.dpSeedArchive = [];
-    state.dpSeedArchive.push({ id: 'seed_' + Date.now(), text: text, images: images, date: dpTodayKey() });
+    state.dpSeedArchive.push({ id: 'seed_' + Date.now(), text: text, images: images, videos: videos, date: dpTodayKey() });
     cb.visualNote = '';
     cb.visualImages = [];
+    cb.visualVideos = [];
     try { saveState(); } catch(e){}
     var textInput = document.getElementById('seed-text-input');
     if (textInput) textInput.value = '';
     if (typeof renderVisualGallery === 'function'){ try { renderVisualGallery(); } catch(e){} }
+    renderVisualVideos();
     renderSeedSection();
     if (typeof toast === 'function') toast('بذر قبلی آرشیو شد — بذر تازه شروع کن 🌱');
   }
 
   function deleteSeedFromArchive(id){
     if (!window.confirm('این بذر آرشیوشده برای همیشه حذف شود؟')) return;
+    var removedItem = (state.dpSeedArchive || []).filter(function(v){ return v.id === id; })[0];
     state.dpSeedArchive = (state.dpSeedArchive || []).filter(function(v){ return v.id !== id; });
+    if (removedItem) vvCleanup(removedItem.videos);
     try { saveState(); } catch(e){}
     renderSeedSection();
     if (typeof toast === 'function') toast('بذر حذف شد');
@@ -1331,6 +1486,10 @@
     var cb = state.currentBelief;
     if (!item || !cb) return;
     cb.visualNote = item.text || '';
+    if (!Array.isArray(cb.visualVideos)) cb.visualVideos = [];
+    (item.videos || []).forEach(function(vd){
+      if (!cb.visualVideos.some(function(x){ return x.id === vd.id; })) cb.visualVideos.push(vd);
+    });
     if (!Array.isArray(cb.visualImages)) cb.visualImages = [];
     (item.images || []).forEach(function(img){
       cb.visualImages.push({ id: Date.now() + Math.random(), src: img.src });
@@ -1360,10 +1519,11 @@
       html += '<div style="padding:9px;border-radius:10px;margin-bottom:6px;border:1px solid var(--line);background:var(--card);">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
           '<span style="font-size:11px;font-weight:800;color:var(--ink);">بذر ' + toFa(realIdx + 1) + '</span>' +
-          '<span style="font-size:9.5px;color:var(--muted);">' + v.date + ' • ' + toFa(imgs.length) + ' عکس</span>' +
+          '<span style="font-size:9.5px;color:var(--muted);">' + v.date + ' • ' + toFa(imgs.length) + ' عکس' + ((v.videos || []).length ? ' • ' + toFa(v.videos.length) + ' ویدیو' : '') + '</span>' +
         '</div>' +
         (v.text ? '<div style="font-size:11px;color:var(--ink-soft);line-height:1.6;padding:6px 8px;background:var(--surface-2);border-radius:8px;font-style:italic;margin-bottom:6px;">«' + escapeHtml(v.text.length > 100 ? v.text.slice(0, 100) + '...' : v.text) + '»</div>' : '') +
         (imgs.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">' + imgs.slice(0, 6).map(function(img){ return '<img src="' + img.src + '" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--line);">'; }).join('') + '</div>' : '') +
+        ((v.videos || []).length ? '<div style="font-size:10.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:6px;">' + v.videos.slice(0, 3).map(function(x){ return '🎬 ' + escapeHtml(x.name || 'video'); }).join('<br>') + (v.videos.length > 3 ? '<br>…' : '') + '</div>' : '') +
         '<div style="display:flex;gap:6px;"><button type="button" class="btn tiny" data-restore-seed="' + v.id + '" style="flex:1;font-size:10.5px;padding:6px;">بازگردانی</button>' +
         '<button type="button" class="btn tiny" data-delete-seed="' + v.id + '" style="flex:0 0 auto;font-size:10.5px;padding:6px 12px;color:#c0392b;">🗑 حذف</button></div>' +
       '</div>';
@@ -1890,6 +2050,9 @@
       var t = e.target;
       if (!t || !t.closest) return;
 
+      var vvDelBtn = t.closest('[data-vv-del]');
+      if (vvDelBtn){ e.stopPropagation(); vvRemove(vvDelBtn.getAttribute('data-vv-del')); return; }
+
       var fmtBtn = t.closest('.fmt-btn[data-fmt]');
       if (fmtBtn){ e.stopPropagation(); handleFmtClick(fmtBtn); return; }
 
@@ -2018,6 +2181,11 @@
     });
 
     document.addEventListener('change', function(e){
+      if (e.target && e.target.id === 'visual-video-input'){
+        vvAddFiles(e.target.files);
+        try { e.target.value = ''; } catch(e2){}
+        return;
+      }
       if (e.target && e.target.id === 'fmt-font'){
         var f = getFutureFmt(); f.font = e.target.value; saveFutureFmt(f);
       }
