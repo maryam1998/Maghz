@@ -1,19 +1,9 @@
-const CACHE_VERSION = 'fix-20260924';
+/* CACHE_VERSION را workflow دیپلوی خودکار (با کد کامیت) عوض می‌کند؛ لازم نیست دستی دست بزنی. */
+const CACHE_VERSION = 'auto';
 const CACHE_NAME = 'faravani-cache-' + CACHE_VERSION;
-const PRECACHE_URLS = [
-  './',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
-];
 
 self.addEventListener('install', event => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS))
-      .catch(() => {})
-  );
 });
 
 self.addEventListener('activate', event => {
@@ -24,34 +14,24 @@ self.addEventListener('activate', event => {
   );
 });
 
+/* همه‌چیز (صفحه، JS، CSS، manifest، آیکون‌ها) اول از شبکه گرفته می‌شود تا همیشه آخرین نسخه بیاید.
+   فقط اگر آفلاین بود، آخرین نسخه‌ی ذخیره‌شده استفاده می‌شود. پس دیگه هیچ‌وقت نسخه‌ی قدیمی گیر نمی‌کند. */
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
-
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  const isHTML = req.mode === 'navigate' ||
-    (req.headers.get('accept') || '').includes('text/html');
-
-  const isJSorCSS = url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
-
-  // صفحه‌ی HTML و فایل‌های JS/CSS → همیشه از شبکه، هرگز از کش
-  if (isHTML || isJSorCSS) {
-    event.respondWith(
-      fetch(req, { cache: 'no-store' })
-        .catch(() => caches.match(req))
-    );
-    return;
-  }
-
-  // بقیه (آیکون، مانیفست، …) → اول کش، بعد شبکه
   event.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-      return res;
-    }))
+    fetch(req, { cache: 'no-store' })
+      .then(res => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, copy)).catch(() => {});
+        }
+        return res;
+      })
+      .catch(() => caches.match(req).then(hit => hit || caches.match('./')))
   );
 });
 
