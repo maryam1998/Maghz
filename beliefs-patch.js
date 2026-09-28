@@ -1594,12 +1594,48 @@
     runBreathCycle();
   }
 
+  /* همه‌ی اسکرول‌کننده‌های اطراف یک المان (نزدیک‌ترین اول، آخرش خودِ صفحه).
+     اگه اپ داخل یه کانتینر اسکرول می‌شه، window.scrollTo کاری نمی‌کرد و صفحه می‌پرید پایین */
+  function fgScrollers(el){
+    var list = [], n = el ? el.parentNode : null;
+    while (n && n.nodeType === 1 && n !== document.body && n !== document.documentElement){
+      try {
+        var oy = getComputedStyle(n).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) list.push(n);
+      } catch(e){}
+      n = n.parentNode;
+    }
+    list.push(document.scrollingElement || document.documentElement);
+    return list;
+  }
+  /* المان دقیقاً همون‌جای صفحه‌ی قبلی بمونه (top0 = مکانش قبل از تغییر) */
+  function fgKeepTop(el, top0){
+    if (!el || top0 === null || top0 === undefined) return;
+    var sc = fgScrollers(el);
+    for (var i = 0; i < sc.length; i++){
+      var d = el.getBoundingClientRect().top - top0;
+      if (Math.abs(d) < 1) return;
+      sc[i].scrollTop += d;
+    }
+  }
+  /* بعد از کات/کپی/پیست مرورگر یا اسکریپت‌های دیگه ممکنه با تأخیر صفحه رو جابه‌جا کنن؛
+     چند بار موقعیت رو برمی‌گردونیم تا همون‌جا بمونه */
+  function fgHoldAnchor(el){
+    var top0 = el.getBoundingClientRect().top;
+    var fix = function(){ try { fgKeepTop(el, top0); } catch(e){} };
+    if (window.requestAnimationFrame) requestAnimationFrame(fix);
+    [40, 120, 260, 500].forEach(function(ms){ setTimeout(fix, ms); });
+  }
   function fgrow(el){
     if (!el) return;
-    var y = window.pageYOffset;
+    var top0 = el.getBoundingClientRect().top;
+    var host = el.parentNode;
+    /* موقع جمع‌شدنِ لحظه‌ایِ باکس، ارتفاع صفحه کم نشه (وگرنه اسکرول به ته کلمپ می‌شه و می‌پره پایین) */
+    if (host && host.style) host.style.minHeight = host.offsetHeight + 'px';
     el.style.height = 'auto';
     el.style.height = Math.max(el.scrollHeight + 4, 120) + 'px';
-    window.scrollTo(0, y);
+    if (host && host.style) host.style.minHeight = '';
+    fgKeepTop(el, top0);
   }
   /* آفست کاراکتر زیر انگشت در متن نمایشی (نشانگر همان‌جا که لمس شده بره) */
   function caretFromPoint(x, y, display){
@@ -1972,6 +2008,13 @@
         try { saveState(); } catch(e2){}
       }
       if (id === 'seed-text-input'){ onSeedTextInput(e.target.value); }
+    });
+
+    ['cut', 'copy', 'paste'].forEach(function(evName){
+      document.addEventListener(evName, function(e){
+        var t = e.target;
+        if (t && t.tagName === 'TEXTAREA') fgHoldAnchor(t);
+      }, true);
     });
 
     document.addEventListener('change', function(e){
