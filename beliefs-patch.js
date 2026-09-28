@@ -464,7 +464,6 @@
     if (!Array.isArray(cb.visualImages)) cb.visualImages = [];
     return cb.visualImages;
   }
-  function vgCols(){ return parseInt(state.visualGalleryCols, 10) === 2 ? 2 : 3; }
 
   /* عکس همون‌طور که انتخاب شده وارد می‌شه؛ فقط برای سبک ماندنِ حافظه کوچک‌ترش می‌کنیم (بدون برش) */
   function vgFileToDataUrl(file){
@@ -518,15 +517,12 @@
     var box = document.getElementById('visual-gallery');
     if (!box || typeof state === 'undefined' || !state) return;
     var imgs = vgImages();
-    var cols = vgCols();
-    var sig = imgs.map(function(x){ return x.id + ':' + (x.src ? x.src.length : 0); }).join('|') + '#' + cols;
+    var sig = imgs.map(function(x){ return x.id + ':' + (x.src ? x.src.length : 0); }).join('|');
     if (box.getAttribute('data-sig') === sig && (!imgs.length || box.querySelector('.vg-grid'))) return;
     box.setAttribute('data-sig', sig);
     if (!imgs.length){ box.innerHTML = ''; return; }
     box.innerHTML =
-      '<div class="vg-head"><span>' + toFa(imgs.length) + ' عکس — برای ورق‌زدن و برش، روی عکس بزن</span>' +
-        '<button type="button" class="vg-cols-btn" data-vg-cols="1">' + (cols === 3 ? '▢ درشت‌تر' : '▦ ریزتر') + '</button></div>' +
-      '<div class="vg-grid vg-cols-' + cols + '">' +
+      '<div class="vg-grid">' +
         imgs.map(function(im, i){
           return '<button type="button" class="vg-thumb" data-vg-open="' + i + '"><img src="' + escapeHtml(im.src) + '" alt="" draggable="false"></button>';
         }).join('') +
@@ -1384,12 +1380,8 @@
       '.vv-cap{padding:6px 10px;font-size:10.5px;color:#d8dbe6;background:rgba(18,20,38,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
       '.vv-missing{padding:18px 12px;font-size:11.5px;color:var(--muted);text-align:center;background:var(--surface-2);}' +
       '.vg-wrap{margin-top:10px;}' +
-      '.vg-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:11px;color:var(--muted);}' +
-      '.vg-cols-btn{flex:none;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-family:inherit;font-size:11px;color:var(--ink-soft);cursor:pointer;}' +
-      '.vg-grid{display:grid;gap:6px;}' +
-      '.vg-grid.vg-cols-3{grid-template-columns:repeat(3,1fr);}' +
-      '.vg-grid.vg-cols-2{grid-template-columns:repeat(2,1fr);}' +
-      '.vg-thumb{padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2);aspect-ratio:1;cursor:pointer;display:block;width:100%;}' +
+      '.vg-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start;direction:rtl;}' +
+      '.vg-thumb{flex:none;width:68px;height:68px;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2);cursor:pointer;display:block;}' +
       '.vg-thumb img{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;}' +
       '.vg-viewer{position:fixed;inset:0;z-index:9999;background:#000;display:none;flex-direction:column;}' +
       '.vg-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;z-index:3;background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent);color:#fff;}' +
@@ -2414,8 +2406,6 @@
 
       var vgOpenBtn = t.closest('[data-vg-open]');
       if (vgOpenBtn){ e.stopPropagation(); vgOpen(parseInt(vgOpenBtn.getAttribute('data-vg-open'), 10) || 0); return; }
-      var vgColsBtn = t.closest('[data-vg-cols]');
-      if (vgColsBtn){ state.visualGalleryCols = vgCols() === 3 ? 2 : 3; try { saveState(); } catch(e2){} renderVisualGalleryMine(); return; }
       var vgActBtn = t.closest('[data-vg]');
       if (vgActBtn){ e.stopPropagation(); vgAction(vgActBtn.getAttribute('data-vg')); return; }
 
