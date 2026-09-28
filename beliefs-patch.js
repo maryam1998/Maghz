@@ -610,8 +610,8 @@
               '<button type="button" id="future-rec-btn" class="future-rec-btn" title="ضبط صدا">🎙️</button>' +
             '</div>' +
             '<div id="future-editor" style="display:none;margin-bottom:10px;">' +
-              '<textarea id="future-editor-input" rows="5" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:vertical;outline:none;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
-              '<div style="display:flex;gap:6px;margin-top:8px;">' +
+              '<textarea id="future-editor-input" rows="5" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:none;overflow:hidden;outline:none;min-height:120px;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
+              '<div style="display:flex;gap:6px;margin-top:8px;position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;padding:8px 0;background:linear-gradient(to top,var(--bg-1,#fff) 70%,transparent);">' +
                 '<button type="button" id="future-save-btn" class="btn gold" style="flex:1;font-size:12.5px;padding:10px;">💾 ذخیره</button>' +
                 '<button type="button" id="future-cancel-btn" class="btn" style="flex:1;font-size:12.5px;padding:10px;">لغو</button>' +
               '</div>' +
@@ -1485,19 +1485,49 @@
     runBreathCycle();
   }
 
-  function openFutureEditor(){
+  function fgrow(el){
+    if (!el) return;
+    var y = window.pageYOffset;
+    el.style.height = 'auto';
+    el.style.height = Math.max(el.scrollHeight + 4, 120) + 'px';
+    window.scrollTo(0, y);
+  }
+  /* آفست کاراکتر زیر انگشت در متن نمایشی (نشانگر همان‌جا که لمس شده بره) */
+  function caretFromPoint(x, y, display){
+    try {
+      var node = null, off = 0;
+      if (document.caretPositionFromPoint){
+        var cp = document.caretPositionFromPoint(x, y);
+        if (cp){ node = cp.offsetNode; off = cp.offset; }
+      } else if (document.caretRangeFromPoint){
+        var r = document.caretRangeFromPoint(x, y);
+        if (r){ node = r.startContainer; off = r.startOffset; }
+      }
+      if (!node || node.nodeType !== 3 || node !== display.firstChild) return null;
+      return Math.max(0, off - 1); /* یک کاراکتر برای « */
+    } catch(e){ return null; }
+  }
+  function openFutureEditor(caretPos){
     var v = getActiveVersion();
     var editorBox = document.getElementById('future-editor');
     var input = document.getElementById('future-editor-input');
     var display = document.getElementById('future-display');
     var actions = document.getElementById('future-actions');
     if (!editorBox || !input) return;
+    var beforeTop = display ? display.getBoundingClientRect().top : null;
     input.value = v ? v.text : '';
     editorBox.style.display = 'block';
     if (display) display.style.display = 'none';
     if (actions) actions.style.display = 'none';
     var recB = document.getElementById('future-rec-btn'); if (recB) recB.style.display = 'none';
-    setTimeout(function(){ input.focus(); }, 50);
+    fgrow(input);
+    /* جای صفحه تغییر نکنه: ویرایشگر همون‌جای متن قبلی می‌شینه */
+    if (beforeTop !== null){
+      window.scrollBy(0, input.getBoundingClientRect().top - beforeTop);
+    }
+    var pos = (typeof caretPos === 'number') ? Math.min(caretPos, input.value.length) : input.value.length;
+    try { input.focus({ preventScroll: true }); input.setSelectionRange(pos, pos); }
+    catch(e){ try { input.focus(); } catch(e2){} }
   }
   function closeFutureEditor(){
     var editorBox = document.getElementById('future-editor');
@@ -1508,6 +1538,24 @@
     if (actions) actions.style.display = 'flex';
     var recB = document.getElementById('future-rec-btn'); if (recB) recB.style.display = 'flex';
   }
+  /* با هر تایپ، باکس به اندازه‌ی متن بزرگ می‌شه؛ کل صفحه اسکرول می‌خوره، نه داخل باکس */
+  document.addEventListener('input', function(e){
+    var t = e.target;
+    if (t && t.tagName === 'TEXTAREA' && (t.id === 'future-editor-input' || t.id === 'dp-possibility-fear' ||
+        t.id === 'dp-possibility-money' || t.id === 'dp-possibility-approval' || t.id === 'seed-text-input')){
+      fgrow(t);
+    }
+  });
+  /* لمس مستقیم روی متن = شروع ویرایش از همون نقطه */
+  document.addEventListener('click', function(e){
+    var d = e.target && e.target.closest ? e.target.closest('#future-display') : null;
+    if (!d || e.target.tagName === 'AUDIO') return;
+    var sel = window.getSelection && window.getSelection();
+    if (sel && String(sel).length > 0) return;
+    var v = getActiveVersion();
+    if (!v || !v.text) return;
+    openFutureEditor(caretFromPoint(e.clientX, e.clientY, d));
+  });
   function saveFutureText(){
     var input = document.getElementById('future-editor-input');
     if (!input) return;
