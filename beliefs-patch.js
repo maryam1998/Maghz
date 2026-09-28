@@ -216,6 +216,102 @@
   }
 
   /* =====================================================================
+     قالب‌بندی متن خواسته (فونت، اندازه، تراز، بولد، ایتالیک)
+     ===================================================================== */
+  var FMT_MIN = 10, FMT_MAX = 40;
+  var FMT_DEFAULT = { font: '', size: 13, align: 'right', bold: false, italic: true };
+  var FUTURE_FONTS = [
+    { id: '',         label: 'پیش‌فرض',          css: '' },
+    { id: 'nazanin',  label: 'بی نازنین (B Nazanin)', css: "'bp-nazanin','B Nazanin',serif" },
+    { id: 'titr',     label: 'بی تیتر (B Titr)',     css: "'bp-titr','B Titr',serif" },
+    { id: 'nastaliq', label: 'نستعلیق',              css: "'bp-nastaliq','IranNastaliq','Noto Nastaliq Urdu',serif" },
+    { id: 'zar',      label: 'بی زر (B Zar)',        css: "'bp-zar','B Zar',serif" },
+    { id: 'arial',    label: 'Arial',                css: "Arial,'Helvetica Neue',sans-serif" },
+    { id: 'times',    label: 'Times New Roman',      css: "'Times New Roman',Times,serif" }
+  ];
+  function fmtFontCss(id){
+    for (var i = 0; i < FUTURE_FONTS.length; i++) if (FUTURE_FONTS[i].id === id) return FUTURE_FONTS[i].css;
+    return '';
+  }
+  function getFutureFmt(){
+    if (!state.futureTextFmt || typeof state.futureTextFmt !== 'object') state.futureTextFmt = {};
+    var f = state.futureTextFmt;
+    Object.keys(FMT_DEFAULT).forEach(function(k){ if (f[k] === undefined) f[k] = FMT_DEFAULT[k]; });
+    f.size = Math.max(FMT_MIN, Math.min(FMT_MAX, parseInt(f.size, 10) || FMT_DEFAULT.size));
+    if (['right','center','left'].indexOf(f.align) === -1) f.align = 'right';
+    return f;
+  }
+  function fmtAlignSvg(type){
+    var w = { right: [14, 9, 12], center: [14, 9, 12], left: [14, 9, 12] }[type];
+    var lines = '';
+    for (var i = 0; i < 3; i++){
+      var len = w[i], x = type === 'right' ? 16 - len : (type === 'left' ? 2 : 9 - len / 2);
+      lines += '<rect x="' + x + '" y="' + (3 + i * 5) + '" width="' + len + '" height="2" rx="1" fill="currentColor"/>';
+    }
+    return '<svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">' + lines + '</svg>';
+  }
+  function fmtBarHtml(){
+    var opts = FUTURE_FONTS.map(function(f){ return '<option value="' + f.id + '">' + f.label + '</option>'; }).join('');
+    return '<div id="future-fmt-bar" class="fmt-bar">' +
+      '<select id="fmt-font" class="fmt-select" aria-label="فونت">' + opts + '</select>' +
+      '<div class="fmt-row">' +
+        '<button type="button" class="fmt-btn" data-fmt="size-" title="کوچک‌تر">A−</button>' +
+        '<span id="fmt-size-val" class="fmt-size-val">۱۳</span>' +
+        '<button type="button" class="fmt-btn" data-fmt="size+" title="بزرگ‌تر">A+</button>' +
+        '<span class="fmt-sep"></span>' +
+        '<button type="button" class="fmt-btn" data-fmt="align-right" title="راست‌چین">' + fmtAlignSvg('right') + '</button>' +
+        '<button type="button" class="fmt-btn" data-fmt="align-center" title="وسط‌چین">' + fmtAlignSvg('center') + '</button>' +
+        '<button type="button" class="fmt-btn" data-fmt="align-left" title="چپ‌چین">' + fmtAlignSvg('left') + '</button>' +
+        '<span class="fmt-sep"></span>' +
+        '<button type="button" class="fmt-btn" data-fmt="bold" title="بولد" style="font-weight:900;">B</button>' +
+        '<button type="button" class="fmt-btn" data-fmt="italic" title="ایتالیک" style="font-style:italic;font-family:Georgia,serif;">I</button>' +
+      '</div>' +
+    '</div>';
+  }
+  function applyFutureFmt(){
+    if (typeof state === 'undefined' || !state) return;
+    var f = getFutureFmt();
+    var css = fmtFontCss(f.font);
+    ['future-display', 'future-editor-input'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.fontFamily = css || (id === 'future-editor-input' ? 'inherit' : '');
+      el.style.fontSize = f.size + 'px';
+      el.style.fontWeight = f.bold ? '800' : '400';
+      el.style.fontStyle = f.italic ? 'italic' : 'normal';
+      el.style.textAlign = f.align;
+    });
+    var sel = document.getElementById('fmt-font');
+    if (sel) sel.value = f.font;
+    var sv = document.getElementById('fmt-size-val');
+    if (sv) sv.textContent = toFa(f.size);
+    document.querySelectorAll('.fmt-btn[data-fmt]').forEach(function(b){
+      var a = b.getAttribute('data-fmt'), on = false;
+      if (a === 'bold') on = f.bold;
+      else if (a === 'italic') on = f.italic;
+      else if (a.indexOf('align-') === 0) on = f.align === a.slice(6);
+      b.classList.toggle('active', on);
+    });
+  }
+  function saveFutureFmt(f){
+    state.futureTextFmt = f;
+    try { saveState(); } catch(e){}
+    applyFutureFmt();
+    var input = document.getElementById('future-editor-input');
+    if (input && input.offsetParent !== null) fgrow(input);
+  }
+  function handleFmtClick(btn){
+    var f = getFutureFmt();
+    var a = btn.getAttribute('data-fmt');
+    if (a === 'size-') f.size = Math.max(FMT_MIN, f.size - 1);
+    else if (a === 'size+') f.size = Math.min(FMT_MAX, f.size + 1);
+    else if (a === 'bold') f.bold = !f.bold;
+    else if (a === 'italic') f.italic = !f.italic;
+    else if (a.indexOf('align-') === 0) f.align = a.slice(6);
+    saveFutureFmt(f);
+  }
+
+  /* =====================================================================
      موج‌های سینوسی نامنظم
      ===================================================================== */
   var LAYER_WAVE = {
@@ -610,6 +706,7 @@
               '<button type="button" id="future-rec-btn" class="future-rec-btn" title="ضبط صدا">🎙️</button>' +
             '</div>' +
             '<div id="future-editor" style="display:none;margin-bottom:10px;">' +
+              fmtBarHtml() +
               '<textarea id="future-editor-input" rows="5" style="width:100%;font-family:inherit;font-size:13px;line-height:1.8;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);color:var(--ink);resize:none;overflow:hidden;outline:none;min-height:120px;" placeholder="بسیار خوشحال و سپاسگزارم حالا که..."></textarea>' +
               '<div style="display:flex;gap:6px;margin-top:8px;position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;padding:8px 0;background:linear-gradient(to top,var(--bg-1,#fff) 70%,transparent);">' +
                 '<button type="button" id="future-save-btn" class="btn gold" style="flex:1;font-size:12.5px;padding:10px;">💾 ذخیره</button>' +
@@ -804,6 +901,17 @@
       '.dp-expand-icon{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;padding:0;transition:.2s;}' +
       '.dp-expand-icon.open{transform:rotate(180deg);background:var(--emerald-100);color:var(--emerald-700);border-color:var(--emerald-500);}' +
 
+      '@font-face{font-family:"bp-nazanin";src:local("B Nazanin"),local("BNazanin"),url("fonts/BNazanin.woff2") format("woff2"),url("fonts/BNazanin.ttf") format("truetype");}' +
+      '@font-face{font-family:"bp-titr";src:local("B Titr"),local("BTitr"),url("fonts/BTitr.woff2") format("woff2"),url("fonts/BTitr.ttf") format("truetype");}' +
+      '@font-face{font-family:"bp-zar";src:local("B Zar"),local("BZar"),url("fonts/BZar.woff2") format("woff2"),url("fonts/BZar.ttf") format("truetype");}' +
+      '@font-face{font-family:"bp-nastaliq";src:local("IranNastaliq"),local("Iran Nastaliq"),local("Noto Nastaliq Urdu"),url("fonts/Nastaliq.woff2") format("woff2"),url("fonts/Nastaliq.ttf") format("truetype");}' +
+      '.fmt-bar{margin-bottom:8px;padding:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:8px;}' +
+      '.fmt-select{width:100%;font-family:inherit;font-size:12.5px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none;}' +
+      '.fmt-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}' +
+      '.fmt-btn{min-width:34px;height:34px;padding:0 8px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-family:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}' +
+      '.fmt-btn.active{background:var(--emerald-500);border-color:var(--emerald-500);color:#fff;}' +
+      '.fmt-size-val{min-width:26px;text-align:center;font-size:12.5px;font-weight:800;color:var(--ink);}' +
+      '.fmt-sep{width:1px;height:22px;background:var(--line);margin:0 2px;}' +
       '.breath-wrap{display:flex;flex-direction:column;align-items:center;margin-top:16px;gap:14px;}' +
       '.breath-circle{position:relative;width:172px;height:172px;border-radius:50%;background:radial-gradient(circle, rgba(43,191,171,.10), transparent 72%);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out;will-change:transform;}' +
       '.breath-circle.inhale{transform:scale(1.14);transition-timing-function:ease-out;}' +
@@ -955,6 +1063,7 @@
     renderMiniCal();
     updateRegisterBtn();
     renderArchiveBox();
+    try { applyFutureFmt(); } catch(e){}
   }
 
   function renderMiniCal(){
@@ -1520,6 +1629,7 @@
     if (display) display.style.display = 'none';
     if (actions) actions.style.display = 'none';
     var recB = document.getElementById('future-rec-btn'); if (recB) recB.style.display = 'none';
+    try { applyFutureFmt(); } catch(e){}
     fgrow(input);
     /* جای صفحه تغییر نکنه: ویرایشگر همون‌جای متن قبلی می‌شینه */
     if (beforeTop !== null){
@@ -1744,6 +1854,9 @@
       var t = e.target;
       if (!t || !t.closest) return;
 
+      var fmtBtn = t.closest('.fmt-btn[data-fmt]');
+      if (fmtBtn){ e.stopPropagation(); handleFmtClick(fmtBtn); return; }
+
       var checkBtn = t.closest('.dp-check-btn[data-dp-check]');
       if (checkBtn){
         e.stopPropagation();
@@ -1859,6 +1972,12 @@
         try { saveState(); } catch(e2){}
       }
       if (id === 'seed-text-input'){ onSeedTextInput(e.target.value); }
+    });
+
+    document.addEventListener('change', function(e){
+      if (e.target && e.target.id === 'fmt-font'){
+        var f = getFutureFmt(); f.font = e.target.value; saveFutureFmt(f);
+      }
     });
 
     document.addEventListener('visibilitychange', function(){
