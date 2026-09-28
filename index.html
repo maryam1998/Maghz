@@ -2298,6 +2298,11 @@ body.bg-mode-image #ambient-bg{opacity:var(--amb-opacity,.5);}
   background-size:cover;background-position:center;background-repeat:no-repeat;
   filter:blur(var(--amb-blur,0px));
 }
+#ambient-bg-video{
+  position:absolute;left:-8%;top:-8%;width:116%;height:116%;
+  object-fit:cover;display:none;pointer-events:none;
+  filter:blur(var(--amb-blur,0px));
+}
 /* در تب بانک فراوانی، پس‌زمینه‌ی دلخواه فقط از حاشیه‌های بیرون کارت دیده می‌شود؛ کارت‌ها همچنان کاملاً خوانا و مات باقی می‌مانند */
 body.bg-mode-image #grat-root{background:transparent;}
 
@@ -2644,6 +2649,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 <!-- ===== پس‌زمینه‌ی محیطی: حالت ساده (Calm) یا پس‌زمینه دلخواه — پشت نقشه و بانک فراوانی ===== -->
 <div id="ambient-bg" aria-hidden="true">
   <div id="ambient-bg-img"></div>
+  <video id="ambient-bg-video" muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
 </div>
 
 <svg id="stage" xmlns="http://www.w3.org/2000/svg">
@@ -2767,12 +2773,13 @@ body.bg-mode-image #grat-root{background:transparent;}
     </div>
 
     <div class="field" id="bgmode-image-options" style="display:none;">
-      <label>تصویر پس‌زمینه</label>
+      <label>تصویر یا ویدیوی پس‌زمینه (ویدیو بی‌صدا پخش می‌شود)</label>
       <div class="bgimg-upload-row">
         <img id="bgimg-preview" class="bgimg-preview" style="display:none;" alt="پیش‌نمایش پس‌زمینه">
-        <label class="bgimg-upload-label" for="bgmode-image-input">انتخاب تصویر…</label>
-        <input type="file" id="bgmode-image-input" accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif" style="display:none;">
-        <button type="button" class="bgimg-remove-btn" id="bgimg-remove-btn" style="display:none;">حذف تصویر</button>
+        <video id="bgvid-preview" class="bgimg-preview" style="display:none;" muted loop playsinline></video>
+        <label class="bgimg-upload-label" for="bgmode-image-input">انتخاب تصویر یا ویدیو…</label>
+        <input type="file" id="bgmode-image-input" accept=".jpg,.jpeg,.png,.gif,.mp4,.webm,.mov,.m4v,image/jpeg,image/png,image/gif,video/mp4,video/webm,video/quicktime" style="display:none;">
+        <button type="button" class="bgimg-remove-btn" id="bgimg-remove-btn" style="display:none;">حذف پس‌زمینه</button>
       </div>
 
       <label style="margin-top:12px;">محو بودن پس‌زمینه (Blur)</label>
@@ -9664,8 +9671,45 @@ updateCartBadge();
 (function(){
   var KEY = 'appBackgroundMode';
   var IMG_KEY = 'appBackgroundImage';
-  var defaults = { mode:'calm', blur:0, opacity:50 };
-  var MAX_IMG_BYTES = 4 * 1024 * 1024; // 4MB
+  var defaults = { mode:'calm', blur:0, opacity:50, kind:'image' };
+  var MAX_IMG_BYTES = 4 * 1024 * 1024;   // 4MB برای عکس
+  var MAX_VID_BYTES = 60 * 1024 * 1024;  // 60MB برای ویدیو
+
+  /* ---- ذخیره‌ی ویدیو در IndexedDB (localStorage جای ویدیو ندارد) ---- */
+  function idb(){
+    return new Promise(function(res, rej){
+      try{
+        var r = indexedDB.open('appBgDB', 1);
+        r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); };
+        r.onsuccess = function(){ res(r.result); };
+        r.onerror = function(){ rej(r.error); };
+      }catch(e){ rej(e); }
+    });
+  }
+  function idbGet(k){
+    return idb().then(function(db){ return new Promise(function(res, rej){
+      var q = db.transaction('kv','readonly').objectStore('kv').get(k);
+      q.onsuccess = function(){ res(q.result || null); };
+      q.onerror = function(){ rej(q.error); };
+    }); });
+  }
+  function idbSet(k, v){
+    return idb().then(function(db){ return new Promise(function(res, rej){
+      var tx = db.transaction('kv','readwrite');
+      tx.objectStore('kv').put(v, k);
+      tx.oncomplete = function(){ res(true); };
+      tx.onerror = function(){ rej(tx.error); };
+      tx.onabort = function(){ rej(tx.error); };
+    }); });
+  }
+  function idbDel(k){
+    return idb().then(function(db){ return new Promise(function(res){
+      var tx = db.transaction('kv','readwrite');
+      tx.objectStore('kv').delete(k);
+      tx.oncomplete = function(){ res(true); };
+      tx.onerror = function(){ res(false); };
+    }); }).catch(function(){ return false; });
+  }
 
   function load(){
     try{
@@ -9674,16 +9718,17 @@ updateCartBadge();
       for (var k in defaults) cfg[k] = defaults[k];
       if (saved) for (var k2 in saved) cfg[k2] = saved[k2];
       try{ cfg.imageData = localStorage.getItem(IMG_KEY) || null; }catch(e){ cfg.imageData = null; }
+      cfg.videoUrl = null;
       return cfg;
     }catch(e){
       var cfg2 = {}; for (var k3 in defaults) cfg2[k3] = defaults[k3];
-      cfg2.imageData = null;
+      cfg2.imageData = null; cfg2.videoUrl = null;
       return cfg2;
     }
   }
   function save(cfg){
     try{
-      localStorage.setItem(KEY, JSON.stringify({ mode:cfg.mode, blur:cfg.blur, opacity:cfg.opacity }));
+      localStorage.setItem(KEY, JSON.stringify({ mode:cfg.mode, blur:cfg.blur, opacity:cfg.opacity, kind:cfg.kind }));
     }catch(e){}
   }
   function saveImage(dataUrl){
@@ -9698,14 +9743,45 @@ updateCartBadge();
 
   window.appBgConfig = load();
 
+  function forceMute(v){
+    if (!v) return;
+    v.muted = true; v.defaultMuted = true; v.volume = 0;
+    v.setAttribute('muted', '');
+  }
+  function playVid(v){
+    if (!v) return;
+    forceMute(v);
+    var p = v.play();
+    if (p && p.catch) p.catch(function(){});
+  }
+
   function applyBg(cfg){
-    var hasImage = !!cfg.imageData;
-    document.body.classList.toggle('bg-mode-image', cfg.mode === 'image' && hasImage);
+    var hasVideo = cfg.kind === 'video' && !!cfg.videoUrl;
+    var hasImage = cfg.kind !== 'video' && !!cfg.imageData;
+    var active = cfg.mode === 'image' && (hasVideo || hasImage);
+    document.body.classList.toggle('bg-mode-image', active);
     document.documentElement.style.setProperty('--amb-opacity', (cfg.opacity/100));
     document.documentElement.style.setProperty('--amb-blur', cfg.blur + 'px');
 
     var imgLayer = document.getElementById('ambient-bg-img');
     if (imgLayer) imgLayer.style.backgroundImage = hasImage ? 'url(' + cfg.imageData + ')' : 'none';
+
+    /* ویدیوی پس‌زمینه: همیشه بی‌صدا، تکرارشونده؛ فقط وقتی فعاله پخش می‌شه */
+    var vid = document.getElementById('ambient-bg-video');
+    if (vid){
+      forceMute(vid);
+      if (hasVideo){
+        if (vid.getAttribute('data-src') !== cfg.videoUrl){
+          vid.setAttribute('data-src', cfg.videoUrl);
+          vid.src = cfg.videoUrl;
+        }
+        vid.style.display = 'block';
+        if (active && !document.hidden) playVid(vid); else vid.pause();
+      } else {
+        vid.pause();
+        vid.style.display = 'none';
+      }
+    }
 
     var calmBtn = document.getElementById('bgmode-calm-btn');
     var imageBtn = document.getElementById('bgmode-image-btn');
@@ -9715,12 +9791,27 @@ updateCartBadge();
     if (imageOpts) imageOpts.style.display = (cfg.mode === 'image') ? 'block' : 'none';
 
     var preview = document.getElementById('bgimg-preview');
-    var removeBtn = document.getElementById('bgimg-remove-btn');
     if (preview){
       if (hasImage){ preview.src = cfg.imageData; preview.style.display = 'block'; }
       else { preview.style.display = 'none'; }
     }
-    if (removeBtn) removeBtn.style.display = hasImage ? 'inline-block' : 'none';
+    var vprev = document.getElementById('bgvid-preview');
+    if (vprev){
+      forceMute(vprev);
+      if (hasVideo){
+        if (vprev.getAttribute('data-src') !== cfg.videoUrl){
+          vprev.setAttribute('data-src', cfg.videoUrl);
+          vprev.src = cfg.videoUrl;
+        }
+        vprev.style.display = 'block';
+        playVid(vprev);
+      } else {
+        vprev.pause();
+        vprev.style.display = 'none';
+      }
+    }
+    var removeBtn = document.getElementById('bgimg-remove-btn');
+    if (removeBtn) removeBtn.style.display = (hasImage || hasVideo) ? 'inline-block' : 'none';
 
     var blurRange = document.getElementById('bgmode-blur');
     if (blurRange) blurRange.value = cfg.blur;
@@ -9736,6 +9827,25 @@ updateCartBadge();
 
   applyBg(window.appBgConfig);
 
+  /* اگه قبلاً ویدیو انتخاب شده بود، از حافظه‌ی گوشی بارگذاری کن */
+  if (window.appBgConfig.kind === 'video'){
+    idbGet('video').then(function(blob){
+      if (!blob) return;
+      window.appBgConfig.videoUrl = URL.createObjectURL(blob);
+      applyBg(window.appBgConfig);
+    }).catch(function(){});
+  }
+
+  /* وقتی اپ در پس‌زمینه‌ست ویدیو رو نگه دار تا باتری نره */
+  document.addEventListener('visibilitychange', function(){
+    applyBg(window.appBgConfig);
+  });
+  /* بعضی مرورگرها تا اولین لمس اجازه‌ی پخش خودکار نمی‌دن */
+  document.addEventListener('touchstart', function(){
+    var v = document.getElementById('ambient-bg-video');
+    if (v && v.paused && document.body.classList.contains('bg-mode-image') && window.appBgConfig.kind === 'video') playVid(v);
+  }, { passive:true });
+
   function wireUI(){
     var calmBtn = document.getElementById('bgmode-calm-btn');
     var imageBtn = document.getElementById('bgmode-image-btn');
@@ -9747,8 +9857,31 @@ updateCartBadge();
       var file = fileInput.files && fileInput.files[0];
       fileInput.value = '';
       if (!file) return;
+
+      /* ---------- ویدیو ---------- */
+      if (/^video\//.test(file.type) || /\.(mp4|webm|mov|m4v)$/i.test(file.name || '')){
+        if (file.size > MAX_VID_BYTES){
+          if (window.toast) toast('حجم ویدیو باید کمتر از ۶۰ مگابایت باشد');
+          return;
+        }
+        idbSet('video', file).then(function(){
+          if (window.appBgConfig.videoUrl){ try{ URL.revokeObjectURL(window.appBgConfig.videoUrl); }catch(e){} }
+          saveImage(null);
+          window.appBgConfig.imageData = null;
+          window.appBgConfig.videoUrl = URL.createObjectURL(file);
+          window.appBgConfig.kind = 'video';
+          window.appBgConfig.mode = 'image';
+          applyBg(window.appBgConfig);
+          save(window.appBgConfig);
+        }).catch(function(){
+          if (window.toast) toast('ذخیره ویدیو ممکن نشد (فضای گوشی یا حجم زیاد است)');
+        });
+        return;
+      }
+
+      /* ---------- تصویر ---------- */
       if (!/^image\/(jpeg|png|gif)$/.test(file.type)){
-        if (window.toast) toast('فقط فایل jpg، png یا gif مجاز است');
+        if (window.toast) toast('فقط عکس (jpg، png، gif) یا ویدیو (mp4، webm، mov) مجاز است');
         return;
       }
       cropImage(file, { screen: true }).then(function(dataUrl){
@@ -9762,7 +9895,11 @@ updateCartBadge();
           if (window.toast) toast('ذخیره تصویر ممکن نشد (حجم زیاد است)');
           return;
         }
+        idbDel('video');
+        if (window.appBgConfig.videoUrl){ try{ URL.revokeObjectURL(window.appBgConfig.videoUrl); }catch(e){} }
+        window.appBgConfig.videoUrl = null;
         window.appBgConfig.imageData = dataUrl;
+        window.appBgConfig.kind = 'image';
         window.appBgConfig.mode = 'image';
         applyBg(window.appBgConfig);
         save(window.appBgConfig);
@@ -9772,8 +9909,13 @@ updateCartBadge();
     var removeBtn = document.getElementById('bgimg-remove-btn');
     if (removeBtn) removeBtn.addEventListener('click', function(){
       saveImage(null);
+      idbDel('video');
+      if (window.appBgConfig.videoUrl){ try{ URL.revokeObjectURL(window.appBgConfig.videoUrl); }catch(e){} }
       window.appBgConfig.imageData = null;
+      window.appBgConfig.videoUrl = null;
+      window.appBgConfig.kind = 'image';
       applyBg(window.appBgConfig);
+      save(window.appBgConfig);
     });
 
     var blurRange = document.getElementById('bgmode-blur');
