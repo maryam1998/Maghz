@@ -451,6 +451,328 @@
   }
 
   /* =====================================================================
+     آلبوم عکس‌ها (ورق‌زدن)، نمایش شبکه‌ای، افزودن بدون برش اجباری، و برشِ دلخواه
+     ===================================================================== */
+  var VG_MAX_DIM = 1400, VG_QUALITY = 0.82, VG_CROP_MAX = 1600, VC_MIN = 30;
+  var VG_VIEW = { idx: 0, open: false, prevOverflow: '' };
+  var VC = null;
+
+  function vgClamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function vgImages(){
+    if (!state.currentBelief) state.currentBelief = {};
+    var cb = state.currentBelief;
+    if (!Array.isArray(cb.visualImages)) cb.visualImages = [];
+    return cb.visualImages;
+  }
+  function vgCols(){ return parseInt(state.visualGalleryCols, 10) === 2 ? 2 : 3; }
+
+  /* عکس همون‌طور که انتخاب شده وارد می‌شه؛ فقط برای سبک ماندنِ حافظه کوچک‌ترش می‌کنیم (بدون برش) */
+  function vgFileToDataUrl(file){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        try {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          var sc = Math.min(1, VG_MAX_DIM / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
+          var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+          var ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(img, 0, 0, cw, ch);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL('image/jpeg', VG_QUALITY));
+        } catch(e){ URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('img')); };
+      img.src = url;
+    });
+  }
+
+  function vgAddFiles(files){
+    if (!files || !files.length) return;
+    var list = Array.prototype.slice.call(files).filter(function(f){
+      return f && ((f.type && f.type.indexOf('image/') === 0) || /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(f.name || ''));
+    });
+    if (!list.length){ if (typeof toast === 'function') toast('فقط فایل عکس انتخاب کن'); return; }
+    var added = 0, failed = 0;
+    list.reduce(function(chain, f){
+      return chain.then(function(){
+        return vgFileToDataUrl(f).then(function(src){
+          vgImages().push({ id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), src: src });
+          added++;
+        }).catch(function(){ failed++; });
+      });
+    }, Promise.resolve()).then(function(){
+      if (added){ try { saveState(); } catch(e){} }
+      renderVisualGalleryMine();
+      if (typeof toast !== 'function') return;
+      if (added && !failed) toast(added > 1 ? toFa(added) + ' عکس اضافه شد 🖼️' : 'عکس اضافه شد 🖼️');
+      else if (added) toast(toFa(added) + ' عکس اضافه شد؛ ' + toFa(failed) + ' تا خوانده نشد');
+      else toast('عکس خوانده نشد (فرمت پشتیبانی نمی‌شه)');
+    });
+  }
+
+  /* ---------- شبکه‌ی عکس‌ها ---------- */
+  function renderVisualGalleryMine(){
+    var box = document.getElementById('visual-gallery');
+    if (!box || typeof state === 'undefined' || !state) return;
+    var imgs = vgImages();
+    var cols = vgCols();
+    var sig = imgs.map(function(x){ return x.id + ':' + (x.src ? x.src.length : 0); }).join('|') + '#' + cols;
+    if (box.getAttribute('data-sig') === sig && (!imgs.length || box.querySelector('.vg-grid'))) return;
+    box.setAttribute('data-sig', sig);
+    if (!imgs.length){ box.innerHTML = ''; return; }
+    box.innerHTML =
+      '<div class="vg-head"><span>' + toFa(imgs.length) + ' عکس — برای ورق‌زدن و برش، روی عکس بزن</span>' +
+        '<button type="button" class="vg-cols-btn" data-vg-cols="1">' + (cols === 3 ? '▢ درشت‌تر' : '▦ ریزتر') + '</button></div>' +
+      '<div class="vg-grid vg-cols-' + cols + '">' +
+        imgs.map(function(im, i){
+          return '<button type="button" class="vg-thumb" data-vg-open="' + i + '"><img src="' + escapeHtml(im.src) + '" alt="" draggable="false"></button>';
+        }).join('') +
+      '</div>';
+  }
+
+  /* ---------- آلبوم تمام‌صفحه ---------- */
+  function vgEnsureViewer(){
+    var v = document.getElementById('vg-viewer');
+    if (v) return v;
+    v = document.createElement('div');
+    v.id = 'vg-viewer'; v.className = 'vg-viewer';
+    v.innerHTML =
+      '<div class="vg-top"><span id="vg-counter" class="vg-counter"></span>' +
+        '<button type="button" class="vg-x" data-vg="close" aria-label="بستن">×</button></div>' +
+      '<div class="vg-track" id="vg-track"></div>' +
+      '<button type="button" class="vg-nav vg-prev" data-vg="prev" aria-label="قبلی">‹</button>' +
+      '<button type="button" class="vg-nav vg-next" data-vg="next" aria-label="بعدی">›</button>' +
+      '<div class="vg-bottom">' +
+        '<button type="button" class="vg-act" data-vg="crop">✂️ برش</button>' +
+        '<button type="button" class="vg-act vg-danger" data-vg="del">🗑 حذف</button>' +
+      '</div>';
+    document.body.appendChild(v);
+    var track = v.querySelector('#vg-track'), timer = null;
+    track.addEventListener('scroll', function(){ clearTimeout(timer); timer = setTimeout(vgSyncIndex, 60); });
+    return v;
+  }
+  function vgUpdateCounter(){
+    var c = document.getElementById('vg-counter');
+    if (c) c.textContent = toFa(VG_VIEW.idx + 1) + ' / ' + toFa(vgImages().length);
+  }
+  function vgBuildSlides(){
+    var track = document.getElementById('vg-track');
+    if (!track) return;
+    track.innerHTML = vgImages().map(function(im){
+      return '<div class="vg-slide"><img src="' + escapeHtml(im.src) + '" alt="" draggable="false"></div>';
+    }).join('');
+  }
+  function vgSyncIndex(){
+    var track = document.getElementById('vg-track');
+    if (!track) return;
+    var n = vgImages().length;
+    VG_VIEW.idx = vgClamp(Math.round(track.scrollLeft / (track.clientWidth || 1)), 0, Math.max(0, n - 1));
+    vgUpdateCounter();
+  }
+  function vgGoto(i, smooth){
+    var track = document.getElementById('vg-track');
+    if (!track) return;
+    i = vgClamp(i, 0, Math.max(0, vgImages().length - 1));
+    VG_VIEW.idx = i;
+    try { track.scrollTo({ left: i * track.clientWidth, behavior: smooth ? 'smooth' : 'auto' }); }
+    catch(e){ track.scrollLeft = i * track.clientWidth; }
+    vgUpdateCounter();
+  }
+  function vgOpen(i){
+    if (!vgImages().length) return;
+    var v = vgEnsureViewer();
+    vgBuildSlides();
+    v.style.display = 'flex';
+    if (!VG_VIEW.open){ VG_VIEW.prevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; }
+    VG_VIEW.open = true;
+    vgGoto(i, false);
+    if (window.requestAnimationFrame) requestAnimationFrame(function(){ vgGoto(i, false); });
+  }
+  function vgClose(){
+    var v = document.getElementById('vg-viewer');
+    if (v) v.style.display = 'none';
+    if (VG_VIEW.open) document.body.style.overflow = VG_VIEW.prevOverflow || '';
+    VG_VIEW.open = false;
+  }
+  function vgDeleteCurrent(){
+    var imgs = vgImages(), im = imgs[VG_VIEW.idx];
+    if (!im) return;
+    if (!window.confirm('این عکس حذف شود؟')) return;
+    state.currentBelief.visualImages = imgs.filter(function(x){ return x !== im; });
+    try { saveState(); } catch(e){}
+    renderVisualGalleryMine();
+    var left = vgImages().length;
+    if (!left){ vgClose(); if (typeof toast === 'function') toast('عکس حذف شد'); return; }
+    vgBuildSlides();
+    vgGoto(Math.min(VG_VIEW.idx, left - 1), false);
+    if (typeof toast === 'function') toast('عکس حذف شد');
+  }
+  function vgAction(a){
+    if (a === 'close') vgClose();
+    else if (a === 'prev') vgGoto(VG_VIEW.idx - 1, true);
+    else if (a === 'next') vgGoto(VG_VIEW.idx + 1, true);
+    else if (a === 'crop') vcOpen(VG_VIEW.idx);
+    else if (a === 'del') vgDeleteCurrent();
+  }
+
+  /* ---------- ابزار برش (فقط وقتی خودت بخوای) ---------- */
+  function vcEnsure(){
+    var m = document.getElementById('vc-modal');
+    if (m) return m;
+    m = document.createElement('div');
+    m.id = 'vc-modal'; m.className = 'vc-modal';
+    m.innerHTML =
+      '<div class="vc-ratios" id="vc-ratios">' +
+        '<button type="button" class="vc-ratio active" data-vc-ratio="0">آزاد</button>' +
+        '<button type="button" class="vc-ratio" data-vc-ratio="1">۱:۱</button>' +
+        '<button type="button" class="vc-ratio" data-vc-ratio="1.3333">۴:۳</button>' +
+        '<button type="button" class="vc-ratio" data-vc-ratio="0.75">۳:۴</button>' +
+        '<button type="button" class="vc-ratio" data-vc-ratio="1.7778">۱۶:۹</button>' +
+        '<button type="button" class="vc-ratio" data-vc-ratio="0.5625">۹:۱۶</button>' +
+      '</div>' +
+      '<div class="vc-stage" id="vc-stage"><div class="vc-box" id="vc-box">' +
+        '<img id="vc-img" alt="" draggable="false">' +
+        '<div class="vc-rect" id="vc-rect"><i class="vc-h" data-h="nw"></i><i class="vc-h" data-h="ne"></i><i class="vc-h" data-h="sw"></i><i class="vc-h" data-h="se"></i></div>' +
+      '</div></div>' +
+      '<div class="vc-actions">' +
+        '<button type="button" data-vc="cancel">انصراف</button>' +
+        '<button type="button" class="vc-apply" data-vc="apply">✓ اعمال برش</button>' +
+      '</div>';
+    document.body.appendChild(m);
+
+    m.addEventListener('click', function(e){
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var rb = t.closest('[data-vc-ratio]');
+      if (rb){ vcSetRatio(parseFloat(rb.getAttribute('data-vc-ratio')) || 0); return; }
+      var ab = t.closest('[data-vc]');
+      if (ab){
+        var a = ab.getAttribute('data-vc');
+        if (a === 'cancel') vcClose(); else if (a === 'apply') vcApply();
+      }
+    });
+
+    var rectEl = m.querySelector('#vc-rect');
+    rectEl.addEventListener('pointerdown', function(e){
+      if (!VC) return;
+      e.preventDefault();
+      var h = e.target && e.target.getAttribute ? e.target.getAttribute('data-h') : null;
+      var br = m.querySelector('#vc-box').getBoundingClientRect();
+      var start = { mode: h || 'move', cx: e.clientX, cy: e.clientY, bx: br.left, by: br.top,
+        r: { x: VC.rect.x, y: VC.rect.y, w: VC.rect.w, h: VC.rect.h } };
+      var mv = function(ev){ ev.preventDefault(); vcDrag(start, ev); };
+      var up = function(){
+        window.removeEventListener('pointermove', mv);
+        window.removeEventListener('pointerup', up);
+        window.removeEventListener('pointercancel', up);
+      };
+      window.addEventListener('pointermove', mv, { passive: false });
+      window.addEventListener('pointerup', up);
+      window.addEventListener('pointercancel', up);
+    });
+    return m;
+  }
+  function vcApplyRect(){
+    var r = document.getElementById('vc-rect');
+    if (!r || !VC) return;
+    r.style.left = VC.rect.x + 'px'; r.style.top = VC.rect.y + 'px';
+    r.style.width = VC.rect.w + 'px'; r.style.height = VC.rect.h + 'px';
+  }
+  function vcDrag(st, ev){
+    var W = VC.dispW, H = VC.dispH, r = st.r, rect = VC.rect;
+    if (st.mode === 'move'){
+      rect.w = r.w; rect.h = r.h;
+      rect.x = vgClamp(r.x + ev.clientX - st.cx, 0, W - r.w);
+      rect.y = vgClamp(r.y + ev.clientY - st.cy, 0, H - r.h);
+    } else {
+      var m = st.mode;
+      var ax = (m === 'nw' || m === 'sw') ? r.x + r.w : r.x;
+      var ay = (m === 'nw' || m === 'ne') ? r.y + r.h : r.y;
+      var px = vgClamp(ev.clientX - st.bx, 0, W), py = vgClamp(ev.clientY - st.by, 0, H);
+      var w = Math.max(Math.abs(px - ax), VC_MIN), h = Math.max(Math.abs(py - ay), VC_MIN);
+      if (VC.ratio){ if (w / h > VC.ratio) w = h * VC.ratio; else h = w / VC.ratio; }
+      w = Math.min(w, W); h = Math.min(h, H);
+      rect.w = w; rect.h = h;
+      rect.x = vgClamp(px >= ax ? ax : ax - w, 0, W - w);
+      rect.y = vgClamp(py >= ay ? ay : ay - h, 0, H - h);
+    }
+    vcApplyRect();
+  }
+  function vcSetRatio(ratio){
+    if (!VC) return;
+    VC.ratio = ratio || null;
+    document.querySelectorAll('#vc-ratios .vc-ratio').forEach(function(b){
+      b.classList.toggle('active', Math.abs((parseFloat(b.getAttribute('data-vc-ratio')) || 0) - (VC.ratio || 0)) < 0.001);
+    });
+    if (VC.ratio){
+      var r = VC.rect, cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+      var w = r.w, h = w / VC.ratio;
+      if (h > r.h){ h = r.h; w = h * VC.ratio; }
+      r.w = w; r.h = h;
+      r.x = vgClamp(cx - w / 2, 0, VC.dispW - w);
+      r.y = vgClamp(cy - h / 2, 0, VC.dispH - h);
+      vcApplyRect();
+    }
+  }
+  function vcOpen(idx){
+    var im = vgImages()[idx];
+    if (!im) return;
+    var m = vcEnsure();
+    var img = m.querySelector('#vc-img');
+    VC = { idx: idx, ratio: null, rect: { x: 0, y: 0, w: 0, h: 0 }, dispW: 0, dispH: 0 };
+    document.querySelectorAll('#vc-ratios .vc-ratio').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-vc-ratio') === '0');
+    });
+    m.style.display = 'flex';
+    img.onload = function(){
+      var st = m.querySelector('#vc-stage');
+      var sw = Math.max(50, st.clientWidth - 24), sh = Math.max(50, st.clientHeight - 24);
+      var sc = Math.min(sw / img.naturalWidth, sh / img.naturalHeight);
+      VC.dispW = Math.round(img.naturalWidth * sc);
+      VC.dispH = Math.round(img.naturalHeight * sc);
+      var box = m.querySelector('#vc-box');
+      box.style.width = VC.dispW + 'px'; box.style.height = VC.dispH + 'px';
+      VC.rect = { x: 0, y: 0, w: VC.dispW, h: VC.dispH };
+      vcApplyRect();
+    };
+    img.src = im.src;
+  }
+  function vcClose(){
+    var m = document.getElementById('vc-modal');
+    if (m) m.style.display = 'none';
+    VC = null;
+  }
+  function vcApply(){
+    if (!VC) return;
+    var idx = VC.idx;
+    try {
+      var img = document.getElementById('vc-img');
+      var k = img.naturalWidth / VC.dispW;
+      var sx = VC.rect.x * k, sy = VC.rect.y * k, sw = VC.rect.w * k, sh = VC.rect.h * k;
+      var out = Math.min(1, VG_CROP_MAX / Math.max(sw, sh));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(sw * out)); c.height = Math.max(1, Math.round(sh * out));
+      c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      var url = c.toDataURL('image/jpeg', 0.9);
+      var im = vgImages()[idx];
+      if (!im) throw new Error('no-image');
+      im.src = url;
+      try { saveState(); } catch(e){}
+      vcClose();
+      renderVisualGalleryMine();
+      var track = document.getElementById('vg-track');
+      var slide = track && track.children[idx];
+      if (slide){ var ii = slide.querySelector('img'); if (ii) ii.src = url; }
+      if (typeof toast === 'function') toast('برش اعمال شد ✂️');
+    } catch(e){
+      if (typeof toast === 'function') toast('برش انجام نشد');
+    }
+  }
+
+  /* =====================================================================
      موج‌های سینوسی نامنظم
      ===================================================================== */
   var LAYER_WAVE = {
@@ -895,10 +1217,10 @@
           '<div class="dp-step-content">' +
             '<textarea id="seed-text-input" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;" placeholder="توضیح این تصویرسازی (اختیاری)..."></textarea>' +
             '<label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>' +
-            '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">' +
+            '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none">' +
             '<label class="visual-upload-btn" for="visual-video-input" style="margin-inline-start:6px;">+ افزودن ویدیو</label>' +
             '<input type="file" id="visual-video-input" accept="video/*" multiple style="display:none">' +
-            '<div class="visual-gallery" id="visual-gallery" style="margin-top:10px;"></div>' +
+            '<div class="vg-wrap" id="visual-gallery"></div>' +
             '<div class="vv-gallery" id="visual-video-gallery"></div>' +
             '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
               '<button type="button" id="archive-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="seed-archive-count">۰</span>)</button>' +
@@ -1061,6 +1383,45 @@
       '.vv-del{position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:17px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;}' +
       '.vv-cap{padding:6px 10px;font-size:10.5px;color:#d8dbe6;background:rgba(18,20,38,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
       '.vv-missing{padding:18px 12px;font-size:11.5px;color:var(--muted);text-align:center;background:var(--surface-2);}' +
+      '.vg-wrap{margin-top:10px;}' +
+      '.vg-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:11px;color:var(--muted);}' +
+      '.vg-cols-btn{flex:none;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-family:inherit;font-size:11px;color:var(--ink-soft);cursor:pointer;}' +
+      '.vg-grid{display:grid;gap:6px;}' +
+      '.vg-grid.vg-cols-3{grid-template-columns:repeat(3,1fr);}' +
+      '.vg-grid.vg-cols-2{grid-template-columns:repeat(2,1fr);}' +
+      '.vg-thumb{padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2);aspect-ratio:1;cursor:pointer;display:block;width:100%;}' +
+      '.vg-thumb img{width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none;}' +
+      '.vg-viewer{position:fixed;inset:0;z-index:9999;background:#000;display:none;flex-direction:column;}' +
+      '.vg-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;z-index:3;background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent);color:#fff;}' +
+      '.vg-counter{font-size:13px;font-weight:800;}' +
+      '.vg-x{width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0;}' +
+      '.vg-track{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;direction:ltr;-webkit-overflow-scrolling:touch;scrollbar-width:none;}' +
+      '.vg-track::-webkit-scrollbar{display:none;}' +
+      '.vg-slide{flex:0 0 100%;width:100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;padding:60px 0 84px;box-sizing:border-box;}' +
+      '.vg-slide img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;}' +
+      '.vg-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:24px;line-height:1;cursor:pointer;z-index:3;padding:0;}' +
+      '.vg-prev{left:8px;}.vg-next{right:8px;}' +
+      '@media (hover:none){.vg-nav{display:none;}}' +
+      '.vg-bottom{position:absolute;bottom:0;left:0;right:0;display:flex;gap:10px;justify-content:center;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,rgba(0,0,0,.65),transparent);z-index:3;}' +
+      '.vg-act{min-width:110px;padding:10px 16px;border-radius:12px;border:none;background:rgba(255,255,255,.16);color:#fff;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}' +
+      '.vg-danger{background:rgba(229,72,77,.75);}' +
+      '.vc-modal{position:fixed;inset:0;z-index:10000;background:#0b0c14;display:none;flex-direction:column;color:#fff;}' +
+      '.vc-ratios{display:flex;gap:6px;overflow-x:auto;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px;flex:none;scrollbar-width:none;position:relative;z-index:2;}' +
+      '.vc-ratio{flex:none;padding:7px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;font-family:inherit;font-size:12px;cursor:pointer;}' +
+      '.vc-ratio.active{background:var(--emerald-500,#2bbfab);border-color:transparent;}' +
+      '.vc-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px;}' +
+      '.vc-box{position:relative;touch-action:none;user-select:none;}' +
+      '.vc-box img{display:block;width:100%;height:100%;pointer-events:none;-webkit-user-drag:none;}' +
+      '.vc-rect{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.6);touch-action:none;cursor:move;box-sizing:border-box;}' +
+      '.vc-h{position:absolute;width:34px;height:34px;touch-action:none;}' +
+      '.vc-h::after{content:"";position:absolute;left:10px;top:10px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.35);}' +
+      '.vc-h[data-h="nw"]{left:-17px;top:-17px;cursor:nwse-resize;}' +
+      '.vc-h[data-h="ne"]{right:-17px;top:-17px;cursor:nesw-resize;}' +
+      '.vc-h[data-h="sw"]{left:-17px;bottom:-17px;cursor:nesw-resize;}' +
+      '.vc-h[data-h="se"]{right:-17px;bottom:-17px;cursor:nwse-resize;}' +
+      '.vc-actions{display:flex;gap:10px;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px));flex:none;position:relative;z-index:2;}' +
+      '.vc-actions button{flex:1;padding:12px;border-radius:12px;border:none;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;}' +
+      '.vc-actions .vc-apply{background:var(--emerald-500,#2bbfab);}' +
       '.breath-wrap{display:flex;flex-direction:column;align-items:center;margin-top:16px;gap:14px;}' +
       '.breath-circle{position:relative;width:172px;height:172px;border-radius:50%;background:radial-gradient(circle, rgba(43,191,171,.10), transparent 72%);display:flex;align-items:center;justify-content:center;transition:transform 4s ease-in-out;will-change:transform;}' +
       '.breath-circle.inhale{transform:scale(1.14);transition-timing-function:ease-out;}' +
@@ -1422,6 +1783,7 @@
     }
     var archiveCount = document.getElementById('seed-archive-count');
     if (archiveCount) archiveCount.textContent = toFa((state.dpSeedArchive || []).length);
+    try { renderVisualGalleryMine(); } catch(e){}
     try { renderVisualVideos(); } catch(e){}
     renderSeedArchiveBox();
   }
@@ -2050,6 +2412,13 @@
       var t = e.target;
       if (!t || !t.closest) return;
 
+      var vgOpenBtn = t.closest('[data-vg-open]');
+      if (vgOpenBtn){ e.stopPropagation(); vgOpen(parseInt(vgOpenBtn.getAttribute('data-vg-open'), 10) || 0); return; }
+      var vgColsBtn = t.closest('[data-vg-cols]');
+      if (vgColsBtn){ state.visualGalleryCols = vgCols() === 3 ? 2 : 3; try { saveState(); } catch(e2){} renderVisualGalleryMine(); return; }
+      var vgActBtn = t.closest('[data-vg]');
+      if (vgActBtn){ e.stopPropagation(); vgAction(vgActBtn.getAttribute('data-vg')); return; }
+
       var vvDelBtn = t.closest('[data-vv-del]');
       if (vvDelBtn){ e.stopPropagation(); vvRemove(vvDelBtn.getAttribute('data-vv-del')); return; }
 
@@ -2173,6 +2542,14 @@
       if (id === 'seed-text-input'){ onSeedTextInput(e.target.value); }
     });
 
+    document.addEventListener('keydown', function(e){
+      if (VC){ if (e.key === 'Escape') vcClose(); return; }
+      if (!VG_VIEW.open) return;
+      if (e.key === 'Escape') vgClose();
+      else if (e.key === 'ArrowLeft') vgGoto(VG_VIEW.idx - 1, true);
+      else if (e.key === 'ArrowRight') vgGoto(VG_VIEW.idx + 1, true);
+    });
+
     ['cut', 'copy', 'paste'].forEach(function(evName){
       document.addEventListener(evName, function(e){
         var t = e.target;
@@ -2181,6 +2558,11 @@
     });
 
     document.addEventListener('change', function(e){
+      if (e.target && e.target.id === 'visual-image-input'){
+        vgAddFiles(e.target.files);
+        try { e.target.value = ''; } catch(e2){}
+        return;
+      }
       if (e.target && e.target.id === 'visual-video-input'){
         vvAddFiles(e.target.files);
         try { e.target.value = ''; } catch(e2){}
@@ -2208,6 +2590,9 @@
 
   function boot(){
     if (!ensureState()){ setTimeout(boot, 100); return; }
+    /* افزودن عکس و نمایش گالری حالا با نسخه‌ی این فایله (بدون برش اجباری) */
+    window.handleVisualImages = vgAddFiles;
+    window.renderVisualGallery = renderVisualGalleryMine;
     injectHelpSection();
     rebuildBeliefsView();
     overrideRenderAll();
