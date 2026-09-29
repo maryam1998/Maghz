@@ -2608,6 +2608,10 @@
     /* افزودن عکس و نمایش گالری حالا با نسخه‌ی این فایله (بدون برش اجباری) */
     window.handleVisualImages = vgAddFiles;
     window.renderVisualGallery = renderVisualGalleryMine;
+    /* برای دکمه‌ی برگشت گوشی (back-nav-fix.js) در دسترس باشن */
+    window.vgClose = vgClose;
+    window.vcClose = vcClose;
+    window.closeFutureEditor = closeFutureEditor;
     injectHelpSection();
     rebuildBeliefsView();
     overrideRenderAll();
