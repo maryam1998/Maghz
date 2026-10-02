@@ -428,7 +428,7 @@
   }
 
   #portal-splash h2{
-    margin:0 0 6px;font-size:19px;font-weight:800;color:var(--text-main);
+    margin:0 0 22px;font-size:19px;font-weight:800;color:var(--text-main);
   }
   #portal-splash .portal-sub{
     margin:0 0 20px;font-size:12px;color:var(--text-dim);line-height:1.85;
@@ -440,7 +440,7 @@
     display:flex;gap:4px;
     background:rgba(255,255,255,0.05);
     border:1px solid var(--panel-border);
-    border-radius:14px;padding:4px;margin-bottom:10px;
+    border-radius:14px;padding:4px;margin-bottom:16px;
   }
   .portal-mode-btn{
     flex:1;border:none;background:none;
@@ -6215,6 +6215,17 @@ body.bg-mode-image #grat-root{background:transparent;}
       <!-- این کادر توسط جاوااسکریپت پر می‌شود -->
     </div>
 
+    <!-- دوره‌ی شکرگذاری با فازها و راهنمای روز — همان بنر تب خانه (با renderThemeBanner پر می‌شود) -->
+    <div class="theme-banner" id="hist-theme-banner">
+      <div class="tb-top">
+        <span class="tb-day" id="hist-tb-day">🧭 مسیر ۲۸ روزه شکرگذاری</span>
+        <span class="tb-progress" id="hist-tb-progress">1 / 28</span>
+      </div>
+      <div class="tb-title" id="hist-tb-title">سلامتی و بدن</div>
+      <div class="tb-hint" id="hist-tb-hint"></div>
+      <div class="tb-bar"><div class="tb-bar-fill" id="hist-tb-bar-fill" style="width:3.5%"></div></div>
+    </div>
+
     <div class="quick-add">
       <!-- عنوان پویا با شماره -->
       <div class="grat-input-header">
@@ -6245,6 +6256,11 @@ body.bg-mode-image #grat-root{background:transparent;}
     <div class="items-title" style="margin-top:10px;">📅 تقویم شکرگذاری</div>
     <div id="hist-gratitude-mini-cal" class="mini-cal-grid"></div>
     <div id="hist-gratitude-mini-cal-info"></div>
+
+    <div class="section-label">
+      <h2><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>مسیر عصبی شکرگذاری</h2>
+    </div>
+    <div class="neural-card" id="np-gratitude-hist-mount"></div>
 
     <!-- کادر مجموع فراوانی (hist-total) به طور کامل حذف شد -->
 
@@ -6900,6 +6916,23 @@ function renderThemeBanner(){
 
   const input = document.getElementById('home-grat-input');
   if(input) input.placeholder = '🎯 ' + info.prompt;
+
+  /* همان فاز و راهنمای روز، توی تب شکرگذاری (بنر + داخل کادر نوشتن) */
+  const hProgress = document.getElementById('hist-tb-progress');
+  const hTitle    = document.getElementById('hist-tb-title');
+  const hHint     = document.getElementById('hist-tb-hint');
+  const hBarFill  = document.getElementById('hist-tb-bar-fill');
+  const hDayLabel = document.getElementById('hist-tb-day');
+  if(hProgress) hProgress.textContent = 'روز ' + info.day.toLocaleString('fa-IR') + ' / ' + info.totalDays.toLocaleString('fa-IR');
+  if(hTitle)    hTitle.textContent = 'فاز ' + (info.phaseIndex + 1).toLocaleString('fa-IR') + ' — ' + info.phaseName;
+  if(hHint)     hHint.textContent = '🎯 ' + info.prompt;
+  if(hBarFill)  hBarFill.style.width = (info.day / info.totalDays * 100) + '%';
+  if(hDayLabel){
+    const hPast = ensureGratitudePeriod().past.length;
+    hDayLabel.textContent = '🧭 دوره‌ی ' + (hPast ? periodOrdFa(hPast) + ' — ' : '') + info.totalDays.toLocaleString('fa-IR') + ' روزه — ' + info.phaseShort;
+  }
+  const histInput = document.getElementById('grat-input');
+  if(histInput) histInput.placeholder = '🎯 ' + info.prompt;
 
   renderGratitudeMiniCal();
 }
@@ -8219,7 +8252,8 @@ function gratDisplayText(text){
 function renderHistory(){
   if(ensureSetup()) return;
   updateGratitudeNumbers();
-  renderGratitudeMiniCal();
+  renderThemeBanner();   /* بنر فاز + راهنمای روز + تقویم */
+  try{ renderAllNeuralPathways(); }catch(e){}
 
   const list = document.getElementById('history-list');
   const empty = document.getElementById('history-empty');
@@ -8707,6 +8741,14 @@ function renderAllNeuralPathways(){
       label: 'شکرگذاری',
       practiceKey: 'gratitude',
       showTodayPrompt: true,   // ← نمایش پرامپت فاز فعلی داخل کارت
+      onChange: saveState
+    });
+  }
+  if(document.getElementById('np-gratitude-hist-mount')){
+    renderNeuralPathway('np-gratitude-hist-mount', ensureGratitudeNeural(), {
+      label: 'شکرگذاری',
+      practiceKey: 'gratitude',
+      showDayButtons: false,   // با هر شکرگذاریِ ثبت‌شده خودکار یک رشته ساخته می‌شه (addGratitude)
       onChange: saveState
     });
   }
@@ -9341,7 +9383,6 @@ updateCartBadge();
     </div>
 
     <h2>به ماوراطبیعی شدن خوش آمدی</h2>
-    <p class="portal-sub">دو راه داری: حساب بساز تا پیشرفتت هر جا همراهت باشه، یا همین حالا مهمان وارد شو.</p>
 
     <!-- دو تب ساده و روشن -->
     <div class="portal-mode-switch">
@@ -9354,11 +9395,6 @@ updateCartBadge();
         <span>ساخت حساب</span>
       </button>
     </div>
-
-    <!-- توضیح حالت فعال -->
-    <p class="portal-mode-hint" id="portal-mode-hint">
-      ایمیل و رمزت رو بنویس تا وارد حسابت بشی.
-    </p>
 
     <div class="portal-field">
       <input id="portal-input-email" type="email" placeholder="you@gmail.com" autocomplete="email">
@@ -9437,7 +9473,7 @@ updateCartBadge();
     document.querySelectorAll('.portal-mode-btn').forEach(function(b){
       b.classList.toggle('active', b.dataset.mode === m);
     });
-    modeHint.textContent = HINTS[m] || '';
+    if (modeHint) modeHint.textContent = HINTS[m] || '';
     var iconUse = enterBtn.querySelector('use');
     if (iconUse) iconUse.setAttribute('href', '#' + CTA_ICON[m]);
     var label = enterBtn.querySelector('span:last-child');

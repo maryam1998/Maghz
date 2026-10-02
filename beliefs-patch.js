@@ -392,7 +392,7 @@
         }).catch(function(){ failed++; });
       });
     }, Promise.resolve()).then(function(){
-      if (added){ try { saveState(); } catch(e){} }
+      if (added){ try { saveState(); } catch(e){} autoPracticeFiber('visual'); }
       renderVisualVideos();
       if (typeof toast !== 'function') return;
       if (added && !tooBig && !failed) toast(added > 1 ? toFa(added) + ' ویدیو اضافه شد 🎬' : 'ویدیو اضافه شد 🎬');
@@ -503,7 +503,7 @@
         }).catch(function(){ failed++; });
       });
     }, Promise.resolve()).then(function(){
-      if (added){ try { saveState(); } catch(e){} }
+      if (added){ try { saveState(); } catch(e){} autoPracticeFiber('visual'); }
       renderVisualGalleryMine();
       if (typeof toast !== 'function') return;
       if (added && !failed) toast(added > 1 ? toFa(added) + ' عکس اضافه شد 🖼️' : 'عکس اضافه شد 🖼️');
@@ -1237,6 +1237,10 @@
             '<input type="file" id="visual-video-input" accept="video/*" multiple style="display:none">' +
             '<div class="vg-wrap" id="visual-gallery"></div>' +
             '<div class="vv-gallery" id="visual-video-gallery"></div>' +
+            '<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
+              '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی تصویرسازی (خودکار با افزودن عکس یا ویدیو)</div>' +
+              '<div class="neural-card" id="np-visual-mount"></div>' +
+            '</div>' +
             '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
               '<button type="button" id="archive-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="seed-archive-count">۰</span>)</button>' +
             '</div>' +
@@ -1316,6 +1320,10 @@
             '<div id="ras-signal-list"></div>' +
             '<button type="button" id="ras-archive-toggle-btn" class="btn tiny" style="width:100%;margin-top:8px;">📚 آرشیو (<span id="ras-archive-count">۰</span>)</button>' +
             '<div id="ras-archive-box" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:220px;overflow-y:auto;"></div>' +
+            '<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
+              '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی ردیابی (خودکار با ثبت نشانه)</div>' +
+              '<div class="neural-card" id="np-tracking-mount"></div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1932,6 +1940,7 @@
     input.value = '';
     input.style.display = 'none';
     rasRenderSignals();
+    autoPracticeFiber('tracking');
   }
 
   function rasDeleteSignal(id){
@@ -2377,18 +2386,71 @@
     if (typeof toast === 'function') toast('✓ امروز ثبت شد — ساعت ' + dpFmtTime(v.readTimes[dk]));
   }
 
+  /* ثبت خودکار: هر بار که کاربر تمرینی رو انجام می‌ده (نشانه‌ی RAS، عکس/ویدیوی تصویرسازی)
+     برای همون روز دقیقاً یک رشته به مسیر عصبیِ همون تمرین اضافه می‌شه — بدون دکمه‌ی جدا. */
+  function autoDailyFiber(container){
+    try {
+      if (!container || typeof neuralAddFiber !== 'function') return false;
+      if (!container.autoDays || typeof container.autoDays !== 'object') container.autoDays = {};
+      var dk = dpTodayKey();
+      if (container.autoDays[dk]) return false;
+      container.autoDays[dk] = true;
+      neuralAddFiber(container, { calendarLinked: false });
+      return true;
+    } catch(e){ console.warn('[auto-fiber]', e); return false; }
+  }
+  function autoPracticeFiber(kind){
+    var c = null;
+    try {
+      if (kind === 'tracking' && typeof ensureTrackingNeural === 'function') c = ensureTrackingNeural();
+      if (kind === 'visual' && typeof ensureVisualNeural === 'function') c = ensureVisualNeural();
+    } catch(e){}
+    if (!c) return;
+    if (autoDailyFiber(c)){
+      try { saveState(); } catch(e){}
+      try { renderOurNeuralPathways(); } catch(e){}
+    }
+  }
+
   function renderOurNeuralPathways(){
     if (typeof renderNeuralPathway !== 'function') return;
-    if (!document.getElementById('np-dispenza-mount')) return;
-    try {
-      var dn = dpGetNeural();
-      renderNeuralPathway('np-dispenza-mount', dn, {
-        label: 'تمرین روزانه', practiceKey: 'dispenza', onChange: saveState
-      });
-    } catch(e){ console.warn('[np-dispenza]', e); }
+    if (document.getElementById('np-dispenza-mount')){
+      try {
+        var dn = dpGetNeural();
+        renderNeuralPathway('np-dispenza-mount', dn, {
+          label: 'تمرین روزانه', practiceKey: 'dispenza', onChange: saveState
+        });
+      } catch(e){ console.warn('[np-dispenza]', e); }
+    }
+    if (document.getElementById('np-tracking-mount') && typeof ensureTrackingNeural === 'function'){
+      try {
+        renderNeuralPathway('np-tracking-mount', ensureTrackingNeural(), {
+          label: 'ردیابی RAS', practiceKey: 'tracking', showDayButtons: false, onChange: saveState
+        });
+      } catch(e){ console.warn('[np-tracking]', e); }
+    }
+    if (document.getElementById('np-visual-mount') && typeof ensureVisualNeural === 'function'){
+      try {
+        renderNeuralPathway('np-visual-mount', ensureVisualNeural(), {
+          label: 'تصویرسازی', practiceKey: 'visual', showDayButtons: false, onChange: saveState
+        });
+      } catch(e){ console.warn('[np-visual]', e); }
+    }
   }
+  /* ریشه‌ی مشکل: این تابع قبلاً renderAllNeuralPathways ی برنامه رو کامل عوض می‌کرد و فقط مسیر دیسپنزا رو
+     رندر می‌کرد؛ برای همین کارت مسیر عصبی شکرگذاری (خانه و تب شکرگذاری)، بازی فراوانی و باور بعد از
+     لود دیگه هیچ‌وقت به‌روز نمی‌شدن. حالا نسخه‌ی اصلی هم صدا زده می‌شه. */
   function overrideRenderAll(){
-    window.renderAllNeuralPathways = function(){ renderOurNeuralPathways(); };
+    var orig = window.renderAllNeuralPathways;
+    if (orig && orig.__chainedV1) return;
+    var chained = function(){
+      if (typeof orig === 'function'){
+        try { orig.apply(this, arguments); } catch(e){ console.warn('[render-all-neural]', e); }
+      }
+      renderOurNeuralPathways();
+    };
+    chained.__chainedV1 = true;
+    window.renderAllNeuralPathways = chained;
   }
   function wrapRenderBeliefsView(){
     if (typeof window.renderBeliefsView !== 'function') return;
@@ -2634,4 +2696,113 @@
 
   if (document.readyState === 'complete') setTimeout(boot, 300);
   else window.addEventListener('load', function(){ setTimeout(boot, 300); });
+})();
+
+/* =====================================================================
+   حبابِ تاریخ برای همه‌ی تقویم‌ها (باورها، شکرگذاری، بازی فراوانی، هدف‌گذاری)
+   با لمس هر روز: «شنبه ۲ مهر ۱۴۰۵» + وضعیتِ همون روز، درست بالای همون خانه.
+   فقط نمایش می‌ده؛ رفتارِ قبلیِ هر تقویم (انتخاب روز، ثبت/برداشتن) دست‌نخورده می‌مونه.
+   ===================================================================== */
+(function(){
+  var CELL_SEL = '.mini-cal-day[data-cal-key], .mini-cal-day[data-shop-key], .pc-day[data-pc-key]';
+  var bubble = null, hideTimer = null;
+
+  function ensureStyle(){
+    if (document.getElementById('cal-date-bubble-style')) return;
+    var st = document.createElement('style');
+    st.id = 'cal-date-bubble-style';
+    st.textContent =
+      '#cal-date-bubble{position:fixed;z-index:100000;pointer-events:none;direction:rtl;max-width:240px;' +
+      'padding:7px 11px;border-radius:10px;background:#12303a;color:#fff;font-size:12px;font-weight:700;line-height:1.7;' +
+      'text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.28);opacity:0;transform:translateY(4px);' +
+      'transition:opacity .15s ease,transform .15s ease;white-space:nowrap;}' +
+      '#cal-date-bubble.show{opacity:1;transform:translateY(0);}' +
+      '#cal-date-bubble small{display:block;font-size:10.5px;font-weight:600;opacity:.8;}' +
+      '#cal-date-bubble:after{content:"";position:absolute;left:var(--arrow-x,50%);width:8px;height:8px;background:#12303a;' +
+      'transform:translateX(-50%) rotate(45deg);}' +
+      '#cal-date-bubble.above:after{bottom:-4px;}' +
+      '#cal-date-bubble.below:after{top:-4px;}';
+    document.head.appendChild(st);
+  }
+
+  function keyToDate(k){
+    var p = String(k).split('-').map(Number);
+    if (p.length !== 3 || !p[0]) return null;
+    return new Date(p[0], p[1]-1, p[2]);
+  }
+
+  function faDate(date){
+    try {
+      var parts = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { weekday:'long', day:'numeric', month:'long', year:'numeric' }).formatToParts(date);
+      var m = {};
+      parts.forEach(function(x){ m[x.type] = x.value; });
+      return [m.weekday, m.day, m.month, m.year].filter(Boolean).join(' ');
+    } catch(e){ return date.toLocaleDateString(); }
+  }
+
+  function hideBubble(){
+    clearTimeout(hideTimer);
+    if (bubble) bubble.classList.remove('show');
+  }
+
+  function showBubble(cell){
+    var key = cell.getAttribute('data-cal-key') || cell.getAttribute('data-shop-key') || cell.getAttribute('data-pc-key');
+    var date = keyToDate(key);
+    if (!date) return;
+    ensureStyle();
+    if (!bubble){
+      bubble = document.createElement('div');
+      bubble.id = 'cal-date-bubble';
+      document.body.appendChild(bubble);
+    }
+    var today = new Date(); today.setHours(0,0,0,0);
+    var cls = cell.className || '';
+    var status = '';
+    if (date > today) status = 'هنوز نرسیده';
+    else if (/\b(done|sub)\b/.test(cls) || /feel/.test(cls)) status = '✓ ثبت شده';
+    else status = 'ثبت نشده';
+    if (/\btoday\b/.test(cls)) status = 'امروز — ' + status;
+    bubble.innerHTML = faDate(date) + '<small>' + status + '</small>';
+
+    var r = cell.getBoundingClientRect();
+    bubble.style.left = '0px'; bubble.style.top = '0px';
+    var bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+    var vw = document.documentElement.clientWidth;
+    var cx = r.left + r.width / 2;
+    var left = Math.max(8, Math.min(vw - bw - 8, cx - bw / 2));
+    var above = r.top - bh - 10 >= 8;
+    var top = above ? r.top - bh - 10 : r.bottom + 10;
+    bubble.style.left = left + 'px';
+    bubble.style.top = top + 'px';
+    bubble.style.setProperty('--arrow-x', Math.max(12, Math.min(bw - 12, cx - left)) + 'px');
+    bubble.classList.toggle('above', above);
+    bubble.classList.toggle('below', !above);
+    bubble.classList.add('show');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideBubble, 2600);
+  }
+
+  /* فاز capture: حتی اگه تقویمی خودش stopPropagation بزنه، تاریخ نشون داده می‌شه */
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (!t || !t.closest) return;
+    var cell = t.closest(CELL_SEL);
+    if (!cell){ hideBubble(); return; }
+    /* بعد از اینکه تقویم خودش دوباره رندر کرد، خانه‌ی جدید رو با همون کلید پیدا می‌کنیم */
+    var key = cell.getAttribute('data-cal-key') || cell.getAttribute('data-shop-key') || cell.getAttribute('data-pc-key');
+    var attr = cell.hasAttribute('data-cal-key') ? 'data-cal-key' : (cell.hasAttribute('data-shop-key') ? 'data-shop-key' : 'data-pc-key');
+    setTimeout(function(){
+      var live = cell.isConnected ? cell : null;
+      if (!live){
+        var all = document.querySelectorAll('[' + attr + '="' + key + '"]');
+        for (var i = 0; i < all.length; i++){
+          var rr = all[i].getBoundingClientRect();
+          if (rr.width && rr.top >= 0 && rr.top < window.innerHeight){ live = all[i]; break; }
+        }
+      }
+      if (live) showBubble(live);
+    }, 30);
+  }, true);
+
+  window.addEventListener('scroll', hideBubble, { passive: true, capture: true });
 })();
