@@ -300,6 +300,18 @@
     transition:background .15s;
   }
   .tbtn:hover{background:rgba(255,255,255,0.08);}
+  #toolbar{max-width:calc(100vw - 16px);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  #toolbar::-webkit-scrollbar{display:none;}
+  @media (max-width:520px){
+    #toolbar{gap:2px;padding:6px;}
+    .tbtn{padding:9px 10px;font-size:12px;}
+  }
+  #collapse-all-btn .ca-ico{transition:transform .25s;}
+  #collapse-all-btn.is-collapsed .ca-ico{transform:rotate(180deg);}
+  .goal-shutter .gs-pill{transition:fill-opacity .2s;}
+  .goal-shutter:hover .gs-pill{stroke-width:2.4;}
+  @keyframes npReveal{from{opacity:0;}to{opacity:1;}}
+  .np-reveal{animation:npReveal .45s ease-out;}
   .tbtn.primary{background:var(--accent);color:#221800;}
   .tbtn.primary:hover{background:#ffd35c;}
 
@@ -2693,6 +2705,10 @@ body.bg-mode-image #grat-root{background:transparent;}
 <div id="toolbar">
   <button class="tbtn primary" id="add-goal-btn">＋ هدف جدید</button>
   <button class="tbtn" id="add-ring-btn">＋ نشانه‌ی نزدیکی</button>
+  <button class="tbtn" id="collapse-all-btn" data-mode="collapse" title="جمع/باز کردن همه‌ی مسیرها" style="display:none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ca-ico"><path d="M7 4l5 5 5-5"/><path d="M7 20l5-5 5 5"/></svg>
+    <span class="lbl">جمع همه</span>
+  </button>
   <button class="tbtn" id="recenter-btn">بازگشت به مرکز</button>
   <button class="tbtn" id="settings-btn">⚙ تنظیمات</button>
 </div>
@@ -3345,6 +3361,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     state.goals.forEach(g=>{
       if (!Array.isArray(g.actions)) g.actions = [];
       if (typeof g.reached !== 'boolean') g.reached = false;
+      if (typeof g.collapsed !== 'boolean') g.collapsed = false;
       if (typeof g.feeling !== 'string') g.feeling = '';
       if (typeof g.radius !== 'number' || g.radius < 12) g.radius = 20;
       if (typeof g.feelingOffsetX !== 'number') g.feelingOffsetX = 0;
@@ -3550,6 +3567,13 @@ body.bg-mode-image #grat-root{background:transparent;}
     if (routineCell){
       e.preventDefault();
       toggleRoutineLog(routineCell.dataset.routineCell, routineCell.dataset.key);
+      return;
+    }
+    const shutter = e.target.closest('[data-goal-toggle]');
+    if (shutter){
+      e.preventDefault();
+      e.stopPropagation();
+      toggleGoalCollapse(shutter.dataset.goalToggle);
       return;
     }
     svg.setPointerCapture(e.pointerId);
@@ -4164,6 +4188,12 @@ body.bg-mode-image #grat-root{background:transparent;}
     else if (hit.dataset.hit==='ring') openPanelForRing(hit.dataset.id);
   });
 
+  document.getElementById('collapse-all-btn').addEventListener('click', ()=>{
+    const collapse = document.getElementById('collapse-all-btn').dataset.mode === 'collapse';
+    state.goals.forEach(g=>{ if (g.actions && g.actions.length) g.collapsed = collapse; });
+    render();
+  });
+
   document.getElementById('recenter-btn').addEventListener('click', ()=>{
     cam = { x: window.innerWidth/2, y: window.innerHeight/2, scale: 1 };
     applyCam();
@@ -4632,13 +4662,65 @@ body.bg-mode-image #grat-root{background:transparent;}
     return out;
   }
 
+  /* ---------- کرکره‌ی هر هدف: جمع/باز کردن کل مسیر و شاخه‌ها ---------- */
+  let revealGoalId = null;
+  function countAllActions(list){
+    return (list || []).reduce((n, a) => n + 1 + countAllActions(a.children), 0);
+  }
+  function toggleGoalCollapse(id, force){
+    const g = state.goals.find(x => x.id === id);
+    if (!g) return;
+    g.collapsed = (typeof force === 'boolean') ? force : !g.collapsed;
+    if (!g.collapsed) revealGoalId = g.id;
+    render();
+  }
+  function updateCollapseAllBtn(){
+    const btn = document.getElementById('collapse-all-btn');
+    if (!btn) return;
+    const withBranches = state.goals.filter(g => g.actions && g.actions.length);
+    btn.style.display = withBranches.length ? '' : 'none';
+    const anyOpen = withBranches.some(g => !g.collapsed);
+    btn.dataset.mode = anyOpen ? 'collapse' : 'expand';
+    const lbl = btn.querySelector('.lbl');
+    if (lbl) lbl.textContent = anyOpen ? 'جمع همه' : 'باز همه';
+    btn.classList.toggle('is-collapsed', !anyOpen);
+  }
+  function goalShutterSVG(g, r){
+    const n = countAllActions(g.actions);
+    if (!n) return '';
+    const cx = g.x, cy = g.y + r + 15;
+    const col = g.color;
+    const num = n.toLocaleString('fa-IR');
+    const open = !g.collapsed;
+    const tc = effectiveTextColor();
+    const chev = open ? 'M-4 1.8 L0 -2.2 L4 1.8' : 'M-4 -1.8 L0 2.2 L4 -1.8';
+    return `<g class="goal-shutter ${open ? 'is-open' : 'is-closed'}" data-goal-toggle="${g.id}" style="cursor:pointer;">
+      <title>${open ? 'جمع کردن مسیر' : 'باز کردن مسیر'} (${num} شاخه)</title>
+      <rect x="${cx-34}" y="${cy-19}" width="68" height="38" rx="14" fill="#fff" fill-opacity="0.001"/>
+      <rect class="gs-pill" x="${cx-27}" y="${cy-11}" width="54" height="22" rx="11"
+            fill="${open ? 'none' : col}" fill-opacity="${open ? 0 : 0.92}" stroke="${col}" stroke-width="1.6" stroke-opacity="${open ? 0.75 : 1}"/>
+      <path d="${chev}" transform="translate(${cx-14},${cy})" fill="none" stroke="${open ? tc : '#1b1400'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="${open ? 0.75 : 0.95}"/>
+      <text x="${cx+7}" y="${cy+4.3}" text-anchor="middle" font-size="12" font-weight="700" fill="${open ? tc : '#1b1400'}" fill-opacity="${open ? 0.8 : 1}" style="pointer-events:none;">${num}</text>
+    </g>`;
+  }
+  function collapsedLinkSVG(g){
+    // خط خیلی کم‌رنگ و نازک از «من» تا هدف، تا ارتباطش گم نشه ولی شلوغ هم نکنه
+    return `<line x1="${state.me.x}" y1="${state.me.y}" x2="${g.x}" y2="${g.y}" stroke="${g.color}" stroke-width="1.2" stroke-dasharray="3 6" stroke-linecap="round" opacity="0.28" pointer-events="none"/>`;
+  }
+
   function render(){
     let html = '';
     actionGeomMap = new Map();
 
     state.goals.forEach(g=>{
-      html += `<g data-goal-branches="${g.id}">${branchesSVG(g)}</g>`;
+      if (g.collapsed && g.actions.length){
+        html += `<g data-goal-branches="${g.id}">${collapsedLinkSVG(g)}</g>`;
+      } else {
+        const cls = (revealGoalId === g.id) ? ' class="np-reveal"' : '';
+        html += `<g data-goal-branches="${g.id}"${cls}>${branchesSVG(g)}</g>`;
+      }
     });
+    revealGoalId = null;
 
     const textColor = effectiveTextColor();
     const fs = Math.max(14, state.fontSize || 14);
@@ -4683,10 +4765,12 @@ body.bg-mode-image #grat-root{background:transparent;}
         return (list || []).reduce((s, a) => s + (a.weight || 0) + sumW(a.children), 0);
       })(g.actions);
       const circuitPower = Math.min(100, weightSum * 3);
-      const hudY = g.y + r + 42;
+      const hasBranches = g.actions && g.actions.length;
+      const hudY = g.y + r + (hasBranches ? 46 : 42);
       html += `<text class="goal-hud" x="${g.x}" y="${hudY}" text-anchor="middle">
-        ${freq.label} — ${freq.desc} · رشد ${circuitPower}٪
+        ${g.collapsed && hasBranches ? `رشد ${circuitPower}٪` : `${freq.label} — ${freq.desc} · رشد ${circuitPower}٪`}
       </text>`;
+      html += goalShutterSVG(g, r);
       if (g.reached){
         html += reachedFeelingSVG(g);
       }
@@ -4728,6 +4812,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     });
 
     viewport.innerHTML = html;
+    updateCollapseAllBtn();
     scheduleMapSave();
   }
 
@@ -5252,6 +5337,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         found.node.children = found.node.children || [];
         const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now() };
         found.node.children.push(child);
+        g.collapsed = false;
         refreshActionChildrenPanel();
         render();
         focusNewFieldIn(panelActionChildrenListEl, child.id);
@@ -5292,6 +5378,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     if (!g) return;
     const a = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:12, createdAt: Date.now() };
     g.actions.push(a);
+    g.collapsed = false;
     g.lastActivity = Date.now();
     refreshActionsPanel(g);
     render();
@@ -5315,6 +5402,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         found.node.children = found.node.children || [];
         const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now() };
         found.node.children.push(child);
+        g.collapsed = false;
         refreshActionsPanel(g);
         render();
         focusNewField(child.id);
@@ -5369,6 +5457,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     found.node.children = found.node.children || [];
     const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now() };
     found.node.children.push(child);
+    g.collapsed = false;
     refreshActionChildrenPanel();
     render();
     focusNewFieldIn(panelActionChildrenListEl, child.id);
