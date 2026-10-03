@@ -311,6 +311,52 @@
   .goal-shutter .gs-pill{transition:fill-opacity .2s;}
   .goal-shutter:hover .gs-pill{stroke-width:2.4;}
   @keyframes npReveal{from{opacity:0;}to{opacity:1;}}
+
+  /* ===== تمرکز / فهرست / منوی بیشتر / LOD ===== */
+  #stage.focus-on [data-goal-branches]:not(.is-focus), #stage.focus-on .gnode:not(.is-focus), #stage.focus-on .rnode{opacity:.13;transition:opacity .3s;}
+  #stage.lod-far .branch-label, #stage.lod-far .goal-hud{display:none;}
+  #stage.lod-xfar .synaptic-bouton{display:none;}
+  body.map-hidden #more-menu, body.map-hidden #focus-pill, body.map-hidden #goals-sheet-overlay{display:none !important;}
+  #more-menu{position:fixed;bottom:148px;right:50%;transform:translateX(50%) translateY(8px);z-index:21;
+    min-width:190px;padding:6px;border-radius:14px;background:var(--panel-bg);border:1px solid var(--panel-border);
+    box-shadow:0 10px 32px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;}
+  #more-menu.open{opacity:1;pointer-events:auto;transform:translateX(50%) translateY(0);}
+  #more-menu .tbtn{width:100%;justify-content:flex-start;padding:11px 12px;}
+  #focus-pill{position:fixed;bottom:148px;right:50%;transform:translateX(50%);z-index:21;display:none;align-items:center;gap:8px;
+    padding:7px 8px 7px 14px;border-radius:999px;background:var(--panel-bg);border:1px solid var(--panel-border);
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:12px;color:var(--text-main);max-width:86vw;}
+  #focus-pill.show{display:flex;}
+  #focus-pill .fp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:48vw;font-weight:600;}
+  #focus-pill button{border:none;border-radius:999px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;background:var(--accent);color:#221800;}
+  .gs-overlay{position:fixed;inset:0 0 64px 0;z-index:45;background:rgba(5,8,20,.45);display:none;align-items:flex-end;justify-content:center;}
+  .gs-overlay.open{display:flex;}
+  .gs-sheet{width:min(560px,100%);max-height:78vh;display:flex;flex-direction:column;background:var(--panel-bg);color:var(--text-main);
+    border-radius:22px 22px 0 0;border:1px solid var(--panel-border);border-bottom:none;padding:8px 16px 14px;
+    box-shadow:0 -12px 40px rgba(0,0,0,.35);animation:gsUp .26s ease-out;}
+  @keyframes gsUp{from{transform:translateY(40px);opacity:.4;}to{transform:none;opacity:1;}}
+  .gs-grab{width:40px;height:4px;border-radius:4px;background:var(--panel-border);margin:2px auto 10px;}
+  .gs-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .gs-head strong{font-size:15px;}
+  .gs-head .gs-count{font-size:11.5px;color:var(--text-dim);flex:1;}
+  .gs-x{border:none;background:transparent;color:var(--text-dim);font-size:17px;cursor:pointer;padding:4px 8px;}
+  #gs-search{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:13px;margin-bottom:10px;}
+  .gs-sort{display:flex;gap:6px;margin-bottom:10px;}
+  .gs-chip{border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:999px;padding:5px 12px;font-family:inherit;font-size:11.5px;cursor:pointer;}
+  .gs-chip.on{background:var(--accent);color:#221800;border-color:transparent;font-weight:700;}
+  #gs-list{overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;padding-bottom:6px;}
+  .gs-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;border:1px solid var(--panel-border);cursor:pointer;}
+  .gs-row:active{background:rgba(127,127,127,.12);}
+  .gs-dot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:0 0 0 4px rgba(127,127,127,.12);}
+  .gs-main{flex:1;min-width:0;}
+  .gs-name{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .gs-tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--panel-border);color:var(--text-dim);}
+  .gs-meta{font-size:11px;color:var(--text-dim);margin-top:3px;}
+  .gs-hit{font-size:11px;color:var(--text-dim);margin-top:3px;opacity:.9;}
+  .gs-bar{height:4px;border-radius:4px;background:rgba(127,127,127,.18);margin-top:7px;overflow:hidden;}
+  .gs-bar i{display:block;height:100%;border-radius:4px;}
+  .gs-ic{flex:none;width:34px;height:34px;border-radius:10px;border:none;background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .gs-ic:active{background:rgba(127,127,127,.18);}
+  .gs-empty{text-align:center;color:var(--text-dim);font-size:12.5px;padding:28px 8px;line-height:2;}
   .np-reveal{animation:npReveal .45s ease-out;}
   .tbtn.primary{background:var(--accent);color:#221800;}
   .tbtn.primary:hover{background:#ffd35c;}
@@ -2704,13 +2750,36 @@ body.bg-mode-image #grat-root{background:transparent;}
 
 <div id="toolbar">
   <button class="tbtn primary" id="add-goal-btn">＋ هدف جدید</button>
+  <button class="tbtn" id="goals-list-btn" title="فهرست اهداف">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+    <span>اهداف</span>
+  </button>
+  <button class="tbtn" id="recenter-btn" title="نمایش همه‌ی اهداف در یک نگاه">نمایش همه</button>
+  <button class="tbtn" id="more-btn" title="بیشتر" aria-label="بیشتر">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+  </button>
+</div>
+<div id="more-menu">
   <button class="tbtn" id="add-ring-btn">＋ نشانه‌ی نزدیکی</button>
   <button class="tbtn" id="collapse-all-btn" data-mode="collapse" title="جمع/باز کردن همه‌ی مسیرها" style="display:none">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ca-ico"><path d="M7 4l5 5 5-5"/><path d="M7 20l5-5 5 5"/></svg>
     <span class="lbl">جمع همه</span>
   </button>
-  <button class="tbtn" id="recenter-btn" title="نمایش همه‌ی اهداف در یک نگاه">نمایش همه</button>
   <button class="tbtn" id="settings-btn">⚙ تنظیمات</button>
+</div>
+<div id="focus-pill"><span class="fp-name" id="fp-name"></span><button id="fp-exit">همه‌ی اهداف</button></div>
+<div class="gs-overlay" id="goals-sheet-overlay">
+  <div class="gs-sheet" role="dialog" aria-label="فهرست اهداف">
+    <div class="gs-grab"></div>
+    <div class="gs-head"><strong>اهداف من</strong><span class="gs-count" id="gs-count"></span><button class="gs-x" id="gs-close" aria-label="بستن">✕</button></div>
+    <input id="gs-search" type="search" placeholder="جست‌وجوی هدف یا شاخه..." autocomplete="off">
+    <div class="gs-sort" id="gs-sort">
+      <button class="gs-chip on" data-sort="recent">آخرین فعالیت</button>
+      <button class="gs-chip" data-sort="growth">رشد</button>
+      <button class="gs-chip" data-sort="name">نام</button>
+    </div>
+    <div id="gs-list"></div>
+  </div>
 </div>
 <input type="file" id="import-file" accept="application/json" class="hidden">
 
@@ -2910,6 +2979,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   </div>
 
   <div id="panel-goal-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+    <button class="btn full" id="panel-focus-btn" style="margin-bottom:10px;">تمرکز روی این هدف</button>
     <div class="reached-row">
       <label class="reached-toggle">
         <input type="checkbox" id="panel-reached">
@@ -3481,6 +3551,8 @@ body.bg-mode-image #grat-root{background:transparent;}
   function applyCam(){
     viewport.setAttribute('transform', `translate(${cam.x},${cam.y}) scale(${cam.scale})`);
     document.getElementById('zoom-readout').textContent = Math.round(cam.scale*100)+'٪';
+    svg.classList.toggle('lod-far', cam.scale < 0.55);
+    svg.classList.toggle('lod-xfar', cam.scale < 0.3);
   }
 
   function resizeSvg(){
@@ -4190,6 +4262,111 @@ body.bg-mode-image #grat-root{background:transparent;}
     else if (hit.dataset.hit==='ring') openPanelForRing(hit.dataset.id);
   });
 
+  /* ---- منوی بیشتر ---- */
+  (function(){
+    const moreBtn = document.getElementById('more-btn');
+    const moreMenu = document.getElementById('more-menu');
+    moreBtn.addEventListener('click', ()=> moreMenu.classList.toggle('open'));
+    moreMenu.addEventListener('click', ()=> moreMenu.classList.remove('open'));
+    document.addEventListener('pointerdown', (e)=>{
+      if (!moreMenu.classList.contains('open')) return;
+      if (moreMenu.contains(e.target) || moreBtn.contains(e.target)) return;
+      moreMenu.classList.remove('open');
+    });
+  })();
+
+  /* ---- لغو انیمیشن دوربین با هر لمس/اسکرول کاربر ---- */
+  svg.addEventListener('pointerdown', ()=> cancelAnimationFrame(camAnimId));
+  svg.addEventListener('wheel', ()=> cancelAnimationFrame(camAnimId), {passive:true});
+
+  document.getElementById('fp-exit').addEventListener('click', exitFocus);
+  document.getElementById('panel-focus-btn').addEventListener('click', ()=>{
+    const id = currentPanelGoalId;
+    panel.classList.remove('open');
+    if (id) focusGoal(id);
+  });
+
+  /* ---- فهرست اهداف ---- */
+  (function(){
+    const ov = document.getElementById('goals-sheet-overlay');
+    const listEl = document.getElementById('gs-list');
+    const searchEl = document.getElementById('gs-search');
+    const countEl = document.getElementById('gs-count');
+    let sortKey = 'recent';
+    const ICO_CHEV_DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    const ICO_CHEV_UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
+    const ICO_EDIT = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>';
+    const norm = (t)=> String(t||'').toLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک');
+    function findInActions(list, q){
+      for (const a of (list||[])){
+        if (norm(a.text).includes(q)) return a.text;
+        const r = findInActions(a.children, q);
+        if (r) return r;
+      }
+      return null;
+    }
+    function ago(ts){
+      if (!ts) return '';
+      const d = Math.floor((Date.now() - ts) / 86400000);
+      if (d <= 0) return 'امروز';
+      if (d === 1) return 'دیروز';
+      return toFa(d) + ' روز پیش';
+    }
+    function draw(){
+      const q = norm(searchEl.value.trim());
+      let rows = state.goals.map(g=>({ g, hit: q ? (norm(g.name).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
+                            .filter(r=> !q || r.hit !== null);
+      rows.sort((a,b)=>{
+        if (sortKey === 'growth') return goalPower(b.g) - goalPower(a.g);
+        if (sortKey === 'name') return String(a.g.name).localeCompare(String(b.g.name), 'fa');
+        return (b.g.lastActivity||0) - (a.g.lastActivity||0);
+      });
+      countEl.textContent = state.goals.length ? toFa(state.goals.length) + ' هدف' : '';
+      if (!rows.length){
+        listEl.innerHTML = `<div class="gs-empty">${state.goals.length ? 'موردی پیدا نشد.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'}</div>`;
+        return;
+      }
+      listEl.innerHTML = rows.map(({g, hit})=>{
+        const n = countAllActions(g.actions);
+        const p = goalPower(g);
+        const stale = g.lastActivity && (Date.now() - g.lastActivity) > 30*86400000;
+        const tags = (g.reached ? '<span class="gs-tag">رسیده‌ام</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
+        return `<div class="gs-row" data-gid="${g.id}">
+          <span class="gs-dot" style="background:${g.color}"></span>
+          <div class="gs-main">
+            <div class="gs-name">${esc(g.name)}${tags}</div>
+            <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${g.lastActivity ? ' · ' + ago(g.lastActivity) : ''}</div>
+            ${hit ? `<div class="gs-hit">شاخه: ${esc(hit)}</div>` : ''}
+            <div class="gs-bar"><i style="width:${p}%;background:${g.color}"></i></div>
+          </div>
+          ${n ? `<button class="gs-ic" data-act="toggle" aria-label="جمع یا باز کردن">${g.collapsed ? ICO_CHEV_DOWN : ICO_CHEV_UP}</button>` : ''}
+          <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
+        </div>`;
+      }).join('');
+    }
+    function open(){ searchEl.value=''; draw(); ov.classList.add('open'); }
+    function close(){ ov.classList.remove('open'); }
+    document.getElementById('goals-list-btn').addEventListener('click', open);
+    document.getElementById('gs-close').addEventListener('click', close);
+    ov.addEventListener('pointerdown', (e)=>{ if (e.target === ov) close(); });
+    searchEl.addEventListener('input', draw);
+    document.getElementById('gs-sort').addEventListener('click', (e)=>{
+      const b = e.target.closest('.gs-chip'); if (!b) return;
+      sortKey = b.dataset.sort;
+      [...document.querySelectorAll('#gs-sort .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
+      draw();
+    });
+    listEl.addEventListener('click', (e)=>{
+      const row = e.target.closest('.gs-row'); if (!row) return;
+      const id = row.dataset.gid;
+      const act = e.target.closest('[data-act]');
+      if (act && act.dataset.act === 'toggle'){ toggleGoalCollapse(id); draw(); return; }
+      if (act && act.dataset.act === 'edit'){ close(); openPanelForGoal(id); return; }
+      close();
+      focusGoal(id);
+    });
+  })();
+
   document.getElementById('collapse-all-btn').addEventListener('click', ()=>{
     const collapse = document.getElementById('collapse-all-btn').dataset.mode === 'collapse';
     state.goals.forEach(g=>{ if (g.actions && g.actions.length) g.collapsed = collapse; });
@@ -4198,6 +4375,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   });
 
   document.getElementById('recenter-btn').addEventListener('click', ()=>{
+    focusGoalId = null;
     render();
     fitAllView();
     document.getElementById('hint').style.display = 'none';
@@ -4706,6 +4884,56 @@ body.bg-mode-image #grat-root{background:transparent;}
       <text x="${cx+7}" y="${cy+4.3}" text-anchor="middle" font-size="12" font-weight="700" fill="${open ? tc : '#1b1400'}" fill-opacity="${open ? 0.8 : 1}" style="pointer-events:none;">${num}</text>
     </g>`;
   }
+  let focusGoalId = null;
+  let camAnimId = 0;
+  function animateCamTo(t, ms){
+    cancelAnimationFrame(camAnimId);
+    ms = ms || 520;
+    const s0 = { x:cam.x, y:cam.y, scale:cam.scale };
+    const t0 = performance.now();
+    (function step(now){
+      const k = Math.min(1, (now - t0) / ms);
+      const e = 1 - Math.pow(1 - k, 3);
+      cam.x = s0.x + (t.x - s0.x) * e;
+      cam.y = s0.y + (t.y - s0.y) * e;
+      cam.scale = s0.scale + (t.scale - s0.scale) * e;
+      applyCam();
+      if (k < 1) camAnimId = requestAnimationFrame(step);
+    })(t0);
+  }
+  function viewForPoints(pts, maxScale){
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    pts.forEach(p=>{ x0=Math.min(x0,p.x-p.r); y0=Math.min(y0,p.y-p.r); x1=Math.max(x1,p.x+p.r); y1=Math.max(y1,p.y+p.r); });
+    const W = window.innerWidth, H = window.innerHeight - 190;
+    const sc = Math.max(0.12, Math.min(maxScale || 1.2, Math.min(W/(x1-x0), H/(y1-y0))));
+    return { scale: sc, x: W/2 - ((x0+x1)/2)*sc, y: 70 + H/2 - ((y0+y1)/2)*sc };
+  }
+  function goalPoints(g){
+    const pts = [{x:g.x, y:g.y, r:(g.radius||20)+70}];
+    if (!g.collapsed){
+      (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x, y:e.end.y, r:80}); walk(a.children); }); })(g.actions);
+    }
+    return pts;
+  }
+  function focusGoal(id){
+    const g = state.goals.find(x=>x.id===id);
+    if (!g) return;
+    focusGoalId = id;
+    g.collapsed = false;
+    revealGoalId = id;
+    render();
+    animateCamTo(viewForPoints(goalPoints(g), 1.4));
+    const h = document.getElementById('hint'); if (h) h.style.display = 'none';
+  }
+  function exitFocus(){
+    focusGoalId = null;
+    render();
+    fitAllView();
+  }
+  function goalPower(g){
+    const w = (function sumW(list){ return (list||[]).reduce((s,a)=> s + (a.weight||0) + sumW(a.children), 0); })(g.actions);
+    return Math.min(100, w*3);
+  }
   function toggleRingsCollapse(force){
     state.ringsCollapsed = (typeof force === 'boolean') ? force : !state.ringsCollapsed;
     render();
@@ -4730,21 +4958,9 @@ body.bg-mode-image #grat-root{background:transparent;}
   }
   function fitAllView(){
     const pts = [{x:state.me.x, y:state.me.y, r:(state.me.radius||34)+60}];
-    state.goals.forEach(g=>{
-      pts.push({x:g.x, y:g.y, r:(g.radius||20)+60});
-      if (!g.collapsed){
-        (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x, y:e.end.y, r:70}); walk(a.children); }); })(g.actions);
-      }
-    });
+    state.goals.forEach(g=>{ goalPoints(g).forEach(p=>pts.push(p)); });
     if (!state.ringsCollapsed) state.rings.forEach(r=>pts.push({x:r.x,y:r.y,r:(r.radius||30)+30}));
-    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-    pts.forEach(p=>{ x0=Math.min(x0,p.x-p.r); y0=Math.min(y0,p.y-p.r); x1=Math.max(x1,p.x+p.r); y1=Math.max(y1,p.y+p.r); });
-    const W = window.innerWidth, H = window.innerHeight - 190;   // جا برای نوار ابزار و تب‌ها
-    const sc = Math.max(0.12, Math.min(1.2, Math.min(W/(x1-x0), H/(y1-y0))));
-    cam.scale = sc;
-    cam.x = W/2 - ((x0+x1)/2)*sc;
-    cam.y = 70 + H/2 - ((y0+y1)/2)*sc;
-    applyCam();
+    animateCamTo(viewForPoints(pts, 1.2));
   }
   function pickGoalSpot(){
     // بهترین زاویه: دورترین نقطه از هدف‌های موجود تا هدف‌ها روی هم نیفتند
@@ -4768,12 +4984,14 @@ body.bg-mode-image #grat-root{background:transparent;}
     let html = '';
     actionGeomMap = new Map();
 
+    if (focusGoalId && !state.goals.some(x=>x.id===focusGoalId)) focusGoalId = null;
     state.goals.forEach(g=>{
+      const cls = [ (revealGoalId === g.id) ? 'np-reveal' : '', (focusGoalId === g.id) ? 'is-focus' : '' ].filter(Boolean).join(' ');
+      const clsAttr = cls ? ` class="${cls}"` : '';
       if (g.collapsed && g.actions.length){
-        html += `<g data-goal-branches="${g.id}">${collapsedLinkSVG(g)}</g>`;
+        html += `<g data-goal-branches="${g.id}"${clsAttr}>${collapsedLinkSVG(g)}</g>`;
       } else {
-        const cls = (revealGoalId === g.id) ? ' class="np-reveal"' : '';
-        html += `<g data-goal-branches="${g.id}"${cls}>${branchesSVG(g)}</g>`;
+        html += `<g data-goal-branches="${g.id}"${clsAttr}>${branchesSVG(g)}</g>`;
       }
     });
     revealGoalId = null;
@@ -4812,6 +5030,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
     state.goals.forEach(g=>{
       const r = g.radius || 20;
+      html += `<g class="gnode${focusGoalId === g.id ? ' is-focus' : ''}" data-gn="${g.id}">`;
       html += haloSVG(g.x, g.y, g.color, r, 1, g.freq);
       html += nodeWithImages(g.x, g.y, r, g.images, g.color, 'goal', g.id, g.name, -42, '', g, g.createdAt);
 
@@ -4830,10 +5049,12 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (g.reached){
         html += reachedFeelingSVG(g);
       }
+      html += `</g>`;
     });
 
     html += ringsShutterSVG();
     (state.ringsCollapsed ? [] : state.rings).forEach(r=>{
+      html += '<g class="rnode">';
       const rad = r.radius || 30;
       const ringColor = r.color || RING_COLOR;
       html += haloSVG(r.x, r.y, ringColor, rad, 1.2);
@@ -4866,9 +5087,18 @@ body.bg-mode-image #grat-root{background:transparent;}
         text += `</text>`;
         html += text;
       }
+      html += '</g>';
     });
 
     viewport.innerHTML = html;
+    svg.classList.toggle('focus-on', !!focusGoalId);
+    (function(){
+      const pill = document.getElementById('focus-pill');
+      if (!pill) return;
+      const fg = focusGoalId && state.goals.find(x=>x.id===focusGoalId);
+      pill.classList.toggle('show', !!fg);
+      if (fg) document.getElementById('fp-name').textContent = 'تمرکز: ' + fg.name;
+    })();
     updateCollapseAllBtn();
     scheduleMapSave();
   }
