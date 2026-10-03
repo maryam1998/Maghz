@@ -816,12 +816,12 @@
   .pc-finished{margin-top:8px;padding:9px 11px;border-radius:10px;background:rgba(244,197,66,0.14);border:1px solid rgba(244,197,66,0.4);font-size:11.5px;font-weight:700;line-height:1.8;color:var(--text-main);}
 
   #hint{
-    position:fixed;bottom:78px;right:50%;transform:translateX(50%);
+    position:fixed;bottom:142px;right:50%;transform:translateX(50%);
     font-size:11px;color:var(--text-dim);opacity:.7;pointer-events:none;
     text-align:center;z-index:15;
   }
   #zoom-readout{
-    position:fixed;bottom:18px;left:16px;font-size:10.5px;color:var(--text-dim);
+    position:fixed;bottom:146px;left:12px;font-size:10.5px;color:var(--text-dim);
     background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:10px;
     padding:6px 10px;z-index:20;}
 
@@ -2709,7 +2709,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ca-ico"><path d="M7 4l5 5 5-5"/><path d="M7 20l5-5 5 5"/></svg>
     <span class="lbl">جمع همه</span>
   </button>
-  <button class="tbtn" id="recenter-btn">بازگشت به مرکز</button>
+  <button class="tbtn" id="recenter-btn" title="نمایش همه‌ی اهداف در یک نگاه">نمایش همه</button>
   <button class="tbtn" id="settings-btn">⚙ تنظیمات</button>
 </div>
 <input type="file" id="import-file" accept="application/json" class="hidden">
@@ -2936,11 +2936,10 @@ body.bg-mode-image #grat-root{background:transparent;}
   </div>
 
   <div id="panel-ring-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;">
-    <label class="small">رنگ نشانه</label>
-    <div class="color-row" style="margin-bottom:8px;">
+    <div style="display:none">
       <input type="color" id="panel-ring-color" value="#2dd4bf">
+      <div class="swatches" id="panel-ring-color-swatches"></div>
     </div>
-    <div class="swatches" id="panel-ring-color-swatches" style="margin-bottom:12px;"></div>
     <label class="small">توضیحات (چند خطی)</label>
     <textarea id="panel-ring-note" placeholder="چیزی که حس می‌کنی..." style="min-height:80px;flex:1;"></textarea>
   </div>
@@ -3377,6 +3376,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       normalizeActions(g.actions);
     });
     if (!Array.isArray(state.rings)) state.rings = [];
+    if (typeof state.ringsCollapsed !== 'boolean') state.ringsCollapsed = false;
     state.rings.forEach(r=>{
       if (typeof r.x !== 'number') r.x = 0;
       if (typeof r.y !== 'number') r.y = 0;
@@ -3569,6 +3569,8 @@ body.bg-mode-image #grat-root{background:transparent;}
       toggleRoutineLog(routineCell.dataset.routineCell, routineCell.dataset.key);
       return;
     }
+    const rShutter = e.target.closest('[data-rings-toggle]');
+    if (rShutter){ e.preventDefault(); e.stopPropagation(); toggleRingsCollapse(); return; }
     const shutter = e.target.closest('[data-goal-toggle]');
     if (shutter){
       e.preventDefault();
@@ -4191,13 +4193,14 @@ body.bg-mode-image #grat-root{background:transparent;}
   document.getElementById('collapse-all-btn').addEventListener('click', ()=>{
     const collapse = document.getElementById('collapse-all-btn').dataset.mode === 'collapse';
     state.goals.forEach(g=>{ if (g.actions && g.actions.length) g.collapsed = collapse; });
+    state.ringsCollapsed = collapse;
     render();
   });
 
   document.getElementById('recenter-btn').addEventListener('click', ()=>{
-    cam = { x: window.innerWidth/2, y: window.innerHeight/2, scale: 1 };
-    applyCam();
     render();
+    fitAllView();
+    document.getElementById('hint').style.display = 'none';
   });
 
   /* ---------------- rendering ---------------- */
@@ -4678,8 +4681,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     const btn = document.getElementById('collapse-all-btn');
     if (!btn) return;
     const withBranches = state.goals.filter(g => g.actions && g.actions.length);
-    btn.style.display = withBranches.length ? '' : 'none';
-    const anyOpen = withBranches.some(g => !g.collapsed);
+    btn.style.display = (withBranches.length || state.rings.length) ? '' : 'none';
+    const anyOpen = withBranches.some(g => !g.collapsed) || (state.rings.length && !state.ringsCollapsed);
     btn.dataset.mode = anyOpen ? 'collapse' : 'expand';
     const lbl = btn.querySelector('.lbl');
     if (lbl) lbl.textContent = anyOpen ? 'جمع همه' : 'باز همه';
@@ -4702,6 +4705,59 @@ body.bg-mode-image #grat-root{background:transparent;}
       <path d="${chev}" transform="translate(${cx-14},${cy})" fill="none" stroke="${open ? tc : '#1b1400'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="${open ? 0.75 : 0.95}"/>
       <text x="${cx+7}" y="${cy+4.3}" text-anchor="middle" font-size="12" font-weight="700" fill="${open ? tc : '#1b1400'}" fill-opacity="${open ? 0.8 : 1}" style="pointer-events:none;">${num}</text>
     </g>`;
+  }
+  function toggleRingsCollapse(force){
+    state.ringsCollapsed = (typeof force === 'boolean') ? force : !state.ringsCollapsed;
+    render();
+  }
+  function ringsShutterSVG(){
+    const n = state.rings.length;
+    if (!n) return '';
+    const open = !state.ringsCollapsed;
+    const col = RING_COLOR;
+    const cx = state.me.x, cy = state.me.y + (state.me.radius || 34) + 58;
+    const num = n.toLocaleString('fa-IR');
+    const tc = effectiveTextColor();
+    const chev = open ? 'M-4 1.8 L0 -2.2 L4 1.8' : 'M-4 -1.8 L0 2.2 L4 -1.8';
+    return `<g class="goal-shutter ${open ? 'is-open' : 'is-closed'}" data-rings-toggle="1" style="cursor:pointer;">
+      <title>${open ? 'جمع کردن' : 'باز کردن'} نشانه‌های نزدیکی (${num})</title>
+      <rect x="${cx-48}" y="${cy-19}" width="96" height="38" rx="14" fill="#fff" fill-opacity="0.001"/>
+      <rect class="gs-pill" x="${cx-42}" y="${cy-11}" width="84" height="22" rx="11"
+            fill="${open ? 'none' : col}" fill-opacity="${open ? 0 : 0.92}" stroke="${col}" stroke-width="1.6" stroke-dasharray="${open ? '4 3' : 'none'}"/>
+      <path d="${chev}" transform="translate(${cx-30},${cy})" fill="none" stroke="${open ? tc : '#04201c'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+      <text x="${cx+8}" y="${cy+4.2}" text-anchor="middle" font-size="11" font-weight="700" fill="${open ? tc : '#04201c'}" style="pointer-events:none;">نزدیکی ${num}</text>
+    </g>`;
+  }
+  function fitAllView(){
+    const pts = [{x:state.me.x, y:state.me.y, r:(state.me.radius||34)+60}];
+    state.goals.forEach(g=>{
+      pts.push({x:g.x, y:g.y, r:(g.radius||20)+60});
+      if (!g.collapsed){
+        (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x, y:e.end.y, r:70}); walk(a.children); }); })(g.actions);
+      }
+    });
+    if (!state.ringsCollapsed) state.rings.forEach(r=>pts.push({x:r.x,y:r.y,r:(r.radius||30)+30}));
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    pts.forEach(p=>{ x0=Math.min(x0,p.x-p.r); y0=Math.min(y0,p.y-p.r); x1=Math.max(x1,p.x+p.r); y1=Math.max(y1,p.y+p.r); });
+    const W = window.innerWidth, H = window.innerHeight - 190;   // جا برای نوار ابزار و تب‌ها
+    const sc = Math.max(0.12, Math.min(1.2, Math.min(W/(x1-x0), H/(y1-y0))));
+    cam.scale = sc;
+    cam.x = W/2 - ((x0+x1)/2)*sc;
+    cam.y = 70 + H/2 - ((y0+y1)/2)*sc;
+    applyCam();
+  }
+  function pickGoalSpot(){
+    // بهترین زاویه: دورترین نقطه از هدف‌های موجود تا هدف‌ها روی هم نیفتند
+    const R = 210 + Math.min(state.goals.length, 12) * 12;
+    let best = null;
+    for (let i=0;i<48;i++){
+      const a = (i/48)*Math.PI*2;
+      const x = state.me.x + Math.cos(a)*R, y = state.me.y + Math.sin(a)*R;
+      let d = 1e9;
+      state.goals.forEach(g=>{ d = Math.min(d, Math.hypot(g.x-x, g.y-y)); });
+      if (!best || d > best.d) best = {x,y,d};
+    }
+    return best;
   }
   function collapsedLinkSVG(g){
     // خط خیلی کم‌رنگ و نازک از «من» تا هدف، تا ارتباطش گم نشه ولی شلوغ هم نکنه
@@ -4776,7 +4832,8 @@ body.bg-mode-image #grat-root{background:transparent;}
       }
     });
 
-    state.rings.forEach(r=>{
+    html += ringsShutterSVG();
+    (state.ringsCollapsed ? [] : state.rings).forEach(r=>{
       const rad = r.radius || 30;
       const ringColor = r.color || RING_COLOR;
       html += haloSVG(r.x, r.y, ringColor, rad, 1.2);
@@ -4792,7 +4849,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         let lx = r.x + (r.labelDX || 0);
         let ly = r.y - 42 + (r.labelDY || 0);
         const fsize = r.labelSize || currentLabelSize('ring', r.id);
-        let text = `<text data-hit="ring" data-id="${r.id}" data-label="1" x="${lx}" y="${ly}" text-anchor="middle" class="feeling-label" font-size="${fsize}" style="cursor:pointer;" fill="${textColor}">`;
+        let text = `<text data-hit="ring" data-id="${r.id}" data-label="1" x="${lx}" y="${ly}" text-anchor="middle" class="feeling-label" font-size="${fsize}" font-weight="700" style="cursor:pointer;fill:${ringColor};" fill="${ringColor}">`;
         lines.forEach((line,i)=>{
           text += `<tspan x="${lx}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
         });
@@ -4852,12 +4909,11 @@ body.bg-mode-image #grat-root{background:transparent;}
   document.getElementById('goal-create-btn').addEventListener('click', ()=>{
     const name = goalNameInput.value.trim();
     if (!name) { goalNameInput.focus(); return; }
-    const angle = Math.random()*Math.PI*2;
-    const radius = 210;
+    const spot = pickGoalSpot();
     state.goals.push({
       id: uid(), name, color: goalColorInput.value,
-      x: state.me.x + Math.cos(angle)*radius,
-      y: state.me.y + Math.sin(angle)*radius,
+      x: spot.x,
+      y: spot.y,
       actions: [], reached:false, feeling:'', radius:20,
       feelingOffsetX: 0, feelingOffsetY: 0,
       images: [], createdAt: Date.now()
@@ -4868,6 +4924,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   document.getElementById('add-ring-btn').addEventListener('click', ()=>{
     const rnd = Math.random()*40-20;
+    state.ringsCollapsed = false;
     state.rings.push({
       id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
       x: state.me.x + rnd, y: state.me.y + 130,
@@ -5004,6 +5061,23 @@ body.bg-mode-image #grat-root{background:transparent;}
   buildPanelSwatches(panelColorSwatches,       panelColor);
   buildPanelSwatches(panelRingColorSwatches,   panelRingColor);
   buildPanelSwatches(panelActionColorSwatches, panelActionColor);
+
+  /* پیش‌نمایش زنده‌ی نام/رنگ نشانه روی نقشه، بدون نیاز به زدن «ذخیره» */
+  function liveRingPreview(){
+    if (!panelTarget || panelTarget.type !== 'ring') return;
+    const r = state.rings.find(x=>x.id===panelTarget.id);
+    if (!r) return;
+    r.label = panelName.value.trim() || r.label;
+    r.color = panelColor.value || r.color;
+    r.note = panelRingNote.value;
+    panelDot.style.background = r.color;
+    debouncedRender();
+  }
+  panelName.addEventListener('input', liveRingPreview);
+  panelColor.addEventListener('input', liveRingPreview);
+  panelRingNote.addEventListener('input', liveRingPreview);
+  panelColorSwatches.addEventListener('click', ()=> setTimeout(liveRingPreview, 0));
+  svg.addEventListener('pointerdown', ()=>{ const h = document.getElementById('hint'); if (h) h.style.display = 'none'; }, {once:true});
 
   const panelImageContainer = document.getElementById('panel-image-preview-container');
   let currentImages = [];
@@ -5153,7 +5227,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     panelDot.style.background = r.color;
     panelName.value = r.label;
     panelName.disabled = false;
-    panelColor.value = r.color;
+    panelColor.value = r.color || RING_COLOR;
+    syncPanelSwatches(panelColorSwatches, r.color || RING_COLOR);
     panelRingNote.value = r.note || '';
     panelRingColor.value = r.color || RING_COLOR;
     syncPanelSwatches(panelRingColorSwatches, r.color || RING_COLOR);
@@ -5478,7 +5553,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (r){
         const newLabel = panelName.value.trim();
         r.label = newLabel || 'نشانه';
-        r.color = panelRingColor.value;
+        r.color = panelColor.value || panelRingColor.value;
         r.note = panelRingNote.value;
         r.images = images;
       }
