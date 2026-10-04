@@ -306,22 +306,17 @@
     #toolbar{gap:2px;padding:6px;}
     .tbtn{padding:9px 10px;font-size:12px;}
   }
-  #collapse-all-btn .ca-ico{transition:transform .25s;}
-  #collapse-all-btn.is-collapsed .ca-ico{transform:rotate(180deg);}
-  .goal-shutter .gs-pill{transition:fill-opacity .2s;}
-  .goal-shutter:hover .gs-pill{stroke-width:2.4;}
-  @keyframes npReveal{from{opacity:0;}to{opacity:1;}}
-
-  /* ===== تمرکز / فهرست / منوی بیشتر / LOD ===== */
-  #stage.focus-on [data-goal-branches]:not(.is-focus), #stage.focus-on .gnode:not(.is-focus), #stage.focus-on .rnode{opacity:.13;transition:opacity .3s;}
-  #stage.lod-far .branch-label, #stage.lod-far .goal-hud{display:none;}
-  #stage.lod-xfar .synaptic-bouton{display:none;}
-  body.map-hidden #more-menu, body.map-hidden #focus-pill, body.map-hidden #goals-sheet-overlay{display:none !important;}
-  #more-menu{position:fixed;bottom:148px;right:50%;transform:translateX(50%) translateY(8px);z-index:21;
-    min-width:190px;padding:6px;border-radius:14px;background:var(--panel-bg);border:1px solid var(--panel-border);
-    box-shadow:0 10px 32px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;}
-  #more-menu.open{opacity:1;pointer-events:auto;transform:translateX(50%) translateY(0);}
+  /* نوار ابزار هدف‌گذاری: تمام‌عرض، دکمه‌ها هم‌اندازه و جدا از هم */
+  #toolbar{left:8px;right:8px;transform:none;width:auto;max-width:none;gap:6px;padding:8px;overflow:visible;}
+  #toolbar .tbtn{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:3px;padding:8px 2px;font-size:10.5px;font-weight:600;}
+  #toolbar .tbtn .ti{font-size:17px;line-height:1;display:block;}
+  #toolbar .tbtn .tl{line-height:1.2;white-space:nowrap;}
+  #toolbar .tbtn.primary{flex:1.3 1 0;}
+  #toolbar{gap:3px;padding:6px;}
   #more-menu .tbtn{width:100%;justify-content:flex-start;padding:11px 12px;}
+  #more-menu{right:8px;bottom:158px;transform:translateY(8px);}
+  #more-menu.open{transform:translateY(0);}
+  #focus-pill{bottom:158px;}
   #focus-pill{position:fixed;bottom:148px;right:50%;transform:translateX(50%);z-index:21;display:none;align-items:center;gap:8px;
     padding:7px 8px 7px 14px;border-radius:999px;background:var(--panel-bg);border:1px solid var(--panel-border);
     box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:12px;color:var(--text-main);max-width:86vw;}
@@ -2749,24 +2744,21 @@ body.bg-mode-image #grat-root{background:transparent;}
 <div id="zoom-readout">۱۰۰٪</div>
 
 <div id="toolbar">
-  <button class="tbtn primary" id="add-goal-btn">＋ هدف جدید</button>
+  <button class="tbtn primary" id="add-goal-btn"><span class="ti">＋</span><span class="tl">هدف جدید</span></button>
   <button class="tbtn" id="goals-list-btn" title="فهرست اهداف">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
-    <span>اهداف</span>
+    <svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+    <span class="tl">اهداف</span>
   </button>
-  <button class="tbtn" id="recenter-btn" title="نمایش همه‌ی اهداف در یک نگاه">نمایش همه</button>
-  <button class="tbtn" id="more-btn" title="بیشتر" aria-label="بیشتر">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
-  </button>
-</div>
-<div id="more-menu">
-  <button class="tbtn" id="add-ring-btn">＋ نشانه‌ی نزدیکی</button>
+  <button class="tbtn" id="recenter-btn" title="نمایش همه‌ی اهداف در یک نگاه"><span class="ti">◎</span><span class="tl">نمایش همه</span></button>
+  <button class="tbtn" id="add-ring-btn" title="نشانه‌ی نزدیکی"><span class="ti">＋</span><span class="tl">نشانه</span></button>
   <button class="tbtn" id="collapse-all-btn" data-mode="collapse" title="جمع/باز کردن همه‌ی مسیرها" style="display:none">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ca-ico"><path d="M7 4l5 5 5-5"/><path d="M7 20l5-5 5 5"/></svg>
-    <span class="lbl">جمع همه</span>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ca-ico ti"><path d="M7 4l5 5 5-5"/><path d="M7 20l5-5 5 5"/></svg>
+    <span class="lbl tl">جمع همه</span>
   </button>
-  <button class="tbtn" id="settings-btn">⚙ تنظیمات</button>
+  <button class="tbtn" id="settings-btn"><span class="ti">⚙</span><span class="tl">تنظیمات</span></button>
+  <button id="more-btn" style="display:none" aria-hidden="true"></button>
 </div>
+<div id="more-menu" style="display:none"></div>
 <div id="focus-pill"><span class="fp-name" id="fp-name"></span><button id="fp-exit">همه‌ی اهداف</button></div>
 <div class="gs-overlay" id="goals-sheet-overlay">
   <div class="gs-sheet" role="dialog" aria-label="فهرست اهداف">
@@ -2872,6 +2864,15 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       <label style="margin-top:10px;">شفافیت پس‌زمینه</label>
       <input type="range" id="bgmode-opacity" min="10" max="100" value="50">
+    </div>
+
+    <div class="field" id="motiv-settings-field">
+      <label>جمله‌های انگیزه‌بخش من (هر جمله در یک خط)</label>
+      <textarea id="motiv-lines" rows="4" style="width:100%;box-sizing:border-box;direction:rtl;text-align:right;padding:10px 12px;border-radius:10px;border:1px solid rgba(127,127,127,.35);background:rgba(127,127,127,.08);color:inherit;font-family:inherit;font-size:13px;resize:vertical;"></textarea>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;">
+        <input type="checkbox" id="motiv-show" style="width:18px;height:18px;">
+        <span>نمایش به‌صورت نوار ثابت در بالای همه‌ی تب‌ها</span>
+      </label>
     </div>
 
     <div class="modal-actions">
@@ -10446,5 +10447,7 @@ window.addEventListener('appinstalled', function(){
 <script src="beliefs-patch.js"></script>
 <script src="emoji-to-svg.js"></script>
 <script src="back-nav-fix.js"></script>
+<script src="motivation-bar.js"></script>
+<script src="angels.js"></script>
 </body>
 </html>
