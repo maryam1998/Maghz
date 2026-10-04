@@ -1223,7 +1223,7 @@
           '<div class="dp-step-head">' +
             '<button type="button" class="dp-check-btn" data-dp-check="5">○</button>' +
             '<span class="dp-step-num">۴</span>' +
-            '<span class="dp-step-title">تصویرسازی</span>' +
+            '<span class="dp-step-title">تصاویر</span>' +
           '</div>' +
           '<div class="dp-why-box">' +
             '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> یه تصویر واضح از واقعیت دلخواهت توی ذهن می‌کاری — بدون حس نیاز یا کمبود.</span>' +
@@ -1231,6 +1231,7 @@
           '</div>' +
           '<div class="dp-step-content">' +
             '<textarea id="seed-text-input" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;" placeholder="توضیح این تصویرسازی (اختیاری)..."></textarea>' +
+            '<div id="vs-root"></div>' +
             '<label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>' +
             '<input type="file" id="visual-image-input" accept="image/*" multiple style="display:none">' +
             '<label class="visual-upload-btn" for="visual-video-input" style="margin-inline-start:6px;">+ افزودن ویدیو</label>' +
@@ -1238,7 +1239,7 @@
             '<div class="vg-wrap" id="visual-gallery"></div>' +
             '<div class="vv-gallery" id="visual-video-gallery"></div>' +
             '<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
-              '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی تصویرسازی (خودکار با افزودن عکس یا ویدیو)</div>' +
+              '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی تصاویر (خودکار با افزودن عکس یا ویدیو)</div>' +
               '<div class="neural-card" id="np-visual-mount"></div>' +
             '</div>' +
             '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
@@ -2432,7 +2433,7 @@
     if (document.getElementById('np-visual-mount') && typeof ensureVisualNeural === 'function'){
       try {
         renderNeuralPathway('np-visual-mount', ensureVisualNeural(), {
-          label: 'تصویرسازی', practiceKey: 'visual', showDayButtons: false, onChange: saveState
+          label: 'تصاویر', practiceKey: 'visual', showDayButtons: false, onChange: saveState
         });
       } catch(e){ console.warn('[np-visual]', e); }
     }

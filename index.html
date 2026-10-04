@@ -2844,13 +2844,13 @@ body.bg-mode-image #grat-root{background:transparent;}
           <span class="bgmode-icon">◻️</span><span>ساده (Calm)</span>
         </button>
         <button type="button" class="bgmode-btn" id="bgmode-image-btn" data-mode="image">
-          <span class="bgmode-icon">🖼️</span><span>پس‌زمینه دلخواه</span>
+          <span class="bgmode-icon">🖼️</span><span>بک‌گراند سفارشی</span>
         </button>
       </div>
     </div>
 
     <div class="field" id="bgmode-image-options" style="display:none;">
-      <label>تصویر یا ویدیوی پس‌زمینه (ویدیو بی‌صدا پخش می‌شود)</label>
+      <label>بک‌گراند سفارشی</label>
       <div class="bgimg-upload-row">
         <img id="bgimg-preview" class="bgimg-preview" style="display:none;" alt="پیش‌نمایش پس‌زمینه">
         <video id="bgvid-preview" class="bgimg-preview" style="display:none;" muted loop playsinline></video>
@@ -6846,7 +6846,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     </div>
 
     <div class="belief-flow-card">
-      <div class="bf-head">✨ تصویرسازی</div>
+      <div class="bf-head">✨ تصاویر</div>
       <p class="bf-desc">خودت را در حالی ببین که به خواسته‌ات رسیده‌ای. صحنه را ببین. احساسش را حس کن. چند لحظه در آن بمان... و رها کن.</p>
       <textarea id="b-visual-note" rows="2" placeholder="📝 یادداشت من (اختیاری)" oninput="updateBeliefField('visualNote', this.value)"></textarea>
       <div class="visual-upload-row">
@@ -9178,7 +9178,7 @@ function renderAllNeuralPathways(){
   }
   if(document.getElementById('np-visual-mount')){
     renderNeuralPathway('np-visual-mount', ensureVisualNeural(), {
-      label: 'تصویرسازی',
+      label: 'تصاویر',
       practiceKey: 'visual',
       calendarLinked: true,
       isConfirmed: isVisualConfirmedForKey,
@@ -9570,7 +9570,7 @@ function showBankCalDay(key, items){
 
   /* ─── ۵. پروتکل دیسپنزا ─── */
   if(groups.dispenza.length){
-    const stepNames = { '1': 'رهاسازی', '2': 'هیچ شدن', '3': 'اتصال', '4': 'انتخاب واقعیت', '5': 'تصویرسازی', '6': 'احساس فراوانی' };
+    const stepNames = { '1': 'رهاسازی', '2': 'هیچ شدن', '3': 'اتصال', '4': 'انتخاب واقعیت', '5': 'تصاویر', '6': 'احساس فراوانی' };
     groups.dispenza.forEach(function(dp){
       const steps = (dp.data && dp.data.steps) || [];
       html += '<div class="sh-item" style="margin-bottom:8px;">' +
@@ -9604,7 +9604,7 @@ function showBankCalDay(key, items){
   /* ─── ۷. عکس‌های تصویرسازی ─── */
   if(groups.visual.length){
     html += '<div class="sh-item" style="margin-bottom:8px;">' +
-      '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">✨ عکس‌های تصویرسازی</div>' +
+      '<div style="font-size:12px;font-weight:800;margin-bottom:6px;">✨ تصاویر</div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
     groups.visual.forEach(function(v){
       html += '<img src="' + v.data.src + '" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--line);">';
@@ -10455,5 +10455,6 @@ window.addEventListener('appinstalled', function(){
 <script src="back-nav-fix.js"></script>
 <script src="motivation-bar.js"></script>
 <script src="angels.js"></script>
+<script src="visual-slideshow.js"></script>
 </body>
 </html>
