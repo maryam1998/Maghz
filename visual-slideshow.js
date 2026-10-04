@@ -76,7 +76,7 @@
     '.vs-layer.on{opacity:1;}',
     '.vs-count{position:absolute;top:8px;left:8px;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;pointer-events:none;}',
     '.vs-pause{position:absolute;top:50%;left:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;pointer-events:none;}',
-    '.vs-stage.paused .vs-pause{opacity:1;}',
+    '.vs-stage.paused .vs-pause{opacity:0;}',
     '.vs-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.18);pointer-events:none;}',
     '.vs-bar i{display:block;height:100%;width:0;background:var(--emerald-700,#c9962b);}',
     '.vs-nav{display:flex;gap:8px;margin-top:8px;}',
@@ -100,7 +100,7 @@
         '<div class="vs-stage" id="vs-stage">' +
           '<img class="vs-layer" alt="" draggable="false"><video class="vs-layer" muted playsinline loop></video>' +
           '<img class="vs-layer" alt="" draggable="false"><video class="vs-layer" muted playsinline loop></video>' +
-          '<div class="vs-count"></div><div class="vs-pause">⏸</div>' +
+          '<div class="vs-count"></div>' +
           '<div class="vs-bar"><i></i></div>' +
         '</div>' +
         '<div class="vs-nav"><button type="button" data-vs="next">‹ بعدی</button><button type="button" data-vs="prev">قبلی ›</button></div>' +
@@ -266,17 +266,25 @@
       }
     }
 
-    /* لمس کوتاه = توقف/ادامه ؛ کشیدن = قبلی/بعدی */
-    var down = null;
-    stage.addEventListener('pointerdown', function(e){ down = { x: e.clientX, y: e.clientY, t: Date.now() }; });
+    /* لمس / زوم = توقف (بدون هیچ دکمه‌ی توقفی) ؛ ورق‌زدن (کشیدن، قبلی/بعدی) = برگشت به حالت خودکار */
+    var down = null, ptrs = 0;
+    stage.addEventListener('pointerdown', function(e){
+      ptrs++;
+      if (ptrs > 1){ down = null; if (list.length) setPaused(true); return; }   // دو انگشت = زوم
+      down = { x: e.clientX, y: e.clientY, t: Date.now() };
+    });
     stage.addEventListener('pointerup', function(e){
+      ptrs = Math.max(0, ptrs - 1);
       if (!down) return;
       var dx = e.clientX - down.x, dy = e.clientY - down.y, dt = Date.now() - down.t;
       down = null;
       if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5){ step(dx < 0 ? 1 : -1, true); return; }
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 450){ if (list.length) setPaused(!paused); }
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 450){ if (list.length) setPaused(true); }
     });
-    stage.addEventListener('pointercancel', function(){ down = null; });
+    stage.addEventListener('pointercancel', function(){ ptrs = Math.max(0, ptrs - 1); down = null; });
+    if (window.visualViewport) visualViewport.addEventListener('resize', function(){
+      if (stage.isConnected && visualViewport.scale > 1.02 && list.length) setPaused(true);   // زومِ کل صفحه
+    });
 
     root.querySelector('[data-vs=next]').addEventListener('click', function(){ step(1, true); });
     root.querySelector('[data-vs=prev]').addEventListener('click', function(){ step(-1, true); });
@@ -333,3 +341,84 @@
   }).observe(document.body, { childList: true, subtree: true });
   scan();
 })();
+
+/* ===== اسلایدشوی خودکار در آلبوم تمام‌صفحه‌ی عکس‌ها =====
+   همان تنظیم (زمان/ترتیب/تکرار) اسلایدشوی بالا را استفاده می‌کند.
+   لمس یا زوم = توقف ؛ ورق‌زدن (کشیدن یا دکمه‌ی قبلی/بعدی) = ادامه‌ی خودکار. دکمه‌ی توقف ندارد. */
+(function(){
+  var KEY = 'vizSlideshow';
+  var UNIT_MS = { s: 1000, m: 60000, h: 3600000 };
+  function cfg(){
+    var c = { value: 5, unit: 's', order: 'seq', loop: true };
+    try{ var o = JSON.parse(localStorage.getItem(KEY) || 'null') || {}; for (var k in c) if (o[k] !== undefined) c[k] = o[k]; }catch(e){}
+    return c;
+  }
+  function ms(c){ var v = parseFloat(c.value); if (!isFinite(v) || v <= 0) v = 5; return Math.max(500, v * (UNIT_MS[c.unit] || 1000)); }
+
+  var timer = null, running = false, paused = false, ignoreUntil = 0, ts = null;
+  function viewer(){ return document.getElementById('vg-viewer'); }
+  function isOpen(){ var v = viewer(); return !!(v && v.style.display === 'flex'); }
+  function track(){ return document.getElementById('vg-track'); }
+  function blocked(){
+    var o = document.getElementById('vg-overview'), c = document.getElementById('vc-modal');
+    if (o && o.style.display === 'flex') return true;
+    if (c && getComputedStyle(c).display !== 'none') return true;
+    return false;
+  }
+  function clearT(){ if (timer){ clearTimeout(timer); timer = null; } }
+  function schedule(delay){
+    clearT();
+    if (!running || paused) return;
+    timer = setTimeout(tick, delay == null ? ms(cfg()) : delay);
+  }
+  function tick(){
+    timer = null;
+    if (!running || !isOpen()) return;
+    var t = track();
+    if (!t || document.hidden || blocked() || paused){ schedule(); return; }
+    var n = t.children.length;
+    if (n < 2) return;
+    var w = t.clientWidth || 1, idx = Math.round(t.scrollLeft / w), c = cfg(), next;
+    if (c.order === 'rnd'){ do { next = Math.floor(Math.random() * n); } while (next === idx); }
+    else { next = idx + 1; if (next >= n){ if (!c.loop){ return; } next = 0; } }
+    ignoreUntil = Date.now() + 900;
+    try{ t.scrollTo({ left: next * w, behavior: 'smooth' }); }catch(e){ t.scrollLeft = next * w; }
+    schedule();
+  }
+  function pause(){ if (!running || paused) return; paused = true; clearT(); }
+  function resume(delay){ if (!running) return; paused = false; schedule(delay); }
+
+  function start(){ running = true; paused = false; schedule(); }
+  function stop(){ running = false; paused = false; clearT(); }
+
+  setInterval(function(){
+    var open = isOpen();
+    if (open && !running) start();
+    else if (!open && running) stop();
+  }, 400);
+
+  /* لمس / زوم / ورق‌زدن */
+  document.addEventListener('touchstart', function(e){
+    if (!running || !viewer() || !viewer().contains(e.target)) return;
+    if (e.target.closest && e.target.closest('button')) return;
+    if (e.touches.length > 1){ ts = null; pause(); return; }   // دو انگشت = زوم
+    var t0 = e.touches[0];
+    ts = { x: t0.clientX, y: t0.clientY, t: Date.now() };
+  }, { passive: true, capture: true });
+  document.addEventListener('touchend', function(e){
+    if (!running || !ts) return;
+    var t1 = e.changedTouches[0], dx = t1.clientX - ts.x, dy = t1.clientY - ts.y, dt = Date.now() - ts.t;
+    ts = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2){ resume(ms(cfg()) + 400); return; }   // ورق زد → ادامه
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 450) pause();                                    // لمس → توقف
+  }, { passive: true, capture: true });
+  document.addEventListener('click', function(e){
+    if (!running) return;
+    var b = e.target.closest && e.target.closest('[data-vg=prev],[data-vg=next]');
+    if (b && viewer() && viewer().contains(b)) resume(ms(cfg()) + 400);
+  }, true);
+  if (window.visualViewport) visualViewport.addEventListener('resize', function(){
+    if (running && visualViewport.scale > 1.02) pause();
+  });
+})();
+

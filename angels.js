@@ -2,7 +2,7 @@
 (function(){
   var KEY = 'appAngels';
   var MAX_BYTES = 10 * 1024 * 1024;
-  var def = { on:true, size:140, speed:3, opacity:85, soft:true, blend:'normal' };
+  var def = { on:true, size:140, speed:3, opacity:85, soft:true, blend:'normal', fs:true };
   var cfg = loadCfg();
   var items = [];      // {id, blob, url, el, x, y, vx, vy, ph}
   var raf = null, last = 0;
@@ -53,6 +53,7 @@
     '#angel-layer{position:fixed;inset:0;z-index:100;pointer-events:none;overflow:hidden;display:none;}',
     'body.angels-on #angel-layer{display:block;}',
     '#angel-layer img{position:absolute;left:0;top:0;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none;will-change:transform;}',
+    'body.angels-fs #angel-layer{z-index:10000;}',
     '#angel-layer.soft img{-webkit-mask-image:radial-gradient(ellipse at center,#000 52%,transparent 72%);mask-image:radial-gradient(ellipse at center,#000 52%,transparent 72%);}',
     '#ang-field .ang-row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;}',
     '#ang-field .ang-th{position:relative;width:58px;height:58px;border-radius:12px;overflow:hidden;border:1px solid rgba(127,127,127,.35);background:rgba(127,127,127,.12);}',
@@ -129,6 +130,18 @@
   }
   document.addEventListener('visibilitychange', run);
 
+  /* وقتی آلبوم/نمایشگر تمام‌صفحه‌ی عکس باز است، لایه را بالاتر از آن می‌آورد (اگر گزینه‌اش روشن باشد) */
+  function fsOpen(){
+    var v = document.getElementById('vg-viewer');
+    if (v && v.style.display === 'flex') return true;
+    var m = document.getElementById('img-viewer-modal');
+    return !!(m && m.classList.contains('show'));
+  }
+  setInterval(function(){
+    var on = !!(cfg.fs && cfg.on && items.length && fsOpen());
+    if (document.body.classList.contains('angels-fs') !== on) document.body.classList.toggle('angels-fs', on);
+  }, 250);
+
   /* ---- UI تنظیمات ---- */
   var ui = {};
   function buildUI(){
@@ -143,6 +156,7 @@
       '<label class="ang-add" for="ang-input">＋ افزودن</label>' +
       '<input type="file" id="ang-input" multiple accept="image/gif,image/png,image/webp,image/jpeg,.gif,.png,.webp,.jpg,.jpeg" style="display:none;">' +
       '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;"><input type="checkbox" id="ang-on" style="width:18px;height:18px;"><span>نمایش روی همه‌ی تب‌ها</span></label>' +
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;"><input type="checkbox" id="ang-fs" style="width:18px;height:18px;"><span>نمایش روی عکس‌ها و ویدیوها در حالت تمام‌صفحه</span></label>' +
       '<div class="ang-sl"><span>اندازه</span><input type="range" id="ang-size" min="60" max="320"></div>' +
       '<div class="ang-sl"><span>سرعت</span><input type="range" id="ang-speed" min="1" max="12"></div>' +
       '<div class="ang-sl"><span>شفافیت</span><input type="range" id="ang-op" min="20" max="100"></div>' +
@@ -161,17 +175,18 @@
     ui.op = f.querySelector('#ang-op');
     ui.soft = f.querySelector('#ang-soft');
     ui.blend = f.querySelector('#ang-blend');
+    ui.fs = f.querySelector('#ang-fs');
 
     function sync(){
       ui.on.checked = cfg.on; ui.size.value = cfg.size; ui.speed.value = cfg.speed;
-      ui.op.value = cfg.opacity; ui.soft.checked = cfg.soft; ui.blend.value = cfg.blend;
+      ui.op.value = cfg.opacity; ui.soft.checked = cfg.soft; ui.blend.value = cfg.blend; ui.fs.checked = !!cfg.fs;
     }
     function change(){
       cfg.on = ui.on.checked; cfg.size = +ui.size.value; cfg.speed = +ui.speed.value;
-      cfg.opacity = +ui.op.value; cfg.soft = ui.soft.checked; cfg.blend = ui.blend.value;
+      cfg.opacity = +ui.op.value; cfg.soft = ui.soft.checked; cfg.blend = ui.blend.value; cfg.fs = ui.fs.checked;
       saveCfg(); styleAll(); run();
     }
-    [ui.on, ui.size, ui.speed, ui.op, ui.soft, ui.blend].forEach(function(e){
+    [ui.on, ui.size, ui.speed, ui.op, ui.soft, ui.blend, ui.fs].forEach(function(e){
       e.addEventListener('input', change); e.addEventListener('change', change);
     });
 
