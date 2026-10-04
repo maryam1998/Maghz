@@ -1,4 +1,4 @@
-/* ===== فرشته‌های شناور: کاربر خودش GIF/تصویر وارد می‌کند و روی همه‌ی تب‌ها حرکت می‌کنند ===== */
+/* ===== بک‌گراند سفارشی متحرک: تصویرهای کاربر روی همه‌ی تب‌ها حرکت می‌کنند ===== */
 (function(){
   var KEY = 'appAngels';
   var MAX_BYTES = 10 * 1024 * 1024;
@@ -138,19 +138,19 @@
     var f = document.createElement('div');
     f.className = 'field'; f.id = 'ang-field';
     f.innerHTML =
-      '<label>فرشته‌های شناور (GIF یا تصویر خودت)</label>' +
+      '<label>بک‌گراند سفارشی</label>' +
       '<div class="ang-row" id="ang-thumbs"></div>' +
-      '<label class="ang-add" for="ang-input">＋ افزودن فرشته…</label>' +
+      '<label class="ang-add" for="ang-input">＋ افزودن</label>' +
       '<input type="file" id="ang-input" multiple accept="image/gif,image/png,image/webp,image/jpeg,.gif,.png,.webp,.jpg,.jpeg" style="display:none;">' +
-      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;"><input type="checkbox" id="ang-on" style="width:18px;height:18px;"><span>نمایش فرشته‌ها روی همه‌ی تب‌ها</span></label>' +
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;"><input type="checkbox" id="ang-on" style="width:18px;height:18px;"><span>نمایش روی همه‌ی تب‌ها</span></label>' +
       '<div class="ang-sl"><span>اندازه</span><input type="range" id="ang-size" min="60" max="320"></div>' +
       '<div class="ang-sl"><span>سرعت</span><input type="range" id="ang-speed" min="1" max="12"></div>' +
       '<div class="ang-sl"><span>شفافیت</span><input type="range" id="ang-op" min="20" max="100"></div>' +
-      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;"><input type="checkbox" id="ang-soft" style="width:18px;height:18px;"><span>محو کردن لبه‌ها (برای تصویرهای دارای پس‌زمینه)</span></label>' +
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;"><input type="checkbox" id="ang-soft" style="width:18px;height:18px;"><span>محو کردن لبه‌ها</span></label>' +
       '<select id="ang-blend">' +
-        '<option value="normal">ترکیب: عادی</option>' +
-        '<option value="screen">ترکیب: حذف پس‌زمینه‌ی تیره</option>' +
-        '<option value="multiply">ترکیب: حذف پس‌زمینه‌ی سفید</option>' +
+        '<option value="normal">حالت: عادی</option>' +
+        '<option value="screen">حالت: محو تیره‌ها</option>' +
+        '<option value="multiply">حالت: محو سفیدها</option>' +
       '</select>';
     anchor.parentNode.insertBefore(f, anchor);
     ui.thumbs = f.querySelector('#ang-thumbs');
@@ -180,10 +180,10 @@
       ui.input.value = '';
       files.forEach(function(file){
         if (!/^image\//.test(file.type) && !/\.(gif|png|webp|jpe?g)$/i.test(file.name || '')) return;
-        if (file.size > MAX_BYTES){ if (window.toast) toast('حجم هر فرشته باید کمتر از ۱۰ مگابایت باشد'); return; }
+        if (file.size > MAX_BYTES){ if (window.toast) toast('حجم هر فایل باید کمتر از ۱۰ مگابایت باشد'); return; }
         var rec = { id: 'a' + Date.now() + Math.random().toString(36).slice(2,6), blob: file };
         dbPut(rec).then(function(){ spawn(rec); renderThumbs(); run(); })
-          .catch(function(){ if (window.toast) toast('ذخیره‌ی فرشته ممکن نشد'); });
+          .catch(function(){ if (window.toast) toast('ذخیره‌ی فایل ممکن نشد'); });
       });
     });
 

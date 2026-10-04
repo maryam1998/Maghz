@@ -2867,15 +2867,21 @@ body.bg-mode-image #grat-root{background:transparent;}
     </div>
 
     <div class="field" id="motiv-settings-field">
-      <label>جمله‌های انگیزه‌بخش من (هر جمله در یک خط)</label>
-      <textarea id="motiv-lines" rows="4" style="width:100%;box-sizing:border-box;direction:rtl;text-align:right;padding:10px 12px;border-radius:10px;border:1px solid rgba(127,127,127,.35);background:rgba(127,127,127,.08);color:inherit;font-family:inherit;font-size:13px;resize:vertical;"></textarea>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:10px;">
+      <label>جمله‌های انگیزه‌بخش من</label>
+      <div class="mv-add">
+        <input type="text" id="motiv-new" maxlength="200" style="direction:rtl;text-align:right;">
+        <button type="button" id="motiv-add" class="btn gold">افزودن</button>
+      </div>
+      <div id="motiv-list"></div>
+      <button type="button" id="motiv-arch-toggle" class="mv-arch-toggle" style="display:none;"></button>
+      <div id="motiv-arch-list" style="display:none;"></div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:12px;">
         <input type="checkbox" id="motiv-show" style="width:18px;height:18px;">
         <span>نمایش به‌صورت نوار ثابت در بالای همه‌ی تب‌ها</span>
       </label>
     </div>
 
-    <div class="modal-actions">
+<div class="modal-actions">
       <button class="btn" id="settings-cancel-btn">انصراف</button>
       <button class="btn gold" id="settings-save-btn">ذخیره</button>
     </div>
