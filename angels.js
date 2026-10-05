@@ -151,7 +151,7 @@
     var f = document.createElement('div');
     f.className = 'field'; f.id = 'ang-field';
     f.innerHTML =
-      '<label>بک‌گراند سفارشی</label>' +
+      '<label>افزودن موارد بیشتر به پیش‌زمینه</label>' +
       '<div class="ang-row" id="ang-thumbs"></div>' +
       '<label class="ang-add" for="ang-input">＋ افزودن</label>' +
       '<input type="file" id="ang-input" multiple accept="image/gif,image/png,image/webp,image/jpeg,.gif,.png,.webp,.jpg,.jpeg" style="display:none;">' +
