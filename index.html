@@ -6033,6 +6033,49 @@ body.bg-mode-image #grat-root{background:transparent;}
     });
   }
 
+  /* وقتی کاربر روی ویجت آدمک حسش رو ثبت کرد: هر شاخه/زیرشاخه‌ای که امروز انجام‌شده (تیک خورده)، رشته‌ی عصبی‌اش به رنگ همون حس درمیاد */
+  window.addEventListener('echw:commit', function(ev){
+    try{
+      const ids = (ev.detail && ev.detail.ids) || [];
+      if (!ids.length || typeof EMOTION_BY_ID === 'undefined') return;
+      let dom = null;
+      ids.forEach(function(id){ const e = EMOTION_BY_ID[id]; if (e && (!dom || e.freq > dom.freq)) dom = e; });
+      if (!dom) return;
+      const tk = todayKey(), t0 = new Date(); t0.setHours(0,0,0,0);
+      const isTodayKey = function(k){
+        if (k === tk) return true;
+        const m = /^f(\d{10,})-/.exec(k);
+        return !!(m && +m[1] >= t0.getTime() && +m[1] < t0.getTime() + 86400000);
+      };
+      let any = false, applied = false;
+      (function walk(list){
+        (list || []).forEach(function(n){
+          const nn = n.neural;
+          if (nn && nn.logs){
+            const keys = Object.keys(nn.logs).filter(function(k){ return nn.logs[k] === true && isTodayKey(k); });
+            if (keys.length){
+              any = true;
+              if (!nn.fiberEmotions || typeof nn.fiberEmotions !== 'object') nn.fiberEmotions = {};
+              keys.forEach(function(k){
+                if (!nn.fiberEmotions[k]){ nn.fiberEmotions[k] = { ids: ids.slice(), color: dom.color, freq: dom.freq }; applied = true; }
+              });
+            }
+          }
+          if (n.children) walk(n.children);
+        });
+      })(state.goals.reduce(function(a,g){ return a.concat(g.actions || []); }, []));
+      if (any && ev.detail && Array.isArray(ev.detail.done)) ev.detail.done.push({ pk:'goals', label:'هدف‌گذاری', applied: applied });
+      if (applied){
+        scheduleMapSave();
+        render();
+        if (panelTarget && panelTarget.type==='action'){
+          const res = findActionAnywhere(panelTarget.actionId);
+          if (res) renderPanelActionNeural(res.node);
+        }
+      }
+    }catch(e){ console.warn(e); }
+  });
+
   function findActionAnywhere(actionId){
     for (const g of state.goals){
       const found = findActionNode(g.actions, actionId);
@@ -7450,7 +7493,7 @@ function periodParseDays(input, max){
   return (n && n >= 1 && n <= max) ? n : 0;
 }
 /* یک دوره (روز شروع + تعداد روز) → شبکه‌ی «ماه اول، ماه دوم، ...» */
-function periodGridHtml(startKey, totalDays, doneSet, keyAttr){
+function periodGridHtml(startKey, totalDays, doneSet, keyAttr, emoPk){
   const startDate = new Date(startKey+'T00:00:00');
   const today = todayMidnight();
   const todayKeyStr = dayKeyFromDate(new Date());
@@ -7478,7 +7521,15 @@ function periodGridHtml(startKey, totalDays, doneSet, keyAttr){
     if(key === todayKeyStr) cls += ' today';
     if(date > today) cls += ' future';
     if((d % blockSize) === blockSize-1 || d === totalDays-1) cls += ' month-end';
-    html += '<div class="' + cls + '" ' + keyAttr + '="' + key + '">' + (done ? '✓' : '') + '</div>';
+    let emoStyle = '';
+    if(emoPk && state.practiceEmotions && state.practiceEmotions[key] && state.practiceEmotions[key][emoPk]){
+      const rec = state.practiceEmotions[key][emoPk];
+      const eids = (rec.after && rec.after.length) ? rec.after : (rec.before || []);
+      let dom = null;
+      eids.forEach(function(id){ const e = EMOTION_BY_ID[id]; if(e && (!dom || e.freq > dom.freq)) dom = e; });
+      if(dom) emoStyle = ' style="box-shadow:0 0 0 2px ' + dom.color + ';" title="' + eids.map(function(id){ return EMOTION_BY_ID[id] ? EMOTION_BY_ID[id].fa : ''; }).join('، ') + '"';
+    }
+    html += '<div class="' + cls + '" ' + keyAttr + '="' + key + '"' + emoStyle + '>' + (done ? '✓' : '') + '</div>';
   }
   return { html: html, doneCount: doneCount };
 }
@@ -7529,7 +7580,7 @@ function renderGratitudeMiniCal(){
   const doneSet = gratitudeDoneDaySet();
   const startDate = new Date(gp.startDate+'T00:00:00');
   const today = todayMidnight();
-  const cur = periodGridHtml(gp.startDate, totalDays, doneSet, 'data-cal-key');
+  const cur = periodGridHtml(gp.startDate, totalDays, doneSet, 'data-cal-key', 'gratitude');
   const finished = today >= (function(){ const e = new Date(startDate); e.setDate(e.getDate()+totalDays); return e; })();
 
   /* هر جایی از اپ که این تقویم دوره‌ای شکرگذاری نشون داده می‌شه (صفحه‌ی خانه +
@@ -9586,6 +9637,75 @@ function saveEmotionCaptureFromWidget(ids, ctx){
 }
 
 window.openEmotionCapture = openEmotionCapture;
+
+/* ---------- ثبت خودکار حس از ویجت آدمک (همه‌ی تب‌ها) ----------
+   وقتی کاربر حسش رو روی ویجت ثبت کرد، برای هر تمرینی که امروز انجام و تیک خورده:
+     • رشته‌ی عصبی امروزِ اون تمرین به رنگ حس درمیاد (اگه رشته‌ای نبود ساخته می‌شه)
+     • حس توی تقویم همون روز ثبت می‌شه */
+function echwFiberIsToday(k){
+  if(k === todayKey()) return true;
+  const m = /^f(\d{10,})-/.exec(k);
+  if(!m) return false;
+  return dayKeyFromDate(new Date(+m[1])) === dayKeyFromDate(new Date());
+}
+function echwApplyFeelingToContainer(c, ids, dom, createIfConfirmed){
+  neuralEnsureContainer(c);
+  if(!c.fiberEmotions || typeof c.fiberEmotions !== 'object') c.fiberEmotions = {};
+  const felt = function(){ return { ids: ids.slice(), color: dom.color, freq: dom.freq }; };
+  const keys = Object.keys(c.logs).filter(function(k){ return c.logs[k] === true && echwFiberIsToday(k); });
+  if(!keys.length){
+    if(!createIfConfirmed) return null;
+    const nk = neuralFiberKey();
+    c.logs[nk] = true;
+    c.fiberEmotions[nk] = felt();
+    return { done:true, applied:true };
+  }
+  let applied = false;
+  keys.forEach(function(k){ if(!c.fiberEmotions[k]){ c.fiberEmotions[k] = felt(); applied = true; } });
+  return { done:true, applied:applied };
+}
+window.addEventListener('echw:commit', function(ev){
+  try{
+    const ids = (ev.detail && ev.detail.ids) || [];
+    if(!ids.length || typeof state === 'undefined' || !state) return;
+    let dom = null;
+    ids.forEach(function(id){ const e = EMOTION_BY_ID[id]; if(e && (!dom || e.freq > dom.freq)) dom = e; });
+    if(!dom) return;
+    const tk = todayKey();
+    syncShopNeuralFromHistory();
+    const practices = [
+      { pk:'gratitude', label:'شکرگذاری',          c:ensureGratitudeNeural(), create:isGratitudeConfirmedForKey(tk) },
+      { pk:'belief',    label:'تمرین باب پراکتور',  c:ensureBeliefNeural(),    create:isBeliefConfirmedForKey(tk) },
+      { pk:'dispenza',  label:'مدیتیشن دیسپنزا',    c:ensureDispenzaNeural(),  create:false },
+      { pk:'tracking',  label:'ردیابی RAS',         c:ensureTrackingNeural(),  create:false },
+      { pk:'visual',    label:'تصویرسازی',          c:ensureVisualNeural(),    create:false },
+      { pk:'shop',      label:'بازی فراوانی',       c:ensureShopNeural(),      create:false }
+    ];
+    const doneList = [];
+    practices.forEach(function(p){
+      const r = echwApplyFeelingToContainer(p.c, ids, dom, p.create);
+      if(r) doneList.push({ pk:p.pk, label:p.label, applied:r.applied });
+    });
+    (ev.detail.done || []).forEach(function(d){ doneList.push(d); });
+    if(!doneList.length) return;
+    const em = ensurePracticeEmotions();
+    const dk = dayKeyFromDate(new Date());
+    if(!em[dk]) em[dk] = {};
+    doneList.forEach(function(d){
+      if(!em[dk][d.pk]) em[dk][d.pk] = {};
+      em[dk][d.pk].after = ids.slice();
+      em[dk][d.pk].label = d.label;
+      em[dk][d.pk].at = Date.now();
+    });
+    saveState();
+    try{ renderAllNeuralPathways(); }catch(e){}
+    try{ renderShopNeural(); }catch(e){}
+    try{ renderGratitudeMiniCal(); }catch(e){}
+    try{ if(document.getElementById('bank-cal-modal') && document.getElementById('bank-cal-modal').classList.contains('show') && document.getElementById('bank-cal-grid').style.display !== 'none') renderBankCal(); }catch(e){}
+    if(typeof window.__echwResetSelection === 'function') window.__echwResetSelection();
+    if(typeof toast === 'function') toast('حس ثبت شد و رشته‌ی عصبی ساخته شد 🧠');
+  }catch(e){ console.warn(e); }
+});
 
 function renderBeliefsView(){
   if(!state.currentBelief) state.currentBelief = defaultCurrentBelief();

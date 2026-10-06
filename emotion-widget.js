@@ -302,12 +302,17 @@
 
     function setOpen(open) {
       if (!open && captureCtx) return;   // ← این خط
+      var wasOpen = !!state.open;
       state.open = !!open;
       wrap.classList.toggle('open', state.open);
       applyPanelPosition();
       save();
       if (state.open) render();
       else stopRender(); // پنل بسته شد → انیمیشن‌های SVG (قلب/موج) رو کاملاً از DOM حذف کن تا دیگه محاسبه/رندر نشن
+      /* بستن پنل با حسِ انتخاب‌شده = «ثبت حس»؛ اپ اصلی روی همه‌ی تب‌ها رشته‌ی عصبی و تقویمِ تمرین‌های انجام‌شده‌ی امروز رو خودکار می‌سازه */
+      if (wasOpen && !state.open && !__suppressCommit && selected.size) {
+        try { window.dispatchEvent(new CustomEvent('echw:commit', { detail: { ids: Array.from(selected), done: [] } })); } catch (e) { console.warn(e); }
+      }
     }
 
     var suppressClickUntil = 0;
@@ -496,6 +501,7 @@
 
   /* ================= حالت ثبت برای «حس قبل/بعد از تمرین» ================= */
   var captureCtx = null;
+  var __suppressCommit = false;
 
   function updateCaptureBar(){
     var bar = document.getElementById('echw-capture-bar');
@@ -533,7 +539,8 @@
     var ids = Array.from(selected);
     captureCtx = null;
     updateCaptureBar();
-    if (typeof window.__echwSetOpen === 'function') window.__echwSetOpen(false);
+    __suppressCommit = true;
+    try { if (typeof window.__echwSetOpen === 'function') window.__echwSetOpen(false); } finally { __suppressCommit = false; }
     if (commit && typeof ctx.onSave === 'function'){
       try { ctx.onSave(ids, ctx); } catch(e){ console.warn(e); }
     }
