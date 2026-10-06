@@ -1243,14 +1243,6 @@ html[data-theme="dark"] .np-emotion-row button{
 #grat-root .bank-card .valid{font-size:10.5px; opacity:.75; text-align:left;}
 #grat-root .bank-card .cvv-mini{font-size:10px; opacity:.8; text-align:center;}
 #grat-root .bank-card .cvv-mini b{display:block; font-size:12.5px; font-weight:700; opacity:1; margin-top:2px; letter-spacing:1px; font-variant-numeric:tabular-nums;}
-#grat-root .card-edit-btn{
-    position:absolute; top:14px; left:14px; z-index:2;
-    width:29px; height:29px; border-radius:50%;
-    background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35);
-    color:#fff; font-size:12.5px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    }
-#grat-root .card-edit-btn:active{transform:scale(.92); background:rgba(255,255,255,.3);}
 #grat-root .bank-card.theme-emerald{
     background:
       radial-gradient(120% 140% at 100% 0%, rgba(230,205,142,.35), transparent 55%),
@@ -1799,6 +1791,22 @@ html[data-theme="dark"] .np-emotion-row button{
   }
 #grat-root .grat-count-badge b{font-size:15px; color:var(--emerald-300);}
 #grat-root .grat-edit-actions{display:flex; gap:2px;}
+/* شبکه‌ی عکس‌های شکرگذاری (همان ظاهر تب باورها) */
+.gv-grid{display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start; direction:rtl; margin-top:8px;}
+.gv-grid:empty{display:none;}
+.grat-media-bar{display:flex; gap:10px; margin:10px 0 2px;}
+.gm-btn{width:44px; height:44px; border-radius:50%; border:1px solid var(--emerald-300,#7ddccf); background:var(--surface,#fff); color:var(--emerald-700,#0f5b53); display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer;}
+.gm-btn:active{transform:scale(.94);}
+.gm-btn.rec{background:#c0392b; color:#fff; border-color:#c0392b; animation:gmPulse 1.2s ease-in-out infinite;}
+@keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.65}}
+.gv-vid{position:relative; margin-top:8px; border-radius:12px; overflow:hidden; background:#000; border:1px solid var(--line);}
+.gv-vid video{width:100%; max-height:260px; display:block; background:#000;}
+.gv-vid .gv-vid-del{position:absolute; top:6px; left:6px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; font-size:17px; line-height:1; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; z-index:2;}
+.gv-vid .gv-vid-miss{padding:16px 12px; font-size:11.5px; color:var(--muted); text-align:center; background:var(--surface-2);}
+.gv-thumb{flex:none; width:68px; height:68px; padding:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface-2); cursor:pointer; display:block;}
+.gv-thumb img{width:100%; height:100%; object-fit:cover; display:block; -webkit-user-drag:none;}
+.tx-item .gv-thumb{width:56px; height:56px;}
+#grat-root #grat-vs-root{margin:0 0 12px;}
 #grat-root .grat-edit-actions button{
     border:none; background:transparent; cursor:pointer; font-size:11px;
     padding:3px 4px; border-radius:7px; color:var(--muted);
@@ -6369,8 +6377,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     </button>
   </div>
     </div>
-    <div class="bank-card theme-emerald" id="home-bank-card">
-      <button class="card-edit-btn" onclick="openCardEditor()" title="ویرایش کارت">✏️</button>
+    <div class="bank-card theme-emerald" id="home-bank-card" onclick="openCardEditor()" style="cursor:pointer;">
       <div class="row-top">
         <div class="brand">
           <div class="seal">🌿</div>
@@ -6635,16 +6642,16 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       <textarea id="grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
 
-      <div class="image-picker">
-        <div class="lbl2">📎 عکس یا صدا (می‌تونی چندتا اضافه کنی)</div>
-        <input type="file" id="grat-media-input" accept="image/*,audio/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'new')">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" class="gallery-btn" onclick="document.getElementById('grat-media-input').click()">+ افزودن عکس یا صدا</button>
-          <button type="button" class="gallery-btn" id="grat-record-btn" onclick="toggleGratRecording('new')">⏺ شروع ضبط صدا</button>
-        </div>
-        <div class="img-thumbnails" id="grat-image-thumbs"></div>
-        <div id="grat-audio-list"></div>
+      <div class="grat-media-bar">
+        <input type="file" id="grat-media-input" accept="image/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'new')">
+        <input type="file" id="grat-video-input" accept="video/*" multiple style="display:none" onchange="handleGratVideos(this.files, 'new')">
+        <button type="button" class="gm-btn" title="عکس" aria-label="افزودن عکس" onclick="document.getElementById('grat-media-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+        <button type="button" class="gm-btn" title="ویدیو" aria-label="افزودن ویدیو" onclick="document.getElementById('grat-video-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3z"/></svg></button>
+        <button type="button" class="gm-btn" id="grat-record-btn" title="ضبط صدا" aria-label="ضبط صدا" onclick="toggleGratRecording('new')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
       </div>
+      <div class="gv-grid" id="grat-image-thumbs"></div>
+      <div id="grat-video-list"></div>
+      <div id="grat-audio-list"></div>
 
       <div class="visibility-options">
         <label><input type="radio" name="grat-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
@@ -6664,6 +6671,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     <div class="neural-card" id="np-gratitude-hist-mount"></div>
 
     <!-- کادر مجموع فراوانی (hist-total) به طور کامل حذف شد -->
+
+    <div id="grat-vs-root" data-vs-src="gratitude"></div>
 
     <div id="history-list"></div>
     <div id="history-empty" class="empty-hint" style="display:none;">
@@ -6942,16 +6951,16 @@ body.bg-mode-image #grat-root{background:transparent;}
       <h2 style="text-align:center;">ویرایش شکرگذاری</h2>
       <textarea id="grat-edit-text" rows="4" placeholder="متن شکرگذاری..."></textarea>
 
-      <div class="image-picker">
-        <div class="lbl2">📎 عکس یا صدا (می‌تونی چندتا اضافه کنی)</div>
-        <input type="file" id="grat-edit-media-input" accept="image/*,audio/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'edit')">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" class="gallery-btn" onclick="document.getElementById('grat-edit-media-input').click()">+ افزودن عکس یا صدا</button>
-          <button type="button" class="gallery-btn" id="grat-edit-record-btn" onclick="toggleGratRecording('edit')">⏺ شروع ضبط صدا</button>
-        </div>
-        <div class="img-thumbnails" id="grat-edit-image-thumbs"></div>
-        <div id="grat-edit-audio-list"></div>
+      <div class="grat-media-bar">
+        <input type="file" id="grat-edit-media-input" accept="image/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'edit')">
+        <input type="file" id="grat-edit-video-input" accept="video/*" multiple style="display:none" onchange="handleGratVideos(this.files, 'edit')">
+        <button type="button" class="gm-btn" title="عکس" aria-label="افزودن عکس" onclick="document.getElementById('grat-edit-media-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+        <button type="button" class="gm-btn" title="ویدیو" aria-label="افزودن ویدیو" onclick="document.getElementById('grat-edit-video-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3z"/></svg></button>
+        <button type="button" class="gm-btn" id="grat-edit-record-btn" title="ضبط صدا" aria-label="ضبط صدا" onclick="toggleGratRecording('edit')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
       </div>
+      <div class="gv-grid" id="grat-edit-image-thumbs"></div>
+      <div id="grat-edit-video-list"></div>
+      <div id="grat-edit-audio-list"></div>
 
       <button class="primary-btn" style="margin:16px 0 8px;" onclick="saveGratEdit()">ذخیره تغییرات</button>
       <button class="ghost-btn" style="margin:0 0 8px;" onclick="deleteGratEntry()">🗑 حذف این شکرگذاری</button>
@@ -7840,10 +7849,18 @@ function gratIconOrImage(item){
   return item.icon || '🌿';
 }
 window.openGratImageViewer = function(gid, idx){
-  const g = (state.gratitude||[]).find(x=>x.id===gid);
-  if(!g || !g.images || !g.images.length) return;
-  openImageViewer(g.images.map(im=>im.src), idx||0);
+  openGratEntryAlbum(gid, idx||0);
 };
+/* کلیک روی هر مورد شکرگذاری: موردهای دستی → ویرایش ؛ موردهای خرید فروشگاه → رسید */
+function gratRowClick(id){
+  const g = (state.gratitude||[]).find(x=>x.id===id);
+  if(!g) return;
+  if(g.source !== 'purchase' && !g.txId){ openGratEditor(id); return; }
+  if(g.txId){
+    const tx = state.history.find(h=>h.id===g.txId);
+    if(tx){ showReceipt(tx); goto('receipt'); }
+  }
+}
 (function(){
   var modal, imgEl, scale=1, startDist=0, startScale=1, lastX=0, lastY=0, offX=0, offY=0, dragging=false, lastTapTime=0;
   var viewerImages=[], viewerIndex=0, swipeStartX=0, swipeStartY=0;
@@ -8198,11 +8215,13 @@ function renderHome(){
     const row = document.createElement('div');
     row.className = 'tx-item';
     row.onclick = ()=>{
+      if(g.source==='manual'){ goto('history'); openGratEditor(g.id); return; }
       if(g.txId){
         const tx = state.history.find(h=>h.id===g.txId);
         if(tx){ showReceipt(tx); goto('receipt'); }
       }
     };
+    if(g.source==='manual') row.style.cursor = 'pointer';
     row.innerHTML = `
       <div class="ic">${gratIconOrImage(g)}</div>
       <div class="mid">
@@ -8211,7 +8230,6 @@ function renderHome(){
       </div>
       ${g.source==='manual' ? `
       <div class="grat-edit-actions">
-        <button title="ویرایش" onclick="event.stopPropagation();goto('history');openGratEditor(${g.id})">✏️</button>
         <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">${g.shared ? '🌍' : '🔒'}</button>
       </div>` : ''}
       ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}`;
@@ -8487,6 +8505,29 @@ let gratRecordingMode = null; // 'new' | 'edit'
 function gratImagesArr(mode){ return mode === 'edit' ? gratEditImages : gratNewImages; }
 function gratAudiosArr(mode){ return mode === 'edit' ? gratEditAudios : gratNewAudios; }
 
+/* عکس همون‌طور که انتخاب شده وارد می‌شه (بدون برش اجباری)؛ فقط برای سبک موندن حافظه کوچیک‌تر می‌شه — مثل تب باورها */
+const GRAT_IMG_MAX_DIM = 1400, GRAT_IMG_QUALITY = 0.82;
+function gratFileToDataUrl(file){
+  return new Promise(function(resolve, reject){
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const w = img.naturalWidth, h = img.naturalHeight;
+        const sc = Math.min(1, GRAT_IMG_MAX_DIM / Math.max(w, h));
+        const cw = Math.max(1, Math.round(w*sc)), ch = Math.max(1, Math.round(h*sc));
+        const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
+        ctx.drawImage(img, 0, 0, cw, ch);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', GRAT_IMG_QUALITY));
+      }catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('img')); };
+    img.src = url;
+  });
+}
 async function handleGratMedia(files, mode){
   if(!files || !files.length) return;
   const list = Array.from(files);
@@ -8494,21 +8535,20 @@ async function handleGratMedia(files, mode){
   if(inputEl) inputEl.value = '';
   const imgArr = gratImagesArr(mode);
   const audArr = gratAudiosArr(mode);
-  const imgTotal = list.filter(f=> f.type.indexOf('image/') === 0).length;
-  let imgIdx = 0;
-  let cropCancelled = false;
+  let addedImgs = 0, failedImgs = 0;
   for(const file of list){
-    const isImage = file.type.indexOf('image/') === 0;
+    const isImage = file.type.indexOf('image/') === 0 || /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(file.name || '');
     const isAudio = file.type.indexOf('audio/') === 0;
     if(!isImage && !isAudio){
       toast('فقط فایل عکس یا صدا قابل اضافه شدنه');
       continue;
     }
     if(isImage){
-      if(cropCancelled) continue;
-      const src = await cropImage(file, { index: imgIdx++, total: imgTotal });
-      if(src === null){ cropCancelled = true; continue; }
-      imgArr.push({ src });
+      try{
+        const src = await gratFileToDataUrl(file);
+        imgArr.push({ id: 'gimg_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), src });
+        addedImgs++;
+      }catch(err){ failedImgs++; }
     } else {
       try{
         const src = await readFileAsDataURL(file);
@@ -8518,24 +8558,69 @@ async function handleGratMedia(files, mode){
   }
   renderGratImageThumbs(mode);
   renderGratAudioList(mode);
+  if(addedImgs && !failedImgs) toast(addedImgs > 1 ? addedImgs.toLocaleString('fa-IR') + ' عکس اضافه شد 🖼️' : 'عکس اضافه شد 🖼️');
+  else if(addedImgs) toast(addedImgs.toLocaleString('fa-IR') + ' عکس اضافه شد؛ ' + failedImgs.toLocaleString('fa-IR') + ' تا خوانده نشد');
+  else if(failedImgs) toast('عکس خوانده نشد (فرمت پشتیبانی نمی‌شه)');
 }
+/* شبکه‌ی بندانگشتی‌ها (مثل تب باورها) — لمس = آلبوم تمام‌صفحه با ورق‌زدن، برش و حذف */
 function renderGratImageThumbs(mode){
   const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-image-thumbs' : 'grat-image-thumbs');
   if(!wrap) return;
   const arr = gratImagesArr(mode);
-  wrap.innerHTML = arr.map((img, idx)=>`
-    <div class="img-thumb">
-      <img src="${img.src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:pointer;" onclick="openImageViewer('${img.src}')">
-      <button type="button" class="del" onclick="event.stopPropagation();removeGratImage(${idx}, '${mode}')">✕</button>
-    </div>
-  `).join('');
+  wrap.innerHTML = arr.map((img, idx)=>`<button type="button" class="gv-thumb" onclick="openGratAlbum('${mode}', ${idx})"><img src="${img.src}" alt="" draggable="false"></button>`).join('');
 }
-function removeGratImage(idx, mode){
-  const arr = gratImagesArr(mode);
-  arr.splice(idx, 1);
-  renderGratImageThumbs(mode);
+function gratAlbumOpen(source, idx){
+  if(typeof window.vgOpenFrom === 'function') window.vgOpenFrom(source, idx);
+  else { const arr = source.get(); if(arr[idx]) openImageViewer(arr.map(im=>im.src), idx); }
 }
-
+/* آلبوم عکس‌های پیش‌نویس (فرم ثبت) یا ویرایش */
+function openGratAlbum(mode, idx){
+  gratAlbumOpen({
+    get: function(){ return gratImagesArr(mode); },
+    changed: function(){ renderGratImageThumbs(mode); }
+  }, idx);
+}
+function gratSyncEntryImages(g){
+  g.image = (g.images && g.images.length) ? g.images[0].src : null;
+}
+/* آلبوم عکس‌های یک مورد شکرگذاری ثبت‌شده */
+function openGratEntryAlbum(gid, idx){
+  const g = (state.gratitude||[]).find(x=>x.id===gid);
+  if(!g) return;
+  if((!g.images || !g.images.length) && g.image && g.source === 'manual') g.images = [{ id: 'gimg_' + Date.now(), src: g.image }];
+  if(!g.images || !g.images.length) return;
+  gratAlbumOpen({
+    get: function(){ return g.images || []; },
+    changed: function(){ gratSyncEntryImages(g); saveState(); renderHistory(); renderHome(); }
+  }, idx || 0);
+}
+/* همه‌ی عکس‌های همه‌ی شکرگذاری‌ها (به ترتیب زمان ثبت) */
+function gratAllImages(){
+  const out = [];
+  (state.gratitude || []).forEach(function(g){
+    if(g.source !== 'manual') return;
+    if((!g.images || !g.images.length) && g.image) g.images = [{ id: 'gimg_' + String(g.id).replace(/\D/g,''), src: g.image }];
+    (g.images || []).forEach(function(im){ if(im && im.src) out.push(im); });
+  });
+  return out;
+}
+function openGratAlbumAll(idx){
+  if(!gratAllImages().length) return;
+  gratAlbumOpen({
+    get: gratAllImages,
+    remove: function(im){
+      (state.gratitude || []).forEach(function(g){
+        if(!g.images) return;
+        const at = g.images.indexOf(im);
+        if(at >= 0){ g.images.splice(at, 1); gratSyncEntryImages(g); }
+      });
+    },
+    changed: function(){
+      (state.gratitude || []).forEach(gratSyncEntryImages);
+      saveState(); renderHistory(); renderHome();
+    }
+  }, idx || 0);
+}
 function toggleGratRecording(mode){
   if(gratRecorder && gratRecorder.state === 'recording'){
     gratRecorder.stop();
@@ -8580,16 +8665,8 @@ function toggleGratRecording(mode){
 function setGratRecordBtn(mode, recording){
   const btn = document.getElementById(mode === 'edit' ? 'grat-edit-record-btn' : 'grat-record-btn');
   if(!btn) return;
-  btn.textContent = recording ? '⏹ پایان ضبط' : '⏺ شروع ضبط صدا';
-  if(recording){
-    btn.style.background = '#c0392b';
-    btn.style.color = '#fff';
-    btn.style.borderColor = '#c0392b';
-  } else {
-    btn.style.background = '';
-    btn.style.color = '';
-    btn.style.borderColor = '';
-  }
+  btn.classList.toggle('rec', !!recording);
+  btn.title = recording ? 'پایان ضبط' : 'ضبط صدا';
 }
 function renderGratAudioList(mode){
   const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-audio-list' : 'grat-audio-list');
@@ -8608,27 +8685,149 @@ function removeGratAudio(idx, mode){
   arr.splice(idx, 1);
   renderGratAudioList(mode);
 }
+/* ---------------- ویدیوی شکرگذاری (فایل ویدیو توی IndexedDB، فقط مشخصاتش توی state — مثل تب باورها) ---------------- */
+const GRAT_VID_MAX_MB = 300;
+let gratNewVideos = [];
+let gratEditVideos = [];
+function gratVideosArr(mode){ return mode === 'edit' ? gratEditVideos : gratNewVideos; }
+let gratVidDbP = null;
+const gratVidUrls = {};
+function gratVidDb(){
+  if(gratVidDbP) return gratVidDbP;
+  gratVidDbP = new Promise(function(res, rej){
+    if(!window.indexedDB){ rej(new Error('no-idb')); return; }
+    const r = indexedDB.open('grat-media', 1);
+    r.onupgradeneeded = function(){ if(!r.result.objectStoreNames.contains('videos')) r.result.createObjectStore('videos'); };
+    r.onsuccess = function(){ res(r.result); };
+    r.onerror = function(){ rej(r.error); };
+  });
+  gratVidDbP.catch(function(){ gratVidDbP = null; });
+  return gratVidDbP;
+}
+function gratVidTx(mode, fn){
+  return gratVidDb().then(function(db){ return new Promise(function(res, rej){
+    const tx = db.transaction('videos', mode);
+    const out = fn(tx.objectStore('videos'));
+    tx.oncomplete = function(){ res(out && out.result); };
+    tx.onerror = function(){ rej(tx.error); };
+    tx.onabort = function(){ rej(tx.error); };
+  }); });
+}
+function gratVidUrl(v){
+  if(gratVidUrls[v.id]) return Promise.resolve(gratVidUrls[v.id]);
+  if(v.blob){ gratVidUrls[v.id] = URL.createObjectURL(v.blob); return Promise.resolve(gratVidUrls[v.id]); }
+  return gratVidTx('readonly', function(st){ return st.get(v.id); }).then(function(blob){
+    if(!blob) throw new Error('missing');
+    gratVidUrls[v.id] = URL.createObjectURL(blob);
+    return gratVidUrls[v.id];
+  });
+}
+function gratVidDelete(list){
+  (list || []).forEach(function(v){
+    if(gratVidUrls[v.id]){ try{ URL.revokeObjectURL(gratVidUrls[v.id]); }catch(e){} delete gratVidUrls[v.id]; }
+    gratVidTx('readwrite', function(st){ return st.delete(v.id); }).catch(function(){});
+  });
+}
+function handleGratVideos(files, mode){
+  const inputEl = document.getElementById(mode === 'edit' ? 'grat-edit-video-input' : 'grat-video-input');
+  const list = Array.from(files || []).filter(function(f){
+    return f && ((f.type && f.type.indexOf('video/') === 0) || /\.(mp4|mov|m4v|webm|3gp|mkv)$/i.test(f.name || ''));
+  });
+  if(inputEl) inputEl.value = '';
+  if(!list.length){ toast('فقط فایل ویدیو انتخاب کن'); return; }
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+  const arr = gratVideosArr(mode);
+  let added = 0, tooBig = 0;
+  list.forEach(function(f){
+    if(f.size > GRAT_VID_MAX_MB * 1048576){ tooBig++; return; }
+    arr.push({ id: 'gvid_' + Date.now() + '_' + Math.random().toString(36).slice(2,7), name: f.name || 'video', type: f.type || 'video/mp4', size: f.size, blob: f });
+    added++;
+  });
+  renderGratVideoList(mode);
+  if(added) toast(added > 1 ? added.toLocaleString('fa-IR') + ' ویدیو اضافه شد 🎬' : 'ویدیو اضافه شد 🎬');
+  else if(tooBig) toast('ویدیو بزرگ‌تر از ' + GRAT_VID_MAX_MB.toLocaleString('fa-IR') + ' مگابایت اضافه نمی‌شه');
+}
+function gratHydrateVideos(root){
+  if(!root) return;
+  root.querySelectorAll('video[data-gvid]').forEach(function(el){
+    if(el.getAttribute('data-ok') === '1') return;
+    const id = el.getAttribute('data-gvid');
+    gratVidUrl({ id: id }).then(function(u){ el.src = u; el.setAttribute('data-ok','1'); }).catch(function(){
+      const box = el.closest('.gv-vid');
+      if(box){
+        const m = document.createElement('div'); m.className = 'gv-vid-miss';
+        m.textContent = 'فایل این ویدیو روی این دستگاه پیدا نشد.';
+        el.replaceWith(m);
+      }
+    });
+  });
+}
+function renderGratVideoList(mode){
+  const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-video-list' : 'grat-video-list');
+  if(!wrap) return;
+  const arr = gratVideosArr(mode);
+  wrap.innerHTML = arr.map(function(v, idx){
+    return '<div class="gv-vid"><video controls playsinline preload="metadata" data-gvid="' + v.id + '"></video>' +
+      '<button type="button" class="gv-vid-del" title="حذف ویدیو" onclick="event.stopPropagation();removeGratVideo(' + idx + ', \'' + mode + '\')">×</button></div>';
+  }).join('');
+  arr.forEach(function(v){
+    const el = wrap.querySelector('video[data-gvid="' + v.id + '"]');
+    if(!el) return;
+    gratVidUrl(v).then(function(u){ el.src = u; el.setAttribute('data-ok','1'); }).catch(function(){
+      const m = document.createElement('div'); m.className = 'gv-vid-miss';
+      m.textContent = 'فایل این ویدیو روی این دستگاه پیدا نشد.';
+      el.replaceWith(m);
+    });
+  });
+}
+function removeGratVideo(idx, mode){
+  if(!window.confirm('این ویدیو حذف شود؟')) return;
+  const arr = gratVideosArr(mode);
+  const v = arr[idx];
+  arr.splice(idx, 1);
+  /* ویدیوی تازه‌اضافه‌شده هنوز جایی ذخیره نشده؛ ویدیوی قدیمی موقع «ذخیره» از حافظه پاک می‌شود */
+  if(v && v.blob && gratVidUrls[v.id]){ try{ URL.revokeObjectURL(gratVidUrls[v.id]); }catch(e){} delete gratVidUrls[v.id]; }
+  renderGratVideoList(mode);
+}
+/* فایل ویدیوهای تازه توی IndexedDB نوشته می‌شه و فقط مشخصاتشان (بدون blob) برای state برمی‌گردد */
+async function gratCommitVideos(arr){
+  const out = []; let failed = 0;
+  for(const v of arr){
+    if(v.blob){
+      try{ await gratVidTx('readwrite', function(st){ return st.put(v.blob, v.id); }); }
+      catch(e){ failed++; continue; }
+    }
+    out.push({ id: v.id, name: v.name, type: v.type, size: v.size });
+  }
+  if(failed) toast('ذخیره‌ی ویدیو ممکن نشد (حافظه یا مرورگر)');
+  return out;
+}
 function resetGratNewMedia(){
   gratNewImages = [];
   gratNewAudios = [];
+  gratNewVideos = [];
+  renderGratVideoList('new');
   renderGratImageThumbs('new');
   renderGratAudioList('new');
 }
 
 /* ---------------- gratitude list ---------------- */
-function addGratitude(){
+async function addGratitude(){
   const input = document.getElementById('grat-input');
   const val = (input.value||'').trim();
   const hasImages = gratNewImages.length > 0;
   const hasAudios = gratNewAudios.length > 0;
-  if(!val && !hasImages && !hasAudios){ toast('یه متن، عکس یا صدا وارد کن 🌱'); return; }
+  const hasVideos = gratNewVideos.length > 0;
+  if(!val && !hasImages && !hasAudios && !hasVideos){ toast('یه متن، عکس، ویدیو یا صدا وارد کن 🌱'); return; }
+  const savedVideos = hasVideos ? await gratCommitVideos(gratNewVideos) : [];
+  if(!val && !hasImages && !hasAudios && !savedVideos.length) return;
   const visRadio = document.querySelector('input[name="grat-vis"]:checked');
   const shared = !!(visRadio && visRadio.value === 'public');
   const np = nowParts();
   const newEntry = {
     id: Date.now()+Math.random(),
     text: val, icon:'🙏', image: gratNewImages.length ? gratNewImages[0].src : null, amount:null,
-    images: gratNewImages.slice(), audios: gratNewAudios.slice(),
+    images: gratNewImages.slice(), audios: gratNewAudios.slice(), videos: savedVideos,
     date: np.date, day: np.day, time: np.time, iso: np.iso, source:'manual',
     shared: shared
   };
@@ -8684,16 +8883,16 @@ function renderHistory(){
   [...state.gratitude].reverse().forEach(g=>{
     const displayText = gratDisplayText(g.text);
     itemsHTML += `
-      <div class="tx-item" onclick="${g.txId ? `(function(){const tx=state.history.find(h=>h.id===${g.txId});if(tx){showReceipt(tx);goto('receipt');}})()` : ''}">
+      <div class="tx-item" style="cursor:pointer;" onclick="gratRowClick(${g.id})">
         <div class="ic">${gratIconOrImage(g)}</div>
         <div class="mid">
           <div class="t1">${nl2br(escapeHtml(displayText))}</div>
           <div class="t2">${g.day} ${g.date} - ${g.time}</div>
-          ${(g.images && g.images.length) ? `<div class="img-thumbnails">${g.images.map((im,idx)=>`<div class="img-thumb"><img src="${im.src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:pointer;" onclick="event.stopPropagation();openGratImageViewer(${g.id},${idx})"></div>`).join('')}</div>` : ''}
+          ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false"></button>`).join('')}</div>` : ''}
           ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
+          ${(g.videos && g.videos.length) ? g.videos.map(v=>`<div class="gv-vid" onclick="event.stopPropagation()"><video controls playsinline preload="metadata" data-gvid="${v.id}"></video></div>`).join('') : ''}
         </div>
         <div class="grat-edit-actions">
-          <button title="ویرایش" onclick="event.stopPropagation();openGratEditor(${g.id})">✏️</button>
           <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">
             ${g.shared
               ? `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--emerald-700);"><use href="#ico-globe"/></svg>`
@@ -8705,6 +8904,7 @@ function renderHistory(){
     `;
   });
   list.innerHTML = itemsHTML;
+  gratHydrateVideos(list);
 }
 function updateGlobalGratCount(fallbackFa){
   if(window.supabaseClient){
@@ -8767,6 +8967,8 @@ function openGratEditor(id){
   document.getElementById('grat-edit-text').value = rawText;
   gratEditImages = (g.images || []).slice();
   gratEditAudios = (g.audios || []).slice();
+  gratEditVideos = (g.videos || []).map(v=>Object.assign({}, v));
+  renderGratVideoList('edit');
   renderGratImageThumbs('edit');
   renderGratAudioList('edit');
   setGratRecordBtn('edit', false);
@@ -8779,21 +8981,29 @@ function closeGratEditor(){
   editingGratId = null;
   gratEditImages = [];
   gratEditAudios = [];
+  gratEditVideos = [];
+  const evl = document.getElementById('grat-edit-video-list'); if(evl) evl.innerHTML = '';
   document.getElementById('grat-edit-modal').classList.remove('show');
 }
-function saveGratEdit(){
+async function saveGratEdit(){
   if(editingGratId==null) return;
   const g = (state.gratitude||[]).find(x=>x.id===editingGratId);
   if(!g) return;
   const newText = (document.getElementById('grat-edit-text').value||'').trim();
   const hasImages = gratEditImages.length > 0;
   const hasAudios = gratEditAudios.length > 0;
-  if(!newText && !hasImages && !hasAudios){ toast('یه متن، عکس یا صدا وارد کن 🌱'); return; }
+  const hasVideos = gratEditVideos.length > 0;
+  if(!newText && !hasImages && !hasAudios && !hasVideos){ toast('یه متن، عکس، ویدیو یا صدا وارد کن 🌱'); return; }
+  const keepIds = gratEditVideos.map(v=>v.id);
+  const removedVideos = (g.videos || []).filter(v=>keepIds.indexOf(v.id) < 0);
+  const savedVideos = await gratCommitVideos(gratEditVideos);
   const wasShared = g.shared;
   const oldEntrySnapshot = Object.assign({}, g);
   g.text = newText;
   g.images = gratEditImages.slice();
   g.audios = gratEditAudios.slice();
+  g.videos = savedVideos;
+  gratVidDelete(removedVideos);
   g.image = g.images.length ? g.images[0].src : null;
   saveState();
   if(wasShared){
@@ -8804,13 +9014,14 @@ function saveGratEdit(){
   closeGratEditor();
   renderHistory();
   renderHome();
-  toast('شکرگذاری ویرایش شد ✏️');
+  toast('شکرگذاری ویرایش شد');
 }
 function deleteGratEntry(){
   if(editingGratId==null) return;
   const g = (state.gratitude||[]).find(x=>x.id===editingGratId);
   if(!g) return;
   if(g.shared) unsyncGratitudeShare(g);
+  gratVidDelete(g.videos);
   state.gratitude = state.gratitude.filter(x=>x.id!==editingGratId);
   saveState();
   closeGratEditor();

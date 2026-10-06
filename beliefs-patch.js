@@ -456,9 +456,13 @@
   var VG_MAX_DIM = 1400, VG_QUALITY = 0.82, VG_CROP_MAX = 1600, VC_MIN = 30;
   var VG_VIEW = { idx: 0, open: false, prevOverflow: '' };
   var VC = null;
+  /* منبع عکس‌های آلبوم: پیش‌فرض عکس‌های تب باورها؛ بخش‌های دیگر (مثل شکرگذاری) با vgOpenFrom منبع خودشان را می‌دهند
+     { get:()=>[{src}], remove?:(im)=>void, changed:()=>void } */
+  var VG_SRC = null;
 
   function vgClamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
   function vgImages(){
+    if (VG_SRC) return VG_SRC.get() || [];
     if (!state.currentBelief) state.currentBelief = {};
     var cb = state.currentBelief;
     if (!Array.isArray(cb.visualImages)) cb.visualImages = [];
@@ -578,6 +582,16 @@
     catch(e){ track.scrollLeft = i * track.clientWidth; }
     vgUpdateCounter();
   }
+  function vgPersist(){
+    if (VG_SRC){ try { VG_SRC.changed(); } catch(e){} return; }
+    try { saveState(); } catch(e){}
+    renderVisualGalleryMine();
+  }
+  function vgOpenFrom(src, i){
+    VG_SRC = src || null;
+    vgOpen(i || 0);
+    if (!VG_VIEW.open) VG_SRC = null;
+  }
   function vgOpen(i){
     if (!vgImages().length) return;
     var v = vgEnsureViewer();
@@ -595,14 +609,20 @@
     if (v) v.style.display = 'none';
     if (VG_VIEW.open) document.body.style.overflow = VG_VIEW.prevOverflow || '';
     VG_VIEW.open = false;
+    VG_SRC = null;
   }
   function vgDeleteCurrent(){
     var imgs = vgImages(), im = imgs[VG_VIEW.idx];
     if (!im) return;
     if (!window.confirm('این عکس حذف شود؟')) return;
-    state.currentBelief.visualImages = imgs.filter(function(x){ return x !== im; });
-    try { saveState(); } catch(e){}
-    renderVisualGalleryMine();
+    if (VG_SRC){
+      if (typeof VG_SRC.remove === 'function') VG_SRC.remove(im);
+      else { var at = imgs.indexOf(im); if (at >= 0) imgs.splice(at, 1); }
+      vgPersist();
+    } else {
+      state.currentBelief.visualImages = imgs.filter(function(x){ return x !== im; });
+      vgPersist();
+    }
     var left = vgImages().length;
     if (!left){ vgClose(); if (typeof toast === 'function') toast('عکس حذف شد'); return; }
     vgBuildSlides();
@@ -775,9 +795,8 @@
       var im = vgImages()[idx];
       if (!im) throw new Error('no-image');
       im.src = url;
-      try { saveState(); } catch(e){}
       vcClose();
-      renderVisualGalleryMine();
+      vgPersist();
       var track = document.getElementById('vg-track');
       var slide = track && track.children[idx];
       if (slide){ var ii = slide.querySelector('img'); if (ii) ii.src = url; }
@@ -1190,7 +1209,7 @@
               '</div>' +
             '</div>' +
             '<div id="future-actions" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">' +
-              '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:80px;">✏️ ویرایش</button>' +
+              '<button type="button" id="edit-future-btn" class="btn tiny" style="flex:1;min-width:80px;">ویرایش</button>' +
               '<button type="button" id="archive-future-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="archive-count">۰</span>)</button>' +
             '</div>' +
             '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">' +
@@ -1590,7 +1609,7 @@
         display.innerHTML = (hasText ? '«' + escapeHtml(v.text) + '»' : '') +
           (hasAudio ? '<audio controls preload="metadata" src="' + v.audio + '" style="width:100%;height:36px;display:block;' + (hasText ? 'margin-top:10px;' : '') + '"></audio>' : '');
       } else {
-        display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز چیزی ثبت نکردی.<br><span style="font-size:11px;">با «✏️ ویرایش» بنویس یا با 🎙️ ویس بگذار.</span></div>';
+        display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز چیزی ثبت نکردی.<br><span style="font-size:11px;">روی همین کادر بزن و بنویس، یا با 🎙️ ویس بگذار.</span></div>';
       }
     }
     if (archiveCount) archiveCount.textContent = toFa((state.futureTextVersions || []).length);
@@ -2491,7 +2510,7 @@
       if (!t || !t.closest) return;
 
       var vgOpenBtn = t.closest('[data-vg-open]');
-      if (vgOpenBtn){ e.stopPropagation(); vgOpen(parseInt(vgOpenBtn.getAttribute('data-vg-open'), 10) || 0); return; }
+      if (vgOpenBtn){ e.stopPropagation(); VG_SRC = null; vgOpen(parseInt(vgOpenBtn.getAttribute('data-vg-open'), 10) || 0); return; }
       var vgGoBtn = t.closest('[data-vg-go]');
       if (vgGoBtn){ e.stopPropagation(); vgOverviewHide(); vgGoto(parseInt(vgGoBtn.getAttribute('data-vg-go'), 10) || 0, false); return; }
       var vgActBtn = t.closest('[data-vg]');
@@ -2673,6 +2692,7 @@
     window.renderVisualGallery = renderVisualGalleryMine;
     /* برای دکمه‌ی برگشت گوشی (back-nav-fix.js) در دسترس باشن */
     window.vgClose = vgClose;
+    window.vgOpenFrom = vgOpenFrom;
     window.vcClose = vcClose;
     window.closeFutureEditor = closeFutureEditor;
     injectHelpSection();

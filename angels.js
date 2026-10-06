@@ -5,7 +5,7 @@
   var def = { on:true, size:140, speed:3, opacity:85, soft:true, blend:'normal', fs:true };
   var cfg = loadCfg();
   var items = [];      // {id, blob, url, el, x, y, vx, vy, ph}
-  var raf = null, last = 0;
+  var raf = null, last = 0, lastFrame = 0;
 
   function loadCfg(){
     try{
@@ -72,8 +72,8 @@
   layer.setAttribute('aria-hidden','true');
   document.body.appendChild(layer);
 
-  function W(){ return window.innerWidth; }
-  function H(){ return window.innerHeight; }
+  function W(){ return window.innerWidth || document.documentElement.clientWidth || 360; }
+  function H(){ return window.innerHeight || document.documentElement.clientHeight || 640; }
 
   function styleAll(){
     layer.classList.toggle('soft', !!cfg.soft);
@@ -103,10 +103,20 @@
 
   function tick(t){
     raf = requestAnimationFrame(tick);
-    var dt = Math.min(50, t - last) / 1000; last = t;
+    lastFrame = performance.now();
+    /* بعد از برگشت به اپ، زمان فریم می‌تونه عقب/جلو بپره؛ dt همیشه بین ۰ تا ۵۰ms نگه داشته می‌شه */
+    var dt = t - last; last = t;
+    if (!isFinite(dt) || dt < 0) dt = 16;
+    dt = Math.min(50, dt) / 1000;
     var sp = cfg.speed * 14; // px/s
     var w = W(), h = H(), s = cfg.size;
     items.forEach(function(it){
+      /* اگر موقعیت خراب شد (NaN)، دوباره یه جای تصادفی بذارش تا برای همیشه گیر نکنه */
+      if (!isFinite(it.x) || !isFinite(it.y) || !isFinite(it.vx) || !isFinite(it.vy)){
+        var a0 = Math.random() * Math.PI * 2;
+        it.x = Math.random() * Math.max(10, w - s); it.y = Math.random() * Math.max(10, h - s);
+        it.vx = Math.cos(a0); it.vy = Math.sin(a0); it.ph = 0;
+      }
       it.ph += dt * 0.7;
       // انحراف آرام مسیر
       var ang = Math.atan2(it.vy, it.vx) + Math.sin(it.ph) * dt * 0.8;
@@ -125,10 +135,27 @@
   function run(){
     var active = cfg.on && items.length > 0 && !document.hidden;
     document.body.classList.toggle('angels-on', cfg.on && items.length > 0);
-    if (active && !raf){ last = performance.now(); raf = requestAnimationFrame(tick); }
+    if (active && !raf){ last = performance.now(); lastFrame = last; raf = requestAnimationFrame(tick); }
     if (!active && raf){ cancelAnimationFrame(raf); raf = null; }
   }
-  document.addEventListener('visibilitychange', run);
+  /* راه‌اندازی دوباره‌ی کامل انیمیشن: وقتی اپ بسته/باز می‌شود، مرورگر (به‌خصوص PWA گوشی) گاهی requestAnimationFrame
+     را وسط کار رها می‌کند ولی raf هنوز «پُر» است و run() فکر می‌کند همه‌چیز در حال اجراست → عکس‌ها یک‌جا قفل می‌شدند
+     و فقط با دست‌زدن به تنظیمات (که صفحه را مجبور به رندر می‌کرد) آزاد می‌شدند. */
+  function restart(){
+    if (raf){ try{ cancelAnimationFrame(raf); }catch(e){} raf = null; }
+    run();
+  }
+  document.addEventListener('visibilitychange', restart);
+  window.addEventListener('pageshow', restart);
+  window.addEventListener('focus', restart);
+  window.addEventListener('resume', restart);
+  window.addEventListener('orientationchange', function(){ setTimeout(restart, 200); });
+  window.addEventListener('resize', function(){ if (!raf) restart(); });
+  /* نگهبان: اگر فریمی بیش از ۱ ثانیه نیومد در حالی که باید در حال حرکت باشیم، انیمیشن را دوباره بیدار کن */
+  setInterval(function(){
+    if (document.hidden || !cfg.on || !items.length) return;
+    if (!raf || performance.now() - lastFrame > 1000) restart();
+  }, 1000);
 
   /* وقتی آلبوم/نمایشگر تمام‌صفحه‌ی عکس باز است، لایه را بالاتر از آن می‌آورد (اگر گزینه‌اش روشن باشد) */
   function fsOpen(){

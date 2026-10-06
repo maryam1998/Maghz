@@ -8,15 +8,15 @@
   var UNIT_MS = { s: 1000, m: 60000, h: 3600000 };
   var def = { value: 5, unit: 's', order: 'seq', loop: true };
 
-  function loadCfg(){
+  function loadCfg(key){
     var c = {}; for (var k in def) c[k] = def[k];
     try{
-      var o = JSON.parse(localStorage.getItem(KEY) || 'null') || {};
+      var o = JSON.parse(localStorage.getItem(key || KEY) || 'null') || {};
       for (var k2 in def) if (o[k2] !== undefined) c[k2] = o[k2];
     }catch(e){}
     return c;
   }
-  function saveCfg(c){ try{ localStorage.setItem(KEY, JSON.stringify(c)); }catch(e){} }
+  function saveCfg(c, key){ try{ localStorage.setItem(key || KEY, JSON.stringify(c)); }catch(e){} }
   function intervalMs(c){
     var v = parseFloat(c.value);
     if (!isFinite(v) || v <= 0) v = def.value;
@@ -54,7 +54,21 @@
   function tsOf(id){
     var m = /(\d{10,})/.exec(String(id)); return m ? +m[1] : 0;
   }
-  function slides(){
+  /* اسلایدهای شکرگذاری: عکس‌های همه‌ی موردهای دستی، به ترتیب ثبت */
+  function slidesGratitude(){
+    var out = [];
+    var arr = (typeof state !== 'undefined' && state && state.gratitude) || [];
+    arr.forEach(function(g, gi){
+      if (!g || g.source !== 'manual') return;
+      var imgs = (g.images && g.images.length) ? g.images : (g.image ? [{ src: g.image }] : []);
+      imgs.forEach(function(im, i){
+        if (im && im.src) out.push({ k: 'g' + gi + '_' + (im.id || i), t: 'img', src: im.src, ts: gi, n: i });
+      });
+    });
+    return out;
+  }
+  function slides(source){
+    if (source === 'gratitude') return slidesGratitude();
     var cb = (typeof state !== 'undefined' && state && state.currentBelief) || {};
     var out = [];
     (cb.visualImages || []).forEach(function(im, i){
@@ -93,9 +107,12 @@
   function mount(root){
     if (root.getAttribute('data-vs') === '1') return;
     root.setAttribute('data-vs', '1');
-    var cfg = loadCfg();
+    var source = root.getAttribute('data-vs-src') || 'beliefs';
+    var cfgKey = source === 'gratitude' ? 'gratSlideshow' : KEY;
+    var cfg = loadCfg(cfgKey);
 
     root.innerHTML =
+      (source === 'gratitude' ? '<div class="items-title" style="margin:6px 0 8px;">🖼️ تصاویر شکرگذاری‌ها</div>' : '') +
       '<div class="vs-wrap">' +
         '<div class="vs-stage" id="vs-stage">' +
           '<img class="vs-layer" alt="" draggable="false"><video class="vs-layer" muted playsinline loop></video>' +
@@ -111,6 +128,7 @@
           '<select data-f="order"><option value="seq">به‌ترتیب</option><option value="rnd">تصادفی</option></select>' +
           '<label class="vs-chk"><input type="checkbox" data-f="loop"><span>تکرار</span></label>' +
         '</div>' +
+        (source === 'gratitude' ? '<div class="vs-nav"><button type="button" data-vs="album">مشاهده‌ی همه‌ی عکس‌ها ▦</button></div>' : '') +
       '</div>';
 
     var stage = root.querySelector('.vs-stage');
@@ -150,7 +168,7 @@
     function curIdx(){ return pos >= 0 && order[pos] != null ? order[pos] : -1; }
 
     function refreshList(){
-      var l = slides(), s = sigOf(l);
+      var l = slides(source), s = sigOf(l);
       if (s === sig) return false;
       var curKey = curIdx() >= 0 && list[curIdx()] ? list[curIdx()].k : null;
       list = l; sig = s;
@@ -286,6 +304,12 @@
       if (stage.isConnected && visualViewport.scale > 1.02 && list.length) setPaused(true);   // زومِ کل صفحه
     });
 
+    var albumBtn = root.querySelector('[data-vs=album]');
+    if (albumBtn) albumBtn.addEventListener('click', function(){
+      if (typeof window.openGratAlbumAll === 'function'){
+        var k = curIdx(); window.openGratAlbumAll(k >= 0 ? k : 0);
+      }
+    });
     root.querySelector('[data-vs=next]').addEventListener('click', function(){ step(1, true); });
     root.querySelector('[data-vs=prev]').addEventListener('click', function(){ step(-1, true); });
 
@@ -296,7 +320,7 @@
       cfg.unit = fUnit.value; cfg.loop = fLoop.checked;
       var newOrder = fOrder.value, orderChanged = newOrder !== cfg.order;
       cfg.order = newOrder;
-      saveCfg(cfg);
+      saveCfg(cfg, cfgKey);
       if (orderChanged){ var k = curIdx(); buildOrder(k); if (k < 0) pos = -1; }
       if (!paused && list.length) schedule(intervalMs(cfg));
     }
@@ -331,8 +355,10 @@
   }
 
   function scan(){
-    var r = document.getElementById('vs-root');
-    if (r && r.getAttribute('data-vs') !== '1') mount(r);
+    ['vs-root', 'grat-vs-root'].forEach(function(id){
+      var r = document.getElementById(id);
+      if (r && r.getAttribute('data-vs') !== '1') mount(r);
+    });
   }
   var pend = false;
   new MutationObserver(function(){
