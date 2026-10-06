@@ -2275,7 +2275,19 @@
     if (!newText){ if (typeof toast === 'function') toast('متن نمی‌تونه خالی باشه'); return; }
     var v = getActiveVersion();
     if (v && newText === v.text){ closeFutureEditor(); return; }
-    if (v) v.endDate = dpTodayKey();
+    /* ویرایش متن، دوره و تقویم رو ریست نمی‌کنه: همون نسخه‌ی فعال سر جاش با متن جدید می‌مونه (تاریخ شروع و روزهای خوانده‌شده حفظ می‌شن) */
+    if (v){
+      if (!Array.isArray(v.prevTexts)) v.prevTexts = [];
+      v.prevTexts.push({ text: v.text, at: Date.now() });
+      v.text = newText;
+      state.futureText = newText;
+      state.futureStartDate = v.startDate;
+      state.futureReadDays = v.readDays || [];
+      try { saveState(); } catch(e){}
+      closeFutureEditor(); renderFutureText(); dpRenderProgress();
+      if (typeof toast === 'function') toast('متن ویرایش شد ✏️ (دوره و تقویم همان‌طور ماند)');
+      return;
+    }
     var newV = { id: 'v_' + Date.now(), text: newText, startDate: dpTodayKey(), endDate: null, readDays: [] };
     if (!Array.isArray(state.futureTextVersions)) state.futureTextVersions = [];
     state.futureTextVersions.push(newV);
@@ -2285,7 +2297,7 @@
     state.futureReadDays = newV.readDays;
     try { saveState(); } catch(e){}
     closeFutureEditor(); renderFutureText(); dpRenderProgress();
-    if (typeof toast === 'function') toast(v ? 'نسخه‌ی جدید ثبت شد 📚' : 'متن خواسته‌ات ثبت شد ✨');
+    if (typeof toast === 'function') toast('متن خواسته‌ات ثبت شد ✨');
   }
   /* ---------- ضبط ویس ---------- */
   var recState = { rec: null, stream: null, chunks: [], timer: null, sec: 0 };
