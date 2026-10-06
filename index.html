@@ -6426,6 +6426,17 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       <textarea id="home-grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
 
+      <div class="grat-media-bar">
+        <input type="file" id="home-grat-media-input" accept="image/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'home')">
+        <input type="file" id="home-grat-video-input" accept="video/*" multiple style="display:none" onchange="handleGratVideos(this.files, 'home')">
+        <button type="button" class="gm-btn" title="عکس" aria-label="افزودن عکس" onclick="document.getElementById('home-grat-media-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+        <button type="button" class="gm-btn" title="ویدیو" aria-label="افزودن ویدیو" onclick="document.getElementById('home-grat-video-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3z"/></svg></button>
+        <button type="button" class="gm-btn" id="home-grat-record-btn" title="ضبط صدا" aria-label="ضبط صدا" onclick="toggleGratRecording('home')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+      </div>
+      <div class="gv-grid" id="home-grat-image-thumbs"></div>
+      <div id="home-grat-video-list"></div>
+      <div id="home-grat-audio-list"></div>
+
       <div class="visibility-options">
         <label><input type="radio" name="home-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
         <label><input type="radio" name="home-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
@@ -7052,6 +7063,47 @@ function autoGrowGratInput(el){
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
+
+/* لمس طولانی دکمه‌ی «خط بعد» (Enter) کیبورد توی کادرهای شکرگذاری = ثبت شکرگذاری؛ لمس کوتاه همچنان خط جدید می‌سازه */
+(function(){
+  const HANDLERS = {
+    'home-grat-input': function(){ return addGratitudeHome(); },
+    'grat-input':      function(){ return addGratitude(); },
+    'grat-edit-text':  function(){ return saveGratEdit(); }
+  };
+  const HOLD_MS = 500;
+  let timer = null, fired = false, resetT = null;
+  function clearTimer(){ if(timer){ clearTimeout(timer); timer = null; } }
+  function fire(el){
+    clearTimer();
+    if(fired) return;
+    fired = true;
+    clearTimeout(resetT);
+    resetT = setTimeout(function(){ fired = false; }, 1500);
+    el.value = el.value.replace(/\n+$/, '');
+    try{ if(navigator.vibrate) navigator.vibrate(25); }catch(e){}
+    try{ HANDLERS[el.id](); }catch(err){}
+  }
+  function isEnter(e){ return e.key === 'Enter' || e.keyCode === 13; }
+  document.addEventListener('keydown', function(e){
+    const el = e.target;
+    if(!el || !HANDLERS[el.id] || !isEnter(e) || e.isComposing && e.keyCode !== 13) return;
+    if(e.ctrlKey || e.metaKey){ e.preventDefault(); fire(el); return; }
+    if(e.shiftKey) return;
+    if(fired){ e.preventDefault(); return; }
+    if(e.repeat){ e.preventDefault(); fire(el); return; }
+    if(!timer) timer = setTimeout(function(){ fire(el); }, HOLD_MS);
+  }, true);
+  document.addEventListener('keyup', function(e){
+    if(!isEnter(e)) return;
+    clearTimer();
+    clearTimeout(resetT);
+    resetT = setTimeout(function(){ fired = false; }, 50);
+  }, true);
+  document.addEventListener('focusout', function(e){
+    if(e.target && HANDLERS[e.target.id]){ clearTimer(); fired = false; }
+  }, true);
+})();
 
 /* ============================================================
    موتور صوتی Nothing — سینتز شده با Web Audio API
@@ -8227,39 +8279,60 @@ function renderHome(){
       <div class="mid">
         <div class="t1">${nl2br(escapeHtml(gratDisplayText(g.text)))}</div>
         <div class="t2">${g.day} ${g.date} - ${g.time}</div>
+        ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false"></button>`).join('')}</div>` : ''}
+        ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
+        ${(g.videos && g.videos.length) ? g.videos.map(v=>`<div class="gv-vid" onclick="event.stopPropagation()"><video controls playsinline preload="metadata" data-gvid="${v.id}"></video></div>`).join('') : ''}
       </div>
       ${g.source==='manual' ? `
       <div class="grat-edit-actions">
-        <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">${g.shared ? '🌍' : '🔒'}</button>
+        <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">
+          ${g.shared
+            ? `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--emerald-700);"><use href="#ico-globe"/></svg>`
+            : `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--muted);"><use href="#ico-lock"/></svg>`}
+        </button>
       </div>` : ''}
       ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}`;
     wrap.appendChild(row);
   });
+  gratHydrateVideos(wrap);
 }
-function addGratitudeHome(){
+async function addGratitudeHome(){
   const input = document.getElementById('home-grat-input');
   const val = (input.value||'').trim();
-  if(!val){ toast('یه چیزی بنویس 🌱'); return; }
-  const visRadio = document.querySelector('input[name="home-vis"]:checked');
-  const shared = !!(visRadio && visRadio.value === 'public');
-  const np = nowParts();
-  const newEntry = {
-    id: Date.now()+Math.random(),
-    text: val, icon:'🙏', image:null, amount:null,
-    date: np.date, day: np.day, time: np.time, iso: np.iso, source:'manual',
-    shared: shared
-  };
-  state.gratitude.push(newEntry);
-  updateGratitudeNumbers();
-  state.shareGratitude = shared;
-  neuralAutoAddFiber(ensureGratitudeNeural());
-  saveState();
-  input.value='';
-  autoGrowGratInput(input);
-  renderHome();
-  renderHistory();
-  toast(shared ? 'ثبت شد و با بقیه به اشتراک گذاشته شد 🌍' : 'ثبت شد — فقط برای خودم 🤫');
-  if(shared) syncGratitudeShare(newEntry);
+  const hasImages = gratHomeImages.length > 0;
+  const hasAudios = gratHomeAudios.length > 0;
+  const hasVideos = gratHomeVideos.length > 0;
+  if(!val && !hasImages && !hasAudios && !hasVideos){ toast('یه متن، عکس، ویدیو یا صدا وارد کن 🌱'); return; }
+  if(window.__gratHomeSaving) return;
+  window.__gratHomeSaving = true;
+  try{
+    const savedVideos = hasVideos ? await gratCommitVideos(gratHomeVideos) : [];
+    if(!val && !hasImages && !hasAudios && !savedVideos.length) return;
+    const visRadio = document.querySelector('input[name="home-vis"]:checked');
+    const shared = !!(visRadio && visRadio.value === 'public');
+    const np = nowParts();
+    const newEntry = {
+      id: Date.now()+Math.random(),
+      text: val, icon:'🙏', image: hasImages ? gratHomeImages[0].src : null, amount:null,
+      images: gratHomeImages.slice(), audios: gratHomeAudios.slice(), videos: savedVideos,
+      date: np.date, day: np.day, time: np.time, iso: np.iso, source:'manual',
+      shared: shared
+    };
+    state.gratitude.push(newEntry);
+    updateGratitudeNumbers();
+    state.shareGratitude = shared;
+    neuralAutoAddFiber(ensureGratitudeNeural());
+    saveState();
+    input.value='';
+    autoGrowGratInput(input);
+    resetGratHomeMedia();
+    renderHome();
+    renderHistory();
+    toast(shared ? 'ثبت شد و با بقیه به اشتراک گذاشته شد 🌍' : 'ثبت شد — فقط برای خودم 🤫');
+    if(shared) syncGratitudeShare(newEntry);
+  } finally {
+    window.__gratHomeSaving = false;
+  }
 }
 
 /* --- custom item with image --- */
@@ -8493,6 +8566,10 @@ function showReceipt(r){
 }
 
 /* ---------------- gratitude list: photo & voice attachments ---------------- */
+let gratHomeImages = [];
+let gratHomeAudios = [];
+let gratHomeVideos = [];
+function gratElId(mode, base){ return (mode === 'edit' ? 'grat-edit-' : mode === 'home' ? 'home-grat-' : 'grat-') + base; }
 let gratNewImages = [];
 let gratEditImages = [];
 let gratNewAudios = [];
@@ -8502,8 +8579,8 @@ let gratRecordStream = null;
 let gratRecordChunks = [];
 let gratRecordingMode = null; // 'new' | 'edit'
 
-function gratImagesArr(mode){ return mode === 'edit' ? gratEditImages : gratNewImages; }
-function gratAudiosArr(mode){ return mode === 'edit' ? gratEditAudios : gratNewAudios; }
+function gratImagesArr(mode){ return mode === 'edit' ? gratEditImages : mode === 'home' ? gratHomeImages : gratNewImages; }
+function gratAudiosArr(mode){ return mode === 'edit' ? gratEditAudios : mode === 'home' ? gratHomeAudios : gratNewAudios; }
 
 /* عکس همون‌طور که انتخاب شده وارد می‌شه (بدون برش اجباری)؛ فقط برای سبک موندن حافظه کوچیک‌تر می‌شه — مثل تب باورها */
 const GRAT_IMG_MAX_DIM = 1400, GRAT_IMG_QUALITY = 0.82;
@@ -8531,7 +8608,7 @@ function gratFileToDataUrl(file){
 async function handleGratMedia(files, mode){
   if(!files || !files.length) return;
   const list = Array.from(files);
-  const inputEl = document.getElementById(mode === 'edit' ? 'grat-edit-media-input' : 'grat-media-input');
+  const inputEl = document.getElementById(gratElId(mode, 'media-input'));
   if(inputEl) inputEl.value = '';
   const imgArr = gratImagesArr(mode);
   const audArr = gratAudiosArr(mode);
@@ -8564,7 +8641,7 @@ async function handleGratMedia(files, mode){
 }
 /* شبکه‌ی بندانگشتی‌ها (مثل تب باورها) — لمس = آلبوم تمام‌صفحه با ورق‌زدن، برش و حذف */
 function renderGratImageThumbs(mode){
-  const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-image-thumbs' : 'grat-image-thumbs');
+  const wrap = document.getElementById(gratElId(mode, 'image-thumbs'));
   if(!wrap) return;
   const arr = gratImagesArr(mode);
   wrap.innerHTML = arr.map((img, idx)=>`<button type="button" class="gv-thumb" onclick="openGratAlbum('${mode}', ${idx})"><img src="${img.src}" alt="" draggable="false"></button>`).join('');
@@ -8663,13 +8740,13 @@ function toggleGratRecording(mode){
   });
 }
 function setGratRecordBtn(mode, recording){
-  const btn = document.getElementById(mode === 'edit' ? 'grat-edit-record-btn' : 'grat-record-btn');
+  const btn = document.getElementById(gratElId(mode, 'record-btn'));
   if(!btn) return;
   btn.classList.toggle('rec', !!recording);
   btn.title = recording ? 'پایان ضبط' : 'ضبط صدا';
 }
 function renderGratAudioList(mode){
-  const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-audio-list' : 'grat-audio-list');
+  const wrap = document.getElementById(gratElId(mode, 'audio-list'));
   if(!wrap) return;
   const arr = gratAudiosArr(mode);
   wrap.innerHTML = arr.map((a, idx)=>`
@@ -8689,7 +8766,7 @@ function removeGratAudio(idx, mode){
 const GRAT_VID_MAX_MB = 300;
 let gratNewVideos = [];
 let gratEditVideos = [];
-function gratVideosArr(mode){ return mode === 'edit' ? gratEditVideos : gratNewVideos; }
+function gratVideosArr(mode){ return mode === 'edit' ? gratEditVideos : mode === 'home' ? gratHomeVideos : gratNewVideos; }
 let gratVidDbP = null;
 const gratVidUrls = {};
 function gratVidDb(){
@@ -8729,7 +8806,7 @@ function gratVidDelete(list){
   });
 }
 function handleGratVideos(files, mode){
-  const inputEl = document.getElementById(mode === 'edit' ? 'grat-edit-video-input' : 'grat-video-input');
+  const inputEl = document.getElementById(gratElId(mode, 'video-input'));
   const list = Array.from(files || []).filter(function(f){
     return f && ((f.type && f.type.indexOf('video/') === 0) || /\.(mp4|mov|m4v|webm|3gp|mkv)$/i.test(f.name || ''));
   });
@@ -8763,7 +8840,7 @@ function gratHydrateVideos(root){
   });
 }
 function renderGratVideoList(mode){
-  const wrap = document.getElementById(mode === 'edit' ? 'grat-edit-video-list' : 'grat-video-list');
+  const wrap = document.getElementById(gratElId(mode, 'video-list'));
   if(!wrap) return;
   const arr = gratVideosArr(mode);
   wrap.innerHTML = arr.map(function(v, idx){
@@ -8809,6 +8886,15 @@ function resetGratNewMedia(){
   renderGratVideoList('new');
   renderGratImageThumbs('new');
   renderGratAudioList('new');
+}
+
+function resetGratHomeMedia(){
+  gratHomeImages = [];
+  gratHomeAudios = [];
+  gratHomeVideos = [];
+  renderGratVideoList('home');
+  renderGratImageThumbs('home');
+  renderGratAudioList('home');
 }
 
 /* ---------------- gratitude list ---------------- */
