@@ -1247,6 +1247,8 @@
           '<div class="dp-why-box">' +
             '<span class="dp-def-chip">📖 <b>کاشتن بذر (Seeding):</b> یه تصویر واضح از واقعیت دلخواهت توی ذهن می‌کاری — بدون حس نیاز یا کمبود.</span>' +
             'خودت رو توی صحنه‌ای ببین که به خواسته‌ات رسیدی. هر تعداد عکس یا ویدیو که دوست داری اضافه کن.' +
+            '<br><span class="dp-def-chip" style="margin-top:8px;display:inline-block;">📖 <b>احساس فراوانی (Embodying):</b> حسِ اون واقعیت رو توی بدنت بساز — شادی، سلامتی، آرامش — تا فرکانست هماهنگ شه.</span>' +
+            '<br>وقتی خودت رو «کسی که رسیده» می‌بینی و حسش می‌کنی، رفتارهایت خودبه‌خود با همون هویت هم‌راستا می‌شن.' +
           '</div>' +
           '<div class="dp-step-content">' +
             '<textarea id="seed-text-input" rows="3" style="width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card);color:var(--ink);resize:vertical;margin-bottom:10px;" placeholder="توضیح این تصویرسازی (اختیاری)..."></textarea>' +
@@ -1258,48 +1260,14 @@
             '<div class="vg-wrap" id="visual-gallery"></div>' +
             '<div class="vv-gallery" id="visual-video-gallery"></div>' +
             '<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">' +
-              '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی تصاویر (خودکار با افزودن عکس یا ویدیو)</div>' +
-              '<div class="neural-card" id="np-visual-mount"></div>' +
+              '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی تمرین</div>' +
+              '<div class="neural-card" id="np-dispenza-mount"></div>' +
             '</div>' +
             '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);">' +
               '<button type="button" id="archive-seed-btn" class="btn tiny" style="flex:1;min-width:80px;">📚 آرشیو (<span id="seed-archive-count">۰</span>)</button>' +
             '</div>' +
             '<div id="seed-archive-box" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:12px;max-height:260px;overflow-y:auto;"></div>' +
           '</div>' +
-        '</div>' +
-
-        /* مرحله ۶ */
-        '<div class="dp-step">' +
-          '<div class="dp-step-head">' +
-            '<button type="button" class="dp-check-btn" data-dp-check="6">○</button>' +
-            '<span class="dp-step-num">۵</span>' +
-            '<span class="dp-step-title">احساس فراوانی</span>' +
-          '</div>' +
-          '<div class="dp-why-box">' +
-            '<span class="dp-def-chip">📖 <b>احساس فراوانی (Embodying):</b> حسِ اون واقعیت رو توی بدنت بساز — شادی، سلامتی، آرامش — تا فرکانست هماهنگ شه.</span>' +
-            'وقتی خودت رو «کسی که رسیده» می‌بینی، رفتارهایت خودبه‌خود با همون هویت هم‌راستا می‌شن.' +
-          '</div>' +
-          '<div class="dp-step-content">' +
-            '<div style="font-size:12px;font-weight:700;margin-bottom:6px;">💗 حسِ حالا</div>' +
-            '<div style="font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:10px;">حس رسیدن رو توی بدنت فراخوانی کن. کدوم احساس رو داری؟</div>' +
-            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
-              '<button type="button" class="btn tiny" onclick="openEmotionCapture(\'dispenza\',\'after\',\'تمرین روزانه\')">💗 ثبت حس</button>' +
-              '<span id="dp-emotion-feedback" style="font-size:11px;color:var(--muted);"></span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="dp-step-content" style="margin-top:14px;">' +
-            '<div style="padding:16px;background:linear-gradient(135deg,rgba(43,191,171,.12),rgba(94,200,240,.06));border-radius:14px;text-align:center;">' +
-              '<div style="font-size:11px;color:var(--emerald-700);font-weight:700;margin-bottom:6px;letter-spacing:.5px;">تأییدیه‌ی نهایی</div>' +
-              '<div style="font-size:15px;font-weight:800;color:var(--emerald-700);line-height:1.8;">«من همین حالا همون کسی هستم که می‌خواستم باشم.<br>همه‌چیز توی وجود من کامله.»</div>' +
-            '</div>' +
-            '<div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.7;">این جمله رو توی دلت سه بار تکرار کن و چند لحظه توی همون حس بمون.</div>' +
-          '</div>' +
-        '</div>' +
-
-        /* مدار عصبی */
-        '<div style="margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);">' +
-          '<div style="font-size:12px;font-weight:800;margin-bottom:8px;">🧠 مدار عصبی این تمرین</div>' +
-          '<div class="neural-card" id="np-dispenza-mount"></div>' +
         '</div>' +
 
         /* دکمه نهایی */
@@ -2041,7 +2009,7 @@
       el.classList.toggle('done', isDone);
     });
     var hint = document.getElementById('dp-progress-hint');
-    if (hint) hint.textContent = toFa(done.length) + ' از ۶ مرحله';
+    if (hint) hint.textContent = toFa(done.length) + ' از ۵ مرحله';
 
     var periodDays = getFutureDays();
     var totalDays = Math.min((state.dispenzaReadDays || []).length, periodDays);
@@ -2450,7 +2418,7 @@
       try {
         var dn = dpGetNeural();
         renderNeuralPathway('np-dispenza-mount', dn, {
-          label: 'تمرین روزانه', practiceKey: 'dispenza', onChange: saveState
+          label: 'تمرین', practiceKey: 'dispenza', showDayButtons: false, onChange: saveState
         });
       } catch(e){ console.warn('[np-dispenza]', e); }
     }
