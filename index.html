@@ -6973,6 +6973,10 @@ body.bg-mode-image #grat-root{background:transparent;}
       <div id="grat-edit-video-list"></div>
       <div id="grat-edit-audio-list"></div>
 
+      <div class="visibility-options" style="margin-top:12px;">
+        <label><input type="radio" name="grat-edit-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
+        <label><input type="radio" name="grat-edit-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
+      </div>
       <button class="primary-btn" style="margin:16px 0 8px;" onclick="saveGratEdit()">ذخیره تغییرات</button>
       <button class="ghost-btn" style="margin:0 0 8px;" onclick="deleteGratEntry()">🗑 حذف این شکرگذاری</button>
       <button class="ghost-btn" style="margin:0;" onclick="closeGratEditor()">انصراف</button>
@@ -7103,6 +7107,32 @@ function autoGrowGratInput(el){
   document.addEventListener('focusout', function(e){
     if(e.target && HANDLERS[e.target.id]){ clearTimer(); fired = false; }
   }, true);
+
+  /* کیبوردهای گوشی (مثل SwiftKey) معمولاً Enter واقعی نمی‌فرستن و فقط «شکست خط» تحویل می‌دن؛
+     پس اینجا مدت نگه داشتن کلید و تکرار سریع شکست خط رو هم می‌سنجیم */
+  let downAt = 0, breakAt = 0, lastBreak = 0;
+  function isBreak(e){ return e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph'; }
+  document.addEventListener('keydown', function(e){
+    if(e.target && HANDLERS[e.target.id] && !e.repeat) downAt = Date.now();
+  }, true);
+  document.addEventListener('beforeinput', function(e){
+    const el = e.target;
+    if(!el || !HANDLERS[el.id] || !isBreak(e)) return;
+    const now = Date.now();
+    if(fired){ e.preventDefault(); return; }
+    if(lastBreak && now - lastBreak < 150){ e.preventDefault(); lastBreak = 0; fire(el); return; }
+    lastBreak = now; breakAt = now;
+  }, true);
+  function holdCheck(e){
+    const el = e.target;
+    if(!el || !HANDLERS[el.id] || !downAt) return;
+    const now = Date.now();
+    if(now - downAt >= HOLD_MS && breakAt >= downAt - 40 && breakAt <= now + 40 && !fired){
+      downAt = 0; fire(el);
+    }
+  }
+  document.addEventListener('keyup', holdCheck, true);
+  document.addEventListener('touchend', function(e){ if(e.target && HANDLERS[e.target.id]) holdCheck(e); }, true);
 })();
 
 /* ============================================================
@@ -8283,14 +8313,7 @@ function renderHome(){
         ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
         ${(g.videos && g.videos.length) ? g.videos.map(v=>`<div class="gv-vid" onclick="event.stopPropagation()"><video controls playsinline preload="metadata" data-gvid="${v.id}"></video></div>`).join('') : ''}
       </div>
-      ${g.source==='manual' ? `
-      <div class="grat-edit-actions">
-        <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">
-          ${g.shared
-            ? `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--emerald-700);"><use href="#ico-globe"/></svg>`
-            : `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--muted);"><use href="#ico-lock"/></svg>`}
-        </button>
-      </div>` : ''}
+
       ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}`;
     wrap.appendChild(row);
   });
@@ -8978,13 +9001,6 @@ function renderHistory(){
           ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
           ${(g.videos && g.videos.length) ? g.videos.map(v=>`<div class="gv-vid" onclick="event.stopPropagation()"><video controls playsinline preload="metadata" data-gvid="${v.id}"></video></div>`).join('') : ''}
         </div>
-        <div class="grat-edit-actions">
-          <button class="share-toggle-btn" title="${g.shared ? 'برای دوستان قابل دیدنه — خاموش کردنش' : 'با دوستان به اشتراک بذار'}" onclick="event.stopPropagation();toggleGratitudeShare(${g.id})">
-            ${g.shared
-              ? `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--emerald-700);"><use href="#ico-globe"/></svg>`
-              : `<svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;color:var(--muted);"><use href="#ico-lock"/></svg>`}
-          </button>
-        </div>
         ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}
       </div>
     `;
@@ -9058,6 +9074,7 @@ function openGratEditor(id){
   renderGratImageThumbs('edit');
   renderGratAudioList('edit');
   setGratRecordBtn('edit', false);
+  const evr = document.querySelector('input[name="grat-edit-vis"][value="' + (g.shared ? 'public' : 'private') + '"]'); if(evr) evr.checked = true;
   document.getElementById('grat-edit-modal').classList.add('show');
 }
 function closeGratEditor(){
@@ -9091,10 +9108,16 @@ async function saveGratEdit(){
   g.videos = savedVideos;
   gratVidDelete(removedVideos);
   g.image = g.images.length ? g.images[0].src : null;
+  const visR = document.querySelector('input[name="grat-edit-vis"]:checked');
+  let wantShared = visR ? visR.value === 'public' : wasShared;
+  if(wantShared && !wasShared && !window.supabaseClient){ wantShared = false; toast('این قابلیت هنوز فعال نشده 🌱'); }
+  g.shared = wantShared;
   saveState();
   if(wasShared){
-    // چون اشتراک‌گذاری بر اساس متن قبلی ثبت شده، اول نسخه‌ی قدیمی رو حذف و بعد نسخه‌ی جدید رو اضافه می‌کنیم
+    // چون اشتراک‌گذاری بر اساس متن قبلی ثبت شده، اول نسخه‌ی قدیمی رو حذف و بعد (اگه هنوز اشتراکیه) نسخه‌ی جدید رو اضافه می‌کنیم
     unsyncGratitudeShare(oldEntrySnapshot);
+    if(wantShared) syncGratitudeShare(g);
+  } else if(wantShared){
     syncGratitudeShare(g);
   }
   closeGratEditor();
