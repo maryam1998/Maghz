@@ -73,52 +73,68 @@
     '🌐': 'ico-globe'
   };
 
+  // یک regex واحد (بلندترین کلیدها اول) به‌جای ده‌ها بار includes برای هر گره‌ی متنی
+  const EMOJI_KEYS = Object.keys(EMOJI_MAP).sort(function(a, b){ return b.length - a.length; });
+  const EMOJI_RE = new RegExp(EMOJI_KEYS.map(function(k){ return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'g');
+  const EMOJI_TEST = new RegExp(EMOJI_RE.source);
+  const SKIP_TAGS = { SCRIPT:1, STYLE:1, SVG:1, svg:1, PATH:1, USE:1, TEXTAREA:1, INPUT:1, AUDIO:1, VIDEO:1, IMG:1, CANVAS:1, SELECT:1, OPTION:1 };
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function makeIcon(iconId){
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'ico');
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('href', '#' + iconId);
+    svg.appendChild(use);
+    return svg;
+  }
+
   // تابع جایگزینی ایموجی‌ها در گره‌های متنی
   function replaceEmojisInNode(node) {
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.nodeValue;
-      let hasEmoji = false;
-      let newHtml = text;
-
-      // بررسی وجود ایموجی در متن
-      for (const [emoji, iconId] of Object.entries(EMOJI_MAP)) {
-        if (newHtml.includes(emoji)) {
-          hasEmoji = true;
-          // جایگزینی ایموجی با تگ SVG
-          newHtml = newHtml.split(emoji).join(`<svg class="ico"><use href="#${iconId}"/></svg>`);
-        }
+      if (!text || !EMOJI_TEST.test(text) || !node.parentNode) return;
+      const span = document.createElement('span');
+      span.className = 'emoji-replaced';
+      let last = 0, m;
+      EMOJI_RE.lastIndex = 0;
+      while ((m = EMOJI_RE.exec(text)) !== null) {
+        if (m.index > last) span.appendChild(document.createTextNode(text.slice(last, m.index)));
+        span.appendChild(makeIcon(EMOJI_MAP[m[0]]));
+        last = m.index + m[0].length;
       }
-
-      if (hasEmoji) {
-        const span = document.createElement('span');
-        span.className = 'emoji-replaced';
-        span.innerHTML = newHtml;
-        node.parentNode.replaceChild(span, node);
-      }
+      if (last < text.length) span.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(span, node);
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // صرف‌نظر کردن از تگ‌های اسکریپت، استایل و خود SVG
-      if (['SCRIPT', 'STYLE', 'SVG', 'PATH', 'USE'].includes(node.tagName)) return;
-      if (node.tagName === 'svg') return;
-
-      // بررسی فرزندان
+      if (SKIP_TAGS[node.tagName] || (node.classList && node.classList.contains('emoji-replaced'))) return;
       for (let i = node.childNodes.length - 1; i >= 0; i--) {
         replaceEmojisInNode(node.childNodes[i]);
       }
     }
   }
 
-  // اجرای تابع پس از بارگذاری کامل صفحه
   window.addEventListener('DOMContentLoaded', () => {
     replaceEmojisInNode(document.body);
   });
 
-  // برای محتوایی که به صورت داینامیک اضافه می‌شود (مثل مودال‌ها یا لیست‌ها)
+  // محتوای داینامیک: تغییرات پشت‌سرهم جمع می‌شن و یک‌جا در فریم بعدی پردازش می‌شن
+  let queue = [], scheduled = false;
+  function flush() {
+    scheduled = false;
+    const nodes = queue; queue = [];
+    nodes.forEach(function(n){ if (n.isConnected) replaceEmojisInNode(n); });
+  }
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
-        replaceEmojisInNode(node);
+        if (node.nodeType === 1 && node.classList && node.classList.contains('emoji-replaced')) return;
+        queue.push(node);
       });
     });
+    if (queue.length && !scheduled) {
+      scheduled = true;
+      (window.requestAnimationFrame || setTimeout)(flush);
+    }
   });
 
   observer.observe(document.body, { childList: true, subtree: true });

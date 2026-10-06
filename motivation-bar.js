@@ -25,8 +25,7 @@
     '#motiv-bar{position:fixed;top:0;left:0;right:0;z-index:150;display:none;align-items:center;justify-content:center;',
     '  padding:calc(7px + env(safe-area-inset-top,0px)) 14px 7px;min-height:34px;box-sizing:border-box;',
     '  background:var(--panel-bg);border-bottom:1px solid var(--panel-border);',
-    '  box-shadow:0 2px 12px rgba(0,0,0,.12);cursor:pointer;',
-    '  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}',
+    '  box-shadow:0 2px 12px rgba(0,0,0,.12);cursor:pointer;}',
     'body.motiv-on #motiv-bar{display:flex;}',
     '#motiv-bar .mb-txt{font-family:"Vazirmatn",Tahoma,sans-serif;font-size:12.5px;font-weight:600;line-height:1.7;',
     '  color:var(--text-main);text-align:center;direction:rtl;transition:opacity .35s;',
@@ -44,6 +43,7 @@
     '.mv-item input[type=checkbox]{width:18px;height:18px;flex:none;}',
     '.mv-item .mv-t{flex:1;min-width:0;font-size:13px;line-height:1.7;direction:rtl;text-align:right;word-break:break-word;}',
     '.mv-item.off .mv-t{opacity:.5;}',
+    '.mv-item .mv-edit{flex:1;min-width:0;padding:8px 10px;border-radius:8px;border:1px solid var(--accent,#c9a227);background:rgba(127,127,127,.08);color:inherit;font-family:inherit;font-size:13px;line-height:1.7;direction:rtl;text-align:right;box-sizing:border-box;resize:vertical;min-height:44px;}',
     '.mv-item button{flex:none;width:30px;height:30px;border:none;border-radius:8px;background:transparent;color:inherit;font-size:15px;cursor:pointer;padding:0;}',
     '.mv-item button:active{background:rgba(127,127,127,.2);}',
     '.mv-arch-toggle{margin-top:10px;border:none;background:transparent;color:inherit;font-family:inherit;font-size:12.5px;cursor:pointer;padding:6px 2px;opacity:.8;}'
@@ -106,12 +106,35 @@
     var html = '';
     if (!archived) html += '<input type="checkbox"' + (l.on ? ' checked' : '') + '>';
     html += '<span class="mv-t"></span>';
+    html += '<button type="button" data-a="edit" aria-label="ویرایش">✎</button>';
     html += '<button type="button" data-a="arch" aria-label="' + (archived ? 'بازگردانی' : 'بایگانی') + '">' + (archived ? '↩' : '🗂') + '</button>';
     html += '<button type="button" data-a="del" aria-label="حذف">✕</button>';
     d.innerHTML = html;
     d.querySelector('.mv-t').textContent = l.text;
     var cb = d.querySelector('input');
     if (cb) cb.addEventListener('change', function(){ l.on = cb.checked; save(); render(); apply(); });
+    var editBtn = d.querySelector('[data-a="edit"]');
+    editBtn.addEventListener('click', function(){
+      var span = d.querySelector('.mv-t');
+      if (!span) return;
+      var ta = document.createElement('textarea');
+      ta.className = 'mv-edit'; ta.value = l.text; ta.rows = 2;
+      d.replaceChild(ta, span);
+      editBtn.textContent = '✓'; editBtn.setAttribute('aria-label', 'ذخیره');
+      ta.focus();
+      var done = false;
+      function commit(){
+        if (done) return; done = true;
+        var v = (ta.value || '').trim();
+        if (v) l.text = v;
+        save(); render(); apply();
+      }
+      editBtn.onclick = function(ev){ ev.stopPropagation(); commit(); };
+      ta.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); commit(); }
+        else if (e.key === 'Escape'){ done = true; render(); }
+      });
+    }, { once:true });
     d.querySelector('[data-a="arch"]').addEventListener('click', function(){ l.arch = !l.arch; if (!l.arch) l.on = true; save(); render(); apply(); });
     d.querySelector('[data-a="del"]').addEventListener('click', function(){
       cfg.lines = cfg.lines.filter(function(x){ return x !== l; }); save(); render(); apply();

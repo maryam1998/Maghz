@@ -1439,6 +1439,7 @@ html[data-theme="dark"] .np-emotion-row button{
     display:flex; align-items:center; justify-content:center; font-size:19px;
     flex:none; overflow:hidden;
   }
+#grat-root .tx-item{content-visibility:auto; contain-intrinsic-size:auto 90px;}
 #grat-root .tx-item .mid{flex:1; min-width:0;}
 #grat-root .tx-item .mid .t1{font-size:13.5px; font-weight:700; white-space:pre-wrap; word-break:break-word;}
 #grat-root .tx-item .mid .t2{font-size:11.5px; color:var(--muted); margin-top:2px;}
@@ -2348,6 +2349,7 @@ html[data-theme="dark"] .np-emotion-row button{
 
 /* ===== ambient background system: ساده (Calm) vs پس‌زمینه دلخواه (Custom Image) ===== */
 #ambient-bg{
+  contain:strict;transform:translateZ(0);
   position:fixed;inset:0;z-index:1;
   pointer-events:none;overflow:hidden;
   opacity:0;transition:opacity .7s ease;
@@ -7319,6 +7321,7 @@ function playUndoSoft(){
 
 const STORAGE_KEY = 'abundanceBankData';
 let state = loadState();
+var gratListLimit = { home: 40, hist: 40 };
 let cart = []; // {id, name, icon, image, price, qty}
 let pendingItems = []; // items being built in the store form before adding to cart
 let customImage = null;
@@ -7747,7 +7750,7 @@ function loadState(rawOverride){
 function defaultCurrentBelief(){
   return { trackingItems:[], trackingActive:false, attentionLever:50, visualNote:'', visualImages:[], audioTrack:null, neural:{logs:{}, lastSyncKey:null, habitFormed:false}, trackingNeural:{logs:{}, lastSyncKey:null, habitFormed:false}, visualNeural:{logs:{}, lastSyncKey:null, habitFormed:false} };
 }
-function saveState(){
+function saveStateSync(){
   let res = 'fail';
   try {
     res = DS.persist(STORAGE_KEY, 'state:' + STORAGE_KEY, state);
@@ -7760,6 +7763,19 @@ function saveState(){
   }
   return res;
 }
+/* ذخیره‌ی پشت‌سرهم (مثلاً با هر حرفی که تایپ می‌شه) یک‌جا و بعد از ۳۰۰ میلی‌ثانیه انجام می‌شه تا صفحه قفل نکنه */
+let __saveTimer = null, __lastSaveRes = 'full';
+function saveState(){
+  if(__saveTimer) return __lastSaveRes;
+  __saveTimer = setTimeout(function(){ __saveTimer = null; __lastSaveRes = saveStateSync(); }, 300);
+  return __lastSaveRes;
+}
+function flushSaveState(){
+  if(__saveTimer){ clearTimeout(__saveTimer); __saveTimer = null; __lastSaveRes = saveStateSync(); }
+}
+window.addEventListener('pagehide', flushSaveState);
+window.addEventListener('beforeunload', flushSaveState);
+document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') flushSaveState(); });
 /* اگر نسخه‌ی کامل‌تر/جدیدتری در IndexedDB باشد (مثلاً چون localStorage پر بود) همان را برمی‌دارد */
 (function hydrateMainState(){
   const KEY = 'state:' + STORAGE_KEY;
@@ -8339,8 +8355,9 @@ function renderHome(){
 
   const wrap = document.getElementById('home-recent');
   wrap.innerHTML = '';
-  const all = [...state.gratitude].reverse();
-  if(all.length===0){
+  const allFull = [...state.gratitude].reverse();
+  const all = allFull.slice(0, gratListLimit.home);
+  if(allFull.length===0){
     wrap.innerHTML = '<div class="empty-hint">هنوز شکرگذاری‌ای ثبت نکردی. یا از بازی فراوانی بخر یا همین‌جا بنویس 🌱</div>';
     return;
   }
@@ -8360,14 +8377,21 @@ function renderHome(){
       <div class="mid">
         <div class="t1">${nl2br(escapeHtml(gratDisplayText(g.text)))}</div>
         <div class="t2">${g.day} ${g.date} - ${g.time}</div>
-        ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false"></button>`).join('')}</div>` : ''}
-        ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
+        ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false" loading="lazy" decoding="async"></button>`).join('')}</div>` : ''}
+        ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls preload="none" src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
         ${(g.videos && g.videos.length) ? g.videos.map(v=>`<div class="gv-vid" onclick="event.stopPropagation()"><video controls playsinline preload="metadata" data-gvid="${v.id}"></video></div>`).join('') : ''}
       </div>
 
       ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}`;
     wrap.appendChild(row);
   });
+  if(allFull.length > all.length){
+    const more = document.createElement('button');
+    more.type = 'button'; more.className = 'ghost-btn'; more.style.cssText = 'margin:10px auto;display:block;';
+    more.textContent = 'نمایش بیشتر (' + (allFull.length - all.length).toLocaleString('fa-IR') + ' مورد دیگر)';
+    more.onclick = function(){ gratListLimit.home += 40; renderHome(); };
+    wrap.appendChild(more);
+  }
   gratHydrateVideos(wrap);
 }
 async function addGratitudeHome(){
@@ -9040,7 +9064,8 @@ function renderHistory(){
   updateGlobalGratCount(faTotal);
 
   let itemsHTML = '';
-  [...state.gratitude].reverse().forEach(g=>{
+  const histAll = [...state.gratitude].reverse();
+  histAll.slice(0, gratListLimit.hist).forEach(g=>{
     const displayText = gratDisplayText(g.text);
     itemsHTML += `
       <div class="tx-item" style="cursor:pointer;" onclick="gratRowClick(${g.id})">
@@ -9048,14 +9073,17 @@ function renderHistory(){
         <div class="mid">
           <div class="t1">${nl2br(escapeHtml(displayText))}</div>
           <div class="t2">${g.day} ${g.date} - ${g.time}</div>
-          ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false"></button>`).join('')}</div>` : ''}
-          ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
+          ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false" loading="lazy" decoding="async"></button>`).join('')}</div>` : ''}
+          ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls preload="none" src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
           ${(g.videos && g.videos.length) ? g.videos.map(v=>`<div class="gv-vid" onclick="event.stopPropagation()"><video controls playsinline preload="metadata" data-gvid="${v.id}"></video></div>`).join('') : ''}
         </div>
         ${g.amount ? `<div class="amt">${formatMoney(g.amount)}</div>` : ''}
       </div>
     `;
   });
+  if(histAll.length > gratListLimit.hist){
+    itemsHTML += '<button type="button" class="ghost-btn" style="margin:10px auto;display:block;" onclick="gratListLimit.hist+=40;renderHistory()">نمایش بیشتر (' + (histAll.length - gratListLimit.hist).toLocaleString('fa-IR') + ' مورد دیگر)</button>';
+  }
   list.innerHTML = itemsHTML;
   gratHydrateVideos(list);
 }
@@ -9268,7 +9296,7 @@ function handleMeditationAudio(files){
     state.currentBelief.audioTrack = { name: f.name, src: r.result };
     renderMeditationAudio();
     document.getElementById('meditation-audio-input').value = '';
-    const res = saveState();
+    const res = saveStateSync();
     if(!(res === 'fail' && DS.ok === false)) toast('موسیقی اضافه شد 🎵');
   };
   r.readAsDataURL(f);
