@@ -1087,12 +1087,14 @@
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
           '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="'+(depth?'نام زیرشاخه':'نام شاخه')+'..." autocomplete="off">'+
           '<span class="gs-fib'+(fib?' on':'')+'" title="رشته‌های عصبی ساخته‌شده">رشته: '+toFa(fib)+'</span>'+
+          '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
+          '<button type="button" class="gs-nbtn" data-nact="addtime" aria-label="افزودن زمان" title="افزودن زمان (دقیقه)">＋⌚</button>'+
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن زیرشاخه" title="افزودن زیرشاخه">＋</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
         '</div>'+
         '<div class="gs-days">'+c.h+'</div>'+
-        '<div class="gs-nmeta">'+toFa(c.done)+' روز از '+toFa(pi.total)+' روز دوره انجام شده</div>'+
+        '<div class="gs-nmeta">'+toFa(c.done)+' روز از '+toFa(pi.total)+' روز دوره انجام شده<span class="gs-tsum"> · ⏱ امروز '+fmtDur(nodeDaySecs(n, pi.todayJK))+' · دوره '+fmtDur(nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)))+'</span></div>'+
       '</div>';
       if (addingFor === n.id) h += '<div style="margin-inline-start:'+(Math.min(depth+1,4)*12)+'px;">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
       (n.children||[]).forEach(ch=>{ h += nodeHTML(ch, g, pi, depth+1); });
@@ -1209,7 +1211,8 @@
       }
       h += iconEditHTML(g);
       h += '<div class="gs-psum"><span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span>'+
-           '<span>· امروز <b>'+toFa(todayCnt)+'</b> کار · <b>'+toFa(fibs)+'</b> رشته</span><span class="sp"></span>'+
+           '<span>· امروز <b>'+toFa(todayCnt)+'</b> کار · <b>'+toFa(fibs)+'</b> رشته</span>'+
+           '<span>· ⏱ امروز <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeDaySecs(n, pi.todayJK),0))+'</b> · دوره <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)),0))+'</b></span><span class="sp"></span>'+
            (pi.finished ? '' : '<button type="button" class="gs-mini" data-gact="days">تنظیم روزهای دوره</button>')+'</div>';
       if (pi.finished){
         h += '<div class="gs-done-banner">دوره‌ی '+pcOrd(pi.gp.past.length)+' تموم شد! برای ادامه، دوره‌ی بعدی را شروع کن؛ دوره‌های قبلی نگه داشته می‌شوند.<br>'+
@@ -1523,6 +1526,12 @@
         touch(g); draw();
         celebrate(node.color || g.color, r.left + r.width/2, r.top + r.height/2);
         if (typeof toast === 'function') toast('🏆 به آرشیو دستاوردها رفت');
+      } else if (nact.dataset.nact === 'timer'){
+        if (timerRunning(found.node)) stopTimer(found.node); else startTimer(found.node);
+        touch(g); render(); draw();
+      } else if (nact.dataset.nact === 'addtime'){
+        const mm = askMinutes('چند دقیقه اضافه بشه؟ (عدد منفی = کم کردن)');
+        if (mm){ addMinutes(found.node, periodInfo(g).todayJK, mm); touch(g); render(); draw(); }
       } else if (nact.dataset.nact === 'add'){
         addingFor = nid; draw(); focusAddInput();
       } else if (nact.dataset.nact === 'del'){
@@ -2173,6 +2182,7 @@
 
     let out = `<g class="${twigClass}"><title>${esc(action.text||'(بدون توضیح)')} — قطر ${weight}</title>`;
     out += geom.poly ? taperedPoly(geom.poly, color, baseWidth, tipWidth, 0.92) : taperedPath(geom.originPt, c1, c2, end, color, baseWidth, tipWidth, 0.92);
+    out += footprintsSVG(goal, action, geom, color, scale);
 
     const handleR = Math.max(15, 18*scale);
     out += `<circle data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" cx="${end.x}" cy="${end.y}" r="${handleR}" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>`;
@@ -3606,6 +3616,125 @@
     return null;
   }
 
+  /* ================= زمان‌سنج روزانه + ردپا روی نقشه ================= */
+  function pcCache(){ return window.__pcKeyCache || (window.__pcKeyCache = new Map()); }
+  function pcPeriodKeys(startDate, days){
+    const c = pcCache(), ck = startDate + '|' + days;
+    let st = c.get(ck);
+    if (!st){
+      st = new Set();
+      const d0 = pcParseKey(startDate);
+      for (let d=0; d<days; d++) st.add(pcJKey(new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()+d)));
+      if (c.size > 40) c.clear();
+      c.set(ck, st);
+    }
+    return st;
+  }
+  function hostPeriodKeys(g){ const gp = ensureGoalPeriod(g); return pcPeriodKeys(gp.startDate, gp.days); }
+  function nodeLogCount(n, keys){ let c = 0; if (n.logs) for (const k in n.logs){ if (n.logs[k] && keys.has(k)) c++; } return c; }
+  function nodeSecs(n, keys){ let t = 0; if (n.time) for (const k in n.time){ if (!keys || keys.has(k)) t += (+n.time[k] || 0); } return t; }
+  function nodeDaySecs(n, jk){ return (n.time && +n.time[jk]) || 0; }
+  function fmtDur(sec){
+    sec = Math.max(0, Math.round(sec));
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+    if (!h && !m) return sec ? toFa(sec) + ' ثانیه' : toFa(0) + ' دقیقه';
+    return (h ? toFa(h) + ' ساعت' : '') + (h && m ? ' و ' : '') + (m ? toFa(m) + ' دقیقه' : '');
+  }
+  function fmtClock(sec){
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), x = sec%60;
+    const p = v => String(v).padStart(2, '0');
+    return toFa(h ? h + ':' + p(m) + ':' + p(x) : p(m) + ':' + p(x));
+  }
+  function timerRunning(n){ return typeof n.timerStart === 'number' && n.timerStart > 0; }
+  function timerLiveHTML(n){ return '<span class="tm-live" data-start="' + n.timerStart + '">' + fmtClock((Date.now() - n.timerStart)/1000) + '</span>'; }
+  function autoTick(n, jk){ if (!(n.logs && n.logs[jk])) toggleRoutineLog(n.id, jk); }
+  function startTimer(n){ n.timerStart = Date.now(); scheduleMapSave(); }
+  function stopTimer(n){
+    if (!timerRunning(n)) return 0;
+    const el = Math.max(0, Math.floor((Date.now() - n.timerStart)/1000));
+    const jk = pcJKey(new Date(n.timerStart));
+    delete n.timerStart;
+    if (el > 0){
+      if (!n.time || typeof n.time !== 'object') n.time = {};
+      n.time[jk] = (n.time[jk] || 0) + el;
+      autoTick(n, jk);
+    }
+    scheduleMapSave();
+    return el;
+  }
+  function addMinutes(n, jk, mins){
+    const secs = Math.round(mins * 60);
+    if (!secs) return;
+    if (!n.time || typeof n.time !== 'object') n.time = {};
+    n.time[jk] = Math.max(0, (n.time[jk] || 0) + secs);
+    if (!n.time[jk]) delete n.time[jk];
+    if (secs > 0) autoTick(n, jk);
+    scheduleMapSave();
+  }
+  function askMinutes(question){
+    const input = window.prompt(question, '30');
+    if (input === null) return 0;
+    const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+    const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }).replace('٫', '.');
+    const v = parseFloat(norm);
+    if (!v || isNaN(v) || Math.abs(v) > 1440){ if (typeof toast === 'function') toast('یه عدد بین ۱ تا ۱۴۴۰ دقیقه وارد کن'); return 0; }
+    return v;
+  }
+  setInterval(()=>{
+    document.querySelectorAll('.tm-live[data-start]').forEach(el=>{ el.textContent = fmtClock((Date.now() - (+el.dataset.start)) / 1000); });
+  }, 1000);
+  (function(){
+    if (document.getElementById('tm-css')) return;
+    const st = document.createElement('style'); st.id = 'tm-css';
+    st.textContent =
+      '.pc-time-btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}'+
+      '.pc-time-btns .btn{flex:1;font-size:11.5px;padding:8px;}'+
+      '.gs-tmr{font-size:11px;white-space:nowrap;}'+
+      '.gs-tmr.on{color:#e5484d;border-color:#e5484d;}'+
+      '.gs-tsum{color:var(--text-dim);}';
+    document.head.appendChild(st);
+  })();
+
+  /* ردپا: هر روزِ تیک‌خورده = یک جفت کفش روی مسیر شاخه، از سرِ شاخه به سمت هدف */
+  function stepPoint(geom, t){
+    if (geom.poly){ const q = polyPointAt(geom.poly, t); return { x:q.pt.x, y:q.pt.y, a:q.angle }; }
+    const pt = bezierPoint(geom.originPt, geom.c1, geom.c2, geom.end, t);
+    return { x:pt.x, y:pt.y, a:bezierTangentAngle(geom.originPt, geom.c1, geom.c2, geom.end, t) };
+  }
+  function footSVG(x, y, ang, color, op, sc, left){
+    const deg = ang*180/Math.PI + 90, m = left ? -1 : 1;
+    return '<g transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') rotate(' + deg.toFixed(0) + ') scale(' + (sc*m).toFixed(2) + ',' + sc.toFixed(2) + ')" fill="' + color + '" opacity="' + op.toFixed(2) + '">' +
+      '<ellipse cx="0" cy="-2.4" rx="2.3" ry="3.4"/><ellipse cx="0" cy="3.1" rx="1.7" ry="1.9"/><ellipse cx="-1.1" cy="-6.2" rx="1.1" ry="1.2"/></g>';
+  }
+  function footprintsSVG(goal, action, geom, color, scale){
+    const keys = hostPeriodKeys(goal);
+    const N = nodeLogCount(action, keys);
+    if (!N) return '';
+    const todayJK = pcJKey(new Date());
+    const todayDone = !!(action.logs && action.logs[todayJK]);
+    const L = (Math.hypot(geom.end.x - geom.originPt.x, geom.end.y - geom.originPt.y) * 1.1) || 1;
+    let sp = Math.max(7, 12*scale);
+    const usable = L * 0.86;
+    if (N*sp > usable) sp = usable / N;
+    const span = sp / L;
+    const sc = Math.max(0.55, 0.8*scale);
+    const half = 3.3 * Math.max(0.6, scale);
+    let out = '<g class="foot-trail" style="pointer-events:none;">';
+    for (let i=0; i<N; i++){
+      const t = Math.max(0.05, 0.95 - i*span);
+      const p = stepPoint(geom, t);
+      const a = p.a + Math.PI;
+      const nx = -Math.sin(a), ny = Math.cos(a);
+      const fx = Math.cos(a) * sp * 0.2, fy = Math.sin(a) * sp * 0.2;
+      const newest = (i === N-1);
+      const op = (newest && todayDone) ? 1 : (0.5 + 0.35 * (N > 1 ? i/(N-1) : 1));
+      out += footSVG(p.x + nx*half + fx, p.y + ny*half + fy, a, color, op, sc, true);
+      out += footSVG(p.x - nx*half - fx, p.y - ny*half - fy, a, color, op, sc, false);
+    }
+    return out + '</g>';
+  }
+
   function pcOrd(i){ return PC_MONTH_ORD[i] || toFa(i+1); }
 
   function renderPanelPeriodCal(){
@@ -3646,7 +3775,7 @@
         if (future) cls += ' future';
         if (!future) cls += ' tap';
         if (d % 30 === 29 || d === days-1) cls += ' month-end';
-        if (isGoal && gKey === pcSelectedKey) cls += ' sel';
+        if (gKey === pcSelectedKey) cls += ' sel';
         html += '<div class="'+cls+'" data-pc-key="'+gKey+'"'+((done||sub) ? ' style="background:'+esc(ctx.color)+';"' : '')+'>'+((done||sub) ? '✓' : '')+'</div>';
       }
       return { html: html, doneCount: doneCount };
@@ -3674,8 +3803,28 @@
       info += '<div class="pc-info"><b>'+pcFaDate(date)+'</b> — ' + (rows.length ? (toFa(rows.length)+' کار انجام شد') : 'کاری ثبت نشده') +
         (rows.length ? '<ul>'+rows.map(n=>{
           const v = n.logs[jKey];
-          return '<li>'+esc(n.text || 'بدون نام')+(v && v !== ROUTINE_DONE_MARK ? ' — '+esc(v) : '')+'</li>';
+          const ts = nodeDaySecs(n, jKey);
+          return '<li>'+esc(n.text || 'بدون نام')+(v && v !== ROUTINE_DONE_MARK ? ' — '+esc(v) : '')+(ts ? ' · ⏱ '+fmtDur(ts) : '')+'</li>';
         }).join('')+'</ul>' : '') + '</div>';
+    }
+    {
+      const todayJK = pcJKey(new Date());
+      const keys = pcPeriodKeys(gp.startDate, total);
+      let selJK = todayJK, selDate = new Date();
+      if (pcSelectedKey){ const d = pcParseKey(pcSelectedKey), jk = pcJKey(d); if (keys.has(jk)){ selJK = jk; selDate = d; } }
+      const srcNodes = isGoal ? ctx.sources : [ctx.node].concat(ctx.sources);
+      const daySecs = srcNodes.reduce((a,n)=> a + nodeDaySecs(n, selJK), 0);
+      const perSecs = srcNodes.reduce((a,n)=> a + nodeSecs(n, keys), 0);
+      const dayLabel = selJK === todayJK ? 'امروز' : pcFaDate(selDate);
+      info += '<div class="pc-info pc-time"><b>⏱ زمان</b><div>'+dayLabel+': <b>'+fmtDur(daySecs)+'</b> · مجموع دوره: <b>'+fmtDur(perSecs)+'</b>'+(!isGoal && ctx.sources.length ? ' <span>(با زیرشاخه‌ها)</span>' : '')+'</div>';
+      if (!isGoal){
+        const nn = ctx.node, run = timerRunning(nn);
+        info += '<div class="pc-time-btns">'+(run
+          ? '<button type="button" class="btn" data-pc-timer="stop">⏹ توقف '+timerLiveHTML(nn)+'</button>'
+          : '<button type="button" class="btn gold" data-pc-timer="start">▶️ شروع تایمر</button>')+
+          '<button type="button" class="btn" data-pc-addtime="'+selJK+'">＋ زمان ('+dayLabel+')</button></div>';
+      }
+      info += '</div>';
     }
     const endOfPeriod = new Date(start.getFullYear(), start.getMonth(), start.getDate()+total);
     const finished = today >= endOfPeriod;
@@ -3741,6 +3890,24 @@
     if (!t || !t.closest) return;
     if (t.closest('[data-pc-settings]')){ pcSetDays(); return; }
     if (t.closest('[data-pc-new]')){ pcNewPeriod(); return; }
+    const tb = t.closest('[data-pc-timer]');
+    if (tb){
+      const c0 = pcContext();
+      if (c0 && c0.node){
+        if (tb.dataset.pcTimer === 'start') startTimer(c0.node); else stopTimer(c0.node);
+        render(); renderPanelPeriodCal();
+      }
+      return;
+    }
+    const ab = t.closest('[data-pc-addtime]');
+    if (ab){
+      const c0 = pcContext();
+      if (c0 && c0.node){
+        const m = askMinutes('چند دقیقه اضافه بشه؟ (عدد منفی = کم کردن)');
+        if (m){ addMinutes(c0.node, ab.dataset.pcAddtime, m); render(); renderPanelPeriodCal(); }
+      }
+      return;
+    }
     const cell = t.closest('.pc-day[data-pc-key]');
     if (!cell || cell.classList.contains('future')) return;
     const ctx = pcContext();
@@ -3749,6 +3916,7 @@
       const jk = pcJKey(pcParseKey(cell.dataset.pcKey));
       const cur = ctx.node.logs && ctx.node.logs[jk];
       if (cur && cur !== ROUTINE_DONE_MARK && !window.confirm('برای این روز یک یادداشت ثبت شده:\n«'+String(cur).slice(0,80)+'»\nبرداشته بشه؟')) return;
+      pcSelectedKey = cell.dataset.pcKey;
       toggleRoutineLog(panelTarget.actionId, jk);
     } else {
       pcSelectedKey = (pcSelectedKey === cell.dataset.pcKey) ? null : cell.dataset.pcKey;
