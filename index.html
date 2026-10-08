@@ -101,6 +101,12 @@
   /* برمی‌گرداند: 'full' | 'lite' | 'fail' (وضعیت localStorage؛ IndexedDB جداگانه و ناهمزمان ذخیره می‌شود) */
   DS.persist = function(lsKey, idbKey, obj){
     obj._savedAt = Date.now();
+    /* تا وقتی نسخه‌ی کامل از IndexedDB برنگشته، state بدون عکس/صداست: نباید جای نسخه‌ی کامل ذخیره شود و باید همیشه با برچسب lite برود */
+    if(held[idbKey]){
+      var resH = 'lite';
+      try{ localStorage.setItem(lsKey, DS.lite(Object.assign({}, obj, { _lite:true }))); }catch(eH){ resH = 'fail'; }
+      return resH;
+    }
     var json = JSON.stringify(obj), res = 'full';
     try{ localStorage.setItem(lsKey, json); }
     catch(e){
@@ -3018,17 +3024,22 @@ body.bg-mode-image #grat-root{background:transparent;}
       <option value="beta">بتا (۱۲–۳۰ Hz) — تمرکز فعال</option>
       <option value="gamma">گاما (۳۰+ Hz) — اوج تمرکز و بینش</option>
     </select>
-    <button class="btn gold full" id="add-branch-btn" style="margin-bottom:10px;">＋ شاخه جدید</button>
-    <div id="panel-actions-list"></div>
+    <div id="branches-block">
+      <label class="small" id="bs-label">شکل شاخه‌ها (برای همه‌ی شاخه‌های این مجموعه)</label>
+      <div id="branch-style-picker"></div>
+      <button class="btn gold full" id="add-branch-btn" style="margin:10px 0;">＋ شاخه جدید</button>
+      <div id="panel-actions-list"></div>
+    </div>
   </div>
 
-  <div id="panel-ring-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+  <div id="panel-ring-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;">
     <div style="display:none">
       <input type="color" id="panel-ring-color" value="#2dd4bf">
       <div class="swatches" id="panel-ring-color-swatches"></div>
     </div>
     <label class="small">توضیحات (چند خطی)</label>
-    <textarea id="panel-ring-note" placeholder="چیزی که حس می‌کنی..." style="min-height:80px;flex:1;"></textarea>
+    <textarea id="panel-ring-note" placeholder="چیزی که حس می‌کنی..." style="min-height:80px;flex:none;"></textarea>
+    <div id="ring-branches-slot" style="margin-top:12px;"></div>
   </div>
 
   <div id="panel-action-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;">
@@ -3042,6 +3053,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     <label class="small">قطر شاخه</label>
     <input type="range" id="panel-action-weight" min="1" max="10" value="5">
     <span id="panel-action-weight-val">۵</span>
+    <label class="small" style="margin-top:10px;">شکل این شاخه</label>
+    <div id="panel-action-style"></div>
     <label class="small" style="margin-top:10px;display:flex;align-items:center;gap:8px;cursor:pointer;">
       <input type="checkbox" id="panel-action-routine" style="width:16px;height:16px;">
       <span>این یه کار روتینه که باید مرتب انجامش بدم</span>
@@ -3390,6 +3403,14 @@ body.bg-mode-image #grat-root{background:transparent;}
   };
 
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  /* میزبان شاخه‌ها: یک هدف یا یک «نشانه‌ی نزدیکی» */
+  function findHost(id){ return state.goals.find(g=>g.id===id) || state.rings.find(r=>r.id===id) || null; }
+  function isRingHost(h){ return state.rings.indexOf(h) >= 0; }
+  const BRANCH_STYLES = { organic:'طبیعی', straight:'مستقیم', curve:'قوسی', wave:'موجی', elbow:'زاویه‌دار', step:'پله‌ای', zigzag:'زیگزاگ' };
+  function effStyle(host, action){
+    const s = (action && action.style) || (host && host.branchStyle) || 'organic';
+    return BRANCH_STYLES[s] ? s : 'organic';
+  }
 
   function normalizeImages(arr){
     if (!Array.isArray(arr)) return [];
@@ -3420,6 +3441,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (typeof a.isRoutine !== 'boolean') a.isRoutine = false;
       if (typeof a.showNeuralOnMap !== 'boolean') a.showNeuralOnMap = false;
       if (typeof a.detached !== 'boolean') a.detached = false;
+      if (typeof a.style !== 'string' || (a.style && !BRANCH_STYLES[a.style])) a.style = '';
       if (a.detached) {
         if (typeof a.originX !== 'number') a.originX = 0;
         if (typeof a.originY !== 'number') a.originY = 0;
@@ -3460,6 +3482,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (!g.logs || typeof g.logs !== 'object') g.logs = {};
       if (typeof g.freq !== 'string' || !FREQ_BANDS[g.freq]) g.freq = 'alpha';
       if (typeof g.lastActivity !== 'number') g.lastActivity = g.createdAt || Date.now();
+      if (typeof g.branchStyle !== 'string' || !BRANCH_STYLES[g.branchStyle]) g.branchStyle = 'organic';
       normalizeActions(g.actions);
     });
     if (!Array.isArray(state.rings)) state.rings = [];
@@ -3475,6 +3498,12 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (typeof r.labelDX !== 'number') r.labelDX = 0;
       if (typeof r.labelDY !== 'number') r.labelDY = 0;
       if (typeof r.labelSize !== 'number') r.labelSize = null;
+      if (!Array.isArray(r.actions)) r.actions = [];
+      if (typeof r.collapsed !== 'boolean') r.collapsed = false;
+      if (!r.logs || typeof r.logs !== 'object') r.logs = {};
+      if (typeof r.lastActivity !== 'number') r.lastActivity = Date.now();
+      if (typeof r.branchStyle !== 'string' || !BRANCH_STYLES[r.branchStyle]) r.branchStyle = 'organic';
+      normalizeActions(r.actions);
     });
   }
 
@@ -3607,10 +3636,10 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   function getNodeRef(type, id, goalId){
     if (type === 'me') return state.me;
-    if (type === 'goal') return state.goals.find(g=>g.id===id) || null;
+    if (type === 'goal') return findHost(id) || null;
     if (type === 'ring') return state.rings.find(r=>r.id===id) || null;
     if (type === 'action') {
-      const g = state.goals.find(g=>g.id===goalId);
+      const g = findHost(goalId);
       if (!g) return null;
       const found = findActionNode(g.actions, id);
       return found ? found.node : null;
@@ -3709,7 +3738,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       if (hit1 && hit2 && hit1.dataset.hit === 'feeling' && hit2.dataset.hit === 'feeling' &&
           hit1.dataset.id === hit2.dataset.id) {
-        const g = state.goals.find(g => g.id === hit1.dataset.id);
+        const g = findHost(hit1.dataset.id);
         if (g) {
           mode = 'resize-feeling';
           resizeTarget = { id: g.id, startDist: dist(pts[0], pts[1]), startScale: g.feelingScale || 1 };
@@ -3724,10 +3753,10 @@ body.bg-mode-image #grat-root{background:transparent;}
         if (type === 'me' || type === 'goal' || type === 'ring' || type === 'action') {
           let node = null;
           if (type === 'me') node = state.me;
-          else if (type === 'goal') node = state.goals.find(g => g.id === id);
+          else if (type === 'goal') node = findHost(id);
           else if (type === 'ring') node = state.rings.find(r => r.id === id);
           else if (type === 'action') {
-            const g = state.goals.find(g => g.id === hit1.dataset.goalid);
+            const g = findHost(hit1.dataset.goalid);
             if (g) {
               const found = findActionNode(g.actions, id);
               if (found) node = found.node;
@@ -3750,7 +3779,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       const goalId = hit.dataset.goalid || null;
 
       if (type === 'feeling') {
-        const g = state.goals.find(g => g.id === id);
+        const g = findHost(id);
         if (g) {
           mode = 'drag-feeling';
           dragTarget = { type:'feeling', id };
@@ -3771,7 +3800,7 @@ body.bg-mode-image #grat-root{background:transparent;}
           return;
         }
 
-        const g = state.goals.find(g => g.id === goalId);
+        const g = findHost(goalId);
         let isDetached = false;
         let foundNode = null;
         if (g) {
@@ -3793,7 +3822,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         longPressTimer = setTimeout(() => {
           longPressTriggered = true;
           detachInProgress = true;
-          const g2 = state.goals.find(g => g.id === goalId);
+          const g2 = findHost(goalId);
           if (g2) {
             const found2 = findActionNode(g2.actions, id);
             if (found2) {
@@ -3882,7 +3911,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       const w = screenToWorld(e.clientX, e.clientY);
       const node = type === 'me' ? state.me
         : type === 'ring' ? state.rings.find(r=>r.id===id)
-        : state.goals.find(g=>g.id===id);
+        : findHost(id);
       if (node) {
         dragStart = { offX: w.x - node.x, offY: w.y - node.y };
         svg.classList.add('node-drag');
@@ -3954,7 +3983,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       const pts = [...pointers.values()];
       const currentAngle = angle(pts[0], pts[1]);
       const delta = currentAngle - rotateTarget.startAngle;
-      const g = state.goals.find(g => g.id === rotateTarget.goalId);
+      const g = findHost(rotateTarget.goalId);
       if (g) {
         const found = findActionNode(g.actions, rotateTarget.id);
         if (found && found.node.detached) {
@@ -3992,7 +4021,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       clearTimeout(longPressTimer);
       longPressTimer = null;
       const { goalId, actionId, dragImgIdx, dragLabel } = pendingActionClick;
-      const g = state.goals.find(g => g.id === goalId);
+      const g = findHost(goalId);
       if (g) {
         const found = findActionNode(g.actions, actionId);
         if (found && !found.node.detached) {
@@ -4057,7 +4086,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       const ratio = d / resizeTarget.startDist;
       let newScale = resizeTarget.startScale * ratio;
       newScale = Math.max(0.5, Math.min(3, newScale));
-      const g = state.goals.find(g => g.id === resizeTarget.id);
+      const g = findHost(resizeTarget.id);
       if (g) {
         g.feelingScale = newScale;
         render();
@@ -4077,10 +4106,10 @@ body.bg-mode-image #grat-root{background:transparent;}
 
       let node = null;
       if (resizeTarget.type === 'me') node = state.me;
-      else if (resizeTarget.type === 'goal') node = state.goals.find(g => g.id === resizeTarget.id);
+      else if (resizeTarget.type === 'goal') node = findHost(resizeTarget.id);
       else if (resizeTarget.type === 'ring') node = state.rings.find(r => r.id === resizeTarget.id);
       else if (resizeTarget.type === 'action') {
-        const g = state.goals.find(g => g.id === resizeTarget.goalId);
+        const g = findHost(resizeTarget.goalId);
         if (g) {
           const found = findActionNode(g.actions, resizeTarget.id);
           if (found) node = found.node;
@@ -4117,7 +4146,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
     if (mode === 'drag-feeling' && dragTarget) {
       const w = screenToWorld(e.clientX, e.clientY);
-      const g = state.goals.find(g => g.id === dragTarget.id);
+      const g = findHost(dragTarget.id);
       if (g) {
         g.feelingOffsetX = w.x - g.x - dragStart.offX + dragStart.baseOffX;
         g.feelingOffsetY = w.y - g.y - dragStart.offY + dragStart.baseOffY;
@@ -4130,7 +4159,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       const w = screenToWorld(e.clientX, e.clientY);
 
       if (dragTarget.type==='goal'){
-        const g = state.goals.find(g=>g.id===dragTarget.id);
+        const g = findHost(dragTarget.id);
         if (g){ g.x = w.x - dragStart.offX; g.y = w.y - dragStart.offY; render(); }
       } else if (dragTarget.type==='me'){
         state.me.x = w.x - dragStart.offX; state.me.y = w.y - dragStart.offY; render();
@@ -4152,7 +4181,7 @@ body.bg-mode-image #grat-root{background:transparent;}
           render();
         }
       } else if (dragTarget.type==='action'){
-        const g = state.goals.find(g=>g.id===dragTarget.goalId);
+        const g = findHost(dragTarget.goalId);
         if (!g) return;
         const found = findActionNode(g.actions, dragTarget.id);
         if (!found) return;
@@ -4244,7 +4273,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
     if (hit && hit.dataset.hit === 'feeling') {
       e.preventDefault();
-      const g = state.goals.find(g => g.id === hit.dataset.id);
+      const g = findHost(hit.dataset.id);
       if (g) {
         const factor = Math.exp(-e.deltaY*0.0018);
         let newScale = (g.feelingScale || 1) * factor;
@@ -4575,6 +4604,18 @@ body.bg-mode-image #grat-root{background:transparent;}
   let actionGeomMap = new Map();
 
   function trunkControlPoints(goal){
+    if (isRingHost(goal)){
+      const R = goal.radius || 30;
+      const a = Math.atan2(goal.y - state.me.y, goal.x - state.me.x);
+      const ux = Math.cos(a), uy = Math.sin(a), px = -uy, py = ux, LL = 130;
+      const q0 = {x:goal.x+ux*R, y:goal.y+uy*R};
+      const rr = seeded(goal.id+'-trunk');
+      const k1 = (rr()*0.5-0.25)*LL*0.3, k2 = (rr()*0.5-0.25)*LL*0.3;
+      return { p0:q0,
+        p1:{x:q0.x+ux*LL*0.33+px*k1, y:q0.y+uy*LL*0.33+py*k1},
+        p2:{x:q0.x+ux*LL*0.66+px*k2, y:q0.y+uy*LL*0.66+py*k2},
+        p3:{x:q0.x+ux*LL, y:q0.y+uy*LL} };
+    }
     const p0={x:state.me.x,y:state.me.y}, p3={x:goal.x,y:goal.y};
     const dx=p3.x-p0.x, dy=p3.y-p0.y;
     const len=Math.hypot(dx,dy)||1;
@@ -4639,6 +4680,55 @@ body.bg-mode-image #grat-root{background:transparent;}
       out += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" opacity="${opacity}"/>`;
     }
     return out;
+  }
+
+  /* ---------- شکل شاخه‌ها: مسیر چندضلعی و سبک‌ها ---------- */
+  function polyCum(pts){ const c=[0]; for(let i=1;i<pts.length;i++) c.push(c[i-1]+Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y)); return c; }
+  function polyPointAt(pts, t){
+    const c = polyCum(pts), T = c[c.length-1]*Math.max(0,Math.min(1,t));
+    for(let i=1;i<pts.length;i++){
+      if (T <= c[i] || i === pts.length-1){
+        const seg = (c[i]-c[i-1]) || 1, f = Math.max(0,Math.min(1,(T-c[i-1])/seg));
+        return { pt:{ x:pts[i-1].x+(pts[i].x-pts[i-1].x)*f, y:pts[i-1].y+(pts[i].y-pts[i-1].y)*f },
+                 angle:Math.atan2(pts[i].y-pts[i-1].y, pts[i].x-pts[i-1].x) };
+      }
+    }
+    return { pt:pts[0], angle:0 };
+  }
+  function taperedPoly(pts, color, w0, w1, opacity){
+    const c = polyCum(pts), tot = c[c.length-1] || 1;
+    let out = '';
+    for(let i=1;i<pts.length;i++){
+      const f = ((c[i-1]+c[i])/2)/tot;
+      const w = w0 + (w1-w0)*f;
+      out += `<line x1="${pts[i-1].x.toFixed(1)}" y1="${pts[i-1].y.toFixed(1)}" x2="${pts[i].x.toFixed(1)}" y2="${pts[i].y.toFixed(1)}" stroke="${color}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"/>`;
+    }
+    return out;
+  }
+  function applyBranchStyle(geom, style, side){
+    if (!style || style === 'organic') return geom;
+    const o = geom.originPt, e = geom.end, L = geom.length || 1, dir = geom.dir;
+    const dvx = Math.cos(dir), dvy = Math.sin(dir), px = -dvy, py = dvx, sd = side || 1;
+    const at = (a,b)=>({ x:o.x+dvx*L*a+px*L*b, y:o.y+dvy*L*a+py*L*b });
+    switch(style){
+      case 'straight': geom.c1 = at(0.33,0); geom.c2 = at(0.72,0); break;
+      case 'curve':    geom.c1 = at(0.22,0.40*sd); geom.c2 = at(0.78,0.40*sd); break;
+      case 'wave':     geom.c1 = at(0.25,0.45*sd); geom.c2 = at(0.75,-0.45*sd); break;
+      case 'elbow': {
+        const horiz = Math.abs(e.x-o.x) >= Math.abs(e.y-o.y);
+        geom.poly = [o, horiz ? {x:e.x,y:o.y} : {x:o.x,y:e.y}, e]; break;
+      }
+      case 'step': {
+        const horiz = Math.abs(e.x-o.x) >= Math.abs(e.y-o.y);
+        geom.poly = horiz ? [o,{x:(o.x+e.x)/2,y:o.y},{x:(o.x+e.x)/2,y:e.y},e] : [o,{x:o.x,y:(o.y+e.y)/2},{x:e.x,y:(o.y+e.y)/2},e]; break;
+      }
+      case 'zigzag': {
+        const n = 6, amp = Math.min(0.13*L, 13), pts = [o];
+        for(let i=1;i<n;i++){ const k = (i%2?1:-1)*sd*amp; const b = at(i/n,0); pts.push({x:b.x+px*k, y:b.y+py*k}); }
+        pts.push(e); geom.poly = pts; break;
+      }
+    }
+    return geom;
   }
 
   function computeTwigGeom(goal, action, originPt, originDir, side, scale){
@@ -4756,7 +4846,9 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   function branchesSVG(goal){
     const cp = trunkControlPoints(goal);
-    let out = trunkSVG(cp, goal.color);
+    let out = isRingHost(goal)
+      ? `<g class="ring-stem">${taperedPath(cp.p0,cp.p1,cp.p2,cp.p3,goal.color||RING_COLOR,3.2,1.6,0.6)}</g>`
+      : trunkSVG(cp, goal.color);
     const n = goal.actions.length;
     goal.actions.forEach((a,i)=>{
       const t = Math.min(0.9, 0.15 + i*0.09);
@@ -4772,6 +4864,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     const weight = action.weight || 5;
     const color = action.color || goal.color;
     const geom = computeTwigGeom(goal, action, originPt, originDir, side, scale);
+    applyBranchStyle(geom, effStyle(goal, action), side);
     const { c1, c2, end } = geom;
     actionGeomMap.set(action.id, { goalId: goal.id, originPt: geom.originPt, end, scale });
 
@@ -4779,13 +4872,13 @@ body.bg-mode-image #grat-root{background:transparent;}
     const tipWidth = Math.max(0.7, baseWidth*0.38);
 
     // آیا این شاخه غیرفعال است؟ (هرسینگ)
-    const goalNode = state.goals.find(g => g.id === goal.id);
+    const goalNode = findHost(goal.id);
     const isPruned = goalNode && goalNode.lastActivity &&
                      (Date.now() - goalNode.lastActivity) > 30 * 86400000;
     const twigClass = isPruned ? 'pruned-twig' : '';
 
     let out = `<g class="${twigClass}"><title>${esc(action.text||'(بدون توضیح)')} — قطر ${weight}</title>`;
-    out += taperedPath(geom.originPt, c1, c2, end, color, baseWidth, tipWidth, 0.92);
+    out += geom.poly ? taperedPoly(geom.poly, color, baseWidth, tipWidth, 0.92) : taperedPath(geom.originPt, c1, c2, end, color, baseWidth, tipWidth, 0.92);
 
     const handleR = Math.max(15, 18*scale);
     out += `<circle data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" cx="${end.x}" cy="${end.y}" r="${handleR}" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>`;
@@ -4797,8 +4890,9 @@ body.bg-mode-image #grat-root{background:transparent;}
       kids.forEach((child,i)=>{
         const cSide = i%2===0 ? 1 : -1;
         const tt = 0.5 + ((i+1)/(kids.length+1))*0.45;
-        const childOrigin = bezierPoint(geom.originPt,c1,c2,end,tt);
-        const childDir = bezierTangentAngle(geom.originPt,c1,c2,end,tt);
+        let childOrigin, childDir;
+        if (geom.poly){ const q = polyPointAt(geom.poly, tt); childOrigin = q.pt; childDir = q.angle; }
+        else { childOrigin = bezierPoint(geom.originPt,c1,c2,end,tt); childDir = bezierTangentAngle(geom.originPt,c1,c2,end,tt); }
         childrenSvg += twigRecursive(goal, childOrigin, childDir, child, cSide, scale*0.72);
       });
     } else {
@@ -4866,7 +4960,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     return (list || []).reduce((n, a) => n + 1 + countAllActions(a.children), 0);
   }
   function toggleGoalCollapse(id, force){
-    const g = state.goals.find(x => x.id === id);
+    const g = findHost(id);
     if (!g) return;
     g.collapsed = (typeof force === 'boolean') ? force : !g.collapsed;
     if (!g.collapsed) revealGoalId = g.id;
@@ -4933,7 +5027,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     return pts;
   }
   function focusGoal(id){
-    const g = state.goals.find(x=>x.id===id);
+    const g = findHost(id);
     if (!g) return;
     focusGoalId = id;
     g.collapsed = false;
@@ -4976,7 +5070,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   function fitAllView(){
     const pts = [{x:state.me.x, y:state.me.y, r:(state.me.radius||34)+60}];
     state.goals.forEach(g=>{ goalPoints(g).forEach(p=>pts.push(p)); });
-    if (!state.ringsCollapsed) state.rings.forEach(r=>pts.push({x:r.x,y:r.y,r:(r.radius||30)+30}));
+    if (!state.ringsCollapsed) state.rings.forEach(r=>{ pts.push({x:r.x,y:r.y,r:(r.radius||30)+30}); (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x,y:e.end.y,r:80}); walk(a.children); }); })(r.actions); });
     animateCamTo(viewForPoints(pts, 1.2));
   }
   function pickGoalSpot(){
@@ -5010,6 +5104,9 @@ body.bg-mode-image #grat-root{background:transparent;}
       } else {
         html += `<g data-goal-branches="${g.id}"${clsAttr}>${branchesSVG(g)}</g>`;
       }
+    });
+    if (!state.ringsCollapsed) state.rings.forEach(r=>{
+      if (r.actions && r.actions.length) html += `<g data-goal-branches="${r.id}">${branchesSVG(Object.assign(r,{color:r.color||RING_COLOR}))}</g>`;
     });
     revealGoalId = null;
 
@@ -5112,7 +5209,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     (function(){
       const pill = document.getElementById('focus-pill');
       if (!pill) return;
-      const fg = focusGoalId && state.goals.find(x=>x.id===focusGoalId);
+      const fg = focusGoalId && findHost(focusGoalId);
       pill.classList.toggle('show', !!fg);
       if (fg) document.getElementById('fp-name').textContent = 'تمرکز: ' + fg.name;
     })();
@@ -5175,7 +5272,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     state.rings.push({
       id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
       x: state.me.x + rnd, y: state.me.y + 130,
-      radius: 30, note: '', images: []
+      radius: 30, note: '', images: [],
+      actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic'
     });
     render();
   });
@@ -5381,8 +5479,70 @@ body.bg-mode-image #grat-root{background:transparent;}
     }catch(e){ return ''; }
   }
 
+  /* ---------- انتخاب شکل شاخه (دسترس‌پذیر: دکمه‌های رادیویی بزرگ، برچسب متنی، حرکت با کیبورد) ---------- */
+  const BS_THUMB = {
+    '':'M6 32 L58 8',
+    organic:'M6 32 C18 34 22 12 36 20 S52 14 58 8',
+    straight:'M6 32 L58 8',
+    curve:'M6 32 Q14 4 58 8',
+    wave:'M6 32 C22 6 40 42 58 8',
+    elbow:'M6 32 L58 32 L58 8',
+    step:'M6 32 L32 32 L32 8 L58 8',
+    zigzag:'M6 32 L18 14 L28 30 L40 12 L50 28 L58 8'
+  };
+  (function(){
+    const st = document.createElement('style');
+    st.textContent = '.bs-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 4px;}'+
+      '.bs-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;padding:5px 2px;border-radius:12px;border:1.5px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:11px;cursor:pointer;}'+
+      '.bs-opt svg{width:46px;height:30px;}.bs-opt svg path{fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}'+
+      '.bs-opt svg circle{fill:var(--accent);}'+
+      '.bs-opt.on{border-color:var(--accent);background:rgba(244,197,66,.16);font-weight:700;}'+
+      '.bs-opt:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}'+
+      '.bs-opt:active{transform:scale(.97);}'+
+      '@media (prefers-reduced-motion:reduce){.bs-opt:active{transform:none;}}';
+    document.head.appendChild(st);
+  })();
+  function buildStylePicker(el, current, allowInherit, onPick){
+    if (!el) return;
+    const keys = (allowInherit ? [''] : []).concat(Object.keys(BRANCH_STYLES));
+    const name = k => k === '' ? 'مثل مجموعه' : BRANCH_STYLES[k];
+    el.className = 'bs-picker';
+    el.setAttribute('role','radiogroup');
+    el.setAttribute('aria-label','شکل شاخه');
+    el.innerHTML = keys.map(k=>{
+      const on = k === current;
+      return `<button type="button" class="bs-opt${on?' on':''}" role="radio" aria-checked="${on}" tabindex="${on?0:-1}" data-bs="${k}" aria-label="${name(k)}">`+
+        `<svg viewBox="0 0 64 40" aria-hidden="true"><path d="${BS_THUMB[k]}"${k===''?' stroke-dasharray="4 4"':''}/><circle cx="58" cy="8" r="3.6"/></svg><span>${name(k)}</span></button>`;
+    }).join('');
+    const pick = b=>{
+      el.querySelectorAll('.bs-opt').forEach(x=>{ const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); x.tabIndex = on ? 0 : -1; });
+      onPick(b.dataset.bs);
+    };
+    el.onclick = e=>{ const b = e.target.closest('.bs-opt'); if (b) pick(b); };
+    el.onkeydown = e=>{
+      const k = e.key;
+      if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k)) return;
+      const btns = Array.from(el.querySelectorAll('.bs-opt'));
+      let i = btns.indexOf(document.activeElement); if (i < 0) i = btns.findIndex(x=>x.classList.contains('on'));
+      const rtl = getComputedStyle(el).direction === 'rtl';
+      const fwd = (k === 'ArrowDown') || (k === (rtl ? 'ArrowLeft' : 'ArrowRight'));
+      const nb = btns[(i + (fwd ? 1 : -1) + btns.length) % btns.length];
+      e.preventDefault(); nb.focus(); pick(nb);
+    };
+  }
+  function mountBranchesBlock(kind, host){
+    const block = document.getElementById('branches-block');
+    const slot = kind === 'ring' ? document.getElementById('ring-branches-slot') : document.getElementById('panel-goal-only');
+    if (block && slot && block.parentNode !== slot) slot.appendChild(block);
+    const lbl = document.getElementById('bs-label');
+    if (lbl) lbl.textContent = kind === 'ring' ? 'شاخه‌های این نشانه — شکل شاخه‌ها' : 'شکل شاخه‌ها (برای همه‌ی شاخه‌های این مجموعه)';
+    buildStylePicker(document.getElementById('branch-style-picker'), host.branchStyle || 'organic', false, v=>{
+      host.branchStyle = v; render();
+    });
+  }
+
   function openPanelForAction(goalId, actionId){
-    const g = state.goals.find(g=>g.id===goalId);
+    const g = findHost(goalId);
     if (!g) return;
     const found = findActionNode(g.actions, actionId);
     if (!found) return;
@@ -5411,6 +5571,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     document.getElementById('panel-action-show-neural').checked = !!action.showNeuralOnMap;
     panelDeleteBtn.classList.remove('hidden');
     panelDeleteBtn.textContent = 'حذف شاخه';
+    buildStylePicker(document.getElementById('panel-action-style'), action.style || '', true, v=>{ action.style = v; render(); });
     refreshActionChildrenPanel();
     renderPanelActionNeural(action);
     panel.classList.add('open');
@@ -5438,7 +5599,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   }
 
   function openPanelForGoal(id){
-    const g = state.goals.find(g=>g.id===id);
+    const g = findHost(id);
     if (!g) return;
     panelTarget = {type:'goal', id};
     currentEditingAction = null;
@@ -5461,6 +5622,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     document.getElementById('panel-reached').checked = !!g.reached;
     document.getElementById('panel-goal-freq').value = g.freq || 'alpha';
     currentPanelGoalId = id;
+    mountBranchesBlock('goal', g);
     refreshActionsPanel(g);
     panel.classList.add('open');
   }
@@ -5488,6 +5650,9 @@ body.bg-mode-image #grat-root{background:transparent;}
     panelActionOnly.classList.add('hidden');
     panelDeleteBtn.classList.remove('hidden');
     panelDeleteBtn.textContent = 'حذف نشانه';
+    currentPanelGoalId = id;
+    mountBranchesBlock('ring', r);
+    refreshActionsPanel(r);
     panel.classList.add('open');
   }
 
@@ -5592,7 +5757,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   function refreshActionChildrenPanel(){
     try{ renderPanelPeriodCal(); }catch(e){}
     if (!currentEditingAction) { panelActionChildrenListEl.innerHTML = ''; return; }
-    const g = state.goals.find(g=>g.id===currentEditingAction.goalId);
+    const g = findHost(currentEditingAction.goalId);
     if (!g) return;
     const found = findActionNode(g.actions, currentEditingAction.actionId);
     if (!found) return;
@@ -5643,7 +5808,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   panelActionChildrenListEl.addEventListener('click', (e)=>{
     if (!currentEditingAction) return;
-    const g = state.goals.find(g=>g.id===currentEditingAction.goalId);
+    const g = findHost(currentEditingAction.goalId);
     if (!g) return;
     if (quickSwatchClick(e, g, panelActionChildrenListEl)) return;
     const delBtn = e.target.closest('.adel');
@@ -5669,7 +5834,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   panelActionChildrenListEl.addEventListener('input', (e)=>{
     if (!currentEditingAction) return;
-    const g = state.goals.find(g=>g.id===currentEditingAction.goalId);
+    const g = findHost(currentEditingAction.goalId);
     if (!g) return;
     const t = e.target;
     if (t.classList.contains('a-text')){
@@ -5696,7 +5861,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   });
 
   document.getElementById('add-branch-btn').addEventListener('click', ()=>{
-    const g = state.goals.find(g=>g.id===currentPanelGoalId);
+    const g = findHost(currentPanelGoalId);
     if (!g) return;
     const a = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:12, createdAt: Date.now() };
     g.actions.push(a);
@@ -5708,7 +5873,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   });
 
   actionsListEl.addEventListener('click', (e)=>{
-    const g = state.goals.find(g=>g.id===currentPanelGoalId);
+    const g = findHost(currentPanelGoalId);
     if (!g) return;
     if (quickSwatchClick(e, g, actionsListEl)) return;
     const delBtn = e.target.closest('.adel');
@@ -5733,7 +5898,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   });
 
   actionsListEl.addEventListener('input', (e)=>{
-    const g = state.goals.find(g=>g.id===currentPanelGoalId);
+    const g = findHost(currentPanelGoalId);
     if (!g) return;
     const t = e.target;
     if (t.classList.contains('a-text')){
@@ -5772,7 +5937,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 
   document.getElementById('panel-action-add-sub').addEventListener('click', ()=>{
     if (!currentEditingAction) return;
-    const g = state.goals.find(g=>g.id===currentEditingAction.goalId);
+    const g = findHost(currentEditingAction.goalId);
     if (!g) return;
     const found = findActionNode(g.actions, currentEditingAction.actionId);
     if (!found) return;
@@ -5805,7 +5970,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         r.images = images;
       }
     } else if (panelTarget.type==='goal'){
-      const g = state.goals.find(g=>g.id===panelTarget.id);
+      const g = findHost(panelTarget.id);
       if (g){
         const newName = panelName.value.trim();
         if (newName) g.name = newName;
@@ -5815,7 +5980,7 @@ body.bg-mode-image #grat-root{background:transparent;}
         g.freq = document.getElementById('panel-goal-freq').value || 'alpha';
       }
     } else if (panelTarget.type==='action'){
-      const g = state.goals.find(g=>g.id===panelTarget.goalId);
+      const g = findHost(panelTarget.goalId);
       if (g){
         const found = findActionNode(g.actions, panelTarget.actionId);
         if (found){
@@ -5845,7 +6010,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       render();
       panel.classList.remove('open');
     } else if (panelTarget && panelTarget.type==='action'){
-      const g = state.goals.find(g=>g.id===panelTarget.goalId);
+      const g = findHost(panelTarget.goalId);
       if (g){
         const found = findActionNode(g.actions, panelTarget.actionId);
         if (found){
@@ -5884,7 +6049,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   document.addEventListener('input', (e)=>{
     const t = e.target;
     if (t.classList && t.classList.contains('feeling-textarea')){
-      const g = state.goals.find(gg=>gg.id===t.dataset.goalid);
+      const g = findHost(t.dataset.goalid);
       if (g) g.feeling = t.value;
     }
   });
@@ -6079,8 +6244,8 @@ body.bg-mode-image #grat-root{background:transparent;}
   });
 
   function findActionAnywhere(actionId){
-    for (const g of state.goals){
-      const found = findActionNode(g.actions, actionId);
+    for (const g of state.goals.concat(state.rings)){
+      const found = findActionNode(g.actions || [], actionId);
       if (found) return { node: found.node, goal: g };
     }
     return null;
@@ -6137,12 +6302,12 @@ body.bg-mode-image #grat-root{background:transparent;}
   function pcContext(){
     if (!panelTarget) return null;
     if (panelTarget.type === 'goal'){
-      const g = state.goals.find(x=>x.id===panelTarget.id);
+      const g = findHost(panelTarget.id);
       if (!g) return null;
       return { kind:'goal', goal:g, node:null, p:'gp-goal', color:g.color, sources:pcCollect(g.actions, []) };
     }
     if (panelTarget.type === 'action'){
-      const g = state.goals.find(x=>x.id===panelTarget.goalId);
+      const g = findHost(panelTarget.goalId);
       if (!g) return null;
       const f = findActionNode(g.actions, panelTarget.actionId);
       if (!f) return null;
@@ -7782,7 +7947,8 @@ document.addEventListener('visibilitychange', function(){ if(document.visibility
   const meta = loadState.meta || { t:0, lite:false };
   function go(){
     DS.get(KEY).then(function(rec){
-      const adopt = !!(rec && rec.json && (meta.lite || rec.t > meta.t));
+      let lsLen = 0; try{ lsLen = (localStorage.getItem(STORAGE_KEY) || '').length; }catch(e){}
+      const adopt = !!(rec && rec.json && (meta.lite || rec.t > meta.t || rec.json.length > lsLen + 20000));
       if(adopt){
         try{
           const cur = state;
