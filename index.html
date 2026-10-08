@@ -343,6 +343,17 @@
   #gs-search{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:13px;margin-bottom:10px;}
   .gs-sort{display:flex;gap:6px;margin-bottom:10px;}
   .gs-chip{border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:999px;padding:5px 12px;font-family:inherit;font-size:11.5px;cursor:pointer;}
+  .gs-nach{flex:none;width:30px;height:30px;border-radius:10px;border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .15s;}
+  .gs-nach:active{transform:scale(.85);}
+  .gs-node.ach{background:linear-gradient(90deg,rgba(255,200,60,.16),transparent 70%);box-shadow:inset 0 0 0 1px rgba(255,200,60,.45);border-radius:12px;}
+  .gs-node.ach .gs-nach{background:linear-gradient(135deg,#ffd45a,#f0a020);color:#3a2600;border-color:transparent;box-shadow:0 0 14px rgba(255,190,50,.65);}
+  .gs-node.ach-pop .gs-nach{animation:gsAchPop .7s cubic-bezier(.2,1.6,.4,1);}
+  @keyframes gsAchPop{0%{transform:scale(.4) rotate(-25deg);}60%{transform:scale(1.5) rotate(10deg);}100%{transform:scale(1) rotate(0);}}
+  .gs-node.ach-pop{animation:gsAchGlow 1s ease-out;}
+  @keyframes gsAchGlow{0%{box-shadow:0 0 0 0 rgba(255,200,60,.9);}100%{box-shadow:0 0 0 22px rgba(255,200,60,0);}}
+  .fx-confetti{position:fixed;left:0;top:0;width:9px;height:14px;border-radius:2px;pointer-events:none;z-index:99999;will-change:transform,opacity;}
+  .fx-flash{position:fixed;inset:0;pointer-events:none;z-index:99998;background:radial-gradient(circle at var(--fx-x,50%) var(--fx-y,50%),rgba(255,214,90,.38),transparent 55%);animation:fxFlash .7s ease-out forwards;}
+  @keyframes fxFlash{from{opacity:1;}to{opacity:0;}}
   .gs-reached-item{opacity:.92;}
   .gs-reached-item .gs-row{cursor:default;}
   .gs-tag.ok{border-color:#2dd4bf;color:#2dd4bf;}
@@ -4395,6 +4406,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     const ICO_CHEV_DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
     const ICO_CHEV_UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
     const ICO_EDIT = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>';
+    const ICO_TROPHY = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M8.5 20h7M10 17h4"/></svg>';
     const ICO_CHECK = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>';
     const ICO_MAP = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
     const norm = (t)=> String(t||'').toLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک');
@@ -4467,11 +4479,12 @@ body.bg-mode-image #grat-root{background:transparent;}
       const c = cellsHTML(n, color, pi);
       const fib = fibersOf(n);
       const todayDone = !!(n.logs && n.logs[pi.todayJK]);
-      let h = '<div class="gs-node" data-nid="'+n.id+'" style="margin-inline-start:'+(Math.min(depth,4)*12)+'px;border-inline-start-color:'+esc(color)+';">'+
+      let h = '<div class="gs-node'+(n.achieved?' ach':'')+'" data-nid="'+n.id+'" style="margin-inline-start:'+(Math.min(depth,4)*12)+'px;border-inline-start-color:'+esc(color)+';">'+
         '<div class="gs-nhead">'+
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
           '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="'+(depth?'نام زیرشاخه':'نام شاخه')+'..." autocomplete="off">'+
           '<span class="gs-fib'+(fib?' on':'')+'" title="رشته‌های عصبی ساخته‌شده">رشته: '+toFa(fib)+'</span>'+
+          '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن زیرشاخه" title="افزودن زیرشاخه">＋</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
         '</div>'+
@@ -4635,6 +4648,53 @@ body.bg-mode-image #grat-root{background:transparent;}
     }
 
     /* کلیک‌های داخل کادر باز */
+    /* ---------- پاداش: کانفتی + لرزش + صدای شاد ---------- */
+    function celebrate(color, x, y, big){
+      try{
+        const fl = document.createElement('div');
+        fl.className = 'fx-flash';
+        fl.style.setProperty('--fx-x', x+'px'); fl.style.setProperty('--fx-y', y+'px');
+        document.body.appendChild(fl); setTimeout(()=>fl.remove(), 800);
+        const cols = [color || '#ffd45a', '#ffd45a', '#ff7aa8', '#5ec8f0', '#7ee0a0', '#b79bff'];
+        const N = big ? 70 : 44;
+        for (let i=0;i<N;i++){
+          const c = document.createElement('i');
+          c.className = 'fx-confetti';
+          c.style.background = cols[i % cols.length];
+          document.body.appendChild(c);
+          const ang = (-Math.PI/2) + (Math.random()-.5) * Math.PI * 1.25;
+          const sp = (big?340:260) * (.45 + Math.random()*.75);
+          const dx = Math.cos(ang)*sp, dy = Math.sin(ang)*sp;
+          const rot = (Math.random()-.5) * 900;
+          const fall = 260 + Math.random()*220;
+          const anim = c.animate([
+            { transform:'translate('+x+'px,'+y+'px) rotate(0deg) scale(1)', opacity:1 },
+            { transform:'translate('+(x+dx*.7)+'px,'+(y+dy*.7)+'px) rotate('+(rot*.6)+'deg) scale(1)', opacity:1, offset:.45 },
+            { transform:'translate('+(x+dx)+'px,'+(y+dy+fall)+'px) rotate('+rot+'deg) scale(.7)', opacity:0 }
+          ], { duration: 1100 + Math.random()*700, easing:'cubic-bezier(.2,.7,.3,1)' });
+          anim.onfinish = ()=> c.remove();
+        }
+      }catch(e){}
+      try{ if (navigator.vibrate) navigator.vibrate(big ? [30,50,30,50,90] : [25,40,70]); }catch(e){}
+      try{
+        if (typeof isNothingSoundOn === 'function' && !isNothingSoundOn()) return;
+        const ctx = (typeof resumeAudio === 'function') ? resumeAudio() : null;
+        if (!ctx) return;
+        const notes = big ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [659.25, 783.99, 1046.5];
+        const t0 = ctx.currentTime;
+        notes.forEach((f, i)=>{
+          const o = ctx.createOscillator(), o2 = ctx.createOscillator(), gn = ctx.createGain();
+          o.type = 'triangle'; o.frequency.value = f;
+          o2.type = 'sine'; o2.frequency.value = f*2;
+          const st = t0 + i*0.085;
+          gn.gain.setValueAtTime(0.0001, st);
+          gn.gain.exponentialRampToValueAtTime(0.16, st+0.02);
+          gn.gain.exponentialRampToValueAtTime(0.0001, st + (i===notes.length-1 ? 0.9 : 0.35));
+          o.connect(gn); o2.connect(gn); gn.connect(ctx.destination);
+          o.start(st); o2.start(st); o.stop(st+1); o2.stop(st+1);
+        });
+      }catch(e){}
+    }
     function onBodyClick(e, g){
       const gact = e.target.closest('[data-gact]');
       if (gact){
@@ -4676,6 +4736,16 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (nact.dataset.nact === 'today'){
         const pi = periodInfo(g);
         doToggle(g, found.node, pi.todayJK, nact);
+      } else if (nact.dataset.nact === 'achieve'){
+        const node = found.node;
+        if (node.achieved){ node.achieved = false; delete node.achievedAt; touch(g); draw(); return; }
+        node.achieved = true; node.achievedAt = Date.now();
+        touch(g); draw();
+        const el = listEl.querySelector('.gs-node[data-nid="'+nid+'"]');
+        if (el) el.classList.add('ach-pop');
+        const r = (el && el.querySelector('.gs-nach') || nact).getBoundingClientRect();
+        celebrate(node.color || g.color, r.left + r.width/2, r.top + r.height/2);
+        if (typeof toast === 'function') toast('🏆 دستاورد!');
       } else if (nact.dataset.nact === 'add'){
         addingFor = nid; draw(); focusAddInput();
       } else if (nact.dataset.nact === 'del'){
@@ -4706,13 +4776,15 @@ body.bg-mode-image #grat-root{background:transparent;}
       const kind = act ? act.dataset.act : 'toggle';
       if (kind === 'none') return;
       if (kind === 'reach'){
+        const rb = act.getBoundingClientRect();
         g.reached = true; g.reachedAt = Date.now(); OPEN.delete(id); touch(g); render(); draw();
-        if (typeof toast === 'function') toast('تبریک! هدف به «اهداف محقق‌شده» رفت');
+        celebrate(g.color, rb.left + rb.width/2, rb.top + rb.height/2, true);
+        if (typeof toast === 'function') toast('🏆 هدف محقق شد!');
         return;
       }
       if (kind === 'unreach'){
         g.reached = false; delete g.reachedAt; touch(g); render(); draw();
-        if (typeof toast === 'function') toast('هدف به اهداف در جریان برگشت');
+        if (typeof toast === 'function') toast('برگشت به اهداف در جریان');
         return;
       }
       if (kind === 'edit'){ close(); openPanelForGoal(id); return; }
