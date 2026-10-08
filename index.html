@@ -343,6 +343,9 @@
   #gs-search{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:13px;margin-bottom:10px;}
   .gs-sort{display:flex;gap:6px;margin-bottom:10px;}
   .gs-chip{border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:999px;padding:5px 12px;font-family:inherit;font-size:11.5px;cursor:pointer;}
+  .gs-reached-item{opacity:.92;}
+  .gs-reached-item .gs-row{cursor:default;}
+  .gs-tag.ok{border-color:#2dd4bf;color:#2dd4bf;}
   .gs-chip.on{background:var(--accent);color:#221800;border-color:transparent;font-weight:700;}
   #gs-list{overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;padding-bottom:6px;}
   .gs-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;border:1px solid var(--panel-border);cursor:pointer;}
@@ -2797,7 +2800,6 @@ body.bg-mode-image #grat-root{background:transparent;}
 <div id="zoom-readout">۱۰۰٪</div>
 
 <div id="toolbar">
-  <button class="tbtn primary" id="add-goal-btn"><span class="ti">＋</span><span class="tl">هدف جدید</span></button>
   <button class="tbtn" id="goals-list-btn" title="فهرست اهداف">
     <svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
     <span class="tl">اهداف</span>
@@ -2816,7 +2818,11 @@ body.bg-mode-image #grat-root{background:transparent;}
 <div class="gs-overlay" id="goals-sheet-overlay">
   <div class="gs-sheet" role="dialog" aria-label="فهرست اهداف">
     <div class="gs-grab"></div>
-    <div class="gs-head"><strong>اهداف من</strong><span class="gs-count" id="gs-count"></span><button class="gs-x" id="gs-close" aria-label="بستن">✕</button></div>
+    <div class="gs-head"><strong>اهداف من</strong><span class="gs-count" id="gs-count"></span><button class="gs-mini gold" id="gs-add" type="button">＋ هدف جدید</button><button class="gs-x" id="gs-close" aria-label="بستن">✕</button></div>
+    <div class="gs-sort" id="gs-tabs">
+      <button class="gs-chip on" data-tab="active">اهداف در جریان</button>
+      <button class="gs-chip" data-tab="reached">اهداف محقق‌شده <span id="gs-reached-n"></span></button>
+    </div>
     <input id="gs-search" type="search" placeholder="جست‌وجوی هدف یا شاخه..." autocomplete="off">
     <div class="gs-sort" id="gs-sort">
       <button class="gs-chip on" data-sort="recent">آخرین فعالیت</button>
@@ -4382,12 +4388,14 @@ body.bg-mode-image #grat-root{background:transparent;}
     const searchEl = document.getElementById('gs-search');
     const countEl = document.getElementById('gs-count');
     let sortKey = 'recent';
+    let tabKey = 'active';        // active | reached
     const OPEN = new Set();       // هدف‌های باز
     let addingFor = null;         // id هدف یا شاخه‌ای که فیلد افزودن زیرش باز است
     let orderCache = null;        // ترتیب ثابت تا موقع تیک زدن ردیف‌ها نپرند
     const ICO_CHEV_DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
     const ICO_CHEV_UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
     const ICO_EDIT = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>';
+    const ICO_CHECK = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>';
     const ICO_MAP = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
     const norm = (t)=> String(t||'').toLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک');
     function findInActions(list, q){
@@ -4500,7 +4508,14 @@ body.bg-mode-image #grat-root{background:transparent;}
     /* ---------- رسم فهرست ---------- */
     function draw(){
       const q = norm(searchEl.value.trim());
-      let rows = state.goals.map(g=>({ g, hit: q ? (norm(g.name).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
+      const activeGoals = state.goals.filter(g=>!g.reached);
+      const reachedGoals = state.goals.filter(g=>g.reached);
+      const rn = document.getElementById('gs-reached-n');
+      if (rn) rn.textContent = reachedGoals.length ? '(' + toFa(reachedGoals.length) + ')' : '';
+      const isReachedTab = tabKey === 'reached';
+      document.getElementById('gs-sort').style.display = isReachedTab ? 'none' : '';
+      const pool = isReachedTab ? reachedGoals : activeGoals;
+      let rows = pool.map(g=>({ g, hit: q ? (norm(g.name).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
                             .filter(r=> !q || r.hit !== null);
       if (orderCache){
         const ix = id => { const i = orderCache.indexOf(id); return i < 0 ? 1e9 : i; };
@@ -4513,17 +4528,41 @@ body.bg-mode-image #grat-root{background:transparent;}
         });
         orderCache = rows.map(r=>r.g.id);
       }
-      countEl.textContent = state.goals.length ? toFa(state.goals.length) + ' هدف' : '';
+      countEl.textContent = pool.length ? toFa(pool.length) + ' هدف' : '';
       if (!rows.length){
-        listEl.innerHTML = `<div class="gs-empty">${state.goals.length ? 'موردی پیدا نشد.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'}</div>`;
+        listEl.innerHTML = `<div class="gs-empty">${q ? 'موردی پیدا نشد.' : (isReachedTab ? 'هنوز هدفی به مرحله‌ی «محقق‌شده» نرسیده.<br>وقتی به یک هدف رسیدی، با دکمه‌ی ✓ کنار آن، به این فهرست منتقل می‌شود.' : (state.goals.length ? 'همه‌ی اهدافت محقق شده‌اند 🎉<br>با دکمه‌ی «＋ هدف جدید» هدف تازه‌ای بساز.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'))}</div>`;
         return;
       }
       const scrollTop = listEl.scrollTop;
+      if (isReachedTab){
+        listEl.innerHTML = rows.map(({g})=>{
+          const n = countAllActions(g.actions);
+          let when = '';
+          if (g.reachedAt){
+            const d = new Date(g.reachedAt); const j = toJalaali(d.getFullYear(), d.getMonth()+1, d.getDate());
+            when = ' · محقق‌شده در ' + toFa(j.jy) + '/' + toFa(j.jm) + '/' + toFa(j.jd);
+          }
+          return `<div class="gs-item gs-reached-item" data-gid="${g.id}" style="--gs-c:${esc(g.color)}">
+            <div class="gs-row" data-act="none">
+              <span class="gs-dot" style="background:${g.color}"></span>
+              <div class="gs-main">
+                <div class="gs-name">${esc(g.name)}<span class="gs-tag ok">محقق شد ✓</span></div>
+                <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'}${when}</div>
+              </div>
+              <button class="gs-mini" data-act="unreach" type="button">بازگرداندن</button>
+              <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
+              <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
+            </div>
+          </div>`;
+        }).join('');
+        listEl.scrollTop = scrollTop;
+        return;
+      }
       listEl.innerHTML = rows.map(({g, hit})=>{
         const n = countAllActions(g.actions);
         const p = goalPower(g);
         const stale = g.lastActivity && (Date.now() - g.lastActivity) > 30*86400000;
-        const tags = (g.reached ? '<span class="gs-tag">رسیده‌ام</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
+        const tags = (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
         const isOpen = OPEN.has(g.id) || (q && hit);
         const fibs = goalFibers(g);
         return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(g.color)}">
@@ -4536,6 +4575,7 @@ body.bg-mode-image #grat-root{background:transparent;}
               <div class="gs-bar"><i style="width:${p}%;background:${g.color}"></i></div>
             </div>
             <button class="gs-ic" data-act="toggle" aria-label="باز یا بسته کردن شاخه‌ها">${isOpen ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
+            <button class="gs-ic" data-act="reach" aria-label="به این هدف رسیدم" title="به این هدف رسیدم">${ICO_CHECK}</button>
             <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
             <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
           </div>
@@ -4544,10 +4584,23 @@ body.bg-mode-image #grat-root{background:transparent;}
       }).join('');
       listEl.scrollTop = scrollTop;
     }
+    window.__reopenGoalsSheet = ()=>{ open(); };
     function open(){ searchEl.value=''; orderCache = null; draw(); ov.classList.add('open'); }
     function close(){ ov.classList.remove('open'); }
     function touch(g){ g.lastActivity = Date.now(); scheduleMapSave(); }
     document.getElementById('goals-list-btn').addEventListener('click', open);
+    document.getElementById('gs-tabs').addEventListener('click', (e)=>{
+      const b = e.target.closest('.gs-chip'); if (!b) return;
+      tabKey = b.dataset.tab; orderCache = null;
+      [...document.querySelectorAll('#gs-tabs .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
+      draw();
+    });
+    document.getElementById('gs-add').addEventListener('click', ()=>{
+      tabKey = 'active';
+      [...document.querySelectorAll('#gs-tabs .gs-chip')].forEach(x=>x.classList.toggle('on', x.dataset.tab==='active'));
+      close();
+      document.dispatchEvent(new CustomEvent('maghz-add-goal'));
+    });
     document.getElementById('gs-close').addEventListener('click', close);
     ov.addEventListener('pointerdown', (e)=>{ if (e.target === ov) close(); });
     searchEl.addEventListener('input', ()=>{ orderCache = null; draw(); });
@@ -4651,6 +4704,17 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (e.target.closest('.gs-body')){ onBodyClick(e, g); return; }
       const act = e.target.closest('[data-act]');
       const kind = act ? act.dataset.act : 'toggle';
+      if (kind === 'none') return;
+      if (kind === 'reach'){
+        g.reached = true; g.reachedAt = Date.now(); OPEN.delete(id); touch(g); render(); draw();
+        if (typeof toast === 'function') toast('تبریک! هدف به «اهداف محقق‌شده» رفت');
+        return;
+      }
+      if (kind === 'unreach'){
+        g.reached = false; delete g.reachedAt; touch(g); render(); draw();
+        if (typeof toast === 'function') toast('هدف به اهداف در جریان برگشت');
+        return;
+      }
       if (kind === 'edit'){ close(); openPanelForGoal(id); return; }
       if (kind === 'map'){ close(); focusGoal(id); return; }
       // toggle: باز/بسته کردن کادر شاخه‌ها
@@ -5510,7 +5574,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     swatchesWrap.appendChild(sw);
   });
 
-  document.getElementById('add-goal-btn').addEventListener('click', ()=>{
+  document.addEventListener('maghz-add-goal', ()=>{
     goalNameInput.value='';
     goalColorInput.value = PALETTE[Math.floor(Math.random()*PALETTE.length)];
     goalOverlay.classList.remove('hidden');
@@ -5518,6 +5582,7 @@ body.bg-mode-image #grat-root{background:transparent;}
   });
   document.getElementById('goal-cancel-btn').addEventListener('click', ()=>{
     goalOverlay.classList.add('hidden');
+    if (window.__reopenGoalsSheet) window.__reopenGoalsSheet();
   });
   document.getElementById('goal-create-btn').addEventListener('click', ()=>{
     const name = goalNameInput.value.trim();
@@ -5533,6 +5598,7 @@ body.bg-mode-image #grat-root{background:transparent;}
     });
     goalOverlay.classList.add('hidden');
     render();
+    if (window.__reopenGoalsSheet) window.__reopenGoalsSheet();
   });
 
   document.getElementById('add-ring-btn').addEventListener('click', ()=>{
@@ -6244,7 +6310,10 @@ body.bg-mode-image #grat-root{background:transparent;}
         const newName = panelName.value.trim();
         if (newName) g.name = newName;
         g.color = panelColor.value;
+        const wasReached = !!g.reached;
         g.reached = document.getElementById('panel-reached').checked;
+        if (g.reached && !wasReached) g.reachedAt = Date.now();
+        if (!g.reached) delete g.reachedAt;
         g.images = images;
         g.freq = document.getElementById('panel-goal-freq').value || 'alpha';
       }
