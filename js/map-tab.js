@@ -1095,6 +1095,28 @@
       const todayDone = !!(n.logs && n.logs[pi.todayJK]);
       const kids = (n.children||[]).filter(k=>!k.achieved);
       const daysOpen = depth === 0 ? !DAYS_TOG.has(n.id) : DAYS_TOG.has(n.id);
+      if (depth > 0){
+        const ts = nodeDaySecs(n, pi.todayJK);
+        let mh = '<div class="gs-grp">'+
+        '<div class="gs-node sub mini" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
+          '<div class="gs-mrow">'+
+            '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
+            '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام زیرشاخه (مثلاً یوتیوب)..." autocomplete="off">'+
+            '<button type="button" class="gs-mtime'+(ts?' on':'')+'" data-nact="settime" data-jk="'+pi.todayJK+'" title="ثبت یا ویرایش زمان امروز">'+(ts ? fmtDur(ts) : '＋ زمان')+'</button>'+
+            '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
+            '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
+            '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
+          '</div>'+
+          (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+timeChipsHTML(n) : '')+
+        '</div>';
+        if (addingFor === n.id) mh += '<div class="gs-kids">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
+        if ((n.children||[]).length){
+          mh += '<div class="gs-kids">';
+          (n.children||[]).forEach(ch=>{ mh += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام'); });
+          mh += '</div>';
+        }
+        return mh + '</div>';
+      }
       const lvlName = depth === 0 ? 'شاخه' : (depth === 1 ? 'زیرشاخه' : 'زیرِ زیرشاخه');
       let h = '<div class="gs-grp">'+
       '<div class="gs-node '+(depth ? 'sub' : 'main')+'" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
@@ -3666,6 +3688,13 @@
       '.gs-kids{display:flex;flex-direction:column;gap:6px;margin-inline-start:12px;padding-inline-start:10px;border-inline-start:2px dashed rgba(127,127,127,.35);}'+
       '.gs-node.main{padding:10px 12px;box-shadow:0 1px 0 rgba(127,127,127,.15);}'+
       '.gs-node.sub{background:rgba(127,127,127,.04);padding:7px 9px;}'+
+      '.gs-node.mini{padding:5px 8px;}'+
+      '.gs-mrow{display:flex;align-items:center;gap:5px;}'+
+      '.gs-mrow .gs-ntext{flex:1;min-width:0;font-size:12.5px;font-weight:600;}'+
+      '.gs-mrow .gs-tick{width:24px;height:24px;flex:none;}'+
+      '.gs-mrow .gs-nbtn{width:24px;height:24px;font-size:13px;}'+
+      '.gs-mtime{flex:none;border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:999px;padding:3px 8px;font-family:inherit;font-size:10.5px;cursor:pointer;white-space:nowrap;}'+
+      '.gs-mtime.on{color:var(--text-main);}'+
       '.gs-node.sub .gs-ntext{font-size:12.5px;font-weight:600;}'+
       '.gs-nname{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}'+
       '.gs-lvl{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:10px;}'+
