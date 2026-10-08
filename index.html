@@ -358,34 +358,6 @@
   .gs-ic{flex:none;width:34px;height:34px;border-radius:10px;border:none;background:transparent;color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .gs-ic:active{background:rgba(127,127,127,.18);}
   .gs-empty{text-align:center;color:var(--text-dim);font-size:12.5px;padding:28px 8px;line-height:2;}
-
-  /* ===== فهرست اهداف = ویرایشگر کامل (هدف، شاخه، زیرشاخه، نشانه، تقویم دوره، مسیر عصبی) ===== */
-  .gs-acts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
-  .gs-acts .gs-chip{color:var(--text-main);}
-  .gs-sec{font-size:11.5px;font-weight:700;color:var(--text-dim);margin:8px 2px 0;}
-  .gs-item{border:1px solid var(--panel-border);border-radius:14px;overflow:hidden;}
-  .gs-item .gs-row{border:none;border-radius:0;}
-  .gs-item.open .gs-row{background:rgba(127,127,127,.08);}
-  .gsx-body{padding:10px 10px 12px;border-top:1px solid var(--panel-border);display:flex;flex-direction:column;gap:8px;}
-  .gsx-hrow,.gsx-nrow{display:flex;align-items:center;gap:6px;}
-  .gsx-body input[type=text]{flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:12.5px;}
-  .gsx-body input[type=color]{width:28px;height:28px;border:none;border-radius:8px;background:none;padding:0;cursor:pointer;flex:none;}
-  .gsx-btns{display:flex;gap:6px;flex-wrap:wrap;}
-  .gsx-btn{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:10px;padding:7px 11px;font-family:inherit;font-size:11.5px;cursor:pointer;}
-  .gsx-btn.gold{background:var(--accent);color:#221800;border-color:transparent;font-weight:700;}
-  .gsx-wide{width:100%;border:1px dashed var(--panel-border);background:transparent;color:var(--text-dim);border-radius:10px;padding:8px;font-family:inherit;font-size:11.5px;cursor:pointer;}
-  .gsx-node{background:rgba(127,127,127,.07);border-radius:10px;padding:7px 8px;border-inline-start:2px solid rgba(127,127,127,.15);}
-  .gsx-node .gsx-node{margin-top:6px;}
-  .gsx-b{flex:none;width:28px;height:28px;border-radius:8px;border:none;background:rgba(127,127,127,.12);color:var(--text-main);font-size:14px;cursor:pointer;line-height:1;}
-  .gsx-b.del{color:#c96b6b;background:transparent;font-size:17px;}
-  .gsx-det{margin-top:8px;display:flex;flex-direction:column;gap:8px;}
-  .gsx-line{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-dim);}
-  .gsx-line input[type=range]{flex:1;}
-  .gsx-chk{display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer;}
-  .gsx-chk input{width:15px;height:15px;}
-  .gsx-sub{font-size:12px;font-weight:700;margin-top:2px;}
-  .gsx-empty{font-size:11.5px;color:var(--text-dim);padding:2px;}
-  body.gs-on #panel{z-index:60;}
   .np-reveal{animation:npReveal .45s ease-out;}
   .tbtn.primary{background:var(--accent);color:#221800;}
   .tbtn.primary:hover{background:#ffd35c;}
@@ -2472,6 +2444,11 @@ body.bg-mode-image #grat-root{background:transparent;}
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+.abundance-today{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(43,191,171,.12);border:1px solid rgba(43,191,171,.35);font-weight:700;font-size:14px;}
+.abundance-today.over{background:rgba(220,80,80,.12);border-color:rgba(220,80,80,.4);}
+.abundance-hint{font-size:12px;opacity:.8;margin:0 4px 10px;text-align:center;}
+</style>
 </head>
 <body>
 
@@ -2808,11 +2785,6 @@ body.bg-mode-image #grat-root{background:transparent;}
   <div class="gs-sheet" role="dialog" aria-label="فهرست اهداف">
     <div class="gs-grab"></div>
     <div class="gs-head"><strong>اهداف من</strong><span class="gs-count" id="gs-count"></span><button class="gs-x" id="gs-close" aria-label="بستن">✕</button></div>
-    <div class="gs-acts">
-      <button class="gs-chip" id="gs-new-goal">＋ هدف جدید</button>
-      <button class="gs-chip" id="gs-new-ring">＋ نشانه‌ی نزدیکی</button>
-      <button class="gs-chip" id="gs-me">من (مرکز نقشه)</button>
-    </div>
     <input id="gs-search" type="search" placeholder="جست‌وجوی هدف یا شاخه..." autocomplete="off">
     <div class="gs-sort" id="gs-sort">
       <button class="gs-chip on" data-sort="recent">آخرین فعالیت</button>
@@ -2962,7 +2934,8 @@ body.bg-mode-image #grat-root{background:transparent;}
 
     <div class="help-section">
   <h3>🛍️ بازی فراوانی چیه؟</h3>
-  <p>یه فروشگاه نمادینه، نه واقعی. هر چیزی که دوست داری — کوچیک یا بزرگ — با عکس و قیمت دلخواه به سبدت اضافه می‌کنی.</p>
+  <p>یه فروشگاه نمادینه، نه واقعی. هر روز یه مبلغ تازه و بزرگ‌تر به کارتت واریز می‌شه (از مبلغی که خودت تعیین می‌کنی شروع می‌شه) و باید همون روز تمامش رو خرج کنی. پول دیروز به امروز اضافه نمی‌شه. هدف خریدن چیزها نیست؛ ساختن حس فراوانی توی ذهنه. اگه روزی انجام ندی، بازی از اول شروع نمی‌شه و از همون‌جا ادامه می‌دی.</p>
+  <p>هر چیزی که دوست داری — کوچیک یا بزرگ — با عکس و قیمت دلخواه به سبدت اضافه می‌کنی.</p>
   <p>وقتی «پرداخت» می‌زنی، هیچ پول واقعی جابه‌جا نمی‌شه. فقط یه رسید نمادین می‌گیری، و همون مورد می‌ره توی لیست شکرگذاری‌ات. این تمرین، حسِ داشتن رو توی دلت زنده می‌کنه — قبل از اینکه واقعاً بهش برسی.</p>
   <p style="background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>هدف این تمرین:</b> تو با این بازی، حسِ حالت درونت رو می‌بینی. شکرگذاری می‌کنی. ولی خودِ شناخت الگوها، توی تب «شناخت» اتفاق می‌افته.</p>
 </div>
@@ -4365,21 +4338,17 @@ body.bg-mode-image #grat-root{background:transparent;}
     if (id) focusGoal(id);
   });
 
-  /* ---- فهرست اهداف: ویرایشگر کامل، متصل مستقیم به نقشه (همان state) ---- */
+  /* ---- فهرست اهداف ---- */
   (function(){
     const ov = document.getElementById('goals-sheet-overlay');
     const listEl = document.getElementById('gs-list');
     const searchEl = document.getElementById('gs-search');
     const countEl = document.getElementById('gs-count');
     let sortKey = 'recent';
-    const openHosts = new Set(), openNodes = new Set(), openCals = new Set();
     const ICO_CHEV_DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
     const ICO_CHEV_UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
     const ICO_EDIT = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>';
     const norm = (t)=> String(t||'').toLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک');
-    const hexOk = (c)=> /^#[0-9a-f]{6}$/i.test(c || '') ? c : '#f4c542';
-    const hColor = (h)=> h.color || RING_COLOR;
-    const hName = (h)=> isRingHost(h) ? (h.label || 'نشانه') : (h.name || '');
     function findInActions(list, q){
       for (const a of (list||[])){
         if (norm(a.text).includes(q)) return a.text;
@@ -4395,152 +4364,40 @@ body.bg-mode-image #grat-root{background:transparent;}
       if (d === 1) return 'دیروز';
       return toFa(d) + ' روز پیش';
     }
-    function newAction(radius){
-      return { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:radius, createdAt:Date.now() };
-    }
-
-    /* ---- تقویم دوره (همان موتور پنل) ---- */
-    function calHTML(p, kind, hid, aid){
-      return `<div class="pc-card gsx-pc" data-kind="${kind}" data-hid="${hid}" data-aid="${aid||''}" data-p="${p}">
-        <div class="pc-head"><span id="${p}-title"></span><span class="pc-prog" id="${p}-progress"></span></div>
-        <div class="pc-hint" id="${p}-hint"></div>
-        <div class="pc-grid" id="${p}-cal"></div>
-        <div id="${p}-info"></div>
-      </div>`;
-    }
-    function renderCalEl(el){
-      const d = el.dataset;
-      pcOverride = { kind:d.kind, hostId:d.hid, aid:d.aid, p:d.p };
-      try{ renderPanelPeriodCal(); }catch(e){ console.warn(e); }
-      finally{ pcOverride = null; }
-    }
-    function renderAllCals(){ listEl.querySelectorAll('.gsx-pc').forEach(renderCalEl); }
-
-    /* ---- مسیر عصبی هر شاخه (همان موتور پنل) ---- */
-    function mountNeural(a){
-      if (typeof renderNeuralPathway !== 'function') return;
-      if (!document.getElementById('gsn-' + a.id)) return;
-      renderNeuralPathway('gsn-' + a.id, ensureNodeNeural(a), {
-        label: a.text || 'این شاخه',
-        practiceKey: 'branch_' + a.id,
-        calendarLinked: true,
-        isConfirmed: function(key){
-          if (key !== todayKey()) return false;
-          const t = new Date();
-          const jt = toJalaali(t.getFullYear(), t.getMonth()+1, t.getDate());
-          return !!(a.logs && a.logs[calDKey(jt.jy, jt.jm, jt.jd)]);
-        },
-        onChange: function(){ scheduleMapSave(); render(); }
-      });
-    }
-
-    function detailHTML(h, a){
-      const w = a.weight || 5;
-      return `<div class="gsx-det">
-        <div class="gsx-line"><span>قطر شاخه</span><input type="range" class="gsx-weight" data-hid="${h.id}" data-aid="${a.id}" min="1" max="10" value="${w}"><b class="gsx-wv" data-aid="${a.id}">${toFa(w)}</b></div>
-        <label class="gsx-chk"><input type="checkbox" class="gsx-routine" data-hid="${h.id}" data-aid="${a.id}"${a.isRoutine ? ' checked' : ''}><span>این یه کار روتینه</span></label>
-        <label class="gsx-chk"><input type="checkbox" class="gsx-neural" data-hid="${h.id}" data-aid="${a.id}"${a.showNeuralOnMap ? ' checked' : ''}><span>نمایش مسیر عصبی روی نقشه</span></label>
-        <div class="gsx-sub">🧬 مسیر عصبی این شاخه</div>
-        <div class="neural-card" id="gsn-${a.id}"></div>
-        <div class="gsx-sub">🧭 تقویم دوره</div>
-        ${calHTML('gsx-a-' + a.id, 'action', h.id, a.id)}
-        <button class="gsx-wide" data-act="panel-node" data-hid="${h.id}" data-aid="${a.id}">عکس، شکل شاخه و تنظیمات بیشتر…</button>
-      </div>`;
-    }
-    function nodeHTML(h, a){
-      const open = openNodes.has(a.id);
-      const kids = a.children || [];
-      return `<div class="gsx-node">
-        <div class="gsx-nrow">
-          <input type="color" class="gsx-color" data-hid="${h.id}" data-aid="${a.id}" value="${hexOk(a.color || hColor(h))}">
-          <input type="text" class="gsx-text" data-hid="${h.id}" data-aid="${a.id}" value="${esc(a.text)}" placeholder="این اقدام چی بود؟">
-          <button class="gsx-b" data-act="add-sub" data-hid="${h.id}" data-aid="${a.id}" title="زیرشاخه">＋</button>
-          <button class="gsx-b" data-act="detail" data-hid="${h.id}" data-aid="${a.id}" title="تقویم، مسیر عصبی و تنظیمات">${open ? '▴' : '▾'}</button>
-          <button class="gsx-b del" data-act="del" data-hid="${h.id}" data-aid="${a.id}" title="حذف">×</button>
-        </div>
-        ${open ? detailHTML(h, a) : ''}
-        ${kids.map(k => nodeHTML(h, k)).join('')}
-      </div>`;
-    }
-    function bodyHTML(h){
-      const ring = isRingHost(h);
-      const calOpen = !ring && openCals.has(h.id);
-      return `<div class="gsx-body">
-        <div class="gsx-hrow">
-          <input type="color" class="gsx-hcolor" data-hid="${h.id}" value="${hexOk(hColor(h))}">
-          <input type="text" class="gsx-hname" data-hid="${h.id}" value="${esc(hName(h))}" placeholder="${ring ? 'اسم نشانه' : 'اسم هدف'}">
-        </div>
-        <div class="gsx-btns">
-          <button class="gsx-btn gold" data-act="add-branch" data-hid="${h.id}">＋ شاخه جدید</button>
-          ${ring ? '' : `<button class="gsx-btn" data-act="cal-host" data-hid="${h.id}">🧭 تقویم دوره</button>`}
-          <button class="gsx-btn" data-act="focus" data-hid="${h.id}">تمرکز روی نقشه</button>
-          ${(h.actions && h.actions.length) ? `<button class="gsx-btn" data-act="map-collapse" data-hid="${h.id}">${h.collapsed ? 'باز کردن روی نقشه' : 'جمع کردن روی نقشه'}</button>` : ''}
-          <button class="gsx-btn" data-act="panel-host" data-hid="${h.id}">تنظیمات کامل</button>
-        </div>
-        ${calOpen ? calHTML('gsx-g-' + h.id, 'goal', h.id, '') : ''}
-        ${(h.actions && h.actions.length) ? h.actions.map(a => nodeHTML(h, a)).join('') : '<div class="gsx-empty">هنوز شاخه‌ای نداره. با «＋ شاخه جدید» شروع کن.</div>'}
-      </div>`;
-    }
-    function itemHTML(h, hit){
-      const ring = isRingHost(h);
-      const n = countAllActions(h.actions);
-      const p = goalPower(h);
-      const open = openHosts.has(h.id) || !!hit;
-      const stale = h.lastActivity && (Date.now() - h.lastActivity) > 30*86400000;
-      const tags = (h.reached ? '<span class="gs-tag">رسیده‌ام</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '') + (ring ? '<span class="gs-tag">نشانه</span>' : '');
-      return `<div class="gs-item${open ? ' open' : ''}" data-gid="${h.id}">
-        <div class="gs-row" data-gid="${h.id}">
-          <span class="gs-dot" style="background:${hColor(h)}"></span>
-          <div class="gs-main">
-            <div class="gs-name">${esc(hName(h))}${tags}</div>
-            <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${h.lastActivity ? ' · ' + ago(h.lastActivity) : ''}</div>
-            ${hit ? `<div class="gs-hit">شاخه: ${esc(hit)}</div>` : ''}
-            <div class="gs-bar"><i style="width:${p}%;background:${hColor(h)}"></i></div>
-          </div>
-          <button class="gs-ic" data-act="host-toggle" data-hid="${h.id}" aria-label="باز یا بسته کردن ویرایشگر">${open ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
-          <button class="gs-ic" data-act="panel-host" data-hid="${h.id}" aria-label="تنظیمات کامل">${ICO_EDIT}</button>
-        </div>
-        ${open ? bodyHTML(h) : ''}
-      </div>`;
-    }
-
     function draw(){
-      const st = listEl.scrollTop;
       const q = norm(searchEl.value.trim());
-      const rowsOf = (arr)=> arr.map(g=>({ g, hit: q ? (norm(hName(g)).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
-                                .filter(r=> !q || r.hit !== null);
-      const rows = rowsOf(state.goals);
-      const rrows = rowsOf(state.rings);
+      let rows = state.goals.map(g=>({ g, hit: q ? (norm(g.name).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
+                            .filter(r=> !q || r.hit !== null);
       rows.sort((a,b)=>{
         if (sortKey === 'growth') return goalPower(b.g) - goalPower(a.g);
         if (sortKey === 'name') return String(a.g.name).localeCompare(String(b.g.name), 'fa');
         return (b.g.lastActivity||0) - (a.g.lastActivity||0);
       });
-      const total = state.goals.length;
-      countEl.textContent = (total ? toFa(total) + ' هدف' : '') + (state.rings.length ? (total ? ' · ' : '') + toFa(state.rings.length) + ' نشانه' : '');
-      let html = '';
+      countEl.textContent = state.goals.length ? toFa(state.goals.length) + ' هدف' : '';
       if (!rows.length){
-        html += `<div class="gs-empty">${total ? 'موردی پیدا نشد.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'}</div>`;
-      } else {
-        html += rows.map(({g, hit}) => itemHTML(g, hit)).join('');
+        listEl.innerHTML = `<div class="gs-empty">${state.goals.length ? 'موردی پیدا نشد.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'}</div>`;
+        return;
       }
-      if (rrows.length){
-        html += `<div class="gs-sec">نشانه‌های نزدیکی</div>` + rrows.map(({g, hit}) => itemHTML(g, hit)).join('');
-      }
-      listEl.innerHTML = html;
-      listEl.scrollTop = st;
-      state.goals.concat(state.rings).forEach(h=>{
-        (function walk(list){ (list||[]).forEach(a=>{ if (openNodes.has(a.id)) mountNeural(a); walk(a.children); }); })(h.actions);
-      });
-      renderAllCals();
+      listEl.innerHTML = rows.map(({g, hit})=>{
+        const n = countAllActions(g.actions);
+        const p = goalPower(g);
+        const stale = g.lastActivity && (Date.now() - g.lastActivity) > 30*86400000;
+        const tags = (g.reached ? '<span class="gs-tag">رسیده‌ام</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
+        return `<div class="gs-row" data-gid="${g.id}">
+          <span class="gs-dot" style="background:${g.color}"></span>
+          <div class="gs-main">
+            <div class="gs-name">${esc(g.name)}${tags}</div>
+            <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${g.lastActivity ? ' · ' + ago(g.lastActivity) : ''}</div>
+            ${hit ? `<div class="gs-hit">شاخه: ${esc(hit)}</div>` : ''}
+            <div class="gs-bar"><i style="width:${p}%;background:${g.color}"></i></div>
+          </div>
+          ${n ? `<button class="gs-ic" data-act="toggle" aria-label="جمع یا باز کردن">${g.collapsed ? ICO_CHEV_DOWN : ICO_CHEV_UP}</button>` : ''}
+          <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
+        </div>`;
+      }).join('');
     }
-    function open(){ searchEl.value=''; draw(); ov.classList.add('open'); document.body.classList.add('gs-on'); }
-    function close(){ ov.classList.remove('open'); document.body.classList.remove('gs-on'); }
-    function isOpen(){ return ov.classList.contains('open'); }
-    function focusField(sel){
-      setTimeout(()=>{ const el = listEl.querySelector(sel); if (el){ el.focus(); try{ el.scrollIntoView({block:'center', behavior:'smooth'}); }catch(_){} } }, 40);
-    }
-
+    function open(){ searchEl.value=''; draw(); ov.classList.add('open'); }
+    function close(){ ov.classList.remove('open'); }
     document.getElementById('goals-list-btn').addEventListener('click', open);
     document.getElementById('gs-close').addEventListener('click', close);
     ov.addEventListener('pointerdown', (e)=>{ if (e.target === ov) close(); });
@@ -4551,108 +4408,15 @@ body.bg-mode-image #grat-root{background:transparent;}
       [...document.querySelectorAll('#gs-sort .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
       draw();
     });
-    document.getElementById('gs-new-goal').addEventListener('click', ()=>{ document.getElementById('add-goal-btn').click(); });
-    document.getElementById('gs-new-ring').addEventListener('click', ()=>{
-      document.getElementById('add-ring-btn').click();
-      const r = state.rings[state.rings.length - 1];
-      if (r) openHosts.add(r.id);
-      draw();
-    });
-    document.getElementById('gs-me').addEventListener('click', ()=>{ openPanelForMe(); });
-
     listEl.addEventListener('click', (e)=>{
-      /* تقویم دوره‌ی داخل فهرست */
-      const pc = e.target.closest('.gsx-pc');
-      if (pc){
-        const d = pc.dataset;
-        pcOverride = { kind:d.kind, hostId:d.hid, aid:d.aid, p:d.p };
-        try{ pcOnClick(e); } finally { pcOverride = null; }
-        renderAllCals();
-        if (d.kind === 'action'){
-          const h = findHost(d.hid), f = h && findActionNode(h.actions, d.aid);
-          if (f) mountNeural(f.node);
-        }
-        return;
-      }
-      if (e.target.closest('input, textarea, select, .neural-card')) return;
-      const btn = e.target.closest('[data-act]');
-      if (btn){
-        const act = btn.dataset.act, hid = btn.dataset.hid, aid = btn.dataset.aid;
-        const h = hid ? findHost(hid) : null;
-        if (!h) return;
-        if (act === 'host-toggle'){ if (openHosts.has(hid)) openHosts.delete(hid); else openHosts.add(hid); draw(); return; }
-        if (act === 'panel-host'){ if (isRingHost(h)) openPanelForRing(hid); else openPanelForGoal(hid); return; }
-        if (act === 'panel-node'){ openPanelForAction(hid, aid); return; }
-        if (act === 'focus'){ close(); focusGoal(hid); return; }
-        if (act === 'map-collapse'){ toggleGoalCollapse(hid); draw(); return; }
-        if (act === 'cal-host'){ if (openCals.has(hid)) openCals.delete(hid); else openCals.add(hid); draw(); return; }
-        if (act === 'add-branch'){
-          const a = newAction(12);
-          h.actions = h.actions || [];
-          h.actions.push(a);
-          h.collapsed = false; h.lastActivity = Date.now();
-          openHosts.add(hid);
-          draw(); render();
-          focusField(`.gsx-text[data-aid="${a.id}"]`);
-          return;
-        }
-        const f = aid ? findActionNode(h.actions, aid) : null;
-        if (!f) return;
-        if (act === 'add-sub'){
-          const c = newAction(10);
-          f.node.children = f.node.children || [];
-          f.node.children.push(c);
-          h.collapsed = false; h.lastActivity = Date.now();
-          draw(); render();
-          focusField(`.gsx-text[data-aid="${c.id}"]`);
-          return;
-        }
-        if (act === 'detail'){ if (openNodes.has(aid)) openNodes.delete(aid); else openNodes.add(aid); draw(); return; }
-        if (act === 'del'){
-          if (f.node.children && f.node.children.length && !window.confirm('این شاخه و همه‌ی زیرشاخه‌هایش حذف شود؟')) return;
-          f.list.splice(f.list.indexOf(f.node), 1);
-          h.lastActivity = Date.now();
-          draw(); render();
-          return;
-        }
-        return;
-      }
-      /* کلیک روی خودِ ردیف (نه دکمه‌ها): تمرکز روی هدف در نقشه */
-      const row = e.target.closest('.gs-row');
-      if (row){ const id = row.dataset.gid; close(); focusGoal(id); }
+      const row = e.target.closest('.gs-row'); if (!row) return;
+      const id = row.dataset.gid;
+      const act = e.target.closest('[data-act]');
+      if (act && act.dataset.act === 'toggle'){ toggleGoalCollapse(id); draw(); return; }
+      if (act && act.dataset.act === 'edit'){ close(); openPanelForGoal(id); return; }
+      close();
+      focusGoal(id);
     });
-
-    listEl.addEventListener('input', (e)=>{
-      const t = e.target, hid = t.dataset && t.dataset.hid;
-      if (!hid) return;
-      const h = findHost(hid); if (!h) return;
-      if (t.classList.contains('gsx-hname')){
-        if (isRingHost(h)) h.label = t.value; else h.name = t.value;
-        h.lastActivity = Date.now(); debouncedRender(); return;
-      }
-      if (t.classList.contains('gsx-hcolor')){ h.color = t.value; debouncedRender(); return; }
-      const f = findActionNode(h.actions || [], t.dataset.aid);
-      if (!f) return;
-      const n = f.node;
-      if (t.classList.contains('gsx-text')){ n.text = t.value; h.lastActivity = Date.now(); debouncedRender(); }
-      else if (t.classList.contains('gsx-color')){ n.color = t.value; debouncedRender(); }
-      else if (t.classList.contains('gsx-weight')){
-        n.weight = +t.value;
-        const sp = listEl.querySelector(`.gsx-wv[data-aid="${n.id}"]`);
-        if (sp) sp.textContent = toFa(t.value);
-        debouncedRender();
-      }
-      else if (t.classList.contains('gsx-routine')){ n.isRoutine = t.checked; render(); }
-      else if (t.classList.contains('gsx-neural')){ n.showNeuralOnMap = t.checked; render(); }
-    });
-
-    /* وقتی پنل کامل بسته شد یا هدف تازه ساخته شد، فهرست از نو خوانده می‌شود */
-    try{
-      new MutationObserver(()=>{ if (isOpen() && !panel.classList.contains('open')) draw(); })
-        .observe(panel, { attributes:true, attributeFilter:['class'] });
-      new MutationObserver(()=>{ if (isOpen() && goalOverlay.classList.contains('hidden')) draw(); })
-        .observe(goalOverlay, { attributes:true, attributeFilter:['class'] });
-    }catch(e){}
   })();
 
   document.getElementById('collapse-all-btn').addEventListener('click', ()=>{
@@ -6524,7 +6288,6 @@ body.bg-mode-image #grat-root{background:transparent;}
   var PC_MONTH_ORD = ['اول','دوم','سوم','چهارم','پنجم','ششم','هفتم','هشتم','نهم','دهم','یازدهم','دوازدهم','سیزدهم'];
   var PC_MAX_DAYS = 365;
   var pcSelectedKey = null;
-  var pcOverride = null; /* وقتی تقویم داخل «فهرست اهداف» رندر/کلیک می‌شود، به‌جای پنل از این استفاده می‌شود */
 
   function pcLocalKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function pcParseKey(k){ const p = String(k).split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
@@ -6543,14 +6306,6 @@ body.bg-mode-image #grat-root{background:transparent;}
   }
 
   function pcContext(){
-    if (pcOverride){
-      const hg = findHost(pcOverride.hostId);
-      if (!hg) return null;
-      if (pcOverride.kind === 'goal') return { kind:'goal', goal:hg, node:null, p:pcOverride.p, color:(hg.color || RING_COLOR), sources:pcCollect(hg.actions, []) };
-      const ff = findActionNode(hg.actions, pcOverride.aid);
-      if (!ff) return null;
-      return { kind:'action', goal:hg, node:ff.node, p:pcOverride.p, color:(ff.node.color || hg.color || RING_COLOR), sources:pcCollect(ff.node.children, []) };
-    }
     if (!panelTarget) return null;
     if (panelTarget.type === 'goal'){
       const g = findHost(panelTarget.id);
@@ -6716,7 +6471,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       // اگه برای این روز یادداشتِ متنی ثبت شده (از تقویم قدیمی)، بدون تایید پاکش نمی‌کنیم
       if (cur && cur !== ROUTINE_DONE_MARK && !window.confirm('برای این روز یک یادداشت ثبت شده:\n«'+String(cur).slice(0,80)+'»\nبرداشته بشه؟')) return;
       // toggleRoutineLog خودش ذخیره، رندر نقشه، همگام‌سازی مسیر عصبی و رندر دوباره‌ی همین تقویم را انجام می‌دهد
-      toggleRoutineLog(ctx.node.id, jk);
+      toggleRoutineLog(panelTarget.actionId, jk);
     } else {
       pcSelectedKey = (pcSelectedKey === cell.dataset.pcKey) ? null : cell.dataset.pcKey;
       renderPanelPeriodCal();
@@ -6860,6 +6615,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       <span id="home-today-deposit">امروز ۰ به حسابت اضافه شد ✨</span>
       <span class="day-tag" id="home-day-tag">روز ۱</span>
     </div>
+    <button class="ghost-btn" style="width:100%;margin:-4px 0 10px;" onclick="openAbundanceSettings()">⚙️ تنظیم مبلغ شروع بازی فراوانی</button>
 
     <div class="theme-banner">
       <div class="tb-top">
@@ -6926,6 +6682,8 @@ body.bg-mode-image #grat-root{background:transparent;}
       </div>
       <button class="icon-btn" onclick="goto('shop-history')" title="تاریخچه خریدها"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-history"/></svg></button>
     </div>
+    <div class="abundance-today" id="store-balance-banner"></div>
+    <div class="abundance-hint" id="store-balance-hint"></div>
     <div class="custom-box">
       <div class="lbl">🛍️ خرید مورد دلخواه</div>
       <div class="hint">هر چیزی که دوستش داری رو یکی‌یکی اضافه کن، بعد همه رو با هم بریز تو سبد</div>
@@ -7378,6 +7136,27 @@ body.bg-mode-image #grat-root{background:transparent;}
         <button id="cur-dollar" onclick="pickCurrency('dollar')">دلار</button>
       </div>
       <button class="primary-btn" style="margin:20px 0 0;" onclick="confirmSetup()">شروع بازی فراوانی</button>
+    </div>
+  </div>
+
+  <!-- abundance settings modal -->
+  <div class="modal-overlay" id="abundance-modal">
+    <div class="modal-card" style="text-align:right;">
+      <div class="m-seal" style="text-align:center;">🌿</div>
+      <h2 style="text-align:center;">تنظیم بازی فراوانی</h2>
+      <p style="text-align:center;margin-top:0;">هر روز مبلغ تازه و بزرگ‌تری واریز می‌شه و باید همون روز خرجش کنی.</p>
+      <div class="field">
+        <label>روز اول از چه مبلغی شروع کنم؟</label>
+        <input type="text" id="ab-start" inputmode="numeric" oninput="formatAmountInput(this)" placeholder="مثلاً 1,000,000">
+      </div>
+      <div class="field">
+        <label>هر روز چقدر بیشتر بشه؟</label>
+        <input type="text" id="ab-step" inputmode="numeric" oninput="formatAmountInput(this)" placeholder="مثلاً 1,000,000">
+      </div>
+      <p id="ab-preview" style="font-size:12px;opacity:.8;margin:6px 0 0;"></p>
+      <p style="font-size:12px;opacity:.7;margin:10px 0 0;">اگه روزی انجام ندی، بازی از اول شروع نمی‌شه؛ واریز روز بعد طبق تقویم ادامه داره و فقط از همون‌جا ادامه می‌دی.</p>
+      <button class="primary-btn" style="width:100%; margin:18px 0 8px;" onclick="saveAbundanceSettings()">ذخیره</button>
+      <button class="ghost-btn" style="width:100%; margin:0;" onclick="closeAbundanceSettings()">انصراف</button>
     </div>
   </div>
 
@@ -8114,6 +7893,36 @@ function startNewShopPeriod(){
   if(typeof toast === 'function') toast('دوره‌ی ' + periodOrdFa(sp.past.length) + ' شروع شد 🌱');
 }
 
+function _abFmt(v){ return Math.round(toDisplay(v)).toLocaleString('en-US'); }
+function openAbundanceSettings(){
+  const a = ensureAbundance();
+  document.getElementById('ab-start').value = _abFmt(a.startAmount);
+  document.getElementById('ab-step').value = _abFmt(a.step);
+  const upd = function(){
+    const st = fromDisplay(parseInt(normalizeDigits(document.getElementById('ab-start').value).replace(/[^\d]/g,''),10)||0);
+    const sp = fromDisplay(parseInt(normalizeDigits(document.getElementById('ab-step').value).replace(/[^\d]/g,''),10)||0);
+    document.getElementById('ab-preview').textContent = (st>0 && sp>0) ? ('روز ۱: '+formatMoney(st)+' ← روز ۲: '+formatMoney(st+sp)+' ← روز ۳: '+formatMoney(st+2*sp)) : '';
+  };
+  document.getElementById('ab-start').addEventListener('input', upd);
+  document.getElementById('ab-step').addEventListener('input', upd);
+  upd();
+  document.getElementById('abundance-modal').classList.add('show');
+}
+function closeAbundanceSettings(){ document.getElementById('abundance-modal').classList.remove('show'); }
+function saveAbundanceSettings(){
+  const st = fromDisplay(parseInt(normalizeDigits(document.getElementById('ab-start').value).replace(/[^\d]/g,''),10));
+  const sp = fromDisplay(parseInt(normalizeDigits(document.getElementById('ab-step').value).replace(/[^\d]/g,''),10));
+  if(!(st>0)){ toast('مبلغ شروع رو بنویس'); return; }
+  if(!(sp>0)){ toast('مبلغ افزایش روزانه رو بنویس'); return; }
+  const a = ensureAbundance();
+  a.startAmount = st; a.step = sp;
+  saveState();
+  closeAbundanceSettings();
+  toast('تنظیم بازی فراوانی ذخیره شد 🌿');
+  try{ renderHome(); }catch(e){}
+  try{ renderStoreBalance(); }catch(e){}
+}
+
 function loadState(rawOverride){
   try{
     const raw = rawOverride || localStorage.getItem(STORAGE_KEY);
@@ -8362,16 +8171,36 @@ function formatMoney(tomanVal){
 
 /* ---------------- abundance-game day logic ---------------- */
 function todayMidnight(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+/* قاعده‌ی بازی فراوانی (استر هیکس):
+   - کاربر مبلغ شروع و پله‌ی افزایش روزانه رو خودش تعیین می‌کنه.
+   - هر روز یک مبلغ تازه و بزرگ‌تر واریز می‌شه (روز n = شروع + (n−1) × پله)؛ پول دیروز به امروز اضافه نمی‌شه.
+   - هدف خرجِ کاملِ همون روزه تا موجودی به صفر برسه.
+   - روزی که کاربر انجام نده، بازی از اول شروع نمی‌شه؛ واریز روزهای بعد طبق تقویم ادامه داره. */
+const ABUNDANCE_DEFAULT_START = 1000000;
+function ensureAbundance(){
+  if(!state.abundance || typeof state.abundance !== 'object') state.abundance = {};
+  const a = state.abundance;
+  if(!(a.startAmount > 0)) a.startAmount = ABUNDANCE_DEFAULT_START;
+  if(!(a.step > 0)) a.step = a.startAmount;
+  if(!a.startDate) a.startDate = state.startDate || dayKeyFromDate(new Date());
+  return a;
+}
 function daysPassed(){
-  if(!state.startDate) return 1;
-  const start = new Date(state.startDate+'T00:00:00');
+  const a = ensureAbundance();
+  const start = new Date(a.startDate+'T00:00:00');
   const diff = Math.floor((todayMidnight()-start)/86400000)+1;
   return Math.max(1, diff);
 }
-function todayDepositToman(){ return daysPassed()*1000000; }
-function depositToman(){ const n=daysPassed(); return 1000000*n*(n+1)/2; }
+function depositForDay(n){ const a = ensureAbundance(); return a.startAmount + (Math.max(1,n)-1)*a.step; }
+function todayDepositToman(){ return depositForDay(daysPassed()); }
+function spentTodayToman(){
+  const k = dayKeyFromDate(new Date());
+  return (state.history||[]).reduce(function(sum,h){ return (h && h.iso && dayKeyFromIso(h.iso)===k) ? sum + (h.total||0) : sum; }, 0);
+}
 function spentToman(){ return state.history.reduce((s,h)=>s+h.total,0); }
-function balanceToman(){ return depositToman()-spentToman(); }
+/* موجودی کارت = واریزی امروز − خرج‌شده‌ی امروز (هر روز از نو) */
+function balanceToman(){ return Math.max(0, todayDepositToman()-spentTodayToman()); }
+function fromDisplay(v){ return state.currency==='dollar' ? v*100000 : v; }
 
 /* ---------------- helpers ---------------- */
 function nowParts(){
@@ -8765,7 +8594,9 @@ function renderHome(){
   document.getElementById('home-expiry').textContent = state.cardExpiry;
   applyCardTheme();
   document.getElementById('home-balance').textContent = formatMoney(balanceToman());
-  document.getElementById('home-today-deposit').textContent = 'امروز '+formatMoney(todayDepositToman())+' به حسابت اضافه شد ✨';
+  document.getElementById('home-today-deposit').textContent = balanceToman()<=0
+    ? '🎉 امروز همه‌ی '+formatMoney(todayDepositToman())+' رو خرج کردی؛ فردا مبلغ بزرگ‌تری منتظرته'
+    : 'امروز '+formatMoney(todayDepositToman())+' به حسابت اضافه شد ✨ — باید همین امروز خرجش کنی';
   document.getElementById('home-day-tag').textContent = 'روز '+daysPassed().toLocaleString('fa-IR');
   renderThemeBanner();
   renderAllNeuralPathways();
@@ -8885,7 +8716,7 @@ function addToPendingList(){
   const nameEl = document.getElementById('custom-name');
   const priceEl = document.getElementById('custom-price');
   const name = nameEl.value.trim();
-  const price = parseInt((priceEl.value||'').replace(/[^\d]/g,''), 10);
+  const price = fromDisplay(parseInt(normalizeDigits(priceEl.value||'').replace(/[^\d]/g,''), 10));
   if(!name){ toast('یک اسم برای این خرید بنویس'); return; }
   if(!price || price<=0){ toast('یک مبلغ معتبر بنویس'); return; }
   pendingItems.push({id:'pend-'+Date.now()+Math.random(), name, icon:'✨', image:customImage, price});
@@ -8899,6 +8730,7 @@ function removeFromPending(id){
   renderPendingList();
 }
 function renderPendingList(){
+  renderStoreBalance();
   const wrap = document.getElementById('pending-list-wrap');
   const list = document.getElementById('pending-list');
   const btn = document.getElementById('pending-checkout-btn');
@@ -8959,7 +8791,19 @@ function removeFromCart(id){
   updateCartBadge();
   renderCart();
 }
+function renderStoreBalance(){
+  const el = document.getElementById('store-balance-banner');
+  if(!el) return;
+  const pendingTotal = (typeof pendingItems!=='undefined' ? pendingItems : []).reduce((t,i)=>t+i.price,0);
+  const cartSum = cart.reduce((t,c)=>t+c.qty*c.price,0);
+  const left = balanceToman() - cartSum - pendingTotal;
+  el.innerHTML = '<span>💳 باقی‌مانده‌ی امروز</span><b>'+formatMoney(Math.max(0,left))+'</b>';
+  el.classList.toggle('over', left < 0);
+  const hint = document.getElementById('store-balance-hint');
+  if(hint) hint.textContent = left < 0 ? 'جمع لیست از موجودی امروزت بیشتره؛ یک مورد رو کم کن.' : (left === 0 ? '✓ دقیقاً همه‌ی مبلغ امروز خرج شد — موجودی صفر!' : 'هدف: امروز همه‌ی '+formatMoney(todayDepositToman())+' رو خرج کنی تا به صفر برسه.');
+}
 function renderCart(){
+  renderStoreBalance();
   if(ensureSetup()) return;
   const list = document.getElementById('cart-list');
   const empty = document.getElementById('cart-empty');
@@ -9023,6 +8867,7 @@ function sendFakeOtp(){
 }
 function processPayment(){
   if(cart.length===0){ toast('سبد خریدت خالیه'); goto('store'); return; }
+  if(cartTotal() > balanceToman()){ toast('این مبلغ از موجودی امروزت بیشتره — باقی‌مانده: '+formatMoney(balanceToman())); goto('store'); return; }
   const overlay = document.getElementById('pay-overlay');
   overlay.classList.add('show');
   setTimeout(()=>{
@@ -9950,6 +9795,8 @@ function syncShopNeuralFromHistory(){
     const k = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
     if(sn.logs[k] !== true) sn.logs[k] = true;
   });
+  /* روز انجام‌نشده در بازی فراوانی رشته کم نمی‌کنه و بازی از اول شروع نمی‌شه */
+  Object.keys(sn.logs).forEach(function(k){ if(sn.logs[k] === false && /^\d{4}-\d{1,2}-\d{1,2}$/.test(k)) delete sn.logs[k]; });
   return sn;
 }
 function renderAllNeuralPathways(){
@@ -10005,7 +9852,7 @@ function renderAllNeuralPathways(){
 function renderShopNeural(){
   if(!document.getElementById('np-shop-mount')) return;
   syncShopNeuralFromHistory();
-  renderNeuralPathway('np-shop-mount', ensureShopNeural(), {label:'بازی فراوانی', practiceKey: 'shop', onChange: saveState, showDayButtons:false});
+  renderNeuralPathway('np-shop-mount', ensureShopNeural(), {label:'بازی فراوانی', practiceKey: 'shop', onChange: saveState, showDayButtons:false, noMissPenalty:true});
 }
 
 /* ============================================================

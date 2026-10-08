@@ -262,7 +262,7 @@ function renderNeuralPathway(mountId, container, opts){
   const mount = document.getElementById(mountId);
   if(!mount) return;
   neuralEnsureContainer(container);
-  const changed = neuralAutoSync(container);
+  const changed = opts.noMissPenalty ? false : neuralAutoSync(container);
   const cleaned = neuralCleanupPending(container, opts);
   if((changed || cleaned) && typeof opts.onChange === 'function') opts.onChange();
 
