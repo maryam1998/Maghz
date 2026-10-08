@@ -94,6 +94,7 @@
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.nodeValue;
       if (!text || !EMOJI_TEST.test(text) || !node.parentNode) return;
+      if (node.parentNode.namespaceURI === SVG_NS) return; /* متنِ داخل SVG (نقشه) را دست نزن؛ span داخل SVG نمایش داده نمی‌شود */
       const span = document.createElement('span');
       span.className = 'emoji-replaced';
       let last = 0, m;
@@ -106,7 +107,7 @@
       if (last < text.length) span.appendChild(document.createTextNode(text.slice(last)));
       node.parentNode.replaceChild(span, node);
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      if (SKIP_TAGS[node.tagName] || (node.classList && node.classList.contains('emoji-replaced'))) return;
+      if (SKIP_TAGS[node.tagName] || node.namespaceURI === SVG_NS || (node.classList && node.classList.contains('emoji-replaced'))) return;
       for (let i = node.childNodes.length - 1; i >= 0; i--) {
         replaceEmojisInNode(node.childNodes[i]);
       }
