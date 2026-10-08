@@ -107,7 +107,6 @@
       if (typeof a.labelSize !== 'number') a.labelSize = null;
       if (!a.logs || typeof a.logs !== 'object') a.logs = {};
       if (typeof a.isRoutine !== 'boolean') a.isRoutine = false;
-      if (typeof a.showNeuralOnMap !== 'boolean') a.showNeuralOnMap = false;
       if (typeof a.detached !== 'boolean') a.detached = false;
       if (typeof a.style !== 'string' || (a.style && !BRANCH_STYLES[a.style])) a.style = '';
       if (a.detached) {
@@ -1046,10 +1045,6 @@
       return n;
     }
     function allNodes(g){ return pcCollect(g.actions, []); }
-    function fibersOf(n){
-      try{ return (n.neural && n.neural.logs && typeof neuralFiberCount === 'function') ? neuralFiberCount(n.neural.logs) : 0; }catch(e){ return 0; }
-    }
-    function goalFibers(g){ return allNodes(g).reduce((s,n)=> s + fibersOf(n), 0); }
     function goalTodayCount(g, jk){ return allNodes(g).filter(n=> n.logs && n.logs[jk]).length; }
 
     function cellsHTML(node, color, pi){
@@ -1072,6 +1067,38 @@
              '<button type="button" class="gs-mini gold" data-gact="addok" data-for="'+forId+'">افزودن</button>'+
              '<button type="button" class="gs-mini" data-gact="addcancel">لغو</button></div>';
     }
+    function jkLabel(jk){
+      const p = String(jk).split('-').map(Number);
+      if (p.length !== 3 || p.some(isNaN)) return String(jk);
+      return toFa(p[2]) + ' ' + JALALI_MONTHS[p[1]-1];
+    }
+    function jkOrder(jk){ const p = String(jk).split('-').map(Number); return p[0]*10000 + p[1]*100 + p[2]; }
+    function timeChipsHTML(n){
+      const ks = Object.keys(n.time || {}).filter(k=> +n.time[k] > 0).sort((a,b)=> jkOrder(b) - jkOrder(a));
+      let h = '<div class="gs-tchips"><span class="gs-tlbl">⏱ زمان‌ها:</span>';
+      ks.slice(0, 10).forEach(k=>{
+        h += '<button type="button" class="gs-tchip" data-nact="settime" data-jk="'+k+'" title="ویرایش زمان این روز">'+jkLabel(k)+' · '+fmtDur(n.time[k])+' ✎</button>';
+      });
+      if (ks.length > 10) h += '<span class="gs-tlbl">و '+toFa(ks.length-10)+' روز دیگر</span>';
+      h += '<button type="button" class="gs-tchip add" data-nact="timeday" title="ثبت یا ویرایش زمان برای یک روز دیگر">＋ روز دیگر</button></div>';
+      return h;
+    }
+    function askSetMinutes(question, def){
+      const input = window.prompt(question, String(def));
+      if (input === null) return null;
+      const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+      const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }).replace('٫', '.');
+      const v = parseFloat(norm);
+      if (isNaN(v) || v < 0 || v > 1440){ if (typeof toast === 'function') toast('یه عدد بین ۰ تا ۱۴۴۰ دقیقه وارد کن'); return null; }
+      return v;
+    }
+    function setDayMinutes(node, jk, mins){
+      if (!node.time || typeof node.time !== 'object') node.time = {};
+      const secs = Math.round(mins * 60);
+      if (secs > 0){ node.time[jk] = secs; autoTick(node, jk); }
+      else delete node.time[jk];
+      scheduleMapSave();
+    }
     function nodeHTML(n, g, pi, depth){
       if (n.achieved){
         let hh = '';
@@ -1080,19 +1107,20 @@
       }
       const color = n.color || hcolor(g);
       const c = cellsHTML(n, color, pi);
-      const fib = fibersOf(n);
       const todayDone = !!(n.logs && n.logs[pi.todayJK]);
       let h = '<div class="gs-node'+(n.achieved?' ach':'')+'" data-nid="'+n.id+'" style="margin-inline-start:'+(Math.min(depth,4)*12)+'px;border-inline-start-color:'+esc(color)+';">'+
         '<div class="gs-nhead">'+
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
           '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="'+(depth?'نام زیرشاخه':'نام شاخه')+'..." autocomplete="off">'+
-          '<span class="gs-fib'+(fib?' on':'')+'" title="رشته‌های عصبی ساخته‌شده">رشته: '+toFa(fib)+'</span>'+
+          '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن زیرشاخه" title="افزودن زیرشاخه">＋</button>'+
+          '<button type="button" class="gs-nbtn" data-nact="addtime" aria-label="ثبت زمان امروز" title="ثبت زمان امروز">⌚</button>'+
           '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
         '</div>'+
         '<div class="gs-days">'+c.h+'</div>'+
         '<div class="gs-nmeta">'+toFa(c.done)+' روز از '+toFa(pi.total)+' روز دوره انجام شده<span class="gs-tsum"> · ⏱ امروز '+fmtDur(nodeDaySecs(n, pi.todayJK))+' · دوره '+fmtDur(nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)))+'</span></div>'+
+        timeChipsHTML(n)+
       '</div>';
       if (addingFor === n.id) h += '<div style="margin-inline-start:'+(Math.min(depth+1,4)*12)+'px;">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
       (n.children||[]).forEach(ch=>{ h += nodeHTML(ch, g, pi, depth+1); });
@@ -1159,7 +1187,7 @@
       if (r){
         const kids = countAllActions(r.actions||[]);
         h += '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
-             '<div class="trow"><span>'+(kids ? toFa(kids)+' شاخه' : 'بدون شاخه')+'</span><span>· '+toFa(goalFibers(r))+' رشته‌ی عصبی</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
+             '<div class="trow"><span>'+(kids ? toFa(kids)+' شاخه' : 'بدون شاخه')+'</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
              '<div class="gs-rbtns">'+
                '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
                '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
@@ -1192,7 +1220,7 @@
         const kids = countAllActions(n.children||[]);
         h += '<div class="gs-tdetail"><b class="tt">'+esc(n.text||'بدون نام')+'</b><div class="trow">'+
              '<span>زیرِ: '+esc(sel.parent)+'</span>'+(when?'<span>· رسیده‌ای در '+when+'</span>':'')+'</div>'+
-             '<div class="trow"><span>'+toFa(days)+' روز انجام شده</span><span>· '+toFa(fibersOf(n))+' رشته‌ی عصبی</span>'+(kids?'<span>· '+toFa(kids)+' زیرشاخه</span>':'')+'</div>'+
+             '<div class="trow"><span>'+toFa(days)+' روز انجام شده</span>'+(kids?'<span>· '+toFa(kids)+' زیرشاخه</span>':'')+'</div>'+
              '<div><button type="button" class="gs-mini" data-gact="unach" data-tid="'+n.id+'">بازگرداندن به شاخه‌های فعال</button></div></div>';
       }
       return h + '</div>';
@@ -1200,7 +1228,6 @@
     function bodyHTML(g){
       const pi = periodInfo(g);
       const nTotal = countAllActions(g.actions);
-      const fibs = goalFibers(g);
       const todayCnt = goalTodayCount(g, pi.todayJK);
       let h = '<div class="gs-body">';
       if (isRingHost(g)){
@@ -1209,7 +1236,7 @@
       }
       h += iconEditHTML(g);
       h += '<div class="gs-psum"><span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span>'+
-           '<span>· امروز <b>'+toFa(todayCnt)+'</b> کار · <b>'+toFa(fibs)+'</b> رشته</span>'+
+           '<span>· امروز <b>'+toFa(todayCnt)+'</b> کار</span>'+
            '<span>· ⏱ امروز <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeDaySecs(n, pi.todayJK),0))+'</b> · دوره <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)),0))+'</b></span><span class="sp"></span>'+
            (pi.finished ? '' : '<button type="button" class="gs-mini" data-gact="days">تنظیم روزهای دوره</button>')+'</div>';
       if (pi.finished){
@@ -1289,13 +1316,12 @@
         const lg = isR && g.goalId ? state.goals.find(x=>x.id===g.goalId) : null;
         const tags = (isR ? '<span class="gs-tag rg">نزدیک شدن به هدف' + (lg ? ' · «' + esc(lg.name || 'هدف') + '»' : '') + '</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
         const isOpen = OPEN.has(g.id) || (q && hit);
-        const fibs = goalFibers(g);
         return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(hc)}">
           <div class="gs-row" data-act="toggle">
             <span class="gs-ico" style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
             <div class="gs-main">
               <div class="gs-name"><span class="gs-nm">${esc(hname(g))}</span>${tags}</div>
-              <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${fibs ? ' · ' + toFa(fibs) + ' رشته' : ''}${g.lastActivity ? ' · ' + ago(g.lastActivity) : ''}</div>
+              <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${g.lastActivity ? ' · ' + ago(g.lastActivity) : ''}</div>
               ${hit ? `<div class="gs-hit">شاخه: ${esc(hit)}</div>` : ''}
               <div class="gs-bar"><i style="width:${p}%;background:${hc}"></i></div>
             </div>
@@ -1530,6 +1556,22 @@
       } else if (nact.dataset.nact === 'addtime'){
         const mm = askMinutes('چند دقیقه اضافه بشه؟ (عدد منفی = کم کردن)');
         if (mm){ addMinutes(found.node, periodInfo(g).todayJK, mm); touch(g); render(); draw(); }
+      } else if (nact.dataset.nact === 'settime'){
+        const jk = nact.dataset.jk;
+        const cur = Math.round(nodeDaySecs(found.node, jk) / 60);
+        const mm = askSetMinutes('زمانِ «' + jkLabel(jk) + '» چند دقیقه باشه؟ (۰ = حذف زمان)', cur);
+        if (mm !== null){ setDayMinutes(found.node, jk, mm); touch(g); render(); draw(); }
+      } else if (nact.dataset.nact === 'timeday'){
+        const pi = periodInfo(g);
+        const dn = window.prompt('کدوم روزِ دوره؟ (۱ تا ' + toFa(pi.total) + ' — امروز روز ' + toFa(pi.dayNum) + ' است)', String(pi.dayNum));
+        if (dn === null) return;
+        const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+        const di = parseInt(String(dn).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }), 10);
+        if (!di || di < 1 || di > pi.total || di > pi.dayNum){ if (typeof toast === 'function') toast('یه روز معتبر از دوره وارد کن'); return; }
+        const jk = pcJKey(new Date(pi.start.getFullYear(), pi.start.getMonth(), pi.start.getDate() + di - 1));
+        const cur = Math.round(nodeDaySecs(found.node, jk) / 60);
+        const mm = askSetMinutes('زمانِ «' + jkLabel(jk) + '» چند دقیقه باشه؟ (۰ = حذف زمان)', cur || 30);
+        if (mm !== null){ setDayMinutes(found.node, jk, mm); touch(g); render(); draw(); }
       } else if (nact.dataset.nact === 'add'){
         addingFor = nid; draw(); focusAddInput();
       } else if (nact.dataset.nact === 'del'){
@@ -1546,7 +1588,6 @@
       draw();
       if (nowDone){
         if (btn){ const nb = listEl.querySelector('.gs-node[data-nid="'+node.id+'"] .gs-tick'); if (nb) nb.classList.add('pop'); }
-        if (typeof toast === 'function') toast('رشته‌ی عصبی ساخته شد');
       }
     }
 
@@ -2246,10 +2287,6 @@
     text += `</text>`;
     out += text;
 
-    if (action.showNeuralOnMap){
-      out += neuralIndicatorSVG(action, goal.id, end.x, end.y, handleR, color);
-    }
-
     return out;
   }
 
@@ -2872,12 +2909,10 @@
     panelActionWeight.value = action.weight || 5;
     panelActionWeightVal.textContent = toFa(action.weight || 5);
     document.getElementById('panel-action-routine').checked = !!action.isRoutine;
-    document.getElementById('panel-action-show-neural').checked = !!action.showNeuralOnMap;
     panelDeleteBtn.classList.remove('hidden');
     panelDeleteBtn.textContent = 'حذف شاخه';
     buildStylePicker(document.getElementById('panel-action-style'), action.style || '', true, v=>{ action.style = v; render(); });
     refreshActionChildrenPanel();
-    renderPanelActionNeural(action);
     panel.classList.add('open');
   }
 
@@ -3007,10 +3042,6 @@
         <label class="small" style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:4px 0;">
           <input type="checkbox" class="a-routine" data-aid="${a.id}" style="width:14px;height:14px;" ${a.isRoutine ? 'checked' : ''}>
           <span style="font-size:11px;">این یه کار روتینه</span>
-        </label>
-        <label class="small" style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:4px 0;">
-          <input type="checkbox" class="a-neural" data-aid="${a.id}" style="width:14px;height:14px;" ${a.showNeuralOnMap ? 'checked' : ''}>
-          <span style="font-size:11px;">نمایش مسیر عصبی روی نقشه</span>
         </label>
         <button class="btn tiny add-sub" data-aid="${a.id}">＋ زیرشاخه</button>
         <div class="children">${renderActionTree(a.children||[], depth+1, a.color||goalColor)}</div>
@@ -3163,9 +3194,6 @@
     } else if (t.classList.contains('a-routine')){
       const found = findActionNode(g.actions, t.dataset.aid);
       if (found){ found.node.isRoutine = t.checked; render(); }
-    } else if (t.classList.contains('a-neural')){
-      const found = findActionNode(g.actions, t.dataset.aid);
-      if (found){ found.node.showNeuralOnMap = t.checked; render(); }
     }
   });
 
@@ -3227,9 +3255,6 @@
     } else if (t.classList.contains('a-routine')){
       const found = findActionNode(g.actions, t.dataset.aid);
       if (found){ found.node.isRoutine = t.checked; render(); }
-    } else if (t.classList.contains('a-neural')){
-      const found = findActionNode(g.actions, t.dataset.aid);
-      if (found){ found.node.showNeuralOnMap = t.checked; render(); }
     }
   });
 
@@ -3303,7 +3328,6 @@
           found.node.weight = +panelActionWeight.value;
           found.node.images = images;
           found.node.isRoutine = document.getElementById('panel-action-routine').checked;
-          found.node.showNeuralOnMap = document.getElementById('panel-action-show-neural').checked;
           g.lastActivity = Date.now();
         }
       }
@@ -3485,71 +3509,6 @@
     return html;
   }
 
-  function ensureNodeNeural(node){
-    if (!node.neural || typeof node.neural !== 'object') node.neural = {logs:{}, lastSyncKey:null, habitFormed:false};
-    return node.neural;
-  }
-
-  function renderPanelActionNeural(node){
-    if (typeof renderNeuralPathway !== 'function') return;
-    if (!document.getElementById('panel-action-neural-mount')) return;
-    renderNeuralPathway('panel-action-neural-mount', ensureNodeNeural(node), {
-      label: node.text || 'این شاخه',
-      practiceKey: 'branch_' + node.id,
-      calendarLinked: true,
-      isConfirmed: function(key){
-        if (key !== todayKey()) return false;
-        const today = new Date();
-        const jt = toJalaali(today.getFullYear(), today.getMonth()+1, today.getDate());
-        const jKey = calDKey(jt.jy, jt.jm, jt.jd);
-        return !!(node.logs && node.logs[jKey]);
-      },
-      onChange: function(){ scheduleMapSave(); render(); }
-    });
-  }
-
-  window.addEventListener('echw:commit', function(ev){
-    try{
-      const ids = (ev.detail && ev.detail.ids) || [];
-      if (!ids.length || typeof EMOTION_BY_ID === 'undefined') return;
-      let dom = null;
-      ids.forEach(function(id){ const e = EMOTION_BY_ID[id]; if (e && (!dom || e.freq > dom.freq)) dom = e; });
-      if (!dom) return;
-      const tk = todayKey(), t0 = new Date(); t0.setHours(0,0,0,0);
-      const isTodayKey = function(k){
-        if (k === tk) return true;
-        const m = /^f(\d{10,})-/.exec(k);
-        return !!(m && +m[1] >= t0.getTime() && +m[1] < t0.getTime() + 86400000);
-      };
-      let any = false, applied = false;
-      (function walk(list){
-        (list || []).forEach(function(n){
-          const nn = n.neural;
-          if (nn && nn.logs){
-            const keys = Object.keys(nn.logs).filter(function(k){ return nn.logs[k] === true && isTodayKey(k); });
-            if (keys.length){
-              any = true;
-              if (!nn.fiberEmotions || typeof nn.fiberEmotions !== 'object') nn.fiberEmotions = {};
-              keys.forEach(function(k){
-                if (!nn.fiberEmotions[k]){ nn.fiberEmotions[k] = { ids: ids.slice(), color: dom.color, freq: dom.freq }; applied = true; }
-              });
-            }
-          }
-          if (n.children) walk(n.children);
-        });
-      })(state.goals.reduce(function(a,g){ return a.concat(g.actions || []); }, []));
-      if (any && ev.detail && Array.isArray(ev.detail.done)) ev.detail.done.push({ pk:'goals', label:'هدف‌گذاری', applied: applied });
-      if (applied){
-        scheduleMapSave();
-        render();
-        if (panelTarget && panelTarget.type==='action'){
-          const res = findActionAnywhere(panelTarget.actionId);
-          if (res) renderPanelActionNeural(res.node);
-        }
-      }
-    }catch(e){ console.warn(e); }
-  });
-
   function findActionAnywhere(actionId){
     for (const g of state.goals.concat(state.rings)){
       const found = findActionNode(g.actions || [], actionId);
@@ -3565,16 +3524,8 @@
     if (!node.logs || typeof node.logs !== 'object') node.logs = {};
     if (node.logs[key]) delete node.logs[key];
     else node.logs[key] = ROUTINE_DONE_MARK;
-    const parts = key.split('-').map(Number);
-    if (parts.length===3 && !parts.some(isNaN)){
-      const g = toGregorianCal(parts[0], parts[1], parts[2]);
-      const gKey = g.gy+'-'+g.gm+'-'+g.gd;
-      const nn = ensureNodeNeural(node);
-      if (node.logs[key]) nn.logs[gKey] = true; else delete nn.logs[gKey];
-    }
     scheduleMapSave();
     render();
-    if (panelTarget && panelTarget.type==='action' && panelTarget.actionId===actionId) renderPanelActionNeural(node);
     try{ renderPanelPeriodCal(); }catch(e){}
   }
 
@@ -3629,7 +3580,7 @@
     return st;
   }
   function hostPeriodKeys(g){ const gp = ensureGoalPeriod(g); return pcPeriodKeys(gp.startDate, gp.days); }
-  function nodeLogCount(n, keys){ let c = 0; if (n.logs) for (const k in n.logs){ if (n.logs[k] && keys.has(k)) c++; } return c; }
+  function nodeLogCount(n, keys){ let c = 0; if (n.logs) for (const k in n.logs){ if (n.logs[k] && (!keys || keys.has(k))) c++; } return c; }
   function nodeSecs(n, keys){ let t = 0; if (n.time) for (const k in n.time){ if (!keys || keys.has(k)) t += (+n.time[k] || 0); } return t; }
   function nodeDaySecs(n, jk){ return (n.time && +n.time[jk]) || 0; }
   function fmtDur(sec){
@@ -3691,6 +3642,10 @@
       '.gs-tmr{font-size:11px;white-space:nowrap;}'+
       '.gs-tmr.on{color:#e5484d;border-color:#e5484d;}'+
       '.gs-tsum{color:var(--text-dim);}'+
+      '.gs-tchips{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;}'+
+      '.gs-tlbl{font-size:10.5px;color:var(--text-dim);}'+
+      '.gs-tchip{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:3px 9px;font-family:inherit;font-size:10.5px;cursor:pointer;}'+
+      '.gs-tchip.add{border-style:dashed;color:var(--text-dim);}'+
       '.pc-sub-row{display:flex;align-items:center;gap:6px;margin-top:5px;}'+
       '.pc-sub-nm{flex:1;min-width:0;color:var(--text-main);}'+
       '.pc-sub-t{color:var(--text-dim);font-size:10.5px;}'+
@@ -3708,8 +3663,8 @@
     return { x:pt.x, y:pt.y, a:bezierTangentAngle(geom.originPt, geom.c1, geom.c2, geom.end, t) };
   }
   function footprintsSVG(goal, action, geom, color, scale){
-    const keys = hostPeriodKeys(goal);
-    const N = nodeLogCount(action, keys);
+    /* همه‌ی روزهای تیک‌خورده از ابتدا (همه‌ی دوره‌ها)؛ با شروع دوره‌ی جدید ردپاها پاک نمی‌شوند */
+    const N = nodeLogCount(action, null);
     if (!N) return '';
     const col = goal.footColor || color;
     const fid = 'fpf' + String(col).replace(/[^a-zA-Z0-9]/g, '');
@@ -3997,8 +3952,7 @@
     let changed = false;
     function hasContent(n){
       return (Array.isArray(n.children) && n.children.length > 0) ||
-        (n.logs && Object.keys(n.logs).length > 0) ||
-        (n.neural && n.neural.logs && Object.keys(n.neural.logs).length > 0);
+        (n.logs && Object.keys(n.logs).length > 0);
     }
     function dropTracked(owner, list){
       const ids = owner.logBranchIds;
@@ -4032,33 +3986,6 @@
     if (changed) scheduleMapSave();
   }
   try{ cleanupLegacyCalNotes(); }catch(e){ console.warn('[cal-cleanup]', e); }
-
-  function sweepAllBranchNeuralPending(){
-    if (typeof neuralCleanupPending !== 'function' || typeof todayKey !== 'function') return;
-    let changed = false;
-    function walk(list){
-      (list||[]).forEach(function(node){
-        if (node.neural && typeof node.neural === 'object'){
-          const opts = {
-            calendarLinked: true,
-            isConfirmed: function(key){
-              if (key !== todayKey()) return false;
-              const today = new Date();
-              const jt = toJalaali(today.getFullYear(), today.getMonth()+1, today.getDate());
-              const jKey = calDKey(jt.jy, jt.jm, jt.jd);
-              return !!(node.logs && node.logs[jKey]);
-            }
-          };
-          if (neuralCleanupPending(node.neural, opts)) changed = true;
-        }
-        if (node.children && node.children.length) walk(node.children);
-      });
-    }
-    (state.goals||[]).forEach(function(g){ walk(g.actions); });
-    if (changed){ scheduleMapSave(); render(); }
-  }
-  setTimeout(sweepAllBranchNeuralPending, 0);
-  setInterval(sweepAllBranchNeuralPending, 5*60*1000);
 
   window.frequencyMapRender = render;
 
