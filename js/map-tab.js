@@ -173,6 +173,7 @@
       if (typeof r.lastActivity !== 'number') r.lastActivity = Date.now();
       if (typeof r.branchStyle !== 'string' || !BRANCH_STYLES[r.branchStyle]) r.branchStyle = 'organic';
       if (typeof r.icon !== 'string' || !r.icon) r.icon = '🌟';
+      if (typeof r.goalId !== 'string') r.goalId = '';
       normalizeActions(r.actions);
     });
   }
@@ -1105,16 +1106,51 @@
       });
       return out;
     }
-    function trophiesHTML(g){
-      const arr = collectAch(g.actions, g.name || g.label || 'نشانه', []);
-      if (!arr.length) return '';
-      arr.sort((a,b)=> (a.node.achievedAt||0) - (b.node.achievedAt||0));
-      let h = '<div class="gs-trophies"><div class="gs-trophies-h">'+ICO_TROPHY+' دستاوردها · '+toFa(arr.length)+'</div><div class="gs-tgrid">';
-      arr.forEach(({node})=>{
-        h += '<button type="button" class="gs-trophy'+(TSEL===node.id?' sel':'')+'" data-gact="trophy" data-tid="'+node.id+'" title="'+esc(node.text||'')+'">'+
-             '<span class="tic">'+ICO_TROPHY+'</span><span class="tnm">'+esc(node.text||'بدون نام')+'</span></button>';
+    let RSEL = null;
+    function ringsOf(g){ return state.rings.filter(r=>r.goalId === g.id); }
+    function ringIconHTML(r){
+      const img = r.images && r.images[0] && r.images[0].src;
+      if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
+      return '<span>'+esc(r.icon || '🌟')+'</span>';
+    }
+    function ringsRowHTML(g){
+      const rs = ringsOf(g);
+      if (!rs.length) return '';
+      let h = '<div class="gs-rings"><div class="gs-trophies-h gs-rings-h">'+ICO_MAP+' نشانه‌های نزدیکی · '+toFa(rs.length)+(rs.length > 1 ? '<span class="gs-rhint">با انگشت جابه‌جا کن</span>' : '')+'</div><div class="gs-rrow">';
+      rs.forEach(r=>{
+        h += '<button type="button" class="gs-ring'+(RSEL===r.id?' sel':'')+'" data-gact="ring" data-rid="'+r.id+'" title="'+esc(r.label||'')+'" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
+             '<span class="ric">'+ringIconHTML(r)+'</span><span class="tnm">'+esc(r.label||'نزدیک شدن به هدف')+'</span></button>';
       });
       h += '</div>';
+      const r = rs.find(x=>x.id===RSEL);
+      if (r){
+        const kids = countAllActions(r.actions||[]);
+        h += '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
+             '<input class="gs-rname" data-rid="'+r.id+'" value="'+esc(r.label||'')+'" placeholder="نام نشانه..." autocomplete="off">'+
+             '<div class="trow"><span>'+(kids ? toFa(kids)+' شاخه' : 'بدون شاخه')+'</span><span>· '+toFa(goalFibers(r))+' رشته‌ی عصبی</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
+             '<div class="gs-rbtns">'+
+               '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
+               '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
+               '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">جدا کردن از هدف</button>'+
+               '<button type="button" class="gs-mini" data-gact="ringdel" data-rid="'+r.id+'">حذف</button>'+
+             '</div></div>';
+      }
+      return h + '</div>';
+    }
+    function trophiesHTML(g){
+      const ringsH = ringsRowHTML(g);
+      const arr = collectAch(g.actions, g.name || g.label || 'نشانه', []);
+      if (!arr.length && !ringsH) return '';
+      arr.sort((a,b)=> (a.node.achievedAt||0) - (b.node.achievedAt||0));
+      let h = '<div class="gs-trophies">'+ringsH;
+      if (arr.length){
+        h += '<div class="gs-trophies-h">'+ICO_TROPHY+' دستاوردها · '+toFa(arr.length)+'</div><div class="gs-tgrid">';
+        arr.forEach(({node})=>{
+          h += '<button type="button" class="gs-trophy'+(TSEL===node.id?' sel':'')+'" data-gact="trophy" data-tid="'+node.id+'" title="'+esc(node.text||'')+'">'+
+               '<span class="tic">'+ICO_TROPHY+'</span><span class="tnm">'+esc(node.text||'بدون نام')+'</span></button>';
+        });
+        h += '</div>';
+      }
       const sel = arr.find(x=>x.node.id===TSEL);
       if (sel){
         const n = sel.node;
@@ -1148,7 +1184,8 @@
       (g.actions||[]).forEach(a=>{ h += nodeHTML(a, g, pi, 0); });
       h += trophiesHTML(g);
       if (addingFor === g.id) h += addRowHTML(g.id, 'نام شاخه (مثلاً گوش دادن به پادکست)');
-      else h += '<div><button type="button" class="gs-mini gold" data-gact="addbranch">＋ شاخه‌ی جدید</button></div>';
+      else h += '<div class="gs-addbtns"><button type="button" class="gs-mini gold" data-gact="addbranch">＋ شاخه‌ی جدید</button>'+
+                '<button type="button" class="gs-mini ring" data-gact="addring">'+ICO_MAP+' ＋ نزدیک شدن به هدف</button></div>';
       h += '</div>';
       return h;
     }
@@ -1349,6 +1386,49 @@
         } else if (a === 'unach'){
           const f2 = findActionNode(g.actions, gact.dataset.tid);
           if (f2){ f2.node.achieved = false; delete f2.node.achievedAt; TSEL = null; touch(g); draw(); if (typeof toast === 'function') toast('به شاخه‌های فعال برگشت'); }
+        } else if (a === 'addring'){
+          if (isRingHost(g)) return;
+          const R0 = (g.radius||20) + 120;
+          let best = null;
+          for (let i=0;i<16;i++){
+            const ang = (i/16)*Math.PI*2 + Math.random()*0.3;
+            const x = g.x + Math.cos(ang)*R0, y = g.y + Math.sin(ang)*R0;
+            let d = Math.hypot(state.me.x-x, state.me.y-y);
+            state.goals.forEach(o=>{ if (o !== g) d = Math.min(d, Math.hypot(o.x-x, o.y-y)); });
+            state.rings.forEach(o=>{ d = Math.min(d, Math.hypot(o.x-x, o.y-y)); });
+            if (!best || d > best.d) best = {x, y, d};
+          }
+          const nr = {
+            id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
+            x: best.x, y: best.y, radius: 30, note: '', images: [], icon: '🌟',
+            actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic', goalId: g.id
+          };
+          state.rings.push(nr);
+          state.ringsCollapsed = false;
+          RSEL = nr.id;
+          touch(g); render(); draw();
+          if (typeof toast === 'function') toast('نشانه‌ی نزدیکی به هدف و نقشه وصل شد');
+          setTimeout(()=>{ const el = listEl.querySelector('.gs-rname[data-rid="'+nr.id+'"]'); if (el){ try{ el.focus(); el.select(); }catch(e){} } }, 40);
+        } else if (a === 'ring'){
+          if (suppressRingClick) return;
+          RSEL = (RSEL === gact.dataset.rid) ? null : gact.dataset.rid; draw();
+        } else if (a === 'ringmap'){
+          const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
+          close();
+          state.ringsCollapsed = false; r.collapsed = false; g.collapsed = false;
+          render();
+          animateCamTo(viewForPoints(goalPoints(g).concat(goalPoints(r)), 1.3));
+          const hh = document.getElementById('hint'); if (hh) hh.style.display = 'none';
+        } else if (a === 'ringedit'){
+          close(); openPanelForRing(gact.dataset.rid);
+        } else if (a === 'ringunlink'){
+          const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
+          r.goalId = ''; RSEL = null; touch(g); render(); draw();
+          if (typeof toast === 'function') toast('از هدف جدا شد (روی نقشه می‌ماند)');
+        } else if (a === 'ringdel'){
+          const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
+          if (!window.confirm('«' + (r.label || 'نشانه') + '» حذف بشه؟')) return;
+          state.rings = state.rings.filter(x=>x.id!==r.id); RSEL = null; touch(g); render(); draw();
         } else if (a === 'addbranch'){ addingFor = g.id; draw(); focusAddInput(); }
         else if (a === 'addcancel'){ addingFor = null; draw(); }
         else if (a === 'addok'){
@@ -1440,6 +1520,14 @@
     });
     listEl.addEventListener('change', (e)=>{
       const t = e.target;
+      if (t.classList && t.classList.contains('gs-rname')){
+        const r = state.rings.find(x=>x.id===t.dataset.rid); if (!r) return;
+        r.label = t.value.trim() || 'نزدیک شدن به هدف';
+        r.lastActivity = Date.now();
+        const nm = listEl.querySelector('.gs-ring[data-rid="'+r.id+'"] .tnm'); if (nm) nm.textContent = r.label;
+        scheduleMapSave(); render();
+        return;
+      }
       if (!t.classList || !t.classList.contains('gs-ntext')) return;
       const item = t.closest('.gs-item'); if (!item) return;
       const g = findHost(item.dataset.gid); if (!g) return;
@@ -1448,6 +1536,60 @@
       found.node.text = t.value.trim() || 'بدون عنوان';
       touch(g); render();
     });
+    /* جابه‌جایی نشانه‌های نزدیکی در ردیف با انگشت (یا ماوس) */
+    let suppressRingClick = false;
+    (function(){
+      let drag = null;
+      function chipAt(x, y, except){
+        const chips = [...listEl.querySelectorAll('.gs-ring')];
+        for (const c of chips){
+          if (c === except) continue;
+          const b = c.getBoundingClientRect();
+          if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) return c;
+        }
+        return null;
+      }
+      listEl.addEventListener('pointerdown', (e)=>{
+        const chip = e.target.closest('.gs-ring');
+        if (!chip || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        drag = { chip, id: chip.dataset.rid, x0: e.clientX, y0: e.clientY, moving:false, over:null, pid:e.pointerId };
+        try{ chip.setPointerCapture(e.pointerId); }catch(_){}
+      });
+      listEl.addEventListener('pointermove', (e)=>{
+        if (!drag || e.pointerId !== drag.pid) return;
+        const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+        if (!drag.moving){
+          if (Math.hypot(dx, dy) < 7) return;
+          drag.moving = true; drag.chip.classList.add('dragging');
+        }
+        e.preventDefault();
+        drag.chip.style.transform = 'translate('+dx+'px,'+dy+'px) scale(1.08)';
+        const over = chipAt(e.clientX, e.clientY, drag.chip);
+        if (over !== drag.over){
+          if (drag.over) drag.over.classList.remove('drop');
+          if (over) over.classList.add('drop');
+          drag.over = over;
+        }
+      });
+      function finish(e, cancel){
+        if (!drag || e.pointerId !== drag.pid) return;
+        const d = drag; drag = null;
+        try{ d.chip.releasePointerCapture(d.pid); }catch(_){}
+        if (!d.moving) return;
+        suppressRingClick = true; setTimeout(()=>{ suppressRingClick = false; }, 350);
+        d.chip.classList.remove('dragging'); d.chip.style.transform = '';
+        if (d.over) d.over.classList.remove('drop');
+        if (cancel || !d.over) return;
+        const from = state.rings.findIndex(r=>r.id === d.id);
+        const to = state.rings.findIndex(r=>r.id === d.over.dataset.rid);
+        if (from < 0 || to < 0 || from === to) return;
+        const [mv] = state.rings.splice(from, 1);
+        state.rings.splice(to, 0, mv);
+        scheduleMapSave(); render(); draw();
+      }
+      listEl.addEventListener('pointerup', (e)=> finish(e, false));
+      listEl.addEventListener('pointercancel', (e)=> finish(e, true));
+    })();
     listEl.addEventListener('keydown', (e)=>{
       const t = e.target;
       if (e.key !== 'Enter' || !t.classList) return;
@@ -1456,7 +1598,7 @@
         const item = t.closest('.gs-item'); if (!item) return;
         const g = findHost(item.dataset.gid); if (!g) return;
         commitAdd(g, t.dataset.for, t.value);
-      } else if (t.classList.contains('gs-ntext')){
+      } else if (t.classList.contains('gs-ntext') || t.classList.contains('gs-rname')){
         e.preventDefault(); t.blur();
       }
     });
@@ -2146,6 +2288,16 @@
     }
     return best;
   }
+  /* خطِ اتصالِ «نشانه‌ی نزدیکی» به هدفش روی نقشه */
+  function ringLinkSVG(g, r){
+    const col = r.color || RING_COLOR;
+    const dx = r.x - g.x, dy = r.y - g.y, d = Math.hypot(dx, dy) || 1;
+    const ux = dx/d, uy = dy/d;
+    const x1 = g.x + ux*((g.radius||20)+6), y1 = g.y + uy*((g.radius||20)+6);
+    const x2 = r.x - ux*((r.radius||30)+6), y2 = r.y - uy*((r.radius||30)+6);
+    const mx = (x1+x2)/2 - uy*d*0.12, my = (y1+y2)/2 + ux*d*0.12;
+    return `<path class="ring-link" d="M${x1.toFixed(1)} ${y1.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round" opacity="0.6" pointer-events="none"/>`;
+  }
   function collapsedLinkSVG(g){
     return `<line x1="${state.me.x}" y1="${state.me.y}" x2="${g.x}" y2="${g.y}" stroke="${g.color}" stroke-width="1.2" stroke-dasharray="3 6" stroke-linecap="round" opacity="0.28" pointer-events="none"/>`;
   }
@@ -2163,6 +2315,10 @@
       } else {
         html += `<g data-goal-branches="${g.id}"${clsAttr}>${branchesSVG(g)}</g>`;
       }
+    });
+    if (!state.ringsCollapsed) state.rings.forEach(r=>{
+      const lg = r.goalId && state.goals.find(x=>x.id===r.goalId);
+      if (lg) html += ringLinkSVG(lg, r);
     });
     if (!state.ringsCollapsed) state.rings.forEach(r=>{
       if (r.actions && r.actions.length) html += `<g data-goal-branches="${r.id}">${branchesSVG(Object.assign(r,{color:r.color||RING_COLOR}))}</g>`;
@@ -3065,6 +3221,7 @@
 
   panelDeleteBtn.addEventListener('click', ()=>{
     if (panelTarget && panelTarget.type==='goal'){
+      state.rings.forEach(r=>{ if (r.goalId === panelTarget.id) r.goalId = ''; });
       state.goals = state.goals.filter(g=>g.id!==panelTarget.id);
       render();
       panel.classList.remove('open');
