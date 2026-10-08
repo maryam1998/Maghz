@@ -1084,6 +1084,11 @@
       return h;
     }
     const DAYS_TOG = new Set();
+    function nodeTotalSecs(n){
+      let t = nodeSecs(n, null);
+      (n.children||[]).forEach(ch=>{ t += nodeTotalSecs(ch); });
+      return t;
+    }
     function nodeHTML(n, g, pi, depth, parentName){
       if (n.achieved){
         let hh = '';
@@ -1094,7 +1099,7 @@
       const c = cellsHTML(n, color, pi);
       const todayDone = !!(n.logs && n.logs[pi.todayJK]);
       const kids = (n.children||[]).filter(k=>!k.achieved);
-      const daysOpen = depth === 0 ? !DAYS_TOG.has(n.id) : DAYS_TOG.has(n.id);
+      const daysOpen = DAYS_TOG.has(n.id);
       if (depth > 0){
         const ts = nodeDaySecs(n, pi.todayJK);
         let mh = '<div class="gs-grp">'+
@@ -1117,29 +1122,20 @@
         }
         return mh + '</div>';
       }
-      const lvlName = depth === 0 ? 'شاخه' : (depth === 1 ? 'زیرشاخه' : 'زیرِ زیرشاخه');
+      const total = nodeTotalSecs(n);
       let h = '<div class="gs-grp">'+
-      '<div class="gs-node '+(depth ? 'sub' : 'main')+'" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
-        '<div class="gs-nhead">'+
+      '<div class="gs-node main" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
+        '<div class="gs-mrow">'+
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
-          '<div class="gs-nname">'+
-            '<div class="gs-lvl"><span class="gs-badge'+(depth ? ' sub' : '')+'" style="'+(depth ? 'color:'+esc(color)+';border-color:'+esc(color) : 'background:'+esc(color))+';">'+lvlName+'</span>'+
-              (depth && parentName ? '<span class="gs-par">↳ زیرِ «'+esc(parentName)+'»</span>' : '')+
-              (kids.length ? '<span class="gs-par">· '+toFa(kids.length)+' زیرشاخه</span>' : '')+'</div>'+
-            '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="'+(depth?'نام زیرشاخه':'نام شاخه')+'..." autocomplete="off">'+
-          '</div>'+
+          '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام شاخه..." autocomplete="off">'+
+          '<span class="gs-mtime'+(total?' on':'')+'" title="مجموع ساعات">'+(total ? '⏱ '+fmtDur(total) : '')+'</span>'+
+          '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن" title="افزودن">＋</button>'+
           '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
+          '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
         '</div>'+
-        '<div class="gs-nmeta">'+toFa(c.done)+' روز از '+toFa(pi.total)+' روز دوره<span class="gs-tsum"> · ⏱ امروز '+fmtDur(nodeDaySecs(n, pi.todayJK))+' · دوره '+fmtDur(nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)))+'</span></div>'+
-        (daysOpen ? '<div class="gs-days">'+c.h+'</div>' : '')+
-        timeChipsHTML(n)+
-        '<div class="gs-foot">'+
-          '<button type="button" class="gs-fbtn" data-nact="add">＋ زیرشاخه</button>'+
-          '<button type="button" class="gs-fbtn" data-nact="addtime">⌚ زمان امروز</button>'+
-          '<button type="button" class="gs-fbtn" data-nact="cal">'+(daysOpen ? '▴ بستن روزها' : '▾ روزها')+'</button>'+
-        '</div>'+
+        (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+timeChipsHTML(n)+'<div class="gs-foot"><button type="button" class="gs-fbtn" data-nact="addtime">⌚ ثبت زمان امروز</button></div>' : '')+
       '</div>';
       if (addingFor === n.id) h += '<div class="gs-kids">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
       if (kids.length || (n.children||[]).length){
@@ -3688,9 +3684,13 @@
       '.gs-kids{display:flex;flex-direction:column;gap:6px;margin-inline-start:12px;padding-inline-start:10px;border-inline-start:2px dashed rgba(127,127,127,.35);}'+
       '.gs-node.main{padding:10px 12px;box-shadow:0 1px 0 rgba(127,127,127,.15);}'+
       '.gs-node.sub{background:rgba(127,127,127,.04);padding:7px 9px;}'+
+      '.gs-node.main .gs-mrow .gs-ntext{font-size:14px;font-weight:700;}'+
+      '.gs-node.main .gs-mtime{border:none;padding:0 2px;}'+
       '.gs-node.mini{padding:5px 8px;}'+
       '.gs-mrow{display:flex;align-items:center;gap:5px;}'+
       '.gs-mrow .gs-ntext{flex:1;min-width:0;font-size:12.5px;font-weight:600;}'+
+      '.gs-mrow .gs-nach{width:24px;height:24px;border-radius:8px;}'+
+      '.gs-mrow .gs-nach svg{width:14px;height:14px;}'+
       '.gs-mrow .gs-tick{width:24px;height:24px;flex:none;}'+
       '.gs-mrow .gs-nbtn{width:24px;height:24px;font-size:13px;}'+
       '.gs-mtime{flex:none;border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:999px;padding:3px 8px;font-family:inherit;font-size:10.5px;cursor:pointer;white-space:nowrap;}'+
