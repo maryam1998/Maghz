@@ -1483,7 +1483,7 @@
             const srcs = await cropImages(files);
             if (!srcs.length) return;
             hh.images = normalizeImages(hh.images);
-            srcs.forEach(src=> hh.images.push({ src, size: DEFAULT_IMG_SIZE, dx: 0, dy: 0 }));
+            hh.images = srcs.map(src=> ({ src, size: DEFAULT_IMG_SIZE, dx: 0, dy: 0 })).concat(hh.images);
             touch(hh); render(); draw();
           });
           inp.click();
@@ -1580,6 +1580,21 @@
       else OPEN.add(id);
       draw();
     });
+    listEl.addEventListener('input', (e)=>{
+      const t = e.target;
+      if (!t.classList || !t.classList.contains('gs-iemoji')) return;
+      const hh = findHost(t.dataset.hid); if (!hh) return;
+      const v = t.value.trim();
+      hh.icon = v || (isRingHost(hh) ? '🌟' : '🎯');
+      if (v && hh.images && hh.images.length) hh.images = [];
+      const ed = t.closest('.gs-iedit');
+      if (ed){
+        ed.querySelectorAll('.gs-ithumb').forEach(x=>x.remove());
+        const ic = ed.querySelector('.gs-ico'); if (ic) ic.innerHTML = hiconHTML(hh);
+      }
+      const rowIc = listEl.querySelector('.gs-item[data-gid="'+hh.id+'"] .gs-row .gs-ico'); if (rowIc) rowIc.innerHTML = hiconHTML(hh);
+      touch(hh); render();
+    });
     listEl.addEventListener('change', (e)=>{
       const t = e.target;
       if (t.classList && t.classList.contains('gs-rname')){
@@ -1597,12 +1612,7 @@
         scheduleMapSave(); render();
         return;
       }
-      if (t.classList && t.classList.contains('gs-iemoji')){
-        const hh = findHost(t.dataset.hid); if (!hh) return;
-        hh.icon = t.value.trim() || (isRingHost(hh) ? '🌟' : '🎯');
-        touch(hh); render(); draw();
-        return;
-      }
+
       if (!t.classList || !t.classList.contains('gs-ntext')) return;
       const item = t.closest('.gs-item'); if (!item) return;
       const sub = t.closest('.gs-sub');
