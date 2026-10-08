@@ -1078,7 +1078,7 @@
         (n.children||[]).forEach(ch=>{ hh += nodeHTML(ch, g, pi, depth); });
         return hh;
       }
-      const color = n.color || g.color;
+      const color = n.color || hcolor(g);
       const c = cellsHTML(n, color, pi);
       const fib = fibersOf(n);
       const todayDone = !!(n.logs && n.logs[pi.todayJK]);
@@ -1108,6 +1108,39 @@
     }
     let RSEL = null;
     function ringsOf(g){ return state.rings.filter(r=>r.goalId === g.id); }
+    /* ---- نام/رنگ/آیکون یکسان برای هدف و نشانه‌ی نزدیکی ---- */
+    function hname(h){ return isRingHost(h) ? (h.label || 'نزدیک شدن به هدف') : (h.name || ''); }
+    function hcolor(h){ return h.color || RING_COLOR; }
+    function hiconHTML(h){
+      const img = h.images && h.images[0] && h.images[0].src;
+      if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
+      return '<span>'+esc(h.icon || (isRingHost(h) ? '🌟' : '🎯'))+'</span>';
+    }
+    function iconEditHTML(h){
+      let th = '';
+      (h.images||[]).forEach((im, i)=>{
+        th += '<span class="gs-ithumb"><img src="'+esc(im.src)+'" alt="" draggable="false"><button type="button" data-gact="iconimgdel" data-hid="'+h.id+'" data-idx="'+i+'" aria-label="حذف عکس">✕</button></span>';
+      });
+      return '<div class="gs-iedit"><span class="gs-ico" style="--ic:'+esc(hcolor(h))+'">'+hiconHTML(h)+'</span>'+
+             '<input class="gs-iemoji" data-hid="'+h.id+'" value="'+esc(h.icon || '')+'" maxlength="8" placeholder="ایموجی" autocomplete="off">'+
+             '<button type="button" class="gs-mini gold" data-gact="iconimg" data-hid="'+h.id+'">عکس</button>'+th+'</div>';
+    }
+    (function(){
+      if (document.getElementById('gs-hostui-css')) return;
+      const st = document.createElement('style'); st.id = 'gs-hostui-css';
+      st.textContent =
+        '.gs-ico{--ic:#2dd4bf;width:34px;height:34px;flex:none;border-radius:50%;border:2px solid var(--ic);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;overflow:hidden;background:rgba(0,0,0,.12);}'+
+        '.gs-ico img{width:100%;height:100%;object-fit:cover;pointer-events:none;}'+
+        '.gs-ico span{pointer-events:none;}'+
+        '.gs-iedit{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}'+
+        '.gs-iemoji{width:64px;text-align:center;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:16px;padding:5px 4px;box-sizing:border-box;}'+
+        '.gs-ithumb{position:relative;width:34px;height:34px;flex:none;}'+
+        '.gs-ithumb img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--panel-border);}'+
+        '.gs-ithumb button{position:absolute;top:-6px;inset-inline-end:-6px;width:16px;height:16px;border-radius:50%;border:none;background:#e5484d;color:#fff;font-size:9px;line-height:16px;padding:0;cursor:pointer;}'+
+        '.gs-rnote{width:100%;box-sizing:border-box;min-height:54px;resize:vertical;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:13px;padding:7px 9px;}'+
+        '.gs-tag.rg{border-color:#2dd4bf;color:#2dd4bf;}';
+      document.head.appendChild(st);
+    })();
     function ringIconHTML(r){
       const img = r.images && r.images[0] && r.images[0].src;
       if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
@@ -1127,6 +1160,7 @@
         const kids = countAllActions(r.actions||[]);
         h += '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
              '<input class="gs-rname" data-rid="'+r.id+'" value="'+esc(r.label||'')+'" placeholder="نام نشانه..." autocomplete="off">'+
+             iconEditHTML(r)+
              '<div class="trow"><span>'+(kids ? toFa(kids)+' شاخه' : 'بدون شاخه')+'</span><span>· '+toFa(goalFibers(r))+' رشته‌ی عصبی</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
              '<div class="gs-rbtns">'+
                '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
@@ -1171,6 +1205,11 @@
       const fibs = goalFibers(g);
       const todayCnt = goalTodayCount(g, pi.todayJK);
       let h = '<div class="gs-body">';
+      if (isRingHost(g)){
+        h += '<input class="gs-rname" data-rid="'+g.id+'" value="'+esc(g.label||'')+'" placeholder="نام نشانه..." autocomplete="off">'+
+             '<textarea class="gs-rnote" data-rid="'+g.id+'" placeholder="نوشته‌ی زیر نشانه روی نقشه...">'+esc(g.note||'')+'</textarea>';
+      }
+      h += iconEditHTML(g);
       h += '<div class="gs-psum"><span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span>'+
            '<span>· امروز <b>'+toFa(todayCnt)+'</b> کار · <b>'+toFa(fibs)+'</b> رشته</span><span class="sp"></span>'+
            (pi.finished ? '' : '<button type="button" class="gs-mini" data-gact="days">تنظیم روزهای دوره</button>')+'</div>';
@@ -1185,7 +1224,7 @@
       h += trophiesHTML(g);
       if (addingFor === g.id) h += addRowHTML(g.id, 'نام شاخه (مثلاً گوش دادن به پادکست)');
       else h += '<div class="gs-addbtns"><button type="button" class="gs-mini gold" data-gact="addbranch">＋ شاخه‌ی جدید</button>'+
-                '<button type="button" class="gs-mini ring" data-gact="addring">'+ICO_MAP+' ＋ نزدیک شدن به هدف</button></div>';
+                (isRingHost(g) ? '' : '<button type="button" class="gs-mini ring" data-gact="addring">'+ICO_MAP+' ＋ نزدیک شدن به هدف</button>')+'</div>';
       h += '</div>';
       return h;
     }
@@ -1198,8 +1237,8 @@
       if (rn) rn.textContent = reachedGoals.length ? '(' + toFa(reachedGoals.length) + ')' : '';
       const isReachedTab = tabKey === 'reached';
       document.getElementById('gs-sort').style.display = isReachedTab ? 'none' : '';
-      const pool = isReachedTab ? reachedGoals : activeGoals;
-      let rows = pool.map(g=>({ g, hit: q ? (norm(g.name).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
+      const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.rings);
+      let rows = pool.map(g=>({ g, hit: q ? (norm(hname(g)).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
                             .filter(r=> !q || r.hit !== null);
       if (orderCache){
         const ix = id => { const i = orderCache.indexOf(id); return i < 0 ? 1e9 : i; };
@@ -1207,12 +1246,12 @@
       } else {
         rows.sort((a,b)=>{
           if (sortKey === 'growth') return goalPower(b.g) - goalPower(a.g);
-          if (sortKey === 'name') return String(a.g.name).localeCompare(String(b.g.name), 'fa');
+          if (sortKey === 'name') return String(hname(a.g)).localeCompare(String(hname(b.g)), 'fa');
           return (b.g.lastActivity||0) - (a.g.lastActivity||0);
         });
         orderCache = rows.map(r=>r.g.id);
       }
-      countEl.textContent = pool.length ? toFa(pool.length) + ' هدف' : '';
+      countEl.textContent = pool.length ? (isReachedTab ? toFa(pool.length) + ' هدف' : toFa(activeGoals.length) + ' هدف' + (state.rings.length ? ' · ' + toFa(state.rings.length) + ' نزدیکی' : '')) : '';
       if (!rows.length){
         listEl.innerHTML = `<div class="gs-empty">${q ? 'موردی پیدا نشد.' : (isReachedTab ? 'هنوز هدفی به مرحله‌ی «محقق‌شده» نرسیده.<br>وقتی به یک هدف رسیدی، با دکمه‌ی ✓ کنار آن، به این فهرست منتقل می‌شود.' : (state.goals.length ? 'همه‌ی اهدافت محقق شده‌اند 🎉<br>با دکمه‌ی «＋ هدف جدید» هدف تازه‌ای بساز.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'))}</div>`;
         return;
@@ -1246,20 +1285,23 @@
         const n = countAllActions(g.actions);
         const p = goalPower(g);
         const stale = g.lastActivity && (Date.now() - g.lastActivity) > 30*86400000;
-        const tags = (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
+        const isR = isRingHost(g);
+        const hc = hcolor(g);
+        const lg = isR && g.goalId ? state.goals.find(x=>x.id===g.goalId) : null;
+        const tags = (isR ? '<span class="gs-tag rg">نزدیک شدن به هدف' + (lg ? ' · «' + esc(lg.name || 'هدف') + '»' : '') + '</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
         const isOpen = OPEN.has(g.id) || (q && hit);
         const fibs = goalFibers(g);
-        return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(g.color)}">
+        return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(hc)}">
           <div class="gs-row" data-act="toggle">
-            <span class="gs-dot" style="background:${g.color}"></span>
+            <span class="gs-ico" style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
             <div class="gs-main">
-              <div class="gs-name">${esc(g.name)}${tags}</div>
+              <div class="gs-name"><span class="gs-nm">${esc(hname(g))}</span>${tags}</div>
               <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${fibs ? ' · ' + toFa(fibs) + ' رشته' : ''}${g.lastActivity ? ' · ' + ago(g.lastActivity) : ''}</div>
               ${hit ? `<div class="gs-hit">شاخه: ${esc(hit)}</div>` : ''}
-              <div class="gs-bar"><i style="width:${p}%;background:${g.color}"></i></div>
+              <div class="gs-bar"><i style="width:${p}%;background:${hc}"></i></div>
             </div>
             <button class="gs-ic" data-act="toggle" aria-label="باز یا بسته کردن شاخه‌ها">${isOpen ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
-            <button class="gs-ic" data-act="reach" aria-label="به این هدف رسیدم" title="به این هدف رسیدم">${ICO_CHECK}</button>
+            ${isR ? '' : `<button class="gs-ic" data-act="reach" aria-label="به این هدف رسیدم" title="به این هدف رسیدم">${ICO_CHECK}</button>`}
             <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
             <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
           </div>
@@ -1429,6 +1471,26 @@
           const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
           if (!window.confirm('«' + (r.label || 'نشانه') + '» حذف بشه؟')) return;
           state.rings = state.rings.filter(x=>x.id!==r.id); RSEL = null; touch(g); render(); draw();
+        } else if (a === 'iconimg'){
+          const hh = findHost(gact.dataset.hid); if (!hh) return;
+          const inp = document.createElement('input');
+          inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true; inp.style.display = 'none';
+          document.body.appendChild(inp);
+          inp.addEventListener('change', async ()=>{
+            const files = Array.from(inp.files || []);
+            inp.remove();
+            if (!files.length) return;
+            const srcs = await cropImages(files);
+            if (!srcs.length) return;
+            hh.images = normalizeImages(hh.images);
+            srcs.forEach(src=> hh.images.push({ src, size: DEFAULT_IMG_SIZE, dx: 0, dy: 0 }));
+            touch(hh); render(); draw();
+          });
+          inp.click();
+        } else if (a === 'iconimgdel'){
+          const hh = findHost(gact.dataset.hid); if (!hh || !Array.isArray(hh.images)) return;
+          hh.images.splice(+gact.dataset.idx, 1);
+          touch(hh); render(); draw();
         } else if (a === 'addbranch'){ addingFor = g.id; draw(); focusAddInput(); }
         else if (a === 'addcancel'){ addingFor = null; draw(); }
         else if (a === 'addok'){
@@ -1525,7 +1587,20 @@
         r.label = t.value.trim() || 'نزدیک شدن به هدف';
         r.lastActivity = Date.now();
         const nm = listEl.querySelector('.gs-ring[data-rid="'+r.id+'"] .tnm'); if (nm) nm.textContent = r.label;
+        const nm2 = listEl.querySelector('.gs-item[data-gid="'+r.id+'"] .gs-nm'); if (nm2) nm2.textContent = r.label;
         scheduleMapSave(); render();
+        return;
+      }
+      if (t.classList && t.classList.contains('gs-rnote')){
+        const r = state.rings.find(x=>x.id===t.dataset.rid); if (!r) return;
+        r.note = t.value; r.lastActivity = Date.now();
+        scheduleMapSave(); render();
+        return;
+      }
+      if (t.classList && t.classList.contains('gs-iemoji')){
+        const hh = findHost(t.dataset.hid); if (!hh) return;
+        hh.icon = t.value.trim() || (isRingHost(hh) ? '🌟' : '🎯');
+        touch(hh); render(); draw();
         return;
       }
       if (!t.classList || !t.classList.contains('gs-ntext')) return;
@@ -1598,7 +1673,7 @@
         const item = t.closest('.gs-item'); if (!item) return;
         const g = findHost(item.dataset.gid); if (!g) return;
         commitAdd(g, t.dataset.for, t.value);
-      } else if (t.classList.contains('gs-ntext') || t.classList.contains('gs-rname')){
+      } else if (t.classList.contains('gs-ntext') || t.classList.contains('gs-rname') || t.classList.contains('gs-iemoji')){
         e.preventDefault(); t.blur();
       }
     });
