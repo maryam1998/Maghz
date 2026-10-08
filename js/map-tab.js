@@ -1057,7 +1057,7 @@
         if (has) done++;
         const future = date > pi.today;
         const isToday = pcLocalKey(date) === pi.todayGK;
-        h += '<button type="button" class="gs-day'+(has?' done':'')+(isToday?' today':'')+(future?' future':'')+'" data-jk="'+jk+'"'+(future?' disabled':'')+
+        h += '<button type="button" class="gs-day'+(has?' done':'')+((DAYSEL[node.id]||pi.todayJK)===jk?' sel':'')+(isToday?' today':'')+(future?' future':'')+'" data-jk="'+jk+'"'+(future?' disabled':'')+
              (has ? ' style="background:'+esc(color)+';border-color:'+esc(color)+';"' : '')+'>'+(has ? '✓' : toFa(j.jd))+'</button>';
       }
       return { h, done };
@@ -1066,6 +1066,12 @@
       return '<div class="gs-addrow"><input class="gs-addin" data-for="'+forId+'" placeholder="'+label+'..." autocomplete="off">'+
              '<button type="button" class="gs-mini gold" data-gact="addok" data-for="'+forId+'">افزودن</button>'+
              '<button type="button" class="gs-mini" data-gact="addcancel">لغو</button></div>';
+    }
+    const DAYSEL = {};
+    function dayTimeHTML(n, pi){
+      const jk = DAYSEL[n.id] || pi.todayJK;
+      const ts = nodeDaySecs(n, jk);
+      return '<div class="gs-tchips"><button type="button" class="gs-tchip" data-nact="settime" data-jk="'+jk+'" title="ویرایش زمان این روز">⏱ '+jkLabel(jk)+' · '+(ts ? fmtDur(ts) : 'زمانی ثبت نشده')+' ✎</button></div>';
     }
     function jkLabel(jk){
       const p = String(jk).split('-').map(Number);
@@ -1112,7 +1118,7 @@
             '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
             '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
           '</div>'+
-          (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+timeChipsHTML(n) : '')+
+          (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+dayTimeHTML(n, pi) : '')+
         '</div>';
         if (addingFor === n.id) mh += '<div class="gs-kids">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
         if ((n.children||[]).length){
@@ -1135,7 +1141,7 @@
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
         '</div>'+
-        (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+timeChipsHTML(n)+'<div class="gs-foot"><button type="button" class="gs-fbtn" data-nact="addtime">⌚ ثبت زمان امروز</button></div>' : '')+
+        (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+dayTimeHTML(n, pi) : '')+
       '</div>';
       if (addingFor === n.id) h += '<div class="gs-kids">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
       if (kids.length || (n.children||[]).length){
@@ -1182,6 +1188,7 @@
         '.gs-ico span{pointer-events:none;}'+
         '.gs-iedit{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}'+
         '.gs-ico-btn{cursor:pointer;}'+
+        '.gs-day.sel{outline:2px solid var(--text-main);outline-offset:1px;}'+
         '.gs-iconpop{padding:8px 12px 10px;border-top:1px dashed var(--panel-border);}'+
         '.gs-iemoji{width:64px;text-align:center;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:16px;padding:5px 4px;box-sizing:border-box;}'+
         '.gs-ithumb{position:relative;width:34px;height:34px;flex:none;}'+
@@ -1558,6 +1565,7 @@
       const dayEl = e.target.closest('.gs-day');
       if (dayEl){
         if (dayEl.disabled || dayEl.classList.contains('future')) return;
+        DAYSEL[found.node.id] = dayEl.dataset.jk;
         doToggle(g, found.node, dayEl.dataset.jk, null);
         return;
       }
