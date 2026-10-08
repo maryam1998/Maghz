@@ -363,6 +363,12 @@
   .gs-row:active{background:rgba(127,127,127,.12);}
   .gs-dot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:0 0 0 4px rgba(127,127,127,.12);}
   .gs-main{flex:1;min-width:0;}
+  /* نشانه‌ی نزدیکی در فهرست: آیکون پاداش به‌جای دایره */
+  .gs-sec-h{font-size:11.5px;font-weight:700;color:var(--text-dim);padding:10px 4px 2px;display:flex;align-items:center;gap:6px;}
+  .gs-rico{width:30px;height:30px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:10px;background:color-mix(in srgb,var(--gs-c,#2dd4bf) 16%,transparent);color:var(--gs-c,#2dd4bf);animation:gsRicoPulse 2.8s ease-in-out infinite;}
+  .gs-rico svg{filter:drop-shadow(0 0 4px var(--gs-c,#2dd4bf));}
+  @keyframes gsRicoPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+  @media (prefers-reduced-motion:reduce){.gs-rico{animation:none;}}
   .gs-name{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .gs-tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--panel-border);color:var(--text-dim);}
   .gs-meta{font-size:11px;color:var(--text-dim);margin-top:3px;}
@@ -4421,6 +4427,8 @@ body.bg-mode-image #grat-root{background:transparent;}
     const ICO_TROPHY = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M8.5 20h7M10 17h4"/></svg>';
     const ICO_CHECK = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>';
     const ICO_MAP = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
+    /* آیکون پاداش/انگیزه: ستاره‌ی درخشان (سیستم پاداش مغز با «نزدیک شدن» فعال می‌شود) */
+    const ICO_REWARD = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z"/><path d="M19.5 2.5v3M18 4h3M4.5 16.5v2.4M3.3 17.7h2.4" fill="none" stroke-width="1.6"/></svg>';
     const norm = (t)=> String(t||'').toLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک');
     function findInActions(list, q){
       for (const a of (list||[])){
@@ -4522,7 +4530,7 @@ body.bg-mode-image #grat-root{background:transparent;}
       return out;
     }
     function trophiesHTML(g){
-      const arr = collectAch(g.actions, g.name, []);
+      const arr = collectAch(g.actions, g.name || g.label || 'نشانه', []);
       if (!arr.length) return '';
       arr.sort((a,b)=> (a.node.achievedAt||0) - (b.node.achievedAt||0));
       let h = '<div class="gs-trophies"><div class="gs-trophies-h">'+ICO_TROPHY+' دستاوردها · '+toFa(arr.length)+'</div><div class="gs-tgrid">';
@@ -4592,8 +4600,12 @@ body.bg-mode-image #grat-root{background:transparent;}
         });
         orderCache = rows.map(r=>r.g.id);
       }
-      countEl.textContent = pool.length ? toFa(pool.length) + ' هدف' : '';
-      if (!rows.length){
+      /* نشانه‌های نزدیکی (و شاخه‌های روی نقشه‌شان) هم در فهرست اهداف می‌آیند */
+      const ringRows = isReachedTab ? [] : state.rings
+        .map(r=>({ r, hit: q ? (norm(r.label).includes(q) ? '' : findInActions(r.actions, q)) : '' }))
+        .filter(x=> !q || x.hit !== null);
+      countEl.textContent = (pool.length ? toFa(pool.length) + ' هدف' : '') + (ringRows.length ? (pool.length ? ' · ' : '') + toFa(ringRows.length) + ' نشانه' : '');
+      if (!rows.length && !ringRows.length){
         listEl.innerHTML = `<div class="gs-empty">${q ? 'موردی پیدا نشد.' : (isReachedTab ? 'هنوز هدفی به مرحله‌ی «محقق‌شده» نرسیده.<br>وقتی به یک هدف رسیدی، با دکمه‌ی ✓ کنار آن، به این فهرست منتقل می‌شود.' : (state.goals.length ? 'همه‌ی اهدافت محقق شده‌اند 🎉<br>با دکمه‌ی «＋ هدف جدید» هدف تازه‌ای بساز.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'))}</div>`;
         return;
       }
@@ -4622,6 +4634,28 @@ body.bg-mode-image #grat-root{background:transparent;}
         listEl.scrollTop = scrollTop;
         return;
       }
+      const ringsHTML = ringRows.length ? ('<div class="gs-sec-h">'+ICO_REWARD+' نشانه‌های نزدیک شدن به هدف</div>' + ringRows.map(({r, hit})=>{
+        const n = countAllActions(r.actions);
+        const p = goalPower(r);
+        const isOpen = OPEN.has(r.id) || (q && hit);
+        const fibs = goalFibers(r);
+        const rc = r.color || '#2dd4bf';
+        return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${r.id}" style="--gs-c:${esc(rc)}">
+          <div class="gs-row" data-act="toggle">
+            <span class="gs-rico" aria-hidden="true">${ICO_REWARD}</span>
+            <div class="gs-main">
+              <div class="gs-name">${esc(r.label || 'نشانه')}<span class="gs-tag ok">نشانه‌ی نزدیکی</span></div>
+              <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'}${fibs ? ' · ' + toFa(fibs) + ' رشته' : ''}${r.lastActivity ? ' · ' + ago(r.lastActivity) : ''}</div>
+              ${hit ? `<div class="gs-hit">شاخه: ${esc(hit)}</div>` : ''}
+              <div class="gs-bar"><i style="width:${p}%;background:${esc(rc)}"></i></div>
+            </div>
+            <button class="gs-ic" data-act="toggle" aria-label="باز یا بسته کردن شاخه‌ها">${isOpen ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
+            <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
+            <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
+          </div>
+          ${isOpen ? bodyHTML(r) : ''}
+        </div>`;
+      }).join('')) : '';
       listEl.innerHTML = rows.map(({g, hit})=>{
         const n = countAllActions(g.actions);
         const p = goalPower(g);
@@ -4645,7 +4679,7 @@ body.bg-mode-image #grat-root{background:transparent;}
           </div>
           ${isOpen ? bodyHTML(g) : ''}
         </div>`;
-      }).join('');
+      }).join('') + ringsHTML;
       listEl.scrollTop = scrollTop;
     }
     window.__reopenGoalsSheet = ()=>{ open(); };
@@ -4840,6 +4874,17 @@ body.bg-mode-image #grat-root{background:transparent;}
         g.reached = false; delete g.reachedAt; touch(g); render(); draw();
         if (typeof toast === 'function') toast('برگشت به اهداف در جریان');
         return;
+      }
+      if (isRingHost(g)){
+        if (kind === 'edit'){ close(); openPanelForRing(id); return; }
+        if (kind === 'map'){
+          close();
+          state.ringsCollapsed = false; g.collapsed = false;
+          render();
+          animateCamTo(viewForPoints(goalPoints(Object.assign({}, g, {x:g.x, y:g.y})), 1.4));
+          const h = document.getElementById('hint'); if (h) h.style.display = 'none';
+          return;
+        }
       }
       if (kind === 'edit'){ close(); openPanelForGoal(id); return; }
       if (kind === 'map'){ close(); focusGoal(id); return; }
