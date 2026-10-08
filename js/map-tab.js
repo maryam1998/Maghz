@@ -1159,15 +1159,13 @@
       if (r){
         const kids = countAllActions(r.actions||[]);
         h += '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
-             '<input class="gs-rname" data-rid="'+r.id+'" value="'+esc(r.label||'')+'" placeholder="نام نشانه..." autocomplete="off">'+
-             iconEditHTML(r)+
              '<div class="trow"><span>'+(kids ? toFa(kids)+' شاخه' : 'بدون شاخه')+'</span><span>· '+toFa(goalFibers(r))+' رشته‌ی عصبی</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
              '<div class="gs-rbtns">'+
                '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
                '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
                '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">جدا کردن از هدف</button>'+
                '<button type="button" class="gs-mini" data-gact="ringdel" data-rid="'+r.id+'">حذف</button>'+
-             '</div></div>';
+             '</div><div class="gs-sub" data-host="'+r.id+'">'+bodyHTML(r)+'</div></div>';
       }
       return h + '</div>';
     }
@@ -1237,7 +1235,7 @@
       if (rn) rn.textContent = reachedGoals.length ? '(' + toFa(reachedGoals.length) + ')' : '';
       const isReachedTab = tabKey === 'reached';
       document.getElementById('gs-sort').style.display = isReachedTab ? 'none' : '';
-      const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.rings);
+      const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.rings.filter(r=> !state.goals.some(x=>x.id===r.goalId)));
       let rows = pool.map(g=>({ g, hit: q ? (norm(hname(g)).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
                             .filter(r=> !q || r.hit !== null);
       if (orderCache){
@@ -1251,7 +1249,7 @@
         });
         orderCache = rows.map(r=>r.g.id);
       }
-      countEl.textContent = pool.length ? (isReachedTab ? toFa(pool.length) + ' هدف' : toFa(activeGoals.length) + ' هدف' + (state.rings.length ? ' · ' + toFa(state.rings.length) + ' نزدیکی' : '')) : '';
+      countEl.textContent = pool.length ? (isReachedTab ? toFa(pool.length) + ' هدف' : toFa(activeGoals.length) + ' هدف' + (pool.length > activeGoals.length ? ' · ' + toFa(pool.length - activeGoals.length) + ' نزدیکی بدون هدف' : '')) : '';
       if (!rows.length){
         listEl.innerHTML = `<div class="gs-empty">${q ? 'موردی پیدا نشد.' : (isReachedTab ? 'هنوز هدفی به مرحله‌ی «محقق‌شده» نرسیده.<br>وقتی به یک هدف رسیدی، با دکمه‌ی ✓ کنار آن، به این فهرست منتقل می‌شود.' : (state.goals.length ? 'همه‌ی اهدافت محقق شده‌اند 🎉<br>با دکمه‌ی «＋ هدف جدید» هدف تازه‌ای بساز.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'))}</div>`;
         return;
@@ -1407,6 +1405,8 @@
       }catch(e){}
     }
     function onBodyClick(e, g){
+      const subEl = e.target.closest('.gs-sub');
+      if (subEl){ const hh = findHost(subEl.dataset.host); if (hh) g = hh; }
       const gact = e.target.closest('[data-gact]');
       if (gact){
         const a = gact.dataset.gact;
@@ -1605,7 +1605,8 @@
       }
       if (!t.classList || !t.classList.contains('gs-ntext')) return;
       const item = t.closest('.gs-item'); if (!item) return;
-      const g = findHost(item.dataset.gid); if (!g) return;
+      const sub = t.closest('.gs-sub');
+      const g = findHost(sub ? sub.dataset.host : item.dataset.gid); if (!g) return;
       const found = findActionNode(g.actions, t.dataset.nid);
       if (!found) return;
       found.node.text = t.value.trim() || 'بدون عنوان';
@@ -1671,7 +1672,8 @@
       if (t.classList.contains('gs-addin')){
         e.preventDefault();
         const item = t.closest('.gs-item'); if (!item) return;
-        const g = findHost(item.dataset.gid); if (!g) return;
+        const sub = t.closest('.gs-sub');
+        const g = findHost(sub ? sub.dataset.host : item.dataset.gid); if (!g) return;
         commitAdd(g, t.dataset.for, t.value);
       } else if (t.classList.contains('gs-ntext') || t.classList.contains('gs-rname') || t.classList.contains('gs-iemoji')){
         e.preventDefault(); t.blur();
