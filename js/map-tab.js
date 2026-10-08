@@ -1088,9 +1088,7 @@
           '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="'+(depth?'نام زیرشاخه':'نام شاخه')+'..." autocomplete="off">'+
           '<span class="gs-fib'+(fib?' on':'')+'" title="رشته‌های عصبی ساخته‌شده">رشته: '+toFa(fib)+'</span>'+
           '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
-          '<button type="button" class="gs-nbtn" data-nact="addtime" aria-label="افزودن زمان" title="افزودن زمان (دقیقه)">＋⌚</button>'+
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
-          '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن زیرشاخه" title="افزودن زیرشاخه">＋</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
         '</div>'+
         '<div class="gs-days">'+c.h+'</div>'+
@@ -3692,7 +3690,14 @@
       '.pc-time-btns .btn{flex:1;font-size:11.5px;padding:8px;}'+
       '.gs-tmr{font-size:11px;white-space:nowrap;}'+
       '.gs-tmr.on{color:#e5484d;border-color:#e5484d;}'+
-      '.gs-tsum{color:var(--text-dim);}';
+      '.gs-tsum{color:var(--text-dim);}'+
+      '.pc-sub-row{display:flex;align-items:center;gap:6px;margin-top:5px;}'+
+      '.pc-sub-nm{flex:1;min-width:0;color:var(--text-main);}'+
+      '.pc-sub-t{color:var(--text-dim);font-size:10.5px;}'+
+      '.pc-sub-row .btn{flex:none;padding:6px 10px;font-size:11px;}'+
+      '.pc-sub-add{display:flex;gap:6px;margin-top:8px;}'+
+      '.pc-sub-in{flex:1;min-width:0;border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:10px;padding:7px 9px;font-family:inherit;font-size:12.5px;}'+
+      '.pc-foot{display:flex;align-items:center;gap:8px;margin-top:8px;}';
     document.head.appendChild(st);
   })();
 
@@ -3702,35 +3707,30 @@
     const pt = bezierPoint(geom.originPt, geom.c1, geom.c2, geom.end, t);
     return { x:pt.x, y:pt.y, a:bezierTangentAngle(geom.originPt, geom.c1, geom.c2, geom.end, t) };
   }
-  function footSVG(x, y, ang, color, op, sc, left){
-    const deg = ang*180/Math.PI + 90, m = left ? -1 : 1;
-    return '<g transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') rotate(' + deg.toFixed(0) + ') scale(' + (sc*m).toFixed(2) + ',' + sc.toFixed(2) + ')" fill="' + color + '" opacity="' + op.toFixed(2) + '">' +
-      '<ellipse cx="0" cy="-2.4" rx="2.3" ry="3.4"/><ellipse cx="0" cy="3.1" rx="1.7" ry="1.9"/><ellipse cx="-1.1" cy="-6.2" rx="1.1" ry="1.2"/></g>';
-  }
   function footprintsSVG(goal, action, geom, color, scale){
     const keys = hostPeriodKeys(goal);
     const N = nodeLogCount(action, keys);
     if (!N) return '';
+    const col = goal.footColor || color;
+    const fid = 'fpf' + String(col).replace(/[^a-zA-Z0-9]/g, '');
     const todayJK = pcJKey(new Date());
     const todayDone = !!(action.logs && action.logs[todayJK]);
     const L = (Math.hypot(geom.end.x - geom.originPt.x, geom.end.y - geom.originPt.y) * 1.1) || 1;
-    let sp = Math.max(7, 12*scale);
+    const fs = Math.max(11, 15*scale);
+    let sp = Math.max(fs*0.95, 14*scale);
     const usable = L * 0.86;
     if (N*sp > usable) sp = usable / N;
     const span = sp / L;
-    const sc = Math.max(0.55, 0.8*scale);
-    const half = 3.3 * Math.max(0.6, scale);
-    let out = '<g class="foot-trail" style="pointer-events:none;">';
+    let out = '<g class="foot-trail" filter="url(#' + fid + ')" style="pointer-events:none;">' +
+      '<defs><filter id="' + fid + '" x="-30%" y="-30%" width="160%" height="160%"><feFlood flood-color="' + col + '" result="f"/><feComposite in="f" in2="SourceAlpha" operator="in"/></filter></defs>';
     for (let i=0; i<N; i++){
       const t = Math.max(0.05, 0.95 - i*span);
       const p = stepPoint(geom, t);
       const a = p.a + Math.PI;
-      const nx = -Math.sin(a), ny = Math.cos(a);
-      const fx = Math.cos(a) * sp * 0.2, fy = Math.sin(a) * sp * 0.2;
+      const deg = (a*180/Math.PI + 90).toFixed(0);
       const newest = (i === N-1);
       const op = (newest && todayDone) ? 1 : (0.5 + 0.35 * (N > 1 ? i/(N-1) : 1));
-      out += footSVG(p.x + nx*half + fx, p.y + ny*half + fy, a, color, op, sc, true);
-      out += footSVG(p.x - nx*half - fx, p.y - ny*half - fy, a, color, op, sc, false);
+      out += '<text x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '" text-anchor="middle" dy="0.35em" font-size="' + fs.toFixed(1) + '" opacity="' + op.toFixed(2) + '" transform="rotate(' + deg + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')">👣</text>';
     }
     return out + '</g>';
   }
@@ -3824,7 +3824,22 @@
           : '<button type="button" class="btn gold" data-pc-timer="start">▶️ شروع تایمر</button>')+
           '<button type="button" class="btn" data-pc-addtime="'+selJK+'">＋ زمان ('+dayLabel+')</button></div>';
       }
+      {
+        const rawC = ctx.goal.footColor || (ctx.node && ctx.node.color) || ctx.goal.color || '#2dd4bf';
+        const hex = /^#[0-9a-f]{6}$/i.test(rawC) ? rawC : '#2dd4bf';
+        info += '<div class="pc-foot">👣 رنگ ردپا: <input type="color" data-pc-footcolor="1" value="'+hex+'"><button type="button" class="btn" data-pc-footreset="1" style="padding:5px 10px;font-size:11px;">پیش‌فرض</button></div>';
+      }
       info += '</div>';
+      if (!isGoal){
+        info += '<div class="pc-info pc-subs"><b>زیرشاخه‌ها — '+dayLabel+'</b>';
+        (ctx.node.children || []).forEach(c=>{
+          const run = timerRunning(c), ts = nodeDaySecs(c, selJK), dn = !!(c.logs && c.logs[selJK]);
+          info += '<div class="pc-sub-row"><span class="pc-sub-nm">'+(dn ? '✓ ' : '')+esc(c.text || 'بدون نام')+'</span><span class="pc-sub-t">'+(ts ? fmtDur(ts) : '')+'</span>'+
+            '<button type="button" class="btn'+(run ? '' : ' gold')+'" data-pc-subtimer="'+c.id+'">'+(run ? '⏹ '+timerLiveHTML(c) : '▶️')+'</button>'+
+            '<button type="button" class="btn" data-pc-subtime="'+c.id+'" data-jk="'+selJK+'" title="ثبت دقیقه">⌚ دقیقه</button></div>';
+        });
+        info += '<div class="pc-sub-add"><input type="text" class="pc-sub-in" placeholder="نام زیرشاخه (مثلاً یوتیوب)" autocomplete="off"><button type="button" class="btn gold" data-pc-subadd="1">افزودن</button></div></div>';
+      }
     }
     const endOfPeriod = new Date(start.getFullYear(), start.getMonth(), start.getDate()+total);
     const finished = today >= endOfPeriod;
@@ -3908,6 +3923,48 @@
       }
       return;
     }
+    if (t.closest('[data-pc-footreset]')){
+      const c0 = pcContext();
+      if (c0){ delete c0.goal.footColor; scheduleMapSave(); render(); renderPanelPeriodCal(); }
+      return;
+    }
+    const sa = t.closest('[data-pc-subadd]');
+    if (sa){
+      const c0 = pcContext();
+      if (c0 && c0.node){
+        const box = sa.closest('.pc-subs'), inp = box && box.querySelector('.pc-sub-in');
+        const txt = ((inp && inp.value) || '').trim();
+        if (!txt){ if (typeof toast === 'function') toast('اسم زیرشاخه را بنویس'); return; }
+        if (!Array.isArray(c0.node.children)) c0.node.children = [];
+        c0.node.children.push({ id:uid(), text:txt, weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt:Date.now(), logs:{} });
+        c0.goal.lastActivity = Date.now();
+        scheduleMapSave(); render(); renderPanelPeriodCal();
+        try{ refreshActionChildrenPanel(); }catch(err){}
+      }
+      return;
+    }
+    const sT = t.closest('[data-pc-subtimer]');
+    if (sT){
+      const c0 = pcContext();
+      const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sT.dataset.pcSubtimer) : null;
+      if (kid){
+        const n = kid.node;
+        if (timerRunning(n)){ const jk = pcJKey(new Date(n.timerStart)); stopTimer(n); autoTick(c0.node, jk); }
+        else startTimer(n);
+        render(); renderPanelPeriodCal();
+      }
+      return;
+    }
+    const sM = t.closest('[data-pc-subtime]');
+    if (sM){
+      const c0 = pcContext();
+      const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sM.dataset.pcSubtime) : null;
+      if (kid){
+        const m = askMinutes('چند دقیقه ثبت بشه؟ (عدد منفی = کم کردن)');
+        if (m){ addMinutes(kid.node, sM.dataset.jk, m); if (m > 0) autoTick(c0.node, sM.dataset.jk); render(); renderPanelPeriodCal(); }
+      }
+      return;
+    }
     const cell = t.closest('.pc-day[data-pc-key]');
     if (!cell || cell.classList.contains('future')) return;
     const ctx = pcContext();
@@ -3925,7 +3982,15 @@
   }
   ['gp-goal-card','gp-action-card'].forEach(id=>{
     const el = document.getElementById(id);
-    if (el) el.addEventListener('click', pcOnClick);
+    if (el){
+      el.addEventListener('click', pcOnClick);
+      el.addEventListener('input', (e)=>{
+        const t = e.target;
+        if (!t || !t.matches || !t.matches('[data-pc-footcolor]')) return;
+        const c0 = pcContext();
+        if (c0){ c0.goal.footColor = t.value; scheduleMapSave(); render(); }
+      });
+    }
   });
 
   function cleanupLegacyCalNotes(){
