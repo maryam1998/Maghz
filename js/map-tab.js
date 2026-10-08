@@ -1083,48 +1083,49 @@
       h += '<button type="button" class="gs-tchip add" data-nact="timeday" title="ثبت یا ویرایش زمان برای یک روز دیگر">＋ روز دیگر</button></div>';
       return h;
     }
-    function askSetMinutes(question, def){
-      const input = window.prompt(question, String(def));
-      if (input === null) return null;
-      const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
-      const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }).replace('٫', '.');
-      const v = parseFloat(norm);
-      if (isNaN(v) || v < 0 || v > 1440){ if (typeof toast === 'function') toast('یه عدد بین ۰ تا ۱۴۴۰ دقیقه وارد کن'); return null; }
-      return v;
-    }
-    function setDayMinutes(node, jk, mins){
-      if (!node.time || typeof node.time !== 'object') node.time = {};
-      const secs = Math.round(mins * 60);
-      if (secs > 0){ node.time[jk] = secs; autoTick(node, jk); }
-      else delete node.time[jk];
-      scheduleMapSave();
-    }
-    function nodeHTML(n, g, pi, depth){
+    const DAYS_TOG = new Set();
+    function nodeHTML(n, g, pi, depth, parentName){
       if (n.achieved){
         let hh = '';
-        (n.children||[]).forEach(ch=>{ hh += nodeHTML(ch, g, pi, depth); });
+        (n.children||[]).forEach(ch=>{ hh += nodeHTML(ch, g, pi, depth, parentName); });
         return hh;
       }
       const color = n.color || hcolor(g);
       const c = cellsHTML(n, color, pi);
       const todayDone = !!(n.logs && n.logs[pi.todayJK]);
-      let h = '<div class="gs-node'+(n.achieved?' ach':'')+'" data-nid="'+n.id+'" style="margin-inline-start:'+(Math.min(depth,4)*12)+'px;border-inline-start-color:'+esc(color)+';">'+
+      const kids = (n.children||[]).filter(k=>!k.achieved);
+      const daysOpen = depth === 0 ? !DAYS_TOG.has(n.id) : DAYS_TOG.has(n.id);
+      const lvlName = depth === 0 ? 'شاخه' : (depth === 1 ? 'زیرشاخه' : 'زیرِ زیرشاخه');
+      let h = '<div class="gs-grp">'+
+      '<div class="gs-node '+(depth ? 'sub' : 'main')+'" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
         '<div class="gs-nhead">'+
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
-          '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="'+(depth?'نام زیرشاخه':'نام شاخه')+'..." autocomplete="off">'+
-          '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن زیرشاخه" title="افزودن زیرشاخه">＋</button>'+
-          '<button type="button" class="gs-nbtn" data-nact="addtime" aria-label="ثبت زمان امروز" title="ثبت زمان امروز">⌚</button>'+
+          '<div class="gs-nname">'+
+            '<div class="gs-lvl"><span class="gs-badge'+(depth ? ' sub' : '')+'" style="'+(depth ? 'color:'+esc(color)+';border-color:'+esc(color) : 'background:'+esc(color))+';">'+lvlName+'</span>'+
+              (depth && parentName ? '<span class="gs-par">↳ زیرِ «'+esc(parentName)+'»</span>' : '')+
+              (kids.length ? '<span class="gs-par">· '+toFa(kids.length)+' زیرشاخه</span>' : '')+'</div>'+
+            '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="'+(depth?'نام زیرشاخه':'نام شاخه')+'..." autocomplete="off">'+
+          '</div>'+
           '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
         '</div>'+
-        '<div class="gs-days">'+c.h+'</div>'+
-        '<div class="gs-nmeta">'+toFa(c.done)+' روز از '+toFa(pi.total)+' روز دوره انجام شده<span class="gs-tsum"> · ⏱ امروز '+fmtDur(nodeDaySecs(n, pi.todayJK))+' · دوره '+fmtDur(nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)))+'</span></div>'+
+        '<div class="gs-nmeta">'+toFa(c.done)+' روز از '+toFa(pi.total)+' روز دوره<span class="gs-tsum"> · ⏱ امروز '+fmtDur(nodeDaySecs(n, pi.todayJK))+' · دوره '+fmtDur(nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)))+'</span></div>'+
+        (daysOpen ? '<div class="gs-days">'+c.h+'</div>' : '')+
         timeChipsHTML(n)+
+        '<div class="gs-foot">'+
+          '<button type="button" class="gs-fbtn" data-nact="add">＋ زیرشاخه</button>'+
+          '<button type="button" class="gs-fbtn" data-nact="addtime">⌚ زمان امروز</button>'+
+          '<button type="button" class="gs-fbtn" data-nact="cal">'+(daysOpen ? '▴ بستن روزها' : '▾ روزها')+'</button>'+
+        '</div>'+
       '</div>';
-      if (addingFor === n.id) h += '<div style="margin-inline-start:'+(Math.min(depth+1,4)*12)+'px;">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
-      (n.children||[]).forEach(ch=>{ h += nodeHTML(ch, g, pi, depth+1); });
-      return h;
+      if (addingFor === n.id) h += '<div class="gs-kids">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
+      if (kids.length || (n.children||[]).length){
+        h += '<div class="gs-kids">';
+        (n.children||[]).forEach(ch=>{ h += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام'); });
+        h += '</div>';
+      }
+      return h + '</div>';
     }
     let TSEL = null;
     function collectAch(list, parent, out){
@@ -1556,6 +1557,9 @@
       } else if (nact.dataset.nact === 'addtime'){
         const mm = askMinutes('چند دقیقه اضافه بشه؟ (عدد منفی = کم کردن)');
         if (mm){ addMinutes(found.node, periodInfo(g).todayJK, mm); touch(g); render(); draw(); }
+      } else if (nact.dataset.nact === 'cal'){
+        if (DAYS_TOG.has(nid)) DAYS_TOG.delete(nid); else DAYS_TOG.add(nid);
+        draw();
       } else if (nact.dataset.nact === 'settime'){
         const jk = nact.dataset.jk;
         const cur = Math.round(nodeDaySecs(found.node, jk) / 60);
@@ -3621,6 +3625,22 @@
     if (secs > 0) autoTick(n, jk);
     scheduleMapSave();
   }
+  function askSetMinutes(question, def){
+    const input = window.prompt(question, String(def));
+    if (input === null) return null;
+    const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+    const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }).replace('٫', '.');
+    const v = parseFloat(norm);
+    if (isNaN(v) || v < 0 || v > 1440){ if (typeof toast === 'function') toast('یه عدد بین ۰ تا ۱۴۴۰ دقیقه وارد کن'); return null; }
+    return v;
+  }
+  function setDayMinutes(node, jk, mins){
+    if (!node.time || typeof node.time !== 'object') node.time = {};
+    const secs = Math.round(mins * 60);
+    if (secs > 0){ node.time[jk] = secs; autoTick(node, jk); }
+    else delete node.time[jk];
+    scheduleMapSave();
+  }
   function askMinutes(question){
     const input = window.prompt(question, '30');
     if (input === null) return 0;
@@ -3642,6 +3662,20 @@
       '.gs-tmr{font-size:11px;white-space:nowrap;}'+
       '.gs-tmr.on{color:#e5484d;border-color:#e5484d;}'+
       '.gs-tsum{color:var(--text-dim);}'+
+      '.gs-grp{display:flex;flex-direction:column;gap:6px;}'+
+      '.gs-kids{display:flex;flex-direction:column;gap:6px;margin-inline-start:12px;padding-inline-start:10px;border-inline-start:2px dashed rgba(127,127,127,.35);}'+
+      '.gs-node.main{padding:10px 12px;box-shadow:0 1px 0 rgba(127,127,127,.15);}'+
+      '.gs-node.sub{background:rgba(127,127,127,.04);padding:7px 9px;}'+
+      '.gs-node.sub .gs-ntext{font-size:12.5px;font-weight:600;}'+
+      '.gs-nname{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}'+
+      '.gs-lvl{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:10px;}'+
+      '.gs-badge{padding:1px 8px;border-radius:999px;font-weight:700;color:#12142a;font-size:9.5px;}'+
+      '.gs-badge.sub{background:transparent;border:1px solid;}'+
+      '.gs-par{color:var(--text-dim);}'+
+      '.gs-foot{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}'+
+      '.gs-fbtn{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:4px 10px;font-family:inherit;font-size:11px;cursor:pointer;}'+
+      '.pc-sub-tick{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--panel-border);background:transparent;color:#12142a;font-weight:800;cursor:pointer;padding:0;}'+
+      '.pc-sub-set{flex:none;border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:4px 9px;font-family:inherit;font-size:10.5px;cursor:pointer;}'+
       '.gs-tchips{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:6px;}'+
       '.gs-tlbl{font-size:10.5px;color:var(--text-dim);}'+
       '.gs-tchip{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:3px 9px;font-family:inherit;font-size:10.5px;cursor:pointer;}'+
@@ -3787,11 +3821,15 @@
       info += '</div>';
       if (!isGoal){
         info += '<div class="pc-info pc-subs"><b>زیرشاخه‌ها — '+dayLabel+'</b>';
-        (ctx.node.children || []).forEach(c=>{
+        const kidsList = ctx.node.children || [];
+        if (!kidsList.length) info += '<div class="pc-hint" style="margin-top:6px;">هنوز زیرشاخه‌ای نداری؛ مثلاً «یوتیوب» یا «کتاب» را اضافه کن، بعد هر روز تیک بزن و زمانش را ثبت کن.</div>';
+        kidsList.forEach(c=>{
           const run = timerRunning(c), ts = nodeDaySecs(c, selJK), dn = !!(c.logs && c.logs[selJK]);
-          info += '<div class="pc-sub-row"><span class="pc-sub-nm">'+(dn ? '✓ ' : '')+esc(c.text || 'بدون نام')+'</span><span class="pc-sub-t">'+(ts ? fmtDur(ts) : '')+'</span>'+
-            '<button type="button" class="btn'+(run ? '' : ' gold')+'" data-pc-subtimer="'+c.id+'">'+(run ? '⏹ '+timerLiveHTML(c) : '▶️')+'</button>'+
-            '<button type="button" class="btn" data-pc-subtime="'+c.id+'" data-jk="'+selJK+'" title="ثبت دقیقه">⌚ دقیقه</button></div>';
+          const kc = c.color || ctx.color;
+          info += '<div class="pc-sub-row"><button type="button" class="pc-sub-tick" data-pc-subtick="'+c.id+'" data-jk="'+selJK+'" aria-label="تیک" style="border-color:'+esc(kc)+';background:'+(dn ? esc(kc) : 'transparent')+';">'+(dn ? '✓' : '')+'</button>'+
+            '<span class="pc-sub-nm">'+esc(c.text || 'بدون نام')+'</span>'+
+            '<button type="button" class="pc-sub-set" data-pc-subset="'+c.id+'" data-jk="'+selJK+'" title="ثبت یا ویرایش زمان">'+(ts ? '⏱ '+fmtDur(ts)+' ✎' : '＋ زمان')+'</button>'+
+            '<button type="button" class="btn'+(run ? '' : ' gold')+'" data-pc-subtimer="'+c.id+'">'+(run ? '⏹ '+timerLiveHTML(c) : '▶️')+'</button></div>';
         });
         info += '<div class="pc-sub-add"><input type="text" class="pc-sub-in" placeholder="نام زیرشاخه (مثلاً یوتیوب)" autocomplete="off"><button type="button" class="btn gold" data-pc-subadd="1">افزودن</button></div></div>';
       }
@@ -3907,6 +3945,28 @@
         if (timerRunning(n)){ const jk = pcJKey(new Date(n.timerStart)); stopTimer(n); autoTick(c0.node, jk); }
         else startTimer(n);
         render(); renderPanelPeriodCal();
+      }
+      return;
+    }
+    const sTk = t.closest('[data-pc-subtick]');
+    if (sTk){
+      const c0 = pcContext();
+      const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sTk.dataset.pcSubtick) : null;
+      if (kid){
+        toggleRoutineLog(kid.node.id, sTk.dataset.jk);
+        if (kid.node.logs && kid.node.logs[sTk.dataset.jk]) autoTick(c0.node, sTk.dataset.jk);
+        render(); renderPanelPeriodCal();
+      }
+      return;
+    }
+    const sSet = t.closest('[data-pc-subset]');
+    if (sSet){
+      const c0 = pcContext();
+      const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sSet.dataset.pcSubset) : null;
+      if (kid){
+        const jk = sSet.dataset.jk;
+        const mm = askSetMinutes('چند دقیقه برای «'+(kid.node.text || 'زیرشاخه')+'» ثبت بشه؟ (۰ = حذف زمان)', Math.round(nodeDaySecs(kid.node, jk)/60) || 30);
+        if (mm !== null){ setDayMinutes(kid.node, jk, mm); if (mm > 0) autoTick(c0.node, jk); render(); renderPanelPeriodCal(); }
       }
       return;
     }
