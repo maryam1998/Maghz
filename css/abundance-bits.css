@@ -1,0 +1,3 @@
+.abundance-today{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px;padding:12px 14px;border-radius:14px;background:rgba(43,191,171,.12);border:1px solid rgba(43,191,171,.35);font-weight:700;font-size:14px;}
+.abundance-today.over{background:rgba(220,80,80,.12);border-color:rgba(220,80,80,.4);}
+.abundance-hint{font-size:12px;opacity:.8;margin:0 4px 10px;text-align:center;}
