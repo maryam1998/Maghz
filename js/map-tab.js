@@ -1146,6 +1146,7 @@
       return h + '</div>';
     }
     let TSEL = null;
+    let ICONSEL = null;
     function collectAch(list, parent, out){
       (list||[]).forEach(n=>{
         if (n.achieved) out.push({ node:n, parent:parent });
@@ -1168,7 +1169,7 @@
       (h.images||[]).forEach((im, i)=>{
         th += '<span class="gs-ithumb"><img src="'+esc(im.src)+'" alt="" draggable="false"><button type="button" data-gact="iconimgdel" data-hid="'+h.id+'" data-idx="'+i+'" aria-label="حذف عکس">✕</button></span>';
       });
-      return '<div class="gs-iedit"><span class="gs-ico" style="--ic:'+esc(hcolor(h))+'">'+hiconHTML(h)+'</span>'+
+      return '<div class="gs-iedit">'+
              '<input class="gs-iemoji" data-hid="'+h.id+'" value="'+esc(h.icon || '')+'" maxlength="8" placeholder="ایموجی" autocomplete="off">'+
              '<button type="button" class="gs-mini gold" data-gact="iconimg" data-hid="'+h.id+'">عکس</button>'+th+'</div>';
     }
@@ -1180,6 +1181,8 @@
         '.gs-ico img{width:100%;height:100%;object-fit:cover;pointer-events:none;}'+
         '.gs-ico span{pointer-events:none;}'+
         '.gs-iedit{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}'+
+        '.gs-ico-btn{cursor:pointer;}'+
+        '.gs-iconpop{padding:8px 12px 10px;border-top:1px dashed var(--panel-border);}'+
         '.gs-iemoji{width:64px;text-align:center;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:16px;padding:5px 4px;box-sizing:border-box;}'+
         '.gs-ithumb{position:relative;width:34px;height:34px;flex:none;}'+
         '.gs-ithumb img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--panel-border);}'+
@@ -1253,7 +1256,7 @@
         h += '<input class="gs-rname" data-rid="'+g.id+'" value="'+esc(g.label||'')+'" placeholder="نام نشانه..." autocomplete="off">'+
              '<textarea class="gs-rnote" data-rid="'+g.id+'" placeholder="نوشته‌ی زیر نشانه روی نقشه...">'+esc(g.note||'')+'</textarea>';
       }
-      h += iconEditHTML(g);
+      if (isRingHost(g)) h += iconEditHTML(g);
       h += '<div class="gs-psum"><span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span>'+
            '<span>· امروز <b>'+toFa(todayCnt)+'</b> کار</span>'+
            '<span>· ⏱ امروز <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeDaySecs(n, pi.todayJK),0))+'</b> · دوره <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)),0))+'</b></span><span class="sp"></span>'+
@@ -1337,7 +1340,7 @@
         const isOpen = OPEN.has(g.id) || (q && hit);
         return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(hc)}">
           <div class="gs-row" data-act="toggle">
-            <span class="gs-ico" style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
+            <span class="gs-ico${isR ? '' : ' gs-ico-btn'}" ${isR ? '' : 'data-act="icon" title="تغییر آیکون یا عکس"'} style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
             <div class="gs-main">
               <div class="gs-name"><span class="gs-nm">${esc(hname(g))}</span>${tags}</div>
               <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${g.lastActivity ? ' · ' + ago(g.lastActivity) : ''}</div>
@@ -1349,6 +1352,7 @@
             <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
             <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
           </div>
+          ${(!isR && ICONSEL === g.id) ? '<div class="gs-body gs-iconpop">' + iconEditHTML(g) + '</div>' : ''}
           ${isOpen ? bodyHTML(g) : ''}
         </div>`;
       }).join('');
@@ -1621,6 +1625,7 @@
       const act = e.target.closest('[data-act]');
       const kind = act ? act.dataset.act : 'toggle';
       if (kind === 'none') return;
+      if (kind === 'icon'){ ICONSEL = (ICONSEL === id) ? null : id; draw(); return; }
       if (kind === 'reach'){
         const rb = act.getBoundingClientRect();
         g.reached = true; g.reachedAt = Date.now(); OPEN.delete(id); touch(g); render(); draw();
