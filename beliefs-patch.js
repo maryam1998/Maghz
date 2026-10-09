@@ -335,6 +335,22 @@
   function vvPut(id, blob){ return vvTx('readwrite', function(st){ return st.put(blob, id); }); }
   function vvGet(id){ return vvTx('readonly', function(st){ return st.get(id); }); }
   function vvDel(id){ return vvTx('readwrite', function(st){ return st.delete(id); }); }
+   
+/* --- توابع کمکی برای ذخیره‌ی عکس‌ها در IndexedDB --- */
+function vvTxStore(storeName, mode, fn){
+  return vvDb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(storeName, mode);
+      var out = fn(tx.objectStore(storeName));
+      tx.oncomplete = function(){ resolve(out && out.result); };
+      tx.onerror = function(){ reject(tx.error); };
+      tx.onabort = function(){ reject(tx.error); };
+    });
+  });
+}
+function vgPutBlob(id, blob){ return vvTxStore('images', 'readwrite', function(st){ return st.put(blob, id); }); }
+function vgGetBlob(id){ return vvTxStore('images', 'readonly', function(st){ return st.get(id); }); }
+function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ return st.delete(id); }); }
 
   function vvList(){
     var cb = state && state.currentBelief;
