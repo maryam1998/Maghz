@@ -3177,6 +3177,7 @@ function wireRasEmptyState(){
 (function(){
   'use strict';
 
+  function S(){ try { if (typeof state !== 'undefined' && state) return state; } catch(e){} return window.state; }
   var DB_NAME = 'beliefs-patch-audio';
   var DB_VER  = 1;
   var STORE   = 'audio';
@@ -3226,7 +3227,7 @@ function wireRasEmptyState(){
     var wrap = document.getElementById('meditation-audio-wrap');
     if (!wrap) return;
 
-    var st = window.state;
+    var st = S();
     var meta = st && st.meditationAudio;
     if (!meta || !meta.name){
       if (wrap.innerHTML) wrap.innerHTML = '';
@@ -3278,7 +3279,7 @@ function wireRasEmptyState(){
       put(f).then(function(v){ clearTimeout(tm); res(v); }, function(e){ clearTimeout(tm); rej(e); });
     });
     putP.then(function(){
-      var st = window.state;
+      var st = S();
       if (!st) return;
       st.meditationAudio = {
         name: f.name || 'audio',
@@ -3295,7 +3296,7 @@ function wireRasEmptyState(){
     }).catch(function(err){
       /* اگه ذخیره‌ی دائمی نشد، حداقل برای همین نشست پخش بشه */
       try {
-        var st2 = window.state;
+        var st2 = S();
         if (st2){ st2.meditationAudio = { name: f.name || 'audio', size: f.size || 0, date: Date.now() }; }
         if (audioUrl){ try { URL.revokeObjectURL(audioUrl); } catch(e){} }
         audioUrl = URL.createObjectURL(f);
@@ -3313,8 +3314,8 @@ function wireRasEmptyState(){
     if (t.closest('#meditation-audio-del')){
       if (!window.confirm('این موسیقی حذف شود؟')) return;
       del().catch(function(){});
-      if (window.state){
-        delete window.state.meditationAudio;
+      if (S()){
+        delete S().meditationAudio;
         try { if (typeof window.saveState === 'function') window.saveState(); } catch(e){}
       }
       if (audioUrl){ try { URL.revokeObjectURL(audioUrl); } catch(e){} audioUrl = null; }

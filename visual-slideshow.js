@@ -30,13 +30,50 @@
     if (dbP) return dbP;
     dbP = new Promise(function(res, rej){
       if (!window.indexedDB){ rej(new Error('no-idb')); return; }
-      var r = indexedDB.open('beliefs-patch-media', 1);
+      var r = indexedDB.open('beliefs-patch-media');
       r.onupgradeneeded = function(){ if (!r.result.objectStoreNames.contains('videos')) r.result.createObjectStore('videos'); };
       r.onsuccess = function(){ res(r.result); };
       r.onerror = function(){ rej(r.error); };
     });
     dbP.catch(function(){ dbP = null; });
     return dbP;
+  }
+  /* ---- عکس‌هایی که فقط در IndexedDB هستند (بدون src) ---- */
+  var imgUrls = {}, imgAsked = {}, imgDbP = null;
+  function imgDb(){
+    if (imgDbP) return imgDbP;
+    imgDbP = new Promise(function(res, rej){
+      if (!window.indexedDB){ rej(new Error('no-idb')); return; }
+      var r = indexedDB.open('beliefs-patch-images', 1);
+      r.onupgradeneeded = function(){ if (!r.result.objectStoreNames.contains('images')) r.result.createObjectStore('images'); };
+      r.onsuccess = function(){ var d = r.result; d.onversionchange = function(){ try { d.close(); } catch(e){} imgDbP = null; }; res(d); };
+      r.onerror = function(){ rej(r.error); };
+    });
+    imgDbP.catch(function(){ imgDbP = null; });
+    return imgDbP;
+  }
+  function getFrom(dbp, id){
+    return dbp.then(function(d){
+      if (!d.objectStoreNames.contains('images')) return null;
+      return new Promise(function(res, rej){
+        var q = d.transaction('images', 'readonly').objectStore('images').get(id);
+        q.onsuccess = function(){ res(q.result || null); };
+        q.onerror = function(){ rej(q.error); };
+      });
+    });
+  }
+  function legacyDb(){
+    return new Promise(function(res, rej){
+      try { var r = indexedDB.open('beliefs-patch-media'); r.onsuccess = function(){ res(r.result); }; r.onerror = function(){ rej(r.error); }; }
+      catch(e){ rej(e); }
+    });
+  }
+  function askImage(id){
+    if (imgUrls[id] || imgAsked[id]) return;
+    imgAsked[id] = 1;
+    getFrom(imgDb(), id).then(function(b){ return b || getFrom(legacyDb(), id); })
+      .then(function(b){ if (b) imgUrls[id] = URL.createObjectURL(b); else delete imgAsked[id]; })
+      .catch(function(){ setTimeout(function(){ delete imgAsked[id]; }, 5000); });
   }
   function videoUrl(id){
     if (urls[id]) return Promise.resolve(urls[id]);
@@ -72,7 +109,10 @@
     var cb = (typeof state !== 'undefined' && state && state.currentBelief) || {};
     var out = [];
     (cb.visualImages || []).forEach(function(im, i){
-      if (im && im.src) out.push({ k: 'i' + (im.id || i), t: 'img', src: im.src, ts: tsOf(im.id), n: i });
+      if (!im) return;
+      var isrc = im.src;
+      if (!isrc && im.id){ isrc = imgUrls[im.id]; if (!isrc) askImage(im.id); }
+      if (isrc) out.push({ k: 'i' + (im.id || i), t: 'img', src: isrc, ts: tsOf(im.id), n: i });
     });
     (cb.visualVideos || []).forEach(function(v, i){
       if (v && v.id) out.push({ k: 'v' + v.id, t: 'vid', id: v.id, ts: tsOf(v.id), n: 1e6 + i });
