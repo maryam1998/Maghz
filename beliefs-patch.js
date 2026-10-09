@@ -467,66 +467,83 @@ function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ re
     return cb.visualImages;
   }
 
-  function vgFileToDataUrl(file){
-    return new Promise(function(resolve, reject){
-      var url = URL.createObjectURL(file);
-      var img = new Image();
-      img.onload = function(){
-        try {
-          var w = img.naturalWidth, h = img.naturalHeight;
-          var sc = Math.min(1, VG_MAX_DIM / Math.max(w, h));
-          var cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
-          var c = document.createElement('canvas'); c.width = cw; c.height = ch;
-          var ctx = c.getContext('2d');
-          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
-          ctx.drawImage(img, 0, 0, cw, ch);
-          URL.revokeObjectURL(url);
-          resolve(c.toDataURL('image/jpeg', VG_QUALITY));
-        } catch(e){ URL.revokeObjectURL(url); reject(e); }
-      };
-      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('img')); };
-      img.src = url;
-    });
-  }
+  function vgFileToBlob(file){
+  return new Promise(function(resolve, reject){
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      try {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var sc = Math.min(1, VG_MAX_DIM / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * sc)), ch = Math.max(1, Math.round(h * sc));
+        var c = document.createElement('canvas'); c.width = cw; c.height = ch;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cw, ch);
+        ctx.drawImage(img, 0, 0, cw, ch);
+        URL.revokeObjectURL(url);
+        c.toBlob(function(blob){
+          if (blob) resolve({ blob: blob, w: cw, h: ch });
+          else reject(new Error('blob'));
+        }, 'image/jpeg', VG_QUALITY);
+      } catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('img')); };
+    img.src = url;
+  });
+}
 
   function vgAddFiles(files){
-    if (!files || !files.length) return;
-    var list = Array.prototype.slice.call(files).filter(function(f){
-      return f && ((f.type && f.type.indexOf('image/') === 0) || /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(f.name || ''));
-    });
-    if (!list.length){ if (typeof toast === 'function') toast('فقط فایل عکس انتخاب کن'); return; }
-    var added = 0, failed = 0;
-    list.reduce(function(chain, f){
-      return chain.then(function(){
-        return vgFileToDataUrl(f).then(function(src){
-          vgImages().push({ id: 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), src: src });
+  if (!files || !files.length) return;
+  var list = Array.prototype.slice.call(files).filter(function(f){
+    return f && ((f.type && f.type.indexOf('image/') === 0) || /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(f.name || ''));
+  });
+  if (!list.length){ if (typeof toast === 'function') toast('فقط فایل عکس انتخاب کن'); return; }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+  var added = 0, failed = 0;
+  list.reduce(function(chain, f){
+    return chain.then(function(){
+      return vgFileToBlob(f).then(function(res){
+        var id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        return vgPutBlob(id, res.blob).then(function(){
+          vgImages().push({ id: id, w: res.w, h: res.h });
           added++;
-        }).catch(function(){ failed++; });
-      });
-    }, Promise.resolve()).then(function(){
-      if (added){ try { saveState(); } catch(e){} autoPracticeFiber('visual'); }
-      renderVisualGalleryMine();
-      if (typeof toast !== 'function') return;
-      if (added && !failed) toast(added > 1 ? toFa(added) + ' عکس اضافه شد 🖼️' : 'عکس اضافه شد 🖼️');
-      else if (added) toast(toFa(added) + ' عکس اضافه شد؛ ' + toFa(failed) + ' تا خوانده نشد');
-      else toast('عکس خوانده نشد (فرمت پشتیبانی نمی‌شه)');
+        });
+      }).catch(function(){ failed++; });
     });
-  }
+  }, Promise.resolve()).then(function(){
+    if (added){ try { saveState(); } catch(e){} autoPracticeFiber('visual'); }
+    renderVisualGalleryMine();
+    if (typeof toast !== 'function') return;
+    if (added && !failed) toast(added > 1 ? toFa(added) + ' عکس اضافه شد 🖼️' : 'عکس اضافه شد 🖼️');
+    else if (added) toast(toFa(added) + ' عکس اضافه شد؛ ' + toFa(failed) + ' تا خوانده نشد');
+    else toast('عکس خوانده نشد (فرمت پشتیبانی نمی‌شه)');
+  });
+}
 
   function renderVisualGalleryMine(){
-    var box = document.getElementById('visual-gallery');
-    if (!box || typeof state === 'undefined' || !state) return;
-    var imgs = vgImages();
-    var sig = imgs.map(function(x){ return x.id + ':' + (x.src ? x.src.length : 0); }).join('|');
-    if (box.getAttribute('data-sig') === sig && (!imgs.length || box.querySelector('.vg-grid'))) return;
-    box.setAttribute('data-sig', sig);
-    if (!imgs.length){ box.innerHTML = ''; return; }
-    box.innerHTML =
-      '<div class="vg-grid">' +
-        imgs.map(function(im, i){
-          return '<button type="button" class="vg-thumb" data-vg-open="' + i + '"><img src="' + escapeHtml(im.src) + '" alt="" draggable="false"></button>';
-        }).join('') +
-      '</div>';
+  var box = document.getElementById('visual-gallery');
+  if (!box || typeof state === 'undefined' || !state) return;
+  var imgs = vgImages();
+  var sig = imgs.map(function(x){ return x.id || (x.src ? 'src-' + x.src.length : ''); }).join('|');
+  if (box.getAttribute('data-sig') === sig && (!imgs.length || box.querySelector('.vg-grid'))) return;
+  box.setAttribute('data-sig', sig);
+  if (!imgs.length){ box.innerHTML = ''; return; }
+  box.innerHTML =
+    '<div class="vg-grid">' +
+      imgs.map(function(im, i){
+        var src = im.src ? escapeHtml(im.src) : '';
+        return '<button type="button" class="vg-thumb" data-vg-open="' + i + '"><img data-img-id="' + (im.id || '') + '" src="' + src + '" alt="" draggable="false"></button>';
+      }).join('') +
+    '</div>';
+  imgs.forEach(function(im){
+    if (im.src || !im.id) return;
+    vgGetBlob(im.id).then(function(blob){
+      if (!blob) return;
+      var url = URL.createObjectURL(blob);
+      var el = box.querySelector('img[data-img-id="' + im.id + '"]');
+      if (el) el.src = url;
+    }).catch(function(){});
+  });
   }
 
   function vgEnsureViewer(){
@@ -555,12 +572,23 @@ function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ re
     if (c) c.textContent = '▦  ' + toFa(VG_VIEW.idx + 1) + ' / ' + toFa(vgImages().length);
   }
   function vgBuildSlides(){
-    var track = document.getElementById('vg-track');
-    if (!track) return;
-    track.innerHTML = vgImages().map(function(im){
-      return '<div class="vg-slide"><img src="' + escapeHtml(im.src) + '" alt="" draggable="false"></div>';
-    }).join('');
-  }
+  var track = document.getElementById('vg-track');
+  if (!track) return;
+  var imgs = vgImages();
+  track.innerHTML = imgs.map(function(im){
+    var src = im.src ? escapeHtml(im.src) : '';
+    return '<div class="vg-slide"><img data-img-id="' + (im.id || '') + '" src="' + src + '" alt="" draggable="false"></div>';
+  }).join('');
+  imgs.forEach(function(im){
+    if (im.src || !im.id) return;
+    vgGetBlob(im.id).then(function(blob){
+      if (!blob) return;
+      var url = URL.createObjectURL(blob);
+      var el = track.querySelector('img[data-img-id="' + im.id + '"]');
+      if (el) el.src = url;
+    }).catch(function(){});
+  });
+}
   function vgSyncIndex(){
     var track = document.getElementById('vg-track');
     if (!track) return;
@@ -607,38 +635,46 @@ function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ re
     VG_SRC = null;
   }
   function vgDeleteCurrent(){
-    var imgs = vgImages(), im = imgs[VG_VIEW.idx];
-    if (!im) return;
-    if (!window.confirm('این عکس حذف شود؟')) return;
-    if (VG_SRC){
-      if (typeof VG_SRC.remove === 'function') VG_SRC.remove(im);
-      else { var at = imgs.indexOf(im); if (at >= 0) imgs.splice(at, 1); }
-      vgPersist();
-    } else {
-      state.currentBelief.visualImages = imgs.filter(function(x){ return x !== im; });
-      vgPersist();
-    }
-    var left = vgImages().length;
-    if (!left){ vgClose(); if (typeof toast === 'function') toast('عکس حذف شد'); return; }
-    vgBuildSlides();
-    vgGoto(Math.min(VG_VIEW.idx, left - 1), false);
-    if (typeof toast === 'function') toast('عکس حذف شد');
+  var imgs = vgImages(), im = imgs[VG_VIEW.idx];
+  if (!im) return;
+  if (!window.confirm('این عکس حذف شود؟')) return;
+  if (VG_SRC){
+    if (typeof VG_SRC.remove === 'function') VG_SRC.remove(im);
+    else { var at = imgs.indexOf(im); if (at >= 0) imgs.splice(at, 1); }
+    vgPersist();
+  } else {
+    state.currentBelief.visualImages = imgs.filter(function(x){ return x !== im; });
+    if (im.id) vgDelBlob(im.id).catch(function(){});
+    vgPersist();
   }
-  function vgOverviewHide(){
-    var o = document.getElementById('vg-overview');
-    if (o) o.style.display = 'none';
-  }
+  var left = vgImages().length;
+  if (!left){ vgClose(); if (typeof toast === 'function') toast('عکس حذف شد'); return; }
+  vgBuildSlides();
+  vgGoto(Math.min(VG_VIEW.idx, left - 1), false);
+  if (typeof toast === 'function') toast('عکس حذف شد');
+}
   function vgOverviewToggle(){
-    var o = document.getElementById('vg-overview');
-    if (!o) return;
-    if (o.style.display === 'flex'){ o.style.display = 'none'; return; }
-    o.innerHTML = vgImages().map(function(im, i){
-      return '<button type="button" class="vg-ov-thumb' + (i === VG_VIEW.idx ? ' active' : '') + '" data-vg-go="' + i + '"><img src="' + escapeHtml(im.src) + '" alt="" draggable="false"></button>';
-    }).join('');
-    o.style.display = 'flex';
-    var cur = o.querySelector('.active');
-    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
-  }
+  var o = document.getElementById('vg-overview');
+  if (!o) return;
+  if (o.style.display === 'flex'){ o.style.display = 'none'; return; }
+  var imgs = vgImages();
+  o.innerHTML = imgs.map(function(im, i){
+    var src = im.src ? escapeHtml(im.src) : '';
+    return '<button type="button" class="vg-ov-thumb' + (i === VG_VIEW.idx ? ' active' : '') + '" data-vg-go="' + i + '"><img data-img-id="' + (im.id || '') + '" src="' + src + '" alt="" draggable="false"></button>';
+  }).join('');
+  o.style.display = 'flex';
+  imgs.forEach(function(im){
+    if (im.src || !im.id) return;
+    vgGetBlob(im.id).then(function(blob){
+      if (!blob) return;
+      var url = URL.createObjectURL(blob);
+      var el = o.querySelector('img[data-img-id="' + im.id + '"]');
+      if (el) el.src = url;
+    }).catch(function(){});
+  });
+  var cur = o.querySelector('.active');
+  if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
+}
   function vgAction(a){
     if (a === 'grid'){ vgOverviewToggle(); return; }
     if (a === 'close') vgClose();
@@ -748,58 +784,88 @@ function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ re
     }
   }
   function vcOpen(idx){
-    var im = vgImages()[idx];
-    if (!im) return;
-    var m = vcEnsure();
-    var img = m.querySelector('#vc-img');
-    VC = { idx: idx, ratio: null, rect: { x: 0, y: 0, w: 0, h: 0 }, dispW: 0, dispH: 0 };
-    document.querySelectorAll('#vc-ratios .vc-ratio').forEach(function(b){
-      b.classList.toggle('active', b.getAttribute('data-vc-ratio') === '0');
-    });
-    m.style.display = 'flex';
-    img.onload = function(){
-      var st = m.querySelector('#vc-stage');
-      var sw = Math.max(50, st.clientWidth - 24), sh = Math.max(50, st.clientHeight - 24);
-      var sc = Math.min(sw / img.naturalWidth, sh / img.naturalHeight);
-      VC.dispW = Math.round(img.naturalWidth * sc);
-      VC.dispH = Math.round(img.naturalHeight * sc);
-      var box = m.querySelector('#vc-box');
-      box.style.width = VC.dispW + 'px'; box.style.height = VC.dispH + 'px';
-      VC.rect = { x: 0, y: 0, w: VC.dispW, h: VC.dispH };
-      vcApplyRect();
-    };
-    img.src = im.src;
+  var im = vgImages()[idx];
+  if (!im) return;
+  var m = vcEnsure();
+  var img = m.querySelector('#vc-img');
+  VC = { idx: idx, ratio: null, rect: { x: 0, y: 0, w: 0, h: 0 }, dispW: 0, dispH: 0 };
+  document.querySelectorAll('#vc-ratios .vc-ratio').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-vc-ratio') === '0');
+  });
+  m.style.display = 'flex';
+  img.onload = function(){
+    var st = m.querySelector('#vc-stage');
+    var sw = Math.max(50, st.clientWidth - 24), sh = Math.max(50, st.clientHeight - 24);
+    var sc = Math.min(sw / img.naturalWidth, sh / img.naturalHeight);
+    VC.dispW = Math.round(img.naturalWidth * sc);
+    VC.dispH = Math.round(img.naturalHeight * sc);
+    var box = m.querySelector('#vc-box');
+    box.style.width = VC.dispW + 'px'; box.style.height = VC.dispH + 'px';
+    VC.rect = { x: 0, y: 0, w: VC.dispW, h: VC.dispH };
+    vcApplyRect();
+  };
+  if (im.src){ img.src = im.src; }
+  else if (im.id){
+    vgGetBlob(im.id).then(function(blob){
+      if (!blob) return;
+      img.src = URL.createObjectURL(blob);
+    }).catch(function(){});
   }
+}
   function vcClose(){
     var m = document.getElementById('vc-modal');
     if (m) m.style.display = 'none';
     VC = null;
   }
   function vcApply(){
-    if (!VC) return;
-    var idx = VC.idx;
-    try {
-      var img = document.getElementById('vc-img');
-      var k = img.naturalWidth / VC.dispW;
-      var sx = VC.rect.x * k, sy = VC.rect.y * k, sw = VC.rect.w * k, sh = VC.rect.h * k;
-      var out = Math.min(1, VG_CROP_MAX / Math.max(sw, sh));
-      var c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(sw * out)); c.height = Math.max(1, Math.round(sh * out));
-      c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
-      var url = c.toDataURL('image/jpeg', 0.9);
-      var im = vgImages()[idx];
-      if (!im) throw new Error('no-image');
-      im.src = url;
-      vcClose();
-      vgPersist();
-      var track = document.getElementById('vg-track');
-      var slide = track && track.children[idx];
-      if (slide){ var ii = slide.querySelector('img'); if (ii) ii.src = url; }
-      if (typeof toast === 'function') toast('برش اعمال شد ✂️');
-    } catch(e){
-      if (typeof toast === 'function') toast('برش انجام نشد');
-    }
+  if (!VC) return;
+  var idx = VC.idx;
+  try {
+    var img = document.getElementById('vc-img');
+    var k = img.naturalWidth / VC.dispW;
+    var sx = VC.rect.x * k, sy = VC.rect.y * k, sw = VC.rect.w * k, sh = VC.rect.h * k;
+    var out = Math.min(1, VG_CROP_MAX / Math.max(sw, sh));
+    var c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(sw * out)); c.height = Math.max(1, Math.round(sh * out));
+    c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    var im = vgImages()[idx];
+    if (!im) throw new Error('no-image');
+
+    c.toBlob(function(newBlob){
+      if (!newBlob){ if (typeof toast === 'function') toast('برش انجام نشد'); return; }
+      if (im.id){
+        im.w = c.width; im.h = c.height;
+        vgPutBlob(im.id, newBlob).then(function(){
+          vcClose();
+          vgPersist();
+          var track = document.getElementById('vg-track');
+          var slide = track && track.children[idx];
+          if (slide){
+            var ii = slide.querySelector('img[data-img-id="' + im.id + '"]');
+            if (ii){
+              try { URL.revokeObjectURL(ii.src); } catch(e){}
+              ii.src = URL.createObjectURL(newBlob);
+            }
+          }
+          if (typeof toast === 'function') toast('برش اعمال شد ✂️');
+        }).catch(function(){
+          if (typeof toast === 'function') toast('برش انجام نشد');
+        });
+      } else if (im.src){
+        var fr = new FileReader();
+        fr.onload = function(){
+          im.src = fr.result;
+          vcClose();
+          vgPersist();
+          if (typeof toast === 'function') toast('برش اعمال شد ✂️');
+        };
+        fr.readAsDataURL(newBlob);
+      }
+    }, 'image/jpeg', 0.9);
+  } catch(e){
+    if (typeof toast === 'function') toast('برش انجام نشد');
   }
+}
   
 /* =====================================================================
    موج‌های سینوسی نامنظم
