@@ -373,12 +373,7 @@
       <button class="gs-chip on" data-tab="active">اهداف در جریان</button>
       <button class="gs-chip" data-tab="reached">اهداف محقق‌شده <span id="gs-reached-n"></span></button>
     </div>
-    <input id="gs-search" type="search" placeholder="جست‌وجوی هدف یا شاخه..." autocomplete="off">
-    <div class="gs-sort" id="gs-sort">
-      <button class="gs-chip on" data-sort="recent">آخرین فعالیت</button>
-      <button class="gs-chip" data-sort="growth">رشد</button>
-      <button class="gs-chip" data-sort="name">نام</button>
-    </div>
+    <input id="gs-search" type="search" placeholder="جست‌وجو..." autocomplete="off">
     <div id="gs-list"></div>
   </div>
 </div>
@@ -615,7 +610,7 @@
         <span>به این هدف رسیده‌ام — روی نقشه از من بپرس چه حسی دارم</span>
       </label>
     </div>
-    <label class="small" style="margin-top:4px;">شاخه‌های اقدام (هر شاخه می‌تواند زیرشاخه هم داشته باشد)</label>
+    <label class="small" style="margin-top:4px;">اقدام‌ها</label>
     <div class="pc-card" id="gp-goal-card">
       <div class="pc-head"><span id="gp-goal-title">🧭 دوره‌ی ۲۸ روزه</span><span class="pc-prog" id="gp-goal-progress"></span></div>
       <div class="pc-hint" id="gp-goal-hint"></div>
@@ -671,7 +666,7 @@
       <div class="pc-grid" id="gp-action-cal"></div>
       <div id="gp-action-info"></div>
     </div>
-    <button class="btn full gold" id="panel-action-add-sub" style="margin-top:10px;">＋ زیرشاخه</button>
+    <button class="btn full gold" id="panel-action-add-sub" style="margin-top:10px;">＋</button>
     <div id="panel-action-children-list" style="margin-top:8px;"></div>
   </div>
 
@@ -807,18 +802,6 @@
       </div>
       <input id="custom-name" placeholder="مثلاً: کفش مورد علاقه‌ام">
       <input id="custom-price" placeholder="مبلغ — مثلاً 300,000" inputmode="numeric" oninput="formatAmountInput(this)">
-      <div class="shop-period-card">
-        <div class="shop-period-head">
-          <span id="shop-period-title">🧭 دوره‌ی ۲۸ روزه</span>
-          <span class="sp-prog" id="shop-period-progress">روز ۱ / ۲۸</span>
-        </div>
-        <div id="shop-mini-cal" class="mini-cal-grid"></div>
-        <div id="shop-mini-cal-info"></div>
-      </div>
-      <div class="section-label" style="margin:10px 0 6px;">
-        <h2 style="font-size:13px;margin:0;"><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>انجام این تمرین</h2>
-      </div>
-      <div class="neural-card" id="np-shop-mount" style="margin-bottom:10px;"></div>
       <button class="submit secondary" onclick="addToPendingList()">➕ افزودن به لیست</button>
       <div class="pending-list" id="pending-list-wrap" style="display:none;">
         <div class="lbl">لیست خریدت</div>
@@ -840,6 +823,20 @@
       <div class="summary-line total"><span>مبلغ قابل پرداخت</span><span id="cart-total">۰</span></div>
     </div>
     <button class="primary-btn" id="cart-checkout-btn" onclick="goto('pay')" disabled>ادامه به درگاه پرداخت</button>
+    <div class="shop-bottom">
+      <div class="shop-period-card">
+        <div class="shop-period-head">
+          <span id="shop-period-title">🧭 دوره‌ی ۲۸ روزه</span>
+          <span class="sp-prog" id="shop-period-progress">روز ۱ / ۲۸</span>
+        </div>
+        <div id="shop-mini-cal" class="mini-cal-grid"></div>
+        <div id="shop-mini-cal-info"></div>
+      </div>
+      <div class="section-label" style="margin:6px 0 4px;">
+        <h2 style="font-size:13px;margin:0;"><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>انجام این تمرین</h2>
+      </div>
+      <div class="neural-card" id="np-shop-mount"></div>
+    </div>
   </section>
 
   <!-- ============ SHOP PURCHASE HISTORY ============ -->
