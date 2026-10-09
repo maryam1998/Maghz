@@ -38,6 +38,15 @@
   function showShenakht(){ clearActive(); mountShenakhtWhenReady(); shenakhtRoot.classList.add("active"); btnShenakht.classList.add("active"); }
   function showMap(){ clearActive(); document.body.classList.remove("map-hidden"); btnMap.classList.add("active"); }
   function showGrat(){ clearActive(); gratRoot.classList.add("active"); btnGrat.classList.add("active"); }
+  /* بارگذاری پیش‌دستانه‌ی تب شناخت وقتی مرورگر بیکاره، تا اولین کلیک روی تب کند/قفل نباشد */
+  function preMountShenakht(){
+    if (shenakhtMounted || !window.ShenakhtApp) return;
+    try{ window.ShenakhtApp.mount(shenakhtRoot); shenakhtMounted = true; }catch(e){}
+  }
+  window.addEventListener("load", function(){
+    var idle = window.requestIdleCallback || function(f){ return setTimeout(f, 1500); };
+    idle(function(){ setTimeout(preMountShenakht, 600); }, { timeout: 4000 });
+  });
   btnShenakht.addEventListener("click", showShenakht);
   btnMap.addEventListener("click", showMap);
   btnGrat.addEventListener("click", showGrat);

@@ -1113,8 +1113,8 @@
           '<div class="gs-mrow">'+
             '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
             '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام (مثلاً یوتیوب)..." autocomplete="off">'+
-            '<button type="button" class="gs-mtime'+(ts?' on':'')+'" data-nact="settime" data-jk="'+pi.todayJK+'" title="ثبت یا ویرایش زمان امروز">'+(ts ? fmtDur(ts) : '＋ زمان')+'</button>'+
-            '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
+            (ts ? '<span class="gs-mtime on" title="زمان امروز">'+fmtDur(ts)+'</span>' : '')+
+            '<button type="button" class="gs-nbtn" data-nact="addtime" aria-label="ثبت زمان" title="ثبت زمان امروز">⌚</button>'+
             '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
             '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
           '</div>'+
@@ -1136,7 +1136,6 @@
           '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام..." autocomplete="off">'+
           '<button type="button" class="gs-mtime'+(total?' on':'')+'" data-nact="addtime" title="ثبت زمان امروز (ساعت و دقیقه)">⌚'+(total ? ' '+fmtDur(total) : '')+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن" title="افزودن">＋</button>'+
-          '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="del" aria-label="حذف" title="حذف">✕</button>'+
@@ -1597,8 +1596,8 @@
         celebrate(node.color || g.color, r.left + r.width/2, r.top + r.height/2);
         if (typeof toast === 'function') toast('🏆 به آرشیو دستاوردها رفت');
       } else if (nact.dataset.nact === 'timer'){
-        if (timerRunning(found.node)) stopTimer(found.node); else startTimer(found.node);
-        touch(g); render(); draw();
+        /* تایمر حذف شد؛ دکمه‌ها حالا پنجره‌ی ثبت زمان را باز می‌کنند */
+        return;
       } else if (nact.dataset.nact === 'addtime'){
         const fnode = found.node, todayJK = periodInfo(g).todayJK;
         askDuration({ title:'چقدر زمان ثبت بشه؟', sub:'امروز · ' + (fnode.text || ''), defMin:60 }, mm=>{
@@ -3727,9 +3726,6 @@
     });
     setTimeout(()=>{ try{ hEl.focus(); hEl.select(); }catch(e){} }, 60);
   }
-  setInterval(()=>{
-    document.querySelectorAll('.tm-live[data-start]').forEach(el=>{ el.textContent = fmtClock((Date.now() - (+el.dataset.start)) / 1000); });
-  }, 1000);
   (function(){
     if (document.getElementById('tm-css')) return;
     const st = document.createElement('style'); st.id = 'tm-css';
@@ -3895,11 +3891,9 @@
       const dayLabel = selJK === todayJK ? 'امروز' : pcFaDate(selDate);
       info += '<div class="pc-info pc-time"><b>⏱ زمان</b><div>'+dayLabel+': <b>'+fmtDur(daySecs)+'</b> · مجموع دوره: <b>'+fmtDur(perSecs)+'</b>'+(!isGoal && ctx.sources.length ? ' <span>(با موارد داخلش)</span>' : '')+'</div>';
       if (!isGoal){
-        const nn = ctx.node, run = timerRunning(nn);
-        info += '<div class="pc-time-btns">'+(run
-          ? '<button type="button" class="btn" data-pc-timer="stop">⏹ توقف '+timerLiveHTML(nn)+'</button>'
-          : '<button type="button" class="btn gold" data-pc-timer="start">▶️ شروع تایمر</button>')+
-          '<button type="button" class="btn" data-pc-addtime="'+selJK+'">＋ زمان ('+dayLabel+')</button></div>';
+        const nn = ctx.node;
+        info += '<div class="pc-time-btns">'+
+          '<button type="button" class="btn gold" data-pc-addtime="'+selJK+'">＋ زمان ('+dayLabel+')</button></div>';
       }
       {
         const rawC = ctx.goal.footColor || (ctx.node && ctx.node.color) || ctx.goal.color || '#2dd4bf';
@@ -3916,8 +3910,7 @@
           const kc = c.color || ctx.color;
           info += '<div class="pc-sub-row"><button type="button" class="pc-sub-tick" data-pc-subtick="'+c.id+'" data-jk="'+selJK+'" aria-label="تیک" style="border-color:'+esc(kc)+';background:'+(dn ? esc(kc) : 'transparent')+';">'+(dn ? '✓' : '')+'</button>'+
             '<span class="pc-sub-nm">'+esc(c.text || 'بدون نام')+'</span>'+
-            '<button type="button" class="pc-sub-set" data-pc-subset="'+c.id+'" data-jk="'+selJK+'" title="ثبت یا ویرایش زمان">'+(ts ? '⏱ '+fmtDur(ts)+' ✎' : '＋ زمان')+'</button>'+
-            '<button type="button" class="btn'+(run ? '' : ' gold')+'" data-pc-subtimer="'+c.id+'">'+(run ? '⏹ '+timerLiveHTML(c) : '▶️')+'</button></div>';
+            '<button type="button" class="pc-sub-set" data-pc-subset="'+c.id+'" data-jk="'+selJK+'" title="ثبت یا ویرایش زمان">'+(ts ? '⏱ '+fmtDur(ts)+' ✎' : '＋ زمان')+'</button></div>';
         });
         info += '<div class="pc-sub-add"><input type="text" class="pc-sub-in" placeholder="مثلاً یوتیوب" autocomplete="off"><button type="button" class="btn gold" data-pc-subadd="1">افزودن</button></div></div>';
       }
