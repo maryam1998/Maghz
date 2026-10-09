@@ -259,6 +259,7 @@
       var nxt = 1 - cur, L = layers[nxt];
       function done(){
         if (tk !== token) return;
+        try{ if (window.__imgZoomReset) window.__imgZoomReset(layers[cur].img); }catch(e){}
         layers[cur].img.classList.remove('on'); layers[cur].vid.classList.remove('on');
         try{ layers[cur].vid.pause(); }catch(e){}
         (s.t === 'img' ? L.img : L.vid).classList.add('on');
@@ -334,6 +335,7 @@
     stage.addEventListener('pointerup', function(e){
       ptrs = Math.max(0, ptrs - 1);
       if (!down) return;
+      if (window.__imgZoomed && window.__imgZoomed(stage)){ down = null; return; }   // در حال زوم/کشیدن عکس: ورق نزن
       var dx = e.clientX - down.x, dy = e.clientY - down.y, dt = Date.now() - down.t;
       down = null;
       if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5){ step(dx < 0 ? 1 : -1, true); return; }

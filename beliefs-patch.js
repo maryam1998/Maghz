@@ -3446,3 +3446,166 @@ function wireRasEmptyState(){
 
   window.addEventListener('scroll', hideBubble, { passive: true, capture: true });
 })();
+
+
+/* =====================================================================
+   زوم روی عکس‌ها — دو انگشت (پینچ)، دابل‌تپ، کشیدن هنگام زوم، و چرخ ماوس
+   برای: نمایشگر آلبوم باورها (vg-viewer) و اسلایدشوی عکس‌ها (vs-stage)
+   ===================================================================== */
+(function(){
+  'use strict';
+  var MAXS = 6, DT = 300;
+  var Zs = new WeakMap();
+  var G = null, lastTap = { t: 0, x: 0, y: 0, img: null };
+
+  var st = document.createElement('style');
+  st.textContent = '.vg-slide img{touch-action:pan-x;}';
+  document.head.appendChild(st);
+
+  function zs(img){ var z = Zs.get(img); if (!z){ z = { s: 1, tx: 0, ty: 0 }; Zs.set(img, z); } return z; }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+  function holderOf(img){ return img.closest('.vs-stage') || img.closest('.vg-track'); }
+  function boxOf(img){
+    var s = img.closest('.vs-stage');
+    if (s){ var r = s.getBoundingClientRect(); return { w: r.width, h: r.height }; }
+    return { w: window.innerWidth, h: window.innerHeight };
+  }
+  function paint(img){
+    var z = zs(img);
+    if (z.s <= 1.001 && !z.tx && !z.ty){ img.style.transform = ''; img.style.willChange = ''; return; }
+    img.style.transformOrigin = '50% 50%';
+    img.style.willChange = 'transform';
+    img.style.transform = 'translate(' + z.tx.toFixed(1) + 'px,' + z.ty.toFixed(1) + 'px) scale(' + z.s.toFixed(3) + ')';
+  }
+  function engage(img){
+    var tr = img.closest('.vg-track');
+    if (tr){ tr.style.overflowX = 'hidden'; tr.style.scrollSnapType = 'none'; }
+    var h = holderOf(img); if (h) h.style.touchAction = 'none';
+  }
+  function release(img){
+    var tr = img.closest('.vg-track');
+    if (tr){ tr.style.overflowX = ''; tr.style.scrollSnapType = ''; }
+    var h = holderOf(img); if (h) h.style.touchAction = '';
+  }
+  function reset(img){
+    if (!img) return;
+    var z = zs(img); z.s = 1; z.tx = 0; z.ty = 0;
+    paint(img); release(img);
+  }
+  function clampT(img){
+    var z = zs(img), r = img.getBoundingClientRect(), b = boxOf(img);
+    var w0 = r.width / z.s, h0 = r.height / z.s;
+    var mx = Math.max(0, (w0 * z.s - b.w) / 2), my = Math.max(0, (h0 * z.s - b.h) / 2);
+    z.tx = clamp(z.tx, -mx, mx); z.ty = clamp(z.ty, -my, my);
+  }
+  function center(img){
+    var z = zs(img), r = img.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - z.tx, y: r.top + r.height / 2 - z.ty };
+  }
+  /* زوم به اندازه‌ی ns طوری که نقطه‌ی زیر انگشت ثابت بماند */
+  function zoomAt(img, ns, fx, fy){
+    var z = zs(img), c = center(img);
+    var px = (fx - c.x - z.tx) / z.s, py = (fy - c.y - z.ty) / z.s;
+    z.s = ns; z.tx = fx - c.x - px * ns; z.ty = fy - c.y - py * ns;
+    clampT(img); paint(img);
+  }
+  function pick(t){
+    if (!t || !t.closest) return null;
+    if (t.closest('button,a,input,select,textarea,video')) return null;
+    var stg = t.closest('.vs-stage');
+    if (stg) return stg.querySelector('img.vs-layer.on');
+    var sl = t.closest('.vg-slide');
+    return sl ? sl.querySelector('img') : null;
+  }
+  function mid(tt){ return { x: (tt[0].clientX + tt[1].clientX) / 2, y: (tt[0].clientY + tt[1].clientY) / 2 }; }
+  function dist(tt){ return Math.hypot(tt[0].clientX - tt[1].clientX, tt[0].clientY - tt[1].clientY); }
+  function stop(e){ if (e.cancelable) e.preventDefault(); }
+
+  function startPinch(img, tt, e){
+    var z = zs(img), c = center(img), m = mid(tt);
+    G = { img: img, mode: 'pinch', d0: dist(tt) || 1, s0: z.s, m0: m, t0x: z.tx, t0y: z.ty, cx: c.x, cy: c.y };
+    engage(img); stop(e);
+  }
+
+  document.addEventListener('touchstart', function(e){
+    var tt = e.touches;
+    if (G && G.img){
+      if (tt.length === 2) startPinch(G.img, tt, e);
+      return;
+    }
+    var img = pick(e.target); if (!img) return;
+    var z = zs(img);
+    if (tt.length === 2){ startPinch(img, tt, e); return; }
+    if (tt.length !== 1) return;
+    var now = Date.now(), x = tt[0].clientX, y = tt[0].clientY;
+    var dbl = (now - lastTap.t < DT) && lastTap.img === img && Math.hypot(x - lastTap.x, y - lastTap.y) < 40;
+    lastTap = { t: dbl ? 0 : now, x: x, y: y, img: img };
+    if (dbl){
+      if (z.s > 1.05) reset(img);
+      else { engage(img); zoomAt(img, 2.5, x, y); }
+      G = { img: img, mode: 'dbl' };
+      stop(e); return;
+    }
+    if (z.s > 1.02){ G = { img: img, mode: 'pan', x: x, y: y }; stop(e); }
+  }, { passive: false, capture: true });
+
+  document.addEventListener('touchmove', function(e){
+    if (!G || !G.img) return;
+    var tt = e.touches, z = zs(G.img);
+    if (G.mode === 'pinch' && tt.length >= 2){
+      var d = dist(tt), m = mid(tt);
+      var ns = clamp(G.s0 * d / G.d0, 1, MAXS);
+      var px = (G.m0.x - G.cx - G.t0x) / G.s0, py = (G.m0.y - G.cy - G.t0y) / G.s0;
+      z.s = ns; z.tx = m.x - G.cx - px * ns; z.ty = m.y - G.cy - py * ns;
+      clampT(G.img); paint(G.img); stop(e);
+    } else if (G.mode === 'pan' && tt.length === 1){
+      z.tx += tt[0].clientX - G.x; z.ty += tt[0].clientY - G.y;
+      G.x = tt[0].clientX; G.y = tt[0].clientY;
+      clampT(G.img); paint(G.img); stop(e);
+    }
+  }, { passive: false, capture: true });
+
+  function onEnd(e){
+    if (!G) return;
+    var tt = e.touches;
+    if (tt.length === 0){
+      var img = G.img, z = zs(img);
+      G = null;
+      if (z.s < 1.05) reset(img); else { clampT(img); paint(img); }
+    } else if (tt.length === 1 && G.mode === 'pinch'){
+      G.mode = 'pan'; G.x = tt[0].clientX; G.y = tt[0].clientY;
+    }
+  }
+  document.addEventListener('touchend', onEnd, { passive: true, capture: true });
+  document.addEventListener('touchcancel', onEnd, { passive: true, capture: true });
+
+  /* ماوس: چرخ = زوم (روی اسلایدشوی داخل صفحه فقط با Ctrl)، دابل‌کلیک */
+  document.addEventListener('wheel', function(e){
+    var img = pick(e.target); if (!img) return;
+    var z = zs(img), inStage = !!img.closest('.vs-stage');
+    if (inStage && !e.ctrlKey && z.s <= 1.02) return;
+    var ns = clamp(z.s * Math.exp(-e.deltaY * 0.0015), 1, MAXS);
+    if (ns < 1.05){ reset(img); } else { engage(img); zoomAt(img, ns, e.clientX, e.clientY); }
+    stop(e);
+  }, { passive: false, capture: true });
+  document.addEventListener('dblclick', function(e){
+    var img = pick(e.target); if (!img) return;
+    var z = zs(img);
+    if (z.s > 1.05) reset(img); else { engage(img); zoomAt(img, 2.5, e.clientX, e.clientY); }
+  }, true);
+
+  /* با هر دکمه‌ی نمایشگر (قبلی/بعدی/بستن/شبکه) زوم عکس‌ها صفر شود */
+  document.addEventListener('click', function(e){
+    var b = e.target && e.target.closest && e.target.closest('[data-vg]');
+    if (!b) return;
+    document.querySelectorAll('.vg-slide img').forEach(function(i){ if (zs(i).s !== 1) reset(i); });
+  }, true);
+
+  window.__imgZoomReset = reset;
+  window.__imgZoomed = function(stage){
+    if (G && G.img && stage.contains(G.img)) return true;
+    var ims = stage.querySelectorAll('img.vs-layer');
+    for (var i = 0; i < ims.length; i++) if (zs(ims[i]).s > 1.02) return true;
+    return false;
+  };
+})();
