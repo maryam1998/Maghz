@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="UTF-8">
+<link rel="preload" as="script" href="shenakht-bundle.js">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  window.SUPABASE_URL = 'https://mfyqdiksarsiooqjnhja.supabase.co';
+  window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1meXFkaWtzYXJzaW9vcWpuaGphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NDU5NTksImV4cCI6MjEwNDUyMTk1OX0.TCrfbktpxhNy-MAnxgYL32x4IKf9h-S-kP0YQkMkW2Y';
+  window.supabaseClient = null;
+  try{
+    if (window.supabase && window.SUPABASE_URL.indexOf('YOUR-PROJECT-REF') === -1 && window.SUPABASE_ANON_KEY.indexOf('YOUR-ANON-PUBLIC-KEY') === -1) {
+      window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    }
+  }catch(e){ console.warn('Supabase init failed', e); }
+</script>
+<script src="js/storage.js"></script>
+<script>try{document.documentElement.setAttribute('data-theme', localStorage.getItem('appTheme')||'light');}catch(e){}</script>
+<script>try{
+  var _ap = JSON.parse(localStorage.getItem('appAppearance')||'null');
+  if(_ap){
+    if(_ap.textColor) document.documentElement.style.setProperty('--ink', _ap.textColor);
+    if(_ap.fontSize) document.documentElement.style.setProperty('--app-font-scale', (_ap.fontSize/14));
+  }
+}catch(e){}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>نقشه‌ی فرکانس</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0c18">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base-and-map.css">
+<link rel="stylesheet" href="css/tamrin-and-beliefs.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<link rel="stylesheet" href="css/abundance-bits.css">
+</head>
+<body>
+
+<!-- ===== SVG icon sprite ===== -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <symbol id="ico-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/>
+      <path d="M9 4v14M15 6v14"/>
+    </symbol>
+    <symbol id="ico-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+    </symbol>
+    <symbol id="ico-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 11 12 3l9 8"/>
+      <path d="M5 10v10h14V10"/>
+    </symbol>
+    <symbol id="ico-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 8h14l-1.2 12.5a1.6 1.6 0 0 1-1.6 1.5H7.8a1.6 1.6 0 0 1-1.6-1.5L5 8z"/>
+      <path d="M9 8V6a3 3 0 0 1 6 0v2"/>
+    </symbol>
+    <symbol id="ico-hands" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 11V5a2 2 0 1 1 4 0v6"/>
+      <path d="M11 11V5a2 2 0 1 1 4 0v6"/>
+      <path d="M15 11V8a2 2 0 1 1 4 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6v-2"/>
+    </symbol>
+    <symbol id="ico-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="9" cy="8" r="3.2"/>
+      <path d="M3 20.5a6 6 0 0 1 12 0"/>
+      <path d="M16.5 5.5a3.2 3.2 0 0 1 0 6.4"/>
+      <path d="M21 20.5a6 6 0 0 0-4.5-5.8"/>
+    </symbol>
+    <symbol id="ico-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 4.5a2.5 2.5 0 0 0-2.5 2.5v.4A2.6 2.6 0 0 0 7 10a2.6 2.6 0 0 0 1 2 2.6 2.6 0 0 0 .5 1.8A2.8 2.8 0 0 0 11 19a2.5 2.5 0 0 0 1 .2"/>
+      <path d="M12 4.5a2.5 2.5 0 0 1 2.5 2.5v.4A2.6 2.6 0 0 1 17 10a2.6 2.6 0 0 1-1 2 2.6 2.6 0 0 1-.5 1.8A2.8 2.8 0 0 1 13 19a2.5 2.5 0 0 1-1 .2"/>
+      <path d="M12 4.5v15"/>
+    </symbol>
+    <symbol id="ico-dna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 3c2 6 12 6 14 12M5 21c2-6 12-6 14-12"/>
+      <path d="M8 6h3M13 18h3M9 10h2M13 14h2"/>
+    </symbol>
+    <symbol id="ico-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M16 8l-2.5 5.5L8 16l2.5-5.5z"/>
+    </symbol>
+    <symbol id="ico-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3c1 3 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4-.5 3 .5 4 1.5 4 0-3 1-6 1.5-9z"/>
+    </symbol>
+    <symbol id="ico-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12h4l2-6 4 12 2-6h6"/>
+    </symbol>
+    <symbol id="ico-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4h7a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H4z"/>
+      <path d="M20 4h-7a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H20z"/>
+    </symbol>
+    <symbol id="ico-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="10" width="16" height="11" rx="2"/>
+      <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+    </symbol>
+    <symbol id="ico-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M3 12h18"/>
+      <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>
+    </symbol>
+    <symbol id="ico-user-guest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="8" r="3.5"/>
+      <path d="M5 20a7 7 0 0 1 14 0"/>
+    </symbol>
+    <symbol id="ico-google" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M21 12h-9M12 3v6"/>
+    </symbol>
+    <symbol id="ico-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 6l-6 6 6 6"/>
+    </symbol>
+    <symbol id="ico-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 6l6 6-6 6"/>
+    </symbol>
+    <symbol id="ico-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </symbol>
+    <symbol id="ico-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>
+    </symbol>
+    <symbol id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 15a8 8 0 1 1-11-11 8 8 0 0 0 11 11z"/>
+    </symbol>
+    <symbol id="ico-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7v.3"/>
+      <circle cx="12" cy="17" r="0.6" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 10v4h3l4 4V6L7 10H4z"/>
+      <path d="M15.5 9a3.5 3.5 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11"/>
+    </symbol>
+    <symbol id="ico-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 10v4h3l4 4V6L7 10H4z"/>
+      <path d="M16 9l5 6M21 9l-5 6"/>
+    </symbol>
+    <symbol id="ico-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12h14"/>
+    </symbol>
+    <symbol id="ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12.5l5 5L20 6.5"/>
+    </symbol>
+    <symbol id="ico-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.7"/>
+      <path d="M3 4v4.5h4.5"/>
+      <path d="M12 8v4.5l3 2"/>
+    </symbol>
+    <symbol id="ico-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </symbol>
+    <symbol id="ico-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+    </symbol>
+    <symbol id="ico-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      <line x1="10" y1="11" x2="10" y2="17"/>
+      <line x1="14" y1="11" x2="14" y2="17"/>
+    </symbol>
+    <symbol id="ico-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </symbol>
+    <symbol id="ico-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+    </symbol>
+    <symbol id="ico-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </symbol>
+    <symbol id="ico-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </symbol>
+    <symbol id="ico-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </symbol>
+    <symbol id="ico-bell-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      <path d="M18.63 13A17.94 17.94 0 0 1 18 8"/>
+      <path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/>
+      <path d="M18 8a6 6 0 0 0-9.33-5"/>
+      <line x1="1" y1="1" x2="23" y2="23"/>
+    </symbol>
+    <symbol id="ico-dove" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <path d="M12 8v4"/>
+    </symbol>
+    <symbol id="ico-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </symbol>
+    <symbol id="ico-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </symbol>
+    <symbol id="ico-seedling" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22V10"/>
+      <path d="M12 10a5 5 0 0 0-5-5c-2 0-2 3 0 4 2.5 1.5 5 1 5 1z"/>
+      <path d="M12 10a5 5 0 0 1 5-5c2 0 2 3 0 4-2.5 1.5-5 1-5 1z"/>
+    </symbol>
+    <symbol id="ico-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <circle cx="12" cy="12" r="6"/>
+      <circle cx="12" cy="12" r="2"/>
+    </symbol>
+    <symbol id="ico-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 2v7.31"/>
+      <path d="M14 9.3V1.99"/>
+      <path d="M8.5 2h7"/>
+      <path d="M14 9.3a6.5 6.5 0 1 1-4 0"/>
+      <path d="M5.58 16.5h12.85"/>
+    </symbol>
+    <symbol id="ico-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </symbol>
+    <symbol id="ico-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </symbol>
+    <symbol id="ico-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </symbol>
+    <symbol id="ico-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </symbol>
+    <symbol id="ico-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </symbol>
+    <symbol id="ico-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="6" y="4" width="4" height="16"/>
+      <rect x="14" y="4" width="4" height="16"/>
+    </symbol>
+    <symbol id="ico-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </symbol>
+    <symbol id="ico-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v18"/>
+      <path d="M8 21h8"/>
+      <path d="M12 3l-6 9h12z"/>
+    </symbol>
+    <symbol id="ico-microscope" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 18h8"/>
+      <path d="M3 22h18"/>
+      <path d="M14 22a7 7 0 1 0 0-14h-1"/>
+      <path d="M9 14h2"/>
+      <path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/>
+      <path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>
+    </symbol>
+    <symbol id="ico-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+    </symbol>
+    <symbol id="ico-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 4v6h-6M1 20v-6h6"/>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+    </symbol>
+    <symbol id="ico-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+    </symbol>
+    <symbol id="ico-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </symbol>
+    <symbol id="ico-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </symbol>
+    <symbol id="ico-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="13.5" cy="6.5" r=".5"/>
+      <circle cx="17.5" cy="10.5" r=".5"/>
+      <circle cx="8.5" cy="7.5" r=".5"/>
+      <circle cx="6.5" cy="12.5" r=".5"/>
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+    </symbol>
+    <symbol id="ico-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 8h14l-1.2 12.5a1.6 1.6 0 0 1-1.6 1.5H7.8a1.6 1.6 0 0 1-1.6-1.5L5 8z"/>
+      <path d="M9 8V6.5A1.5 1.5 0 0 1 10.5 5h3A1.5 1.5 0 0 1 15 6.5V8"/>
+      <path d="M3.5 13h17"/>
+    </symbol>
+    <symbol id="ico-muscle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12.5c0-2 1-3 2.5-3.5 1-2 3-3.5 5-3.5 3 0 5.5 2.2 5.5 5.5v2c0 3.3-2.5 6-6 6H8a4 4 0 0 1-4-4v-2.5z"/>
+      <path d="M8.5 9.5V7a2 2 0 0 1 4 0"/>
+    </symbol>
+    <symbol id="ico-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="7" y="2.5" width="10" height="19" rx="2.2"/>
+      <path d="M11 18.5h2"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ===== پس‌زمینه‌ی محیطی ===== -->
+<div id="ambient-bg" aria-hidden="true">
+  <div id="ambient-bg-img"></div>
+  <video id="ambient-bg-video" muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
+</div>
+
+<svg id="stage" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="circleClip" clipPathUnits="objectBoundingBox">
+      <circle cx="0.5" cy="0.5" r="0.5"/>
+    </clipPath>
+    <radialGradient id="auraGrad" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="auraBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <g id="viewport"></g>
+</svg>
+
+<div id="topbar">
+  <div id="topbar-brand">
+    <img src="icons/icon-192.png" alt="" class="app-logo">
+    <span class="app-title">بی‌نهایت راه</span>
+  </div>
+  <div id="topbar-actions">
+    <button id="theme-toggle-btn-map" class="theme-toggle-btn" onclick="toggleAppTheme()" title="تغییر تم">🌙</button>
+    <button id="help-btn" title="راهنما"><svg class="ico"><use href="#ico-help"/></svg></button>
+  </div>
+</div>
+
+<div id="hint">برای جابه‌جایی نقشه بکشید • برای بزرگ‌نمایی اسکرول یا پینچ کنید</div>
+<div id="zoom-readout">۱۰۰٪</div>
+
+<div id="toolbar">
+  <button class="tbtn" id="goals-list-btn" title="فهرست اهداف">
+    <svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+    <span class="tl">اهداف</span>
+  </button>
+  <button class="tbtn" id="recenter-btn" title="نمایش همه‌ی اهداف در یک نگاه"><span class="ti">◎</span><span class="tl">نمایش همه</span></button>
+  <button class="tbtn" id="add-ring-btn" title="نشانه‌ی نزدیکی"><span class="ti">＋</span><span class="tl">نشانه</span></button>
+  <button class="tbtn" id="collapse-all-btn" data-mode="collapse" title="جمع/باز کردن همه‌ی مسیرها" style="display:none">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ca-ico ti"><path d="M7 4l5 5 5-5"/><path d="M7 20l5-5 5 5"/></svg>
+    <span class="lbl tl">جمع همه</span>
+  </button>
+  <button class="tbtn" id="settings-btn"><span class="ti">⚙</span><span class="tl">تنظیمات</span></button>
+  <button id="more-btn" style="display:none" aria-hidden="true"></button>
+</div>
+<div id="more-menu" style="display:none"></div>
+<div id="focus-pill"><span class="fp-name" id="fp-name"></span><button id="fp-exit">همه‌ی اهداف</button></div>
+<div class="gs-overlay" id="goals-sheet-overlay">
+  <div class="gs-sheet" role="dialog" aria-label="فهرست اهداف">
+    <div class="gs-grab"></div>
+    <div class="gs-head"><strong>اهداف من</strong><span class="gs-count" id="gs-count"></span><button class="gs-mini gold" id="gs-add" type="button">＋ هدف جدید</button><button class="gs-x" id="gs-close" aria-label="بستن">✕</button></div>
+    <div class="gs-sort" id="gs-tabs">
+      <button class="gs-chip on" data-tab="active">اهداف در جریان</button>
+      <button class="gs-chip" data-tab="reached">اهداف محقق‌شده <span id="gs-reached-n"></span></button>
+    </div>
+    <input id="gs-search" type="search" placeholder="جست‌وجو..." autocomplete="off">
+    <div id="gs-list"></div>
+  </div>
+</div>
+<input type="file" id="import-file" accept="application/json" class="hidden">
+
+<!-- add goal modal -->
+<div class="overlay hidden" id="goal-modal-overlay">
+  <div class="modal">
+    <h2>هدف جدید</h2>
+    <p class="desc">اسم هدف را بنویس و رنگی که حس فرکانسِ آن هدف را برایت دارد انتخاب کن. آیکون دلخواهت (ایموجی از کیبورد خودت) را هم می‌توانی در همان فیلد وارد کنی.</p>
+    <div class="field">
+      <label>اسم هدف</label>
+      <input type="text" id="goal-name-input" placeholder="مثلاً: مهاجرت به ویرجینیا">
+    </div>
+    <div class="field">
+      <label>آیکون (ایموجی از کیبورد خودت)</label>
+      <input type="text" id="goal-icon-input" placeholder="🎯  یا  ✈️  یا  🌱" maxlength="20" autocomplete="off" style="font-size:22px;text-align:center;">
+    </div>
+    <div class="field">
+      <label>رنگ فرکانس</label>
+      <div class="color-row">
+        <input type="color" id="goal-color-input" value="#5ec8f0">
+        <div class="swatches" id="goal-swatches"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="goal-cancel-btn">انصراف</button>
+      <button class="btn gold" id="goal-create-btn">ایجاد کن</button>
+    </div>
+  </div>
+</div>
+
+<!-- settings modal -->
+<div class="overlay hidden" id="settings-modal-overlay">
+  <div class="modal">
+    <h2>تنظیمات</h2>
+    <div class="field">
+      <label>ایمیل ورود</label>
+      <div id="settings-account-email" dir="ltr" style="text-align:left;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font-size:13px;word-break:break-all;user-select:text;">—</div>
+    </div>
+    <div class="field">
+      <label>نام شما (در بخش دوستان با همین نام نمایش داده می‌شود)</label>
+      <input type="text" id="settings-profile-name" maxlength="24" placeholder="مثلاً: مریم" style="direction:rtl;text-align:right;">
+    </div>
+    <p class="desc">رنگ نوشته‌ها و اندازه فونت را انتخاب کن.</p>
+    <div class="field">
+      <label>رنگ نوشته‌ها</label>
+      <div class="color-row">
+        <input type="color" id="settings-text-color" value="#eef0fa">
+        <div class="swatches" id="settings-swatches"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>اندازه فونت (پیش‌فرض ۱۴)</label>
+      <input type="range" id="settings-font-size" min="8" max="28" value="14">
+      <span id="settings-font-size-val">۱۴</span>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="settings-show-dates" style="width:18px;height:18px;">
+        <span>نمایش تاریخ و ساعت ثبت هدف‌ها و شاخه‌ها روی صفحه اصلی</span>
+      </label>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="settings-show-emotion-widget" style="width:18px;height:18px;">
+        <span>نمایش ویجت شناور «آدم و احساسات» روی صفحه (در تمام تب‌ها)</span>
+      </label>
+    </div>
+    <div class="field">
+      <label>پس‌زمینه</label>
+      <div class="bgmode-row">
+        <button type="button" class="bgmode-btn active" id="bgmode-calm-btn" data-mode="calm">
+          <span class="bgmode-icon">◻️</span><span>ساده (Calm)</span>
+        </button>
+        <button type="button" class="bgmode-btn" id="bgmode-image-btn" data-mode="image">
+          <span class="bgmode-icon">🖼️</span><span>پس‌زمینه دلخواه</span>
+        </button>
+      </div>
+    </div>
+    <div class="field" id="bgmode-image-options" style="display:none;">
+      <label>تصویر یا ویدیوی پس‌زمینه (ویدیو بی‌صدا پخش می‌شود)</label>
+      <div class="bgimg-upload-row">
+        <img id="bgimg-preview" class="bgimg-preview" style="display:none;" alt="پیش‌نمایش پس‌زمینه">
+        <video id="bgvid-preview" class="bgimg-preview" style="display:none;" muted loop playsinline></video>
+        <label class="bgimg-upload-label" for="bgmode-image-input">انتخاب تصویر یا ویدیو…</label>
+        <input type="file" id="bgmode-image-input" accept=".jpg,.jpeg,.png,.gif,.mp4,.webm,.mov,.m4v,image/jpeg,image/png,image/gif,video/mp4,video/webm,video/quicktime" style="display:none;">
+        <button type="button" class="bgimg-remove-btn" id="bgimg-remove-btn" style="display:none;">حذف پس‌زمینه</button>
+      </div>
+      <label style="margin-top:12px;">محو بودن پس‌زمینه (Blur)</label>
+      <input type="range" id="bgmode-blur" min="0" max="20" value="0">
+      <label style="margin-top:10px;">شفافیت پس‌زمینه</label>
+      <input type="range" id="bgmode-opacity" min="10" max="100" value="50">
+    </div>
+    <div class="field" id="motiv-settings-field">
+      <label>جمله‌های انگیزه‌بخش من</label>
+      <div class="mv-add">
+        <input type="text" id="motiv-new" maxlength="200" style="direction:rtl;text-align:right;">
+        <button type="button" id="motiv-add" class="btn gold">افزودن</button>
+      </div>
+      <div id="motiv-list"></div>
+      <button type="button" id="motiv-arch-toggle" class="mv-arch-toggle" style="display:none;"></button>
+      <div id="motiv-arch-list" style="display:none;"></div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:12px;">
+        <input type="checkbox" id="motiv-show" style="width:18px;height:18px;">
+        <span>نمایش به‌صورت نوار ثابت در بالای همه‌ی تب‌ها</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="settings-cancel-btn">انصراف</button>
+      <button class="btn gold" id="settings-save-btn">ذخیره</button>
+    </div>
+    <div class="modal-actions" style="margin-top:8px;">
+      <button class="btn" id="settings-signout-btn" onclick="appSignOut()" style="width:100%;color:#e2664a;">🚪 خروج از حساب</button>
+    </div>
+  </div>
+</div>
+
+<!-- help modal -->
+<div class="overlay hidden" id="help-modal-overlay">
+  <div class="modal" style="max-height:88vh;overflow-y:auto;">
+    <h2>راهنمای اپ</h2>
+    <p class="desc">
+  این اپ یه فضای شخصیه با سه بخش که کنار هم کار می‌کنن: توی <b>شناخت</b>، الگوهای ذهنی‌ات رو می‌شناسی؛ روی <b>نقشه</b>، هدف‌هات رو می‌بینی و پیش می‌بری؛ و توی <b>تمرین</b>، حس و حالت درونت رو با چشم باز نگه می‌داری.
+</p>
+
+    <div class="help-section">
+  <h3>🧭 چطور با نقشه کار کنم؟</h3>
+  <ul>
+    <li>برای جابه‌جایی نقشه، پس‌زمینه رو بکش.</li>
+    <li>برای زوم، دو انگشت یا اسکرول موس.</li>
+    <li>برای دیدن جزئیات هر گره، روش بزن.</li>
+    <li>برای جابه‌جای گره، نگه‌دار و بکش.</li>
+    <li>دو انگشت روی یه گره = تغییر اندازه.</li>
+    <li>نگه‌داشتن طولانی روی یه شاخه = جدا یا وصل کردنش.</li>
+  </ul>
+</div>
+
+    <div class="help-section">
+  <h3>🎨 آیکون هدف و نشانه</h3>
+  <p>هر هدف و هر نشانه‌ی نزدیکی روی نقشه، حالا یا یک <b>ایموجی</b> است (از کیبورد خودت) یا یک <b>عکس</b> که خودت آپلود کردی. با پنچ‌کردن دو انگشت روی همون آیکون، اندازه‌اش رو بزرگ‌تر یا کوچک‌تر کن.</p>
+  <p>اگر عکس آپلود کنی، عکس جای ایموجی را می‌گیرد و داخل یک دایره‌ی نازک به رنگ فرکانس هدف نشان داده می‌شود.</p>
+    </div>
+
+    <div class="help-section">
+  <h3>🛍️ بازی فراوانی چیه؟</h3>
+  <p>یه فروشگاه نمادینه، نه واقعی. هر روز یه مبلغ تازه و بزرگ‌تر به کارتت واریز می‌شه (از مبلغی که خودت تعیین می‌کنی شروع می‌شه) و باید همون روز تمامش رو خرج کنی. پول دیروز به امروز اضافه نمی‌شه. هدف خریدن چیزها نیست؛ ساختن حس فراوانی توی ذهنه. اگه روزی انجام ندی، بازی از اول شروع نمی‌شه و از همون‌جا ادامه می‌دی.</p>
+  <p>هر چیزی که دوست داری — کوچیک یا بزرگ — با عکس و قیمت دلخواه به سبدت اضافه می‌کنی.</p>
+  <p>وقتی «پرداخت» می‌زنی، هیچ پول واقعی جابه‌جا نمی‌شه. فقط یه رسید نمادین می‌گیری، و همون مورد می‌ره توی لیست شکرگذاری‌ات. این تمرین، حسِ داشتن رو توی دلت زنده می‌کنه — قبل از اینکه واقعاً بهش برسی.</p>
+  <p style="background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>هدف این تمرین:</b> تو با این بازی، حسِ حالت درونت رو می‌بینی. شکرگذاری می‌کنی. ولی خودِ شناخت الگوها، توی تب «شناخت» اتفاق می‌افته.</p>
+</div>
+
+    <div class="help-section">
+  <h3>🧠 چرا تکرار این‌قدر مهمه؟ سه قانون مغز</h3>
+  <p><b>۱. RAS — فیلتر توجه مغز.</b> توی هر لحظه، میلیون‌ها چیز به مغزت می‌رسه. ولی مغز فقط یه بخش کوچیک رو به آگاهیت می‌آره. این فیلتر، <b>RAS</b> نام داره. وقتی تصمیم می‌گیری به چیزی توجه کنی — مثل «امروز سه نعمت رو می‌بینم» — مغزت یاد می‌گیره همون‌ها رو برات علامت بزنه. دقیقاً همین اتفاق، توی تمرین شکرگذاری می‌افته.</p>
+  <p><b>۲. قانون هب.</b> یه جمله‌ی معروف از <b>دونالد هب</b> (۱۹۴۹): «نورون‌هایی که با هم روشن می‌شن، به هم می‌چسبن.» هر فکری که تکرار کنی، یه مسیر ذهنی می‌سازه که هر بار قوی‌تر می‌شه — تا خودبه‌خود فعال شه. این قانون هم برای عادت بد کار می‌کنه، هم برای عادت خوب.</p>
+  <p><b>۳. نوروپلاستیسیتی.</b> تا یه زمانی فکر می‌کردن مغز بزرگسال ثابته. الان می‌دونیم مغزت تا آخر عمر می‌تونه خودش رو بازسازی کنه. تکرار + احساس قوی، سریع‌ترین راه ساخت مسیر تازه‌ست — به همین دلیل توی این اپ، هر تمرین رو با یه حس همراه می‌کنیم.</p>
+    </div>
+
+    <div class="help-section">
+  <h3>🌊 باندهای فرکانسی چیه؟</h3>
+  <p>مغزت همیشه در حال تولید امواج الکتریکیه. سرعت این امواج، حالت ذهنی‌ات رو نشون می‌ده — آروم، متمرکز، خلاق، یا در اوج بینش.</p>
+  <ul>
+    <li><b>دلتا (۰.۵–۴ Hz):</b> خواب عمیق، بازسازی بدن.</li>
+    <li><b>تتا (۴–۸ Hz):</b> مدیتیشن عمیق، خلاقیت، خاطره‌های قدیمی.</li>
+    <li><b>آلفا (۸–۱۲ Hz):</b> آرامش هوشیار — بهترین حالت برای یادگیری.</li>
+    <li><b>بتا (۱۲–۳۰ Hz):</b> تمرکز، تصمیم‌گیری، کارهای روزانه.</li>
+    <li><b>گاما (۳۰+ Hz):</b> اوج تمرکز، بینش ناگهانی، حس یگانگی.</li>
+  </ul>
+  <p>هر هدف روی نقشه، یه باند فرکانسی داره که می‌تونی از پنل ویرایش هدف انتخابش کنی. هاله‌ی دور هدف، با همون سرعت می‌تپه — یعنی داری مغزت رو یاد می‌دی وقتی به اون هدف فکر می‌کنه، خودش رو روی اون موج تنظیم کنه.</p>
+    </div>
+       
+    <div class="help-section">
+  <h3>🎨 رنگ‌ها و شاخه‌ها یعنی چی؟</h3>
+  <ul>
+    <li><b>رنگ هر هدف:</b> فرکانسی که براش انتخاب کردی.</li>
+    <li><b>رنگ شاخه‌ها:</b> به رنگ هدف پیش‌فرض، ولی می‌تونی عوض کنی.</li>
+    <li><b>بوتونِ نوک شاخه:</b> نقطه‌ی آزادسازی پیام عصبی.</li>
+  </ul>
+</div>
+
+    <div class="modal-actions">
+      <button class="btn gold full" id="help-close-btn">متوجه شدم</button>
+    </div>
+  </div>
+</div>
+
+<!-- side panel -->
+<div id="panel">
+  <div class="panel-top">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="dot" id="panel-dot"></div>
+      <strong id="panel-title" style="font-size:14px;"></strong>
+    </div>
+    <button id="panel-close">✕</button>
+  </div>
+
+  <div id="panel-name-color-wrap">
+    <label class="small">اسم</label>
+    <input type="text" id="panel-name">
+
+    <div id="panel-icon-wrap" class="hidden">
+      <label class="small">آیکون (ایموجی از کیبورد خودت)</label>
+      <input type="text" id="panel-icon" placeholder="🎯  مثلاً" maxlength="20" autocomplete="off"
+             style="font-size:22px;text-align:center;">
+      <div class="small" style="margin-top:4px;opacity:0.7;font-size:11px;">
+        اگر عکس اضافه کنی، عکس جای ایموجی را می‌گیرد.
+      </div>
+    </div>
+
+    <label class="small" style="margin-top:8px;">رنگ فرکانس</label>
+    <div class="color-row" style="margin-bottom:8px;">
+      <input type="color" id="panel-color">
+    </div>
+    <div class="swatches" id="panel-color-swatches" style="margin-bottom:12px;"></div>
+  </div>
+
+  <div id="panel-note-wrap">
+    <label class="small">حال و هوای این فرکانس (اختیاری)</label>
+    <textarea id="panel-note" placeholder="مثلاً: آرامش، اطمینان، شوق..."></textarea>
+  </div>
+
+  <div id="panel-image-wrap" class="img-upload">
+    <label for="panel-image-input">📷 افزودن عکس (چندگانه)</label>
+    <input type="file" id="panel-image-input" accept="image/*" multiple style="display:none;">
+    <div id="panel-image-preview-container" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+
+  <div id="panel-goal-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+    <button class="btn full" id="panel-focus-btn" style="margin-bottom:10px;">تمرکز روی این هدف</button>
+    <div class="reached-row">
+      <label class="reached-toggle">
+        <input type="checkbox" id="panel-reached">
+        <span>به این هدف رسیده‌ام — روی نقشه از من بپرس چه حسی دارم</span>
+      </label>
+    </div>
+    <label class="small" style="margin-top:4px;">اقدام‌ها</label>
+    <div class="pc-card" id="gp-goal-card">
+      <div class="pc-head"><span id="gp-goal-title">🧭 دوره‌ی ۲۸ روزه</span><span class="pc-prog" id="gp-goal-progress"></span></div>
+      <div class="pc-hint" id="gp-goal-hint"></div>
+      <div class="pc-grid" id="gp-goal-cal"></div>
+      <div id="gp-goal-info"></div>
+    </div>
+    <label class="small" style="margin-top:6px;">باند فرکانسی غالب این هدف</label>
+    <select id="panel-goal-freq" style="width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:13px;margin-bottom:10px;">
+      <option value="delta">دلتا (۰.۵–۴ Hz) — بازسازی و درمان عمیق</option>
+      <option value="theta">تتا (۴–۸ Hz) — مدیتیشن و خلاقیت</option>
+      <option value="alpha">آلفا (۸–۱۲ Hz) — آرامش هوشیار</option>
+      <option value="beta">بتا (۱۲–۳۰ Hz) — تمرکز فعال</option>
+      <option value="gamma">گاما (۳۰+ Hz) — اوج تمرکز و بینش</option>
+    </select>
+    <div id="branches-block">
+      <label class="small" id="bs-label">شکل شاخه‌ها (برای همه‌ی شاخه‌های این مجموعه)</label>
+      <div id="branch-style-picker"></div>
+      <button class="btn gold full" id="add-branch-btn" style="margin:10px 0;">＋ شاخه جدید</button>
+      <div id="panel-actions-list"></div>
+    </div>
+  </div>
+
+  <div id="panel-ring-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;">
+    <div style="display:none">
+      <input type="color" id="panel-ring-color" value="#2dd4bf">
+      <div class="swatches" id="panel-ring-color-swatches"></div>
+    </div>
+    <label class="small">توضیحات (چند خطی)</label>
+    <textarea id="panel-ring-note" placeholder="چیزی که حس می‌کنی..." style="min-height:80px;flex:none;"></textarea>
+    <div id="ring-branches-slot" style="margin-top:12px;"></div>
+  </div>
+
+  <div id="panel-action-only" class="hidden" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;">
+    <label class="small">متن شاخه</label>
+    <input type="text" id="panel-action-text" placeholder="متن شاخه...">
+    <label class="small" style="margin-top:8px;">رنگ شاخه</label>
+    <div class="color-row" style="margin-bottom:8px;">
+      <input type="color" id="panel-action-color">
+    </div>
+    <div class="swatches" id="panel-action-color-swatches" style="margin-bottom:12px;"></div>
+    <label class="small">قطر شاخه</label>
+    <input type="range" id="panel-action-weight" min="1" max="10" value="5">
+    <span id="panel-action-weight-val">۵</span>
+    <label class="small" style="margin-top:10px;">شکل این شاخه</label>
+    <div id="panel-action-style"></div>
+    <label class="small" style="margin-top:10px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" id="panel-action-routine" style="width:16px;height:16px;">
+      <span>این یه کار روتینه که باید مرتب انجامش بدم</span>
+    </label>
+    <div class="pc-card" id="gp-action-card" style="margin-top:10px;">
+      <div class="pc-head"><span id="gp-action-title">🧭 دوره‌ی ۲۸ روزه</span><span class="pc-prog" id="gp-action-progress"></span></div>
+      <div class="pc-hint" id="gp-action-hint"></div>
+      <div class="pc-grid" id="gp-action-cal"></div>
+      <div id="gp-action-info"></div>
+    </div>
+    <button class="btn full gold" id="panel-action-add-sub" style="margin-top:10px;">＋</button>
+    <div id="panel-action-children-list" style="margin-top:8px;"></div>
+  </div>
+
+  <div id="panel-danger">
+    <button class="btn danger full hidden" id="panel-delete-btn">حذف</button>
+    <button class="btn gold full" id="panel-save-btn">ذخیره</button>
+  </div>
+</div>
+<script src="js/crop-tool.js"></script>
+<script src="js/map-tab.js"></script>
+
+<!-- ===== embedded شناخت ===== -->
+<div id="shenakht-root"></div>
+<script src="shenakht-bundle.js" defer></script>
+<!-- ===== embedded گratitude bank app ===== -->
+<div id="grat-root">
+<div class="app" id="app">
+
+  <!-- ============ HOME ============ -->
+  <section class="view active" id="view-home">
+    <div class="greeting">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="icons/icon-192.png" alt="" style="width:36px;height:36px;border-radius:10px;flex-shrink:0;box-shadow:0 4px 12px rgba(10,40,35,0.15);">
+    <div>
+      <p class="hi" id="home-hi">صبح بخیر ✦</p>
+      <p class="name" id="home-name" style="display:none;">فراوانی</p>
+    </div>
+  </div>
+  <div class="greeting-actions">
+    <button class="icon-btn" id="pwa-install-btn" onclick="installPWA()" title="نصب اپ" style="display:none;">📲</button>
+    <button class="icon-btn theme-toggle-btn-grat" onclick="toggleAppTheme()" title="تغییر تم">
+      <svg class="ico" viewBox="0 0 24 24"><use href="#ico-moon"/></svg>
+    </button>
+    <button class="icon-btn" onclick="toggleCurrency()" title="تغییر واحد پول">
+      <svg class="ico" viewBox="0 0 24 24"><use href="#ico-settings"/></svg>
+    </button>
+  </div>
+    </div>
+    <div class="bank-card theme-emerald" id="home-bank-card" onclick="openCardEditor()" style="cursor:pointer;">
+      <div class="row-top">
+        <div class="brand">
+          <div class="seal">🌿</div>
+          <div class="txt"><b id="home-bank-name">بانک فراوانی</b><span>کارت شکرگذاری</span></div>
+        </div>
+        <div class="chip"></div>
+      </div>
+      <div class="balance-label">موجودی فراوانی</div>
+      <div class="balance-value" id="home-balance">۰ تومان</div>
+      <div class="card-number" id="home-card-number">5859 8312 8347 6690</div>
+      <div class="row-bottom">
+        <div class="holder">دارنده کارت<b id="home-holder">کاربر فراوانی</b></div>
+        <div class="cvv-mini">CVV2<b id="home-cvv">۱۴۰</b></div>
+        <div class="valid">معتبر تا<br><b id="home-expiry">∞ / ∞</b></div>
+      </div>
+    </div>
+
+    <div class="today-banner">
+      <span id="home-today-deposit">امروز ۰ به حسابت اضافه شد ✨</span>
+      <span class="day-tag" id="home-day-tag">روز ۱</span>
+    </div>
+    <button class="ghost-btn" style="width:100%;margin:-4px 0 10px;" onclick="openAbundanceSettings()">⚙️ تنظیم مبلغ شروع بازی فراوانی</button>
+
+    <div class="theme-banner">
+      <div class="tb-top">
+        <span class="tb-day">🧭 مسیر ۲۸ روزه شکرگذاری</span>
+        <span class="tb-progress" id="tb-progress">1 / 28</span>
+      </div>
+      <div class="tb-title" id="tb-title">سلامتی و بدن</div>
+      <div class="tb-hint" id="tb-hint">بدنت رو با تمام توانایی‌هایی که امروز بهت داده حس کن.</div>
+      <div class="tb-bar"><div class="tb-bar-fill" id="tb-bar-fill" style="width:3.5%"></div></div>
+    </div>
+
+    <div id="gratitude-mini-cal" class="mini-cal-grid"></div>
+    <div id="gratitude-mini-cal-info"></div>
+
+    <button class="cta-buy" onclick="goto('store')"><span>🛍️</span> خرید جدید</button>
+
+    <div class="quick-add">
+      <div class="lbl">🧠 مغزت رو تربیت کن تا داشته‌هات رو ببینه</div>
+      <div class="sub">طبق علم اعصاب، هر بار شکرگذاری می‌کنی، مسیرهای عصبیِ مثبت‌نگری در مغزت قوی‌تر می‌شن.</div>
+      <div class="grat-input-header">
+        <span id="home-grat-number">۱</span> - خدایا شکرت که:
+      </div>
+      <textarea id="home-grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
+      <div class="grat-media-bar">
+        <input type="file" id="home-grat-media-input" accept="image/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'home')">
+        <input type="file" id="home-grat-video-input" accept="video/*" multiple style="display:none" onchange="handleGratVideos(this.files, 'home')">
+        <button type="button" class="gm-btn" title="عکس" aria-label="افزودن عکس" onclick="document.getElementById('home-grat-media-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+        <button type="button" class="gm-btn" title="ویدیو" aria-label="افزودن ویدیو" onclick="document.getElementById('home-grat-video-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3z"/></svg></button>
+        <button type="button" class="gm-btn" id="home-grat-record-btn" title="ضبط صدا" aria-label="ضبط صدا" onclick="toggleGratRecording('home')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+      </div>
+      <div class="gv-grid" id="home-grat-image-thumbs"></div>
+      <div id="home-grat-video-list"></div>
+      <div id="home-grat-audio-list"></div>
+      <div class="visibility-options">
+        <label><input type="radio" name="home-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
+        <label><input type="radio" name="home-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
+      </div>
+      <button onclick="addGratitudeHome()" style="margin-top:12px; width:100%;">ثبت شکرگذاری</button>
+    </div>
+
+    <div class="section-label">
+      <h2><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>انجام این تمرین</h2>
+    </div>
+    <div class="neural-card" id="np-gratitude-mount"></div>
+
+    <div class="section-label">
+      <h2><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-hands"/></svg></span>لیست شکرگذاری</h2>
+    </div>
+    <div id="home-recent"></div>
+  </section>
+
+  <!-- ============ STORE ============ -->
+  <section class="view" id="view-store">
+    <div class="topbar bordered">
+      <button class="icon-btn" onclick="goto('home')">‹</button>
+      <div style="flex:1;">
+        <h1>بازی فراوانی</h1>
+      </div>
+      <button class="icon-btn" onclick="goto('shop-history')" title="تاریخچه خریدها"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-history"/></svg></button>
+    </div>
+    <div class="abundance-today" id="store-balance-banner"></div>
+    <div class="abundance-hint" id="store-balance-hint"></div>
+    <div class="custom-box">
+      <div class="lbl">🛍️ خرید مورد دلخواه</div>
+      <div class="hint">هر چیزی که دوستش داری رو یکی‌یکی اضافه کن، بعد همه رو با هم بریز تو سبد</div>
+      <div class="image-picker">
+        <div class="lbl2">🖼️ تصویرش رو انتخاب کن</div>
+        <div class="image-preview" id="custom-image-preview">تصویری انتخاب نشده</div>
+        <button type="button" class="gallery-btn" onclick="document.getElementById('custom-file').click()">📁 انتخاب از گالری گوشی</button>
+        <input type="file" id="custom-file" accept="image/*" style="display:none" onchange="handleCustomFile(event)">
+        <input id="custom-image-url" placeholder="یا لینک تصویر از اینترنت را بچسبان" oninput="handleCustomUrl()">
+      </div>
+      <input id="custom-name" placeholder="مثلاً: کفش مورد علاقه‌ام">
+      <input id="custom-price" placeholder="مبلغ — مثلاً 300,000" inputmode="numeric" oninput="formatAmountInput(this)">
+      <button class="submit secondary" onclick="addToPendingList()">➕ افزودن به لیست</button>
+      <div class="pending-list" id="pending-list-wrap" style="display:none;">
+        <div class="lbl">لیست خریدت</div>
+        <div id="pending-list"></div>
+        <div class="pending-total"><span>جمع کل</span><b id="pending-total-amt">۰ تومان</b></div>
+      </div>
+      <button class="submit" id="pending-checkout-btn" onclick="addAllToCart()" disabled>افزودن به سبد خرید</button>
+    </div>
+
+    <div class="section-label">
+      <h2><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-bag"/></svg></span>سبد خرید</h2>
+    </div>
+    <div id="cart-list" style="margin-top:8px;"></div>
+    <div id="cart-empty" class="empty-hint" style="display:none;">
+      سبد خریدت خالیه 🌱<br>یک نعمت از بازی فراوانی اضافه کن
+    </div>
+    <div class="summary-box" id="cart-summary" style="display:none;">
+      <div class="summary-line"><span>تعداد اقلام</span><span id="cart-count">۰</span></div>
+      <div class="summary-line total"><span>مبلغ قابل پرداخت</span><span id="cart-total">۰</span></div>
+    </div>
+    <button class="primary-btn" id="cart-checkout-btn" onclick="goto('pay')" disabled>ادامه به درگاه پرداخت</button>
+    <div class="shop-bottom">
+      <div class="shop-period-card">
+        <div class="shop-period-head">
+          <span id="shop-period-title">🧭 دوره‌ی ۲۸ روزه</span>
+          <span class="sp-prog" id="shop-period-progress">روز ۱ / ۲۸</span>
+        </div>
+        <div id="shop-mini-cal" class="mini-cal-grid"></div>
+        <div id="shop-mini-cal-info"></div>
+      </div>
+      <div class="section-label" style="margin:6px 0 4px;">
+        <h2 style="font-size:13px;margin:0;"><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>انجام این تمرین</h2>
+      </div>
+      <div class="neural-card" id="np-shop-mount"></div>
+    </div>
+  </section>
+
+  <!-- ============ SHOP PURCHASE HISTORY ============ -->
+  <section class="view" id="view-shop-history">
+    <div class="topbar bordered">
+      <button class="icon-btn" onclick="goto('store')">‹</button>
+      <div>
+        <h1>تاریخچه خریدها</h1>
+        <div class="sub">هر خریدی که ثبت کردی، دقیقاً با تاریخ و ساعتش</div>
+      </div>
+    </div>
+    <div class="hist-total">
+      <div class="l1">مجموع خریدهای ثبت‌شده در بازی فراوانی</div>
+      <div class="l2" id="shop-hist-total">۰</div>
+    </div>
+    <div id="shop-history-list" style="margin-top:8px;"></div>
+    <div id="shop-history-empty" class="empty-hint" style="display:none;">
+      هنوز هیچ خریدی ثبت نشده 🌱<br>از فروشگاه بازی فراوانی چیزی اضافه کن
+    </div>
+  </section>
+
+  <!-- ============ PAYMENT ============ -->
+  <section class="view" id="view-pay">
+    <div class="topbar bordered">
+      <button class="icon-btn" onclick="goto('store')">‹</button>
+      <div>
+        <h1>درگاه پرداخت فراوانی</h1>
+        <div class="sub">اتصال امن 🔒</div>
+      </div>
+    </div>
+    <div class="gateway-head">
+      <div class="lock">🔒</div>
+      <div class="amt" id="pay-amount">۰</div>
+      <div class="to">پرداخت به <b>بازی فراوانی</b></div>
+    </div>
+    <div class="pay-form">
+      <div class="field">
+        <label>شماره کارت</label>
+        <input id="pay-card" value="5859 8312 8347 6690" maxlength="19">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>تاریخ انقضا</label>
+          <input id="pay-exp" value="∞ / ∞" maxlength="7">
+        </div>
+        <div class="field">
+          <label>CVV2</label>
+          <input id="pay-cvv" value="۱۴۰" maxlength="4">
+        </div>
+      </div>
+      <div class="field">
+        <label>رمز پویا (دینامیک)</label>
+        <input id="pay-otp" placeholder="ارسال شد به قلب شما 💚" maxlength="6">
+      </div>
+    </div>
+    <div class="gw-note">
+      🕊️ <span>این یک درگاه پرداخت نمادین برای بازی شکرگذاری‌ست؛ هیچ اطلاعات بانکی واقعی ذخیره یا منتقل نمی‌شود. فقط با ثبت این خرید، حس فراوانی را در دلت تأیید کن.</span>
+    </div>
+    <button class="primary-btn" onclick="processPayment()" style="margin-top:14px;">تأیید و پرداخت</button>
+    <div class="pay-overlay" id="pay-overlay">
+      <div class="spinner"></div>
+      <p>در حال تأیید تراکنش با درگاه شاپرک فراوانی...</p>
+    </div>
+  </section>
+
+  <!-- ============ RECEIPT ============ -->
+  <section class="view" id="view-receipt">
+    <div class="topbar">
+      <button class="icon-btn" onclick="goto('home')">✕</button>
+      <div><h1>رسید پرداخت</h1></div>
+    </div>
+    <div class="receipt-wrap">
+      <div class="stamp-zone">
+        <div class="stamp">✓</div>
+        <h2>پرداخت با موفقیت انجام شد</h2>
+        <div class="amt-big" id="rc-amount">۰</div>
+        <div class="amt-lbl">از حساب فراوانی شما کسر و به لیست شکرگذاری‌ات اضافه شد</div>
+      </div>
+      <div class="receipt-card">
+        <div class="r-row"><span>تاریخ</span><span id="rc-date">-</span></div>
+        <div class="r-row"><span>روز هفته</span><span id="rc-day">-</span></div>
+        <div class="r-row"><span>ساعت</span><span id="rc-time">-</span></div>
+        <div class="r-row"><span>کد رهگیری</span><span id="rc-track">-</span></div>
+        <div class="r-row"><span>شماره کارت مبدا</span><span id="rc-card">-</span></div>
+        <div class="r-row"><span>بانک مقصد</span><span id="rc-bank">بانک فراوانی</span></div>
+      </div>
+      <div class="items-title">🌿 اقلام این شکرگذاری</div>
+      <div id="rc-items"></div>
+    </div>
+    <button class="primary-btn" onclick="goto('home')">بازگشت به خانه</button>
+    <button class="ghost-btn" onclick="goto('history')">مشاهده در لیست شکرگذاری</button>
+  </section>
+
+  <!-- ============ GRATITUDE LIST ============ -->
+  <section class="view" id="view-history">
+    <div class="topbar bordered">
+      <button class="icon-btn" onclick="goto('home')">‹</button>
+      <div>
+        <h1>لیست شکرگذاری</h1>
+        <div class="sub">هر چیزی که در زندگیت هست، همین‌جا ثبتش کن</div>
+      </div>
+    </div>
+    <div class="grat-counter-card" id="grat-counter-card"></div>
+    <div class="theme-banner" id="hist-theme-banner">
+      <div class="tb-top">
+        <span class="tb-day" id="hist-tb-day">🧭 مسیر ۲۸ روزه شکرگذاری</span>
+        <span class="tb-progress" id="hist-tb-progress">1 / 28</span>
+      </div>
+      <div class="tb-title" id="hist-tb-title">سلامتی و بدن</div>
+      <div class="tb-hint" id="hist-tb-hint"></div>
+      <div class="tb-bar"><div class="tb-bar-fill" id="hist-tb-bar-fill" style="width:3.5%"></div></div>
+    </div>
+    <div class="quick-add">
+      <div class="grat-input-header">
+        <span id="grat-number">۱</span> - خدایا شکرت که:
+      </div>
+      <textarea id="grat-input" placeholder="نعمت امروزت رو بنویس..." oninput="autoGrowGratInput(this)"></textarea>
+      <div class="grat-media-bar">
+        <input type="file" id="grat-media-input" accept="image/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'new')">
+        <input type="file" id="grat-video-input" accept="video/*" multiple style="display:none" onchange="handleGratVideos(this.files, 'new')">
+        <button type="button" class="gm-btn" title="عکس" aria-label="افزودن عکس" onclick="document.getElementById('grat-media-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+        <button type="button" class="gm-btn" title="ویدیو" aria-label="افزودن ویدیو" onclick="document.getElementById('grat-video-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3z"/></svg></button>
+        <button type="button" class="gm-btn" id="grat-record-btn" title="ضبط صدا" aria-label="ضبط صدا" onclick="toggleGratRecording('new')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+      </div>
+      <div class="gv-grid" id="grat-image-thumbs"></div>
+      <div id="grat-video-list"></div>
+      <div id="grat-audio-list"></div>
+      <div class="visibility-options">
+        <label><input type="radio" name="grat-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
+        <label><input type="radio" name="grat-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
+      </div>
+      <button onclick="addGratitude()" style="margin-top:12px; width:100%;">ثبت شکرگذاری</button>
+    </div>
+    <div class="items-title" style="margin-top:10px;">📅 تقویم شکرگذاری</div>
+    <div id="hist-gratitude-mini-cal" class="mini-cal-grid"></div>
+    <div id="hist-gratitude-mini-cal-info"></div>
+    <div class="section-label">
+      <h2><span class="section-icon"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-dna"/></svg></span>مسیر عصبی شکرگذاری</h2>
+    </div>
+    <div class="neural-card" id="np-gratitude-hist-mount"></div>
+    <div id="grat-vs-root" data-vs-src="gratitude"></div>
+    <div id="history-list"></div>
+    <div id="history-empty" class="empty-hint" style="display:none;">
+      هنوز هیچ شکرگذاری ثبت نشده.<br>یه چیز خوب زندگیت رو همین بالا بنویس 🌱
+    </div>
+  </section>
+
+  <!-- ============ FRIENDS ============ -->
+  <section class="view" id="view-friends">
+    <div class="topbar bordered">
+      <button class="icon-btn" onclick="goto('home')">‹</button>
+      <div><h1>دوستان هم‌فرکانسی</h1></div>
+    </div>
+    <div id="friends-no-backend" class="empty-hint" style="display:none;">
+      این قابلیت هنوز توسط سازنده‌ی اپ فعال نشده. بعداً دوباره سر بزن 🌱
+    </div>
+    <div id="friends-loading" class="empty-hint" style="display:none;">در حال دریافت لیست... ⏳</div>
+    <div id="friends-feed"></div>
+    <div id="friends-empty" class="empty-hint" style="display:none;">
+      هنوز کسی چیزی به اشتراک نذاشته. اولین نفر باش! 🌱
+    </div>
+  </section>
+
+  <!-- ============ BELIEFS ============ -->
+  <section class="view" id="view-beliefs">
+    <div class="topbar bordered" style="position:relative;">
+      <button class="icon-btn" onclick="goto('home')">‹</button>
+      <div>
+        <h1>بازنویسی باورها</h1>
+        <div class="sub">سیم‌کشی مغز بر پایه‌ی RAS، نوروپلاستیسیتی و روش دکتر جو دیسپنزا</div>
+      </div>
+      <button class="icon-btn" id="reminder-icon-btn" onclick="toggleReminderPanel()" title="یادآوری روزانه" style="margin-inline-start:auto;">🔔</button>
+    </div>
+    <div id="reminder-panel" class="b-card" style="display:none; position:absolute; top:64px; left:12px; z-index:50; width:250px; box-shadow:0 10px 24px rgba(0,0,0,.15);">
+      <div class="reminder-row">
+        <span class="rt-label">آلارم تمرین روزانه فعال باشد</span>
+        <div class="switch" id="alarm-switch" onclick="toggleAlarm()"><div class="knob"></div></div>
+      </div>
+      <div class="reminder-row">
+        <span class="rt-label">ساعت یادآوری</span>
+        <input type="time" class="time-input" id="alarm-time" value="20:00" onchange="setAlarmTime(this.value)">
+      </div>
+      <p style="margin-top:10px;font-size:11px;">وقتی برنامه در مرورگر باز باشد، سر ساعت انتخابی یک نوتیفیکیشن برایت می‌فرستد.</p>
+    </div>
+    <div class="belief-flow-card">
+      <p class="bf-desc">مثل تمرین باب پراکتور: زندگی‌ای که می‌خوای رو همین حالا، انگار که اتفاق افتاده، بنویس. با «بسیار خوشحال و سپاسگزارم حالا که...» شروع کن.</p>
+      <textarea id="b-future-text" rows="4" placeholder="بسیار خوشحال و سپاسگزارم حالا که..." oninput="updateFutureText(this.value)"></textarea>
+      <div id="future-progress-wrap" style="display:none;margin-top:12px;">
+        <div class="intensity-labels"><span>روز <b id="future-day-num">۰</b> از ۹۰</span><span id="future-day-pct">۰٪</span></div>
+        <div class="tb-bar" style="margin:8px 0 12px;"><div class="tb-bar-fill" id="future-progress-bar" style="width:0%;"></div></div>
+      </div>
+      <div class="ras-btn-row">
+        <button class="ras-activate-btn" id="future-start-btn" onclick="startFutureProtocol()">شروع دوره‌ی ۹۰ روزه</button>
+        <button class="today-btn2" id="future-read-btn" style="display:none;" onclick="markFutureRead()">📖 امروز خواندم</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <button type="button" class="btn tiny" onclick="openEmotionCapture('belief','after','باب پراکتور')">💗 ثبت حس</button>
+        <span id="belief-emotion-feedback" style="font-size:11px;color:var(--muted);"></span>
+      </div>
+      <button class="btn full" style="margin-top:10px;" onclick="openBankCalendar('beliefs')">📅 تقویم خواندن</button>
+      <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2></div>
+      <div class="neural-card" id="np-belief-mount"></div>
+    </div>
+    <div class="belief-flow-card dispenza-card">
+      <div class="bf-head">🌌 پروتکل دیسپنزا</div>
+      <div class="audio-upload-row">
+        <label class="visual-upload-btn" for="meditation-audio-input">+ افزودن موسیقی</label>
+        <input type="file" id="meditation-audio-input" accept="audio/*" style="display:none" onchange="handleMeditationAudio(this.files)">
+      </div>
+      <div id="meditation-audio-wrap"></div>
+      <div class="dp-step">
+        <div class="dp-step-head">
+          <span class="dp-step-num">۱</span>
+          <span class="dp-step-title" style="flex:1;">Nothing — هیچ‌شدن</span>
+          <button type="button" id="nothing-sound-toggle" class="nothing-sound-btn" onclick="toggleNothingSound()" title="قطع/وصل صدای تمرین">🔔</button>
+        </div>
+        <p class="bf-desc" style="margin-right:36px;">
+          در این مرحله توجه از بدن، آدم‌ها، اشیا، مکان و زمان برداشته می‌شود. اما این‌ها را یک‌جا رها نکن — یکی‌یکی. روی هر لایه ضربه بزن و ببین چطور از دورت محو می‌شود.
+        </p>
+        <div class="nothing-stage" id="nothing-stage">
+          <div class="nothing-core" id="nothing-core">
+            <div class="nothing-core-ring"></div>
+            <div class="nothing-core-dot"></div>
+            <span class="nothing-core-label">آگاهی خالص</span>
+          </div>
+          <div class="nothing-layer" data-nothing="body">بدن</div>
+          <div class="nothing-layer" data-nothing="one">هویت</div>
+          <div class="nothing-layer" data-nothing="thing">اشیا</div>
+          <div class="nothing-layer" data-nothing="where">مکان</div>
+          <div class="nothing-layer" data-nothing="time">زمان</div>
+        </div>
+        <div class="nothing-steps" id="nothing-steps">
+          <button type="button" class="nothing-step" data-nothing-step="body">
+            <span class="nothing-step-num">۱</span>
+            <span class="nothing-step-txt"><b>No body</b> — از توجه به بدن فاصله بگیر</span>
+            <span class="nothing-step-check">○</span>
+          </button>
+          <button type="button" class="nothing-step" data-nothing-step="one">
+            <span class="nothing-step-num">۲</span>
+            <span class="nothing-step-txt"><b>No one</b> — از هویت و نقش‌های خودت فاصله بگیر</span>
+            <span class="nothing-step-check">○</span>
+          </button>
+          <button type="button" class="nothing-step" data-nothing-step="thing">
+            <span class="nothing-step-num">۳</span>
+            <span class="nothing-step-txt"><b>No thing</b> — از اشیا و دنیای مادی فاصله بگیر</span>
+            <span class="nothing-step-check">○</span>
+          </button>
+          <button type="button" class="nothing-step" data-nothing-step="where">
+            <span class="nothing-step-num">۴</span>
+            <span class="nothing-step-txt"><b>No where</b> — از مکان فاصله بگیر</span>
+            <span class="nothing-step-check">○</span>
+          </button>
+          <button type="button" class="nothing-step" data-nothing-step="time">
+            <span class="nothing-step-num">۵</span>
+            <span class="nothing-step-txt"><b>No time</b> — از گذشته و آینده‌ی خطی فاصله بگیر</span>
+            <span class="nothing-step-check">○</span>
+          </button>
+        </div>
+        <div class="nothing-final" id="nothing-final">
+          <span class="nothing-final-pulse"></span>
+          Pure consciousness / awareness
+        </div>
+        <p class="nothing-sound-hint">🎧 اگر هدفون داری بزن. هر رهاسازی یک زنگ صعودی دارد — از ۳۹۶ هرتز تا ۸۵۲ هرتز. پایان تمرین با یک گانگ پایین ۱۳۶ هرتز (فرکانس اُم) بسته می‌شود.</p>
+        <button type="button" class="nothing-reset" onclick="resetNothingPractice()">↺ شروع دوباره‌ی این تمرین</button>
+      </div>
+      <div class="dp-step">
+        <div class="dp-step-head"><span class="dp-step-num">۲</span><span class="dp-step-title">New Possibility — سیستم رادار</span></div>
+        <p class="bf-desc" style="margin-right:36px;">توجهت را به همان چیزی که می‌خوای جلب کن.</p>
+        <div class="ras-input-row">
+          <textarea id="b-tracking" rows="1"></textarea>
+          <button class="ras-add-btn" onclick="addTrackingItem()">+</button>
+        </div>
+        <div class="tracking-list" id="tracking-list"></div>
+        <div class="ras-btn-row">
+          <button class="ras-activate-btn" id="ras-activate-btn" onclick="toggleTracking()">فعال کردن ردیابی</button>
+          <div class="ras-radar" id="ras-radar">
+            <span class="radar-blip green" style="top:22%;left:32%; animation-delay:0s;"></span>
+            <span class="radar-blip red" style="top:58%;left:70%; animation-delay:1.1s;"></span>
+            <span class="radar-blip green" style="top:72%;left:24%; animation-delay:2.1s;"></span>
+            <span class="radar-blip green" style="top:32%;left:75%; animation-delay:2.9s;"></span>
+          </div>
+        </div>
+        <button class="btn full" style="margin-top:10px;" onclick="openBankCalendar('tracking')">📅 تقویم ردیابی</button>
+        <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2></div>
+        <div class="neural-card" id="np-tracking-mount"></div>
+      </div>
+      <div class="dp-step">
+        <div class="dp-step-head"><span class="dp-step-num">۳</span><span class="dp-step-title">See it — ببینش</span></div>
+      </div>
+      <div class="dp-step">
+        <div class="dp-step-head"><span class="dp-step-num">۴</span><span class="dp-step-title">Feel it NOW ❤️</span></div>
+      </div>
+      <div class="dp-step">
+        <div class="dp-step-head"><span class="dp-step-num">۵</span><span class="dp-step-title">Become — تبدیل شو</span></div>
+        <p class="bf-desc" style="margin-right:36px;">حالا در همان حال بمان و همان آدمی که می‌خواهی بشوی را با تمام وجود تجربه کن. همین که انجامش دادی، یک رشته‌ی جدید در مدار عصبی‌ات ساخته شد.</p>
+        <button class="today-btn2" style="width:calc(100% - 36px); margin-right:36px; margin-top:8px;" onclick="markDispenzaDone()">🧠 امروز این پروتکل را کامل کردم</button>
+        <div class="section-label" style="margin:14px 0 6px; margin-right:36px;">
+          <h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2>
+        </div>
+        <div class="neural-card" id="np-dispenza-mount" style="margin-right:36px;"></div>
+      </div>
+    </div>
+    <div class="belief-flow-card">
+      <div class="bf-head">✨ تصویرسازی</div>
+      <p class="bf-desc">خودت را در حالی ببین که به خواسته‌ات رسیده‌ای. صحنه را ببین. احساسش را حس کن. چند لحظه در آن بمان... و رها کن.</p>
+      <textarea id="b-visual-note" rows="2" placeholder="📝 یادداشت من (اختیاری)" oninput="updateBeliefField('visualNote', this.value)"></textarea>
+      <div class="visual-upload-row">
+        <label class="visual-upload-btn" for="visual-image-input">+ افزودن عکس</label>
+        <input type="file" id="visual-image-input" accept="image/*" multiple style="display:none" onchange="handleVisualImages(this.files)">
+      </div>
+      <div class="visual-gallery" id="visual-gallery"></div>
+      <div class="section-label" style="margin:12px 0 6px;"><h2 style="font-size:13px;margin:0;">🧬 انجام این تمرین</h2></div>
+      <div class="neural-card" id="np-visual-mount"></div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal-card">
+      <div class="m-seal">🔐</div>
+      <h2>ورود به بانک فراوانی</h2>
+      <p style="text-align:center;">با شماره تماس یا جیمیل وارد شو</p>
+      <div class="login-tabs">
+        <button id="tab-phone" class="active" onclick="switchLoginTab('phone')">شماره تماس</button>
+        <button id="tab-email" onclick="switchLoginTab('email')">جیمیل</button>
+      </div>
+      <div class="login-field active" id="field-phone">
+        <input id="login-phone" type="tel" placeholder="09xxxxxxxxx" inputmode="numeric">
+      </div>
+      <div class="login-field" id="field-email">
+        <input id="login-email" type="email" placeholder="you@gmail.com">
+      </div>
+      <p class="login-hint">فقط برای شناسایی تو روی همین دستگاه استفاده می‌شود.</p>
+      <button class="primary-btn" style="margin:16px 0 0;" onclick="confirmLogin()">ورود</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="setup-modal">
+    <div class="modal-card">
+      <div class="m-seal">🌿</div>
+      <h2>به بازی فراوانی خوش اومدی</h2>
+      <p>اسمت چیه؟ (روی کارتت نوشته می‌شه)</p>
+      <input id="setup-name" placeholder="اسمت را بنویس">
+      <p>واحد پول فراوانی‌ات چیه؟</p>
+      <div class="currency-choice">
+        <button id="cur-toman" onclick="pickCurrency('toman')">تومان</button>
+        <button id="cur-dollar" onclick="pickCurrency('dollar')">دلار</button>
+      </div>
+      <button class="primary-btn" style="margin:20px 0 0;" onclick="confirmSetup()">شروع بازی فراوانی</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="abundance-modal">
+    <div class="modal-card" style="text-align:right;">
+      <div class="m-seal" style="text-align:center;">🌿</div>
+      <h2 style="text-align:center;">تنظیم بازی فراوانی</h2>
+      <p style="text-align:center;margin-top:0;">هر روز مبلغ تازه و بزرگ‌تری واریز می‌شه و باید همون روز خرجش کنی.</p>
+      <div class="field">
+        <label>روز اول از چه مبلغی شروع کنم؟</label>
+        <input type="text" id="ab-start" inputmode="numeric" oninput="formatAmountInput(this)" placeholder="مثلاً 1,000,000">
+      </div>
+      <div class="field">
+        <label>هر روز چقدر بیشتر بشه؟</label>
+        <input type="text" id="ab-step" inputmode="numeric" oninput="formatAmountInput(this)" placeholder="مثلاً 1,000,000">
+      </div>
+      <p id="ab-preview" style="font-size:12px;opacity:.8;margin:6px 0 0;"></p>
+      <p style="font-size:12px;opacity:.7;margin:10px 0 0;">اگه روزی انجام ندی، بازی از اول شروع نمی‌شه؛ واریز روز بعد طبق تقویم ادامه داره و فقط از همون‌جا ادامه می‌دی.</p>
+      <button class="primary-btn" style="width:100%; margin:18px 0 8px;" onclick="saveAbundanceSettings()">ذخیره</button>
+      <button class="ghost-btn" style="width:100%; margin:0;" onclick="closeAbundanceSettings()">انصراف</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="card-edit-modal">
+    <div class="modal-card" style="text-align:right;">
+      <div class="m-seal" style="text-align:center;">💳</div>
+      <h2 style="text-align:center;">ویرایش کارت فراوانی</h2>
+      <p style="text-align:center;margin-top:0;">کارتت رو دقیقاً مثل یک کارت واقعی بساز</p>
+      <div class="field">
+        <label>اسم بانک</label>
+        <input type="text" id="edit-bank-name" maxlength="24" placeholder="مثلاً: بانک فراوانی" style="direction:rtl;text-align:right;letter-spacing:normal;">
+      </div>
+      <div class="field">
+        <label>نام دارنده کارت</label>
+        <input type="text" id="edit-holder-name" maxlength="24" placeholder="مثلاً: مریم" style="direction:rtl;text-align:right;letter-spacing:normal;">
+      </div>
+      <div class="field">
+        <label>شماره کارت</label>
+        <input type="text" id="edit-card-number" maxlength="19" inputmode="numeric" placeholder="•••• •••• •••• ••••" oninput="formatCardNumberInput(this)">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>تاریخ انقضا</label>
+          <input type="text" id="edit-card-expiry" maxlength="7" placeholder="∞ / ∞">
+        </div>
+        <div class="field">
+          <label>CVV2</label>
+          <input type="text" id="edit-card-cvv" maxlength="4" inputmode="numeric">
+        </div>
+      </div>
+      <p style="margin:14px 0 8px;">رنگ کارت</p>
+      <div class="card-theme-grid" id="card-theme-grid"></div>
+      <button class="primary-btn" style="width:100%; margin:20px 0 8px;" onclick="saveCardEdit()">ذخیره کارت</button>
+<button class="ghost-btn" style="width:100%; margin:0;" onclick="closeCardEditor()">انصراف</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="grat-edit-modal">
+    <div class="modal-card" style="text-align:right;">
+      <div class="m-seal" style="text-align:center;">🙏</div>
+      <h2 style="text-align:center;">ویرایش شکرگذاری</h2>
+      <textarea id="grat-edit-text" rows="4" placeholder="متن شکرگذاری..."></textarea>
+      <div class="grat-media-bar">
+        <input type="file" id="grat-edit-media-input" accept="image/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'edit')">
+        <input type="file" id="grat-edit-video-input" accept="video/*" multiple style="display:none" onchange="handleGratVideos(this.files, 'edit')">
+        <button type="button" class="gm-btn" title="عکس" aria-label="افزودن عکس" onclick="document.getElementById('grat-edit-media-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+        <button type="button" class="gm-btn" title="ویدیو" aria-label="افزودن ویدیو" onclick="document.getElementById('grat-edit-video-input').click()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3z"/></svg></button>
+        <button type="button" class="gm-btn" id="grat-edit-record-btn" title="ضبط صدا" aria-label="ضبط صدا" onclick="toggleGratRecording('edit')"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+      </div>
+      <div class="gv-grid" id="grat-edit-image-thumbs"></div>
+      <div id="grat-edit-video-list"></div>
+      <div id="grat-edit-audio-list"></div>
+      <div class="visibility-options" style="margin-top:12px;">
+        <label><input type="radio" name="grat-edit-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
+        <label><input type="radio" name="grat-edit-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
+      </div>
+      <button class="primary-btn" style="margin:16px 0 8px;" onclick="saveGratEdit()">ذخیره تغییرات</button>
+      <button class="ghost-btn" style="margin:0 0 8px;" onclick="deleteGratEntry()">🗑 حذف این شکرگذاری</button>
+      <button class="ghost-btn" style="margin:0;" onclick="closeGratEditor()">انصراف</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="bank-cal-modal">
+    <div class="modal-card cal-modal">
+      <div class="cal-modal-head">
+        <h2 id="bank-cal-title">📅 تقویم</h2>
+        <button class="cal-x" onclick="closeBankCalendar()">✕</button>
+      </div>
+      <div class="cal-nav" id="bank-cal-nav">
+        <button type="button" class="cal-nav-btn" onclick="bankCalNav(-1)">‹</button>
+        <span id="bank-cal-label"></span>
+        <button type="button" class="cal-nav-btn" onclick="bankCalNav(1)">›</button>
+      </div>
+      <div class="cal-weekdays" id="bank-cal-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+      <div class="cal-grid" id="bank-cal-grid"></div>
+      <div id="bank-cal-day-detail"></div>
+      <div id="bank-cal-period-wrap" style="display:none;">
+        <div id="bank-cal-period-grid" class="mini-cal-grid"></div>
+        <div id="bank-cal-period-info"></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-nav="home" onclick="goto('home')">
+      <span class="n-ic"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-home"/></svg></span>خانه
+    </button>
+    <button class="nav-btn" data-nav="store" onclick="goto('store')">
+      <span class="n-ic" style="position:relative;">
+        <svg class="ico" viewBox="0 0 24 24"><use href="#ico-bag"/></svg>
+        <span class="nav-badge" id="nav-cart-badge" style="display:none;">۰</span>
+      </span>بازی فراوانی
+    </button>
+    <button class="nav-btn" data-nav="history" onclick="goto('history')">
+      <span class="n-ic"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-hands"/></svg></span>شکرگذاری
+    </button>
+    <button class="nav-btn" data-nav="friends" onclick="goto('friends')">
+      <span class="n-ic"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-users"/></svg></span>دوستان
+    </button>
+    <button class="nav-btn" data-nav="beliefs" onclick="goto('beliefs')">
+      <span class="n-ic"><svg class="ico" viewBox="0 0 24 24"><use href="#ico-brain"/></svg></span>باورها
+    </button>
+  </nav>
+</div>
+</div>
+<script src="neural-pathway.js"></script>
+<script src="js/tamrin-tab.js"></script>
+
+<!-- ===== تب‌های پایین ===== -->
+<div id="bottom-tabs">
+  <button class="tab-btn" id="tab-btn-shenakht" type="button">
+    <span class="tab-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-brain"/></svg></span>
+    <span>شناخت</span>
+  </button>
+  <button class="tab-btn active" id="tab-btn-map" type="button">
+    <span class="tab-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-compass"/></svg></span>
+    <span>هدف گذاری</span>
+  </button>
+  <button class="tab-btn" id="tab-btn-grat" type="button">
+    <span class="tab-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#ico-spark"/></svg></span>
+    <span>تمرین</span>
+  </button>
+</div>
+
+<script src="js/tab-switcher.js"></script>
+
+<!-- ===== portal splash ===== -->
+<div id="portal-splash">
+  <div class="portal-card" id="portal-card">
+    <div class="portal-swirl-wrap" id="portal-swirl-wrap">
+      <img class="portal-spiral-img" src="data:image/jpeg;base64,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" alt="">
+      <div class="portal-spiral-glow" aria-hidden="true"></div>
+    </div>
+    <h2>به ماوراطبیعی شدن خوش آمدی</h2>
+    <div class="portal-mode-switch">
+      <button type="button" class="portal-mode-btn active" data-mode="signin">
+        <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg>
+        <span>ورود</span>
+      </button>
+      <button type="button" class="portal-mode-btn" data-mode="signup">
+        <svg class="ico" viewBox="0 0 24 24"><use href="#ico-plus"/></svg>
+        <span>ساخت حساب</span>
+      </button>
+    </div>
+    <div class="portal-field">
+      <input id="portal-input-email" type="email" placeholder="you@gmail.com" autocomplete="email">
+    </div>
+    <div class="portal-field">
+      <input id="portal-input-password" type="password" placeholder="رمز عبور (حداقل ۶ کاراکتر)" autocomplete="current-password">
+    </div>
+    <p class="portal-error" id="portal-error"></p>
+    <p class="portal-info" id="portal-info"></p>
+    <button type="button" class="portal-cta" id="portal-enter-btn">
+      <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg>
+      <span>ورود</span>
+    </button>
+    <div class="portal-or"><span>یا</span></div>
+    <button type="button" class="portal-cta portal-cta-google" id="portal-google-btn">
+      <svg class="ico" viewBox="0 0 24 24"><use href="#ico-google"/></svg>
+      <span>ورود با گوگل</span>
+    </button>
+    <button type="button" class="portal-cta portal-cta-guest" id="portal-guest-btn">
+      <svg class="ico" viewBox="0 0 24 24"><use href="#ico-user-guest"/></svg>
+      <span>ورود به عنوان مهمان</span>
+    </button>
+    <button type="button" class="portal-alt-link" id="portal-forgot-link">رمز عبور را فراموش کردم</button>
+    <p class="portal-guest-note">
+      در حالت مهمان، همه‌ی داده‌ها فقط روی همین دستگاه ذخیره می‌شوند.
+    </p>
+  </div>
+</div>
+
+<script src="js/portal-splash.js"></script>
+
+<!-- ===== shared light/dark theme toggle ===== -->
+<script src="js/theme-toggle.js"></script>
+
+<!-- ===== انتخاب پس‌زمینه ===== -->
+<script src="js/background-picker.js"></script>
+<script src="js/service-worker-register.js"></script>
+<script src="js/install-prompt.js"></script>
+<div id="img-viewer-modal" onclick="if(event.target.id==='img-viewer-modal') closeImageViewer();">
+  <button id="img-viewer-close" onclick="closeImageViewer()">✕</button>
+  <button id="img-viewer-grid-btn" onclick="event.stopPropagation();toggleImageViewerGrid()" title="مشاهده همه">▦</button>
+  <div id="img-viewer-counter"></div>
+  <img id="img-viewer-img" src="" alt="">
+  <div id="img-viewer-grid"></div>
+</div>
+<script src="emotion-widget.js"></script>
+<script src="beliefs-patch.js"></script>
+<script src="emoji-to-svg.js"></script>
+<script src="back-nav-fix.js"></script>
+<script src="motivation-bar.js"></script>
+<script src="angels.js"></script>
+<script src="visual-slideshow.js"></script>
+</body>
+</html>
