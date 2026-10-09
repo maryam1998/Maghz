@@ -68,7 +68,8 @@
     rings: [],
     textColor: DEFAULT_TEXT_COLOR,
     fontSize: 14,
-    showDateStamps: true
+    showDateStamps: true,
+    showTimeStamps: true
   };
 
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
@@ -138,6 +139,7 @@
     if (typeof state.textColor !== 'string') state.textColor = DEFAULT_TEXT_COLOR;
     if (typeof state.fontSize !== 'number' || state.fontSize < 8) state.fontSize = 14;
     if (typeof state.showDateStamps !== 'boolean') state.showDateStamps = true;
+    if (typeof state.showTimeStamps !== 'boolean') state.showTimeStamps = true;
     if (typeof state.showEmotionWidget !== 'boolean') state.showEmotionWidget = true;
     if (typeof state.trunkStyle !== 'string' || !TRUNK_STYLES[state.trunkStyle]) state.trunkStyle = 'dashed';
     state.goals.forEach(g=>{
@@ -193,6 +195,7 @@
       textColor: DEFAULT_TEXT_COLOR,
       fontSize: 14,
       showDateStamps: true,
+      showTimeStamps: true,
       showEmotionWidget: true
     };
   }
@@ -1080,7 +1083,8 @@
     function dayTimeHTML(n, pi){
       const jk = DAYSEL[n.id] || pi.todayJK;
       const ts = nodeDaySecs(n, jk);
-      return '<div class="gs-tchips"><button type="button" class="gs-tchip" data-nact="settime" data-jk="'+jk+'" title="ویرایش زمان این روز">⏱ '+jkLabel(jk)+' · '+(ts ? fmtDur(ts) : 'زمانی ثبت نشده')+' ✎</button></div>';
+      return '<div class="gs-tchips"><button type="button" class="gs-tchip" data-nact="settime" data-jk="'+jk+'" title="ویرایش زمان این روز">⏱ '+jkLabel(jk)+' · '+(ts ? fmtDur(ts) : 'زمانی ثبت نشده')+' ✎</button></div>'+
+             (rangesText(n, jk) ? '<div class="pc-rng">🕒 '+rangesText(n, jk)+'</div>' : '');
     }
     function jkLabel(jk){
       const p = String(jk).split('-').map(Number);
@@ -1092,7 +1096,7 @@
       const ks = Object.keys(n.time || {}).filter(k=> +n.time[k] > 0).sort((a,b)=> jkOrder(b) - jkOrder(a));
       let h = '<div class="gs-tchips"><span class="gs-tlbl">⏱ زمان‌ها:</span>';
       ks.slice(0, 10).forEach(k=>{
-        h += '<button type="button" class="gs-tchip" data-nact="settime" data-jk="'+k+'" title="ویرایش زمان این روز">'+jkLabel(k)+' · '+fmtDur(n.time[k])+' ✎</button>';
+        h += '<button type="button" class="gs-tchip" data-nact="settime" data-jk="'+k+'" title="ویرایش زمان این روز">'+jkLabel(k)+' · '+fmtDur(n.time[k])+(rangesText(n, k) ? ' · 🕒 '+rangesText(n, k) : '')+' ✎</button>';
       });
       if (ks.length > 10) h += '<span class="gs-tlbl">و '+toFa(ks.length-10)+' روز دیگر</span>';
       h += '<button type="button" class="gs-tchip add" data-nact="timeday" title="ثبت یا ویرایش زمان برای یک روز دیگر">＋ روز دیگر</button></div>';
@@ -1206,6 +1210,12 @@
       '.dur-in span{font-size:11px;color:var(--text-dim);}'+
       '.dur-q{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;}'+
       '.dur-q button{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:11.5px;cursor:pointer;}'+
+      '.dur-tabs{display:flex;gap:6px;margin-top:12px;}'+
+      '.dur-tabs button{flex:1;border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:10px;padding:7px 4px;font-family:inherit;font-size:11.5px;cursor:pointer;}'+
+      '.dur-tabs button.on{background:rgba(201,151,43,.18);border-color:#c9972b;color:var(--text-main);font-weight:700;}'+
+      '.dur-in input[type=time]{width:112px;font-size:20px;direction:ltr;}'+
+      '.dur-rinfo{font-size:12px;color:var(--text-dim);margin:-2px 0 14px;}'+
+      '.pc-rng{font-size:11px;color:var(--text-dim);margin-top:2px;}'+
       '.dur-b{display:flex;gap:8px;}'+
       '.dur-b button{flex:1;border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:12px;padding:10px 6px;font-family:inherit;font-size:13px;cursor:pointer;}'+
       '.dur-b .ok{background:#c9972b;border-color:#c9972b;color:#fff;font-weight:700;flex:1.4;}'+
@@ -2199,7 +2209,7 @@
     const labelY = cy + (labelOffset || 0) + (n.labelDY || 0);
     const textColor = effectiveTextColor();
     const fs = n.labelSize || currentLabelSize(hitType, hitId);
-    const stamp = (state.showDateStamps !== false) ? formatStamp(stampTs) : '';
+    const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(stampTs) : '';
     const stampTspan = stamp ? '<tspan x="' + labelX + '" dy="' + ((+fs*1.15).toFixed(1)) + '" font-size="' + Math.max(9, (+fs)*0.62).toFixed(1) + '" fill-opacity="0.6" direction="ltr">' + esc(stamp) + '</tspan>' : '';
 
     return content + hitArea + (label
@@ -2218,7 +2228,7 @@
     const textColor = effectiveTextColor();
     const fillColor = (images && images.length) ? 'transparent' : color;
     const fs = n.labelSize || currentLabelSize(hitType, hitId);
-    const stamp = (state.showDateStamps !== false) ? formatStamp(stampTs) : '';
+    const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(stampTs) : '';
     const stampTspan = stamp ? `<tspan x="${labelX}" dy="${(+fs*1.15).toFixed(1)}" font-size="${Math.max(9, (+fs)*0.62).toFixed(1)}" fill-opacity="0.6" direction="ltr">${esc(stamp)}</tspan>` : '';
     const isMeWithPhoto = hitType === 'me' && images && images.length;
     return `
@@ -2342,7 +2352,7 @@
     lines.forEach((line,i)=>{
       text += `<tspan x="${labelX}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
     });
-    const stamp = (state.showDateStamps !== false) ? formatStamp(action.createdAt) : '';
+    const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(action.createdAt) : '';
     if (stamp){
       text += `<tspan x="${labelX}" dy="16" font-size="${Math.max(9, (+fsize)*0.62).toFixed(1)}" fill-opacity="0.6" direction="ltr">${esc(stamp)}</tspan>`;
     }
@@ -2688,6 +2698,7 @@
   const settingsFontSizeVal = document.getElementById('settings-font-size-val');
   const settingsSwatches = document.getElementById('settings-swatches');
   const settingsShowDates = document.getElementById('settings-show-dates');
+  const settingsShowTimes = document.getElementById('settings-show-times');
   const settingsShowEmotionWidget = document.getElementById('settings-show-emotion-widget');
   let settingsTrunkStyle = 'dashed';
 
@@ -2711,6 +2722,7 @@
     settingsFontSize.value = state.fontSize || 14;
     settingsFontSizeVal.textContent = settingsFontSize.value;
     settingsShowDates.checked = state.showDateStamps !== false;
+    if (settingsShowTimes) settingsShowTimes.checked = state.showTimeStamps !== false;
     settingsShowEmotionWidget.checked = state.showEmotionWidget !== false;
     settingsTrunkStyle = effTrunkStyle(null);
     buildTrunkPicker(document.getElementById('settings-trunk-style-picker'), settingsTrunkStyle, false, v=>{ settingsTrunkStyle = v; });
@@ -2733,6 +2745,7 @@
     state.textColor = settingsTextColor.value;
     state.fontSize = +settingsFontSize.value;
     state.showDateStamps = !!settingsShowDates.checked;
+    if (settingsShowTimes) state.showTimeStamps = !!settingsShowTimes.checked;
     state.showEmotionWidget = !!settingsShowEmotionWidget.checked;
     state.trunkStyle = TRUNK_STYLES[settingsTrunkStyle] ? settingsTrunkStyle : 'dashed';
     try{
@@ -2880,9 +2893,10 @@
     if (!ts) return '';
     try{
       const d = new Date(ts);
-      const datePart = d.toLocaleDateString('fa-IR');
-      const timePart = d.toLocaleTimeString('fa-IR', { hour:'2-digit', minute:'2-digit' });
-      return `${datePart} - ${timePart}`;
+      const parts = [];
+      if (state.showDateStamps !== false) parts.push(d.toLocaleDateString('fa-IR'));
+      if (state.showTimeStamps !== false) parts.push(d.toLocaleTimeString('fa-IR', { hour:'2-digit', minute:'2-digit' }));
+      return parts.join(' - ');
     }catch(e){ return ''; }
   }
 
@@ -3716,6 +3730,17 @@
   function nodeLogCount(n, keys){ let c = 0; if (n.logs) for (const k in n.logs){ if (n.logs[k] && (!keys || keys.has(k))) c++; } return c; }
   function nodeSecs(n, keys){ let t = 0; if (n.time) for (const k in n.time){ if (!keys || keys.has(k)) t += (+n.time[k] || 0); } return t; }
   function nodeDaySecs(n, jk){ return (n.time && +n.time[jk]) || 0; }
+  /* بازه‌های ساعتی هر روز: n.ranges[jk] = [{s:دقیقه‌ی شروع از نیمه‌شب, e:دقیقه‌ی پایان}] */
+  let PENDING_RANGE = null;
+  function fmtHM(min){ min = ((Math.round(min) % 1440) + 1440) % 1440; const h = Math.floor(min/60), m = min % 60; return toFa(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0')); }
+  function nodeDayRanges(n, jk){ return (n.ranges && Array.isArray(n.ranges[jk])) ? n.ranges[jk] : []; }
+  function rangesText(n, jk){ return nodeDayRanges(n, jk).map(r=> fmtHM(r.s) + ' تا ' + fmtHM(r.e)).join('، '); }
+  function pushRange(n, jk, r){
+    if (!r) return;
+    if (!n.ranges || typeof n.ranges !== 'object') n.ranges = {};
+    if (!Array.isArray(n.ranges[jk])) n.ranges[jk] = [];
+    n.ranges[jk].push({ s:r.s, e:r.e });
+  }
   function fmtDur(sec){
     sec = Math.max(0, Math.round(sec));
     const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
@@ -3751,13 +3776,14 @@
     if (!n.time || typeof n.time !== 'object') n.time = {};
     n.time[jk] = Math.max(0, (n.time[jk] || 0) + secs);
     if (!n.time[jk]) delete n.time[jk];
-    if (secs > 0) autoTick(n, jk);
+    if (secs > 0){ autoTick(n, jk); pushRange(n, jk, PENDING_RANGE); }
     scheduleMapSave();
   }
   function setDayMinutes(node, jk, mins){
     if (!node.time || typeof node.time !== 'object') node.time = {};
     const secs = Math.round(mins * 60);
-    if (secs > 0){ node.time[jk] = secs; autoTick(node, jk); }
+    if (node.ranges) delete node.ranges[jk];
+    if (secs > 0){ node.time[jk] = secs; autoTick(node, jk); pushRange(node, jk, PENDING_RANGE); }
     else delete node.time[jk];
     scheduleMapSave();
   }
@@ -3765,18 +3791,28 @@
   function askDuration(opts, cb){
     const old = document.getElementById('dur-dlg'); if (old) old.remove();
     const d0 = Math.max(0, Math.round(opts.defMin || 0));
+    const p2 = v => String(v).padStart(2, '0');
+    const nowD = new Date(), startH = nowD.getHours();
+    const defFrom = p2(startH) + ':00', defTo = p2((startH + 1) % 24) + ':00';
     const ov = document.createElement('div');
     ov.id = 'dur-dlg'; ov.className = 'dur-ov';
     ov.innerHTML =
       '<div class="dur-box" role="dialog" aria-label="ثبت زمان">'+
         '<div class="dur-t">'+esc(opts.title || 'ثبت زمان')+'</div>'+
         (opts.sub ? '<div class="dur-s">'+esc(opts.sub)+'</div>' : '')+
-        '<div class="dur-in">'+
+        '<div class="dur-tabs"><button type="button" class="on" data-mode="dur">مدت زمان</button><button type="button" data-mode="range">بازه‌ی ساعت (از … تا …)</button></div>'+
+        '<div class="dur-in dur-mode-dur">'+
           '<label><input id="dur-h" type="number" inputmode="numeric" min="0" max="24" value="'+Math.floor(d0/60)+'"><span>ساعت</span></label>'+
           '<b>:</b>'+
           '<label><input id="dur-m" type="number" inputmode="numeric" min="0" max="59" value="'+(d0%60)+'"><span>دقیقه</span></label>'+
         '</div>'+
-        '<div class="dur-q">'+[15,30,60,120].map(m=>'<button type="button" data-q="'+m+'">'+(m<60 ? toFa(m)+' دقیقه' : toFa(m/60)+' ساعت')+'</button>').join('')+'</div>'+
+        '<div class="dur-in dur-mode-range" style="display:none;">'+
+          '<label><input id="dur-from" type="time" value="'+defFrom+'"><span>از ساعت</span></label>'+
+          '<b>←</b>'+
+          '<label><input id="dur-to" type="time" value="'+defTo+'"><span>تا ساعت</span></label>'+
+        '</div>'+
+        '<div class="dur-rinfo dur-mode-range" style="display:none;"></div>'+
+        '<div class="dur-q dur-mode-dur">'+[15,30,60,120].map(m=>'<button type="button" data-q="'+m+'">'+(m<60 ? toFa(m)+' دقیقه' : toFa(m/60)+' ساعت')+'</button>').join('')+'</div>'+
         '<div class="dur-b">'+
           '<button type="button" class="ok" data-d="ok">ثبت</button>'+
           (opts.deletable ? '<button type="button" class="del" data-d="del">حذف زمان</button>' : '')+
@@ -3786,6 +3822,21 @@
     document.body.appendChild(ov);
     const hEl = ov.querySelector('#dur-h'), mEl = ov.querySelector('#dur-m');
     const close = ()=>{ ov.remove(); };
+    const fromEl = ov.querySelector('#dur-from'), toEl = ov.querySelector('#dur-to');
+    const rInfo = ov.querySelector('.dur-rinfo');
+    let mode = 'dur';
+    const hm2min = v => { const m = /^(\d{1,2}):(\d{2})$/.exec(v || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+    const readRange = ()=>{
+      const a = hm2min(fromEl.value), b = hm2min(toEl.value);
+      if (a === null || b === null) return null;
+      let e = b; if (e <= a) e += 1440; /* مثلاً ۲۳ تا ۱ بامداد */
+      return { s:a, e:e, mins:e - a };
+    };
+    const updRInfo = ()=>{
+      const r = readRange();
+      rInfo.textContent = r ? ('مدت: ' + fmtDur(r.mins * 60)) : 'ساعت شروع و پایان را انتخاب کن';
+    };
+    fromEl.addEventListener('input', updRInfo); toEl.addEventListener('input', updRInfo); updRInfo();
     const total = ()=>{
       const h = Math.max(0, Math.min(24, parseInt(hEl.value, 10) || 0));
       const m = Math.max(0, Math.min(59, parseInt(mEl.value, 10) || 0));
@@ -3793,14 +3844,29 @@
     };
     ov.addEventListener('click', e=>{
       if (e.target === ov){ close(); return; }
+      const md = e.target.closest('[data-mode]');
+      if (md){
+        mode = md.dataset.mode;
+        ov.querySelectorAll('[data-mode]').forEach(x=> x.classList.toggle('on', x === md));
+        ov.querySelectorAll('.dur-mode-dur').forEach(x=>{ x.style.display = mode === 'dur' ? '' : 'none'; });
+        ov.querySelectorAll('.dur-mode-range').forEach(x=>{ x.style.display = mode === 'range' ? '' : 'none'; });
+        return;
+      }
       const q = e.target.closest('[data-q]');
       if (q){ const m = +q.dataset.q; hEl.value = Math.floor(m/60); mEl.value = m % 60; return; }
       const b = e.target.closest('[data-d]'); if (!b) return;
       if (b.dataset.d === 'no'){ close(); return; }
-      if (b.dataset.d === 'del'){ close(); cb(0); return; }
+      if (b.dataset.d === 'del'){ close(); PENDING_RANGE = null; cb(0); return; }
+      if (mode === 'range'){
+        const r = readRange();
+        if (!r || r.mins <= 0){ if (typeof toast === 'function') toast('ساعت شروع و پایان را درست انتخاب کن'); return; }
+        close(); PENDING_RANGE = { s:r.s % 1440, e:r.e % 1440 };
+        try{ cb(r.mins); } finally { PENDING_RANGE = null; }
+        return;
+      }
       const t = total();
       if (t <= 0 && !opts.allowZero){ if (typeof toast === 'function') toast('ساعت یا دقیقه رو وارد کن'); return; }
-      close(); cb(t);
+      close(); PENDING_RANGE = null; cb(t);
     });
     setTimeout(()=>{ try{ hEl.focus(); hEl.select(); }catch(e){} }, 60);
   }
@@ -3955,7 +4021,7 @@
         (rows.length ? '<ul>'+rows.map(n=>{
           const v = n.logs[jKey];
           const ts = nodeDaySecs(n, jKey);
-          return '<li>'+esc(n.text || 'بدون نام')+(v && v !== ROUTINE_DONE_MARK ? ' — '+esc(v) : '')+(ts ? ' · ⏱ '+fmtDur(ts) : '')+'</li>';
+          return '<li>'+esc(n.text || 'بدون نام')+(v && v !== ROUTINE_DONE_MARK ? ' — '+esc(v) : '')+(ts ? ' · ⏱ '+fmtDur(ts) : '')+(rangesText(n, jKey) ? ' · 🕒 '+rangesText(n, jKey) : '')+'</li>';
         }).join('')+'</ul>' : '') + '</div>';
     }
     {
@@ -3968,6 +4034,10 @@
       const perSecs = srcNodes.reduce((a,n)=> a + nodeSecs(n, keys), 0);
       const dayLabel = selJK === todayJK ? 'امروز' : pcFaDate(selDate);
       info += '<div class="pc-info pc-time"><b>⏱ زمان</b><div>'+dayLabel+': <b>'+fmtDur(daySecs)+'</b> · مجموع دوره: <b>'+fmtDur(perSecs)+'</b>'+(!isGoal && ctx.sources.length ? ' <span>(با موارد داخلش)</span>' : '')+'</div>';
+      {
+        const rr = srcNodes.filter(n=> nodeDayRanges(n, selJK).length);
+        if (rr.length) info += '<ul class="pc-rng-list" style="margin:6px 0 0;padding-inline-start:18px;font-size:11.5px;">'+rr.map(n=>'<li>'+esc(n.text || 'بدون نام')+' — 🕒 '+rangesText(n, selJK)+'</li>').join('')+'</ul>';
+      }
       if (!isGoal){
         const nn = ctx.node;
         info += '<div class="pc-time-btns">'+
@@ -3988,7 +4058,8 @@
           const kc = c.color || ctx.color;
           info += '<div class="pc-sub-row"><button type="button" class="pc-sub-tick" data-pc-subtick="'+c.id+'" data-jk="'+selJK+'" aria-label="تیک" style="border-color:'+esc(kc)+';background:'+(dn ? esc(kc) : 'transparent')+';">'+(dn ? '✓' : '')+'</button>'+
             '<span class="pc-sub-nm">'+esc(c.text || 'بدون نام')+'</span>'+
-            '<button type="button" class="pc-sub-set" data-pc-subset="'+c.id+'" data-jk="'+selJK+'" title="ثبت یا ویرایش زمان">'+(ts ? '⏱ '+fmtDur(ts)+' ✎' : '＋ زمان')+'</button></div>';
+            '<button type="button" class="pc-sub-set" data-pc-subset="'+c.id+'" data-jk="'+selJK+'" title="ثبت یا ویرایش زمان">'+(ts ? '⏱ '+fmtDur(ts)+' ✎' : '＋ زمان')+'</button></div>'+
+            (rangesText(c, selJK) ? '<div class="pc-rng">🕒 '+rangesText(c, selJK)+'</div>' : '');
         });
         info += '<div class="pc-sub-add"><input type="text" class="pc-sub-in" placeholder="مثلاً یوتیوب" autocomplete="off"><button type="button" class="btn gold" data-pc-subadd="1">افزودن</button></div></div>';
       }
