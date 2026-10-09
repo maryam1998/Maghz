@@ -1307,3 +1307,29 @@ body.bg-mode-image #grat-root{background:transparent;}
   margin: 0 2px;
   vertical-align: -0.15em;
 }
+
+/* بازی فراوانی: کارت دوره و مسیر عصبی پایین صفحه، جمع‌وجور */
+#grat-root .shop-bottom{ margin-top:18px; }
+#grat-root .shop-bottom .shop-period-card{ padding:8px 10px; margin:0 0 8px; border-radius:12px; }
+#grat-root .shop-bottom .shop-period-head{ font-size:11px; margin-bottom:6px; }
+#grat-root .shop-bottom #shop-mini-cal{ gap:2px; max-width:78%; margin:0 auto; }
+#grat-root .shop-bottom #shop-mini-cal .mini-cal-day{ font-size:7.5px; border-radius:3px; }
+#grat-root .shop-bottom #shop-mini-cal .mini-cal-month{ font-size:9.5px; padding:4px 2px 2px; }
+#grat-root .shop-bottom #shop-mini-cal-info .btn, #grat-root .shop-bottom #shop-mini-cal-info button{ padding:6px 10px; font-size:11px; }
+#grat-root .shop-bottom .section-label h2{ font-size:11.5px; }
+#grat-root .shop-bottom .neural-card{ padding:8px 10px 8px; border-radius:12px; margin:0; }
+#grat-root .shop-bottom .neural-card svg{ height:78px; width:100%; }
+#grat-root .shop-bottom .neural-card .np-status{ font-size:11px; margin-top:4px; line-height:1.5; }
+#grat-root .shop-bottom .neural-card .np-habit-btn{ padding:6px 10px; font-size:11px; margin-top:6px !important; }
+#grat-root .shop-bottom .neural-card .np-stats-grid{ margin-top:6px; gap:6px; }
+#grat-root .shop-bottom .neural-card .np-stat-box{ padding:5px 4px; }
+#grat-root .shop-bottom .neural-card .np-stat-value{ font-size:14px; }
+/* تاریخچه خریدها: هر قلم یک ردیف جدا */
+#grat-root .shx-item{ display:flex; align-items:center; gap:10px; padding:10px 12px; margin:0 0 8px; background:var(--surface); border:1px solid var(--line); border-radius:14px; cursor:pointer; }
+#grat-root .shx-item .ic{ width:38px; height:38px; flex:none; display:flex; align-items:center; justify-content:center; border-radius:10px; overflow:hidden; background:var(--surface-2); }
+#grat-root .shx-item .ic img{ width:100%; height:100%; object-fit:cover; }
+#grat-root .shx-item .mid{ flex:1; min-width:0; }
+#grat-root .shx-item .t1{ font-size:13.5px; font-weight:700; white-space:normal; word-break:break-word; }
+#grat-root .shx-item .t2{ font-size:11px; color:var(--muted); margin-top:2px; }
+#grat-root .shx-item .amt{ font-size:12.5px; font-weight:800; color:var(--emerald-700); white-space:nowrap; text-align:left; }
+#grat-root .shx-item .amt small{ display:block; font-size:10px; font-weight:600; color:var(--muted); }
