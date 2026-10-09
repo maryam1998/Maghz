@@ -306,17 +306,21 @@
   var vvUrls = {};
 
   function vvDb(){
-    if (vvDbPromise) return vvDbPromise;
-    vvDbPromise = new Promise(function(resolve, reject){
-      if (!window.indexedDB){ reject(new Error('no-idb')); return; }
-      var req = indexedDB.open('beliefs-patch-media', 1);
-      req.onupgradeneeded = function(){ req.result.createObjectStore('videos'); };
-      req.onsuccess = function(){ resolve(req.result); };
-      req.onerror = function(){ reject(req.error); };
-    });
-    vvDbPromise.catch(function(){ vvDbPromise = null; });
-    return vvDbPromise;
-  }
+  if (vvDbPromise) return vvDbPromise;
+  vvDbPromise = new Promise(function(resolve, reject){
+    if (!window.indexedDB){ reject(new Error('no-idb')); return; }
+    var req = indexedDB.open('beliefs-patch-media', 2);
+    req.onupgradeneeded = function(){
+      var db = req.result;
+      if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos');
+      if (!db.objectStoreNames.contains('images')) db.createObjectStore('images');
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error); };
+  });
+  vvDbPromise.catch(function(){ vvDbPromise = null; });
+  return vvDbPromise;
+}
   function vvTx(mode, fn){
     return vvDb().then(function(db){
       return new Promise(function(resolve, reject){
