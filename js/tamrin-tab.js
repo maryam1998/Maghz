@@ -1,26 +1,99 @@
 /* ---------------- فیلتر محتوای نامناسب ---------------- */
 const BANNED_WORDS = [
-  'کیر','کص','کس','کوس','جنده','کونی','گاییدم','گاييدم','کیری','کصکش','مادرجنده',
-  'مادرقحبه','ننه جنده','حرومزاده','حروم‌زاده','عوضی','آشغال','کثافت','لاشی','ابنه',
-  'خارکسه','خار کسه','کیرم','بی‌ناموس','بی ناموس','حیوون','احمق کثیف','لعنتی',
-  'fuck','shit','bitch','asshole','bastard','dick','pussy','cunt','whore','slut',
-  'سیاسی','سیاست','انتخابات','رئیس‌جمهور','رییس جمهور','رهبر انقلاب','حکومت','رژیم',
-  'اصلاح‌طلب','اصلاح طلب','اصولگرا','براندازی','انقلاب','اعتراضات','تحریم','مجلس',
-  'حزب','رفراندوم','جمهوری اسلامی','سلطنت‌طلب','سلطنت طلب','دولت'
+  /* موضوعات سیاسی (عادی؛ بر اساس بخشی از متن) */
+  'سیاسی','سیاست','انتخابات','رئیس‌جمهور','رییس جمهور',
+  'رهبر انقلاب','حکومت','رژیم','اصلاح‌طلب','اصلاح طلب',
+  'اصولگرا','براندازی','انقلاب','اعتراضات','تحریم',
+  'مجلس','حزب','رفراندوم','جمهوری اسلامی','سلطنت‌طلب',
+  'سلطنت طلب','دولت'
 ];
+/* کلمات نامناسب به‌صورت متن خوانا در برنامه نیست؛ فقط اثرانگشتِ یک‌طرفه (هش) ذخیره شده
+   و متن کاربر کلمه‌به‌کلمه با آن‌ها مقایسه می‌شود. بازیابیِ کلمه از روی هش ممکن نیست. */
+const BANNED_HASHES = new Set([
+  '01aaaabeca4efe6a','02a8a4237194c658','08a8ad9565bc9bf1','1578f7f93125f308',
+  '1e4fcefe00425218','2c06520d1e615e90','30ffffdbe116a306','35dc92ca07288b0b',
+  '41d872d80ffa9e59','47b3c5b5edf9f9a2','50c6245d1d8d25cc','57eac029e1c40db4',
+  '6171c4b51d642e3f','61c91e8a80c227a0','62a0f7de07668fa6','6537d0941beed072',
+  '6af77a1c8401b03a','6cd5e87b8a86223f','7c9ae63ffb604387','81602170e4611ac7',
+  '909f228d53151e61','91b887d376a6c3d9','92a4ff902b393f7f','92f10755dc690691',
+  '9879638adb82998c','988b1ec5fa118c27','a856eb338e0807fd','a9a1d1ddaecac09a',
+  'b83ae030aefe0496','b99bf9867bd8b693','c27a98b047154dcb','c9747efa7888df7a',
+  'cefa23cbc5fa7cbb','d95c3b1f43ced6d2','da26bf9e6555fcbe','dac84a0510cc3019',
+  'e6774d4a8b4a2345','edb23f2e143a5c65','fbbc16bee6a17d01'
+]);
+const BANNED_STEM_HASHES = new Set([
+  '1e4fcefe00425218','2c06520d1e615e90','30ffffdbe116a306','6171c4b51d642e3f',
+  '909f228d53151e61','92f10755dc690691','9879638adb82998c','988b1ec5fa118c27',
+  'b83ae030aefe0496','c27a98b047154dcb','da26bf9e6555fcbe','edb23f2e143a5c65'
+]);
+const BANNED_AMBIG = { '08a8ad9565bc9bf1': ['هیچ','هر','یک','چند','آن','این','همه','هرکس','هیچکس'] };
+const BANNED_SUFFIX = ['ها','های','ام','ات','اش','تون','شون','مون','ان','ید','ین','یم','ی','م','ت','ش','ه','ا','ing','ed','er','es','s','y'];
+function _bwHash(s){
+  let h1 = 0x811c9dc5, h2 = 0x9e3779b1;
+  for(let i=0;i<s.length;i++){
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 ^ ((c + i) >>> 0), 0x85ebca6b) >>> 0;
+    h2 = (h2 ^ (h2 >>> 13)) >>> 0;
+  }
+  return ('00000000' + h1.toString(16)).slice(-8) + ('00000000' + h2.toString(16)).slice(-8);
+}
+function _bwTokenHit(tok, prev){
+  const hh = _bwHash(tok);
+  if(BANNED_HASHES.has(hh)){
+    const amb = BANNED_AMBIG[hh];
+    if(amb && prev && amb.indexOf(prev) !== -1) return false;
+    return true;
+  }
+  /* پسوندهای رایج (فقط وقتی ریشه حداقل ۴ حرف باشد تا کلمات عادیِ کوتاه اشتباهی نگیرند) */
+  let cur = [tok];
+  for(let depth=0; depth<2; depth++){
+    const next = [];
+    cur.forEach(function(w){
+      BANNED_SUFFIX.forEach(function(sf){
+        if(w.length - sf.length >= 4 && w.endsWith(sf)){
+          const b = w.slice(0, w.length - sf.length);
+          if(BANNED_HASHES.has(_bwHash(b))) next.push('!'); else next.push(b);
+        }
+      });
+    });
+    if(next.indexOf('!') !== -1) return true;
+    cur = next;
+    if(!cur.length) break;
+  }
+  /* ریشه‌های بلند: کلمه‌ای که با آن‌ها شروع می‌شود */
+  for(let L=5; L<=tok.length; L++){
+    if(BANNED_STEM_HASHES.has(_bwHash(tok.slice(0, L)))) return true;
+  }
+  return false;
+}
+function containsProfanity(t){
+  const toks = t.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  for(let i=0;i<toks.length;i++){
+    if(_bwTokenHit(toks[i], i>0 ? toks[i-1] : '')) return true;
+    for(let n=2;n<=3 && i+n<=toks.length;n++){
+      const ph = toks.slice(i, i+n).join(' ');
+      if(BANNED_HASHES.has(_bwHash(ph)) || BANNED_HASHES.has(_bwHash(ph.replace(/ /g,'')))) return true;
+    }
+  }
+  return false;
+}
 function normalizeForFilter(str){
   return (str||'')
     .replace(/[\u064B-\u065F\u0670]/g,'')
     .replace(/ي/g,'ی').replace(/ك/g,'ک')
+    .replace(/\u0640/g,'')
     .replace(/[\u200c]+/g,' ')
     .replace(/\s+/g,' ')
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/(.)\1{2,}/g,'$1');
 }
 function containsBannedContent(text){
   const t = normalizeForFilter(text);
   if(!t) return false;
-  return BANNED_WORDS.some(w => t.indexOf(normalizeForFilter(w)) !== -1);
+  if(BANNED_WORDS.some(w => t.indexOf(normalizeForFilter(w)) !== -1)) return true;
+  return containsProfanity(t);
 }
 function escapeHtml(str){
   return (str==null?'':String(str)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2674,4 +2747,55 @@ updateCartBadge();
   document.addEventListener('touchstart', warm, {passive:true, once:true});
   document.addEventListener('mousedown',  warm, {once:true});
   document.addEventListener('keydown',    warm, {once:true});
+})();
+
+/* ===== حفظ جای اسکرول بعد از ویرایش/تأیید =====
+   لیست‌ها با innerHTML دوباره ساخته می‌شوند؛ لحظه‌ای ارتفاع صفحه کم می‌شود و
+   مرورگر اسکرول #grat-root را به بالا می‌پراند. این پوشش، جای اسکرول را قبل از
+   عملیات می‌خواند و بعدش (و چند بار با تأخیر، برای محتوای دیرتر لود شونده) برمی‌گرداند.
+   اگر کاربر در این فاصله خودش لمس/اسکرول کند، دیگر چیزی را برنمی‌گرداند. */
+(function(){
+  var token = 0;
+  function bump(){ token++; }
+  ['touchstart','touchmove','wheel','mousedown','keydown'].forEach(function(ev){
+    document.addEventListener(ev, bump, {passive:true, capture:true});
+  });
+  function keepScroll(fn){
+    if (typeof fn !== 'function' || fn.__ks) return fn;
+    var w = function(){
+      var el = document.getElementById('grat-root');
+      var top = el ? el.scrollTop : 0, my = token;
+      var restore = function(){
+        if (my !== token) return;
+        var e = document.getElementById('grat-root');
+        if (e && top > 0 && Math.abs(e.scrollTop - top) > 1) e.scrollTop = top;
+      };
+      var after = function(){
+        restore();
+        if (window.requestAnimationFrame) requestAnimationFrame(restore);
+        setTimeout(restore, 80); setTimeout(restore, 300);
+      };
+      var r;
+      try { r = fn.apply(this, arguments); }
+      finally { after(); }
+      if (r && typeof r.then === 'function') r.then(after, function(){});
+      return r;
+    };
+    w.__ks = true;
+    return w;
+  }
+  window.__keepScroll = keepScroll;
+  renderHistory = keepScroll(renderHistory);
+  renderHome = keepScroll(renderHome);
+  renderShopHistory = keepScroll(renderShopHistory);
+  renderPendingList = keepScroll(renderPendingList);
+  renderCart = keepScroll(renderCart);
+  renderTrackingList = keepScroll(renderTrackingList);
+  renderTrackingState = keepScroll(renderTrackingState);
+  renderFutureUI = keepScroll(renderFutureUI);
+  renderVisualGallery = keepScroll(renderVisualGallery);
+  renderMeditationAudio = keepScroll(renderMeditationAudio);
+  saveGratEdit = keepScroll(saveGratEdit);
+  deleteGratEntry = keepScroll(deleteGratEntry);
+  addTrackingItem = keepScroll(addTrackingItem);
 })();
