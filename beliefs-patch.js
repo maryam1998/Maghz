@@ -1533,8 +1533,73 @@
       '.qc-labels{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:800;margin-bottom:8px;}' +
       '.qc-side{color:var(--ink);}' +
       '.qc-center{font-size:10.5px;color:var(--emerald-700);background:rgba(43,191,171,.12);padding:3px 10px;border-radius:12px;letter-spacing:.3px;}' +
-      '.qc-desc{font-size:11.5px;color:var(--ink-soft);line-height:1.8;text-align:center;}';
-  }
+      '.qc-desc{font-size:11.5px;color:var(--ink-soft);line-height:1.8;text-align:center;}' +
+'.ras-empty{padding:16px;background:linear-gradient(135deg,rgba(43,191,171,.06),rgba(94,200,240,.03));border:1px dashed rgba(43,191,171,.35);border-radius:14px;text-align:center;}' +
+'.ras-empty-icon{font-size:32px;margin-bottom:8px;display:block;}' +
+'.ras-empty-title{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:6px;}' +
+'.ras-empty-desc{font-size:11.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:14px;}' +
+'.ras-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;}' +
+'.ras-chip{padding:8px 12px;border-radius:20px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font-family:inherit;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.2s;}' +
+'.ras-chip:active{transform:scale(.96);}' +
+'.ras-chip.selected{background:var(--emerald-500,#2bbfab);border-color:var(--emerald-500,#2bbfab);color:#fff;box-shadow:0 4px 12px rgba(43,191,171,.3);}' +
+'.ras-custom-input{width:100%;font-family:inherit;font-size:12px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);margin-bottom:12px;outline:none;resize:vertical;min-height:44px;}' +
+'.ras-custom-input:focus{border-color:var(--emerald-500,#2bbfab);}' +
+'.ras-start-btn{width:100%;padding:12px;font-size:13px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(15,91,83,.18);transition:.2s;}' +
+'.ras-start-btn:active{transform:scale(.98);}' +
+'.ras-start-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}' +
+'.ras-active{padding:16px;background:linear-gradient(135deg,rgba(43,191,171,.08),rgba(244,197,66,.04));border:1px solid rgba(43,191,171,.3);border-radius:14px;}' +
+'.ras-active-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;}' +
+'.ras-active-label{font-size:13.5px;font-weight:800;color:var(--ink);line-height:1.5;flex:1;}' +
+'.ras-active-label small{display:block;font-size:10.5px;color:var(--muted);font-weight:600;margin-top:4px;}' +
+'.ras-change-btn{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;font-size:14px;padding:0;display:flex;align-items:center;justify-content:center;}' +
+'.ras-change-btn:hover{background:var(--surface-2);}' +
+'.ras-record-btn{width:100%;padding:14px;font-size:13.5px;font-weight:800;background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 16px rgba(15,91,83,.2);display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;}' +
+'.ras-record-btn:active{transform:scale(.98);}' +
+'.ras-record-btn.pulse{animation:rasPulse 2s ease-in-out infinite;}' +
+'@keyframes rasPulse{0%,100%{box-shadow:0 6px 16px rgba(15,91,83,.2);}50%{box-shadow:0 6px 24px rgba(43,191,171,.5),0 0 0 8px rgba(43,191,171,.08);}}' +
+'.ras-stats{display:flex;gap:6px;margin-bottom:14px;}' +
+'.ras-stat{flex:1;padding:8px 6px;background:var(--card);border:1px solid var(--line);border-radius:10px;text-align:center;}' +
+'.ras-stat-num{font-size:16px;font-weight:800;color:var(--emerald-700,#0f5b53);display:block;line-height:1.2;}' +
+'.ras-stat-lbl{font-size:9.5px;color:var(--muted);font-weight:700;margin-top:2px;display:block;}' +
+'.ras-heatmap{display:flex;gap:5px;margin-bottom:14px;justify-content:space-between;}' +
+'.ras-heat-day{flex:1;aspect-ratio:1;border-radius:8px;background:var(--surface-2);border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--muted);position:relative;}' +
+'.ras-heat-day.l1{background:rgba(43,191,171,.25);color:var(--emerald-700,#0f5b53);}' +
+'.ras-heat-day.l2{background:rgba(43,191,171,.5);color:#fff;}' +
+'.ras-heat-day.l3{background:var(--emerald-500,#2bbfab);color:#fff;}' +
+'.ras-heat-day.today{border-color:var(--gold-500,#f4c542);}' +
+'.ras-heat-day small{position:absolute;bottom:-16px;font-size:9px;font-weight:600;color:var(--muted);}' +
+'.ras-feed-title{font-size:11.5px;font-weight:800;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}' +
+'.ras-feed-title span{font-size:10px;color:var(--muted);font-weight:600;}' +
+'.ras-feed-item{padding:10px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);margin-bottom:6px;position:relative;}' +
+'.ras-feed-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}' +
+'.ras-feed-time{font-size:10.5px;color:var(--muted);font-weight:700;}' +
+'.ras-feed-feel{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:10px;}' +
+'.ras-feel-normal{background:rgba(120,120,140,.12);color:var(--ink-soft);}' +
+'.ras-feel-calm{background:rgba(94,200,240,.18);color:#1d7ba0;}' +
+'.ras-feel-bright{background:rgba(244,197,66,.2);color:#8a6b00;}' +
+'.ras-feel-strong{background:rgba(43,191,171,.2);color:#0f5b53;}' +
+'.ras-feed-text{font-size:12px;color:var(--ink);line-height:1.7;white-space:pre-wrap;}' +
+'.ras-feed-del{position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;line-height:1;padding:0;}' +
+'.ras-feed-empty{text-align:center;font-size:11px;color:var(--muted);padding:12px;background:var(--surface-2);border-radius:10px;line-height:1.7;}' +
+'.ras-sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);}' +
+'.ras-sheet-overlay.open{display:flex;animation:rasFadeIn .2s ease;}' +
+'@keyframes rasFadeIn{from{opacity:0;}to{opacity:1;}}' +
+'.ras-sheet-card{width:100%;max-width:500px;background:var(--card);border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0));box-shadow:0 -10px 40px rgba(0,0,0,.3);animation:rasSlideUp .3s cubic-bezier(.2,.9,.3,1);}' +
+'@keyframes rasSlideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}' +
+'.ras-sheet-handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 14px;}' +
+'.ras-sheet-title{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:14px;text-align:center;}' +
+'.ras-sheet-text{width:100%;font-family:inherit;font-size:13px;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--ink);resize:none;min-height:80px;outline:none;line-height:1.75;box-sizing:border-box;}' +
+'.ras-sheet-text:focus{border-color:var(--emerald-500,#2bbfab);background:var(--card);}' +
+'.ras-sheet-feel-lbl{font-size:11.5px;font-weight:800;color:var(--ink);margin:14px 0 8px;}' +
+'.ras-sheet-feels{display:flex;gap:6px;flex-wrap:wrap;}' +
+'.ras-sheet-feel{flex:1;min-width:70px;padding:10px 6px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:.15s;}' +
+'.ras-sheet-feel span:first-child{font-size:18px;}' +
+'.ras-sheet-feel.selected{background:var(--emerald-500,#2bbfab);border-color:var(--emerald-500,#2bbfab);color:#fff;transform:scale(1.03);}' +
+'.ras-sheet-actions{display:flex;gap:8px;margin-top:16px;}' +
+'.ras-sheet-actions button{flex:1;padding:12px;border-radius:12px;border:none;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;}' +
+'.ras-sheet-cancel{background:var(--surface-2);color:var(--ink-soft);}' +
+'.ras-sheet-save{background:linear-gradient(135deg,var(--emerald-700,#0f5b53),var(--emerald-500,#2bbfab));color:#fff;box-shadow:0 4px 12px rgba(15,91,83,.2);}' +
+'.ras-sheet-save:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}';
 
   /* =====================================================================
      بقیه‌ی توابع (متن آینده، بذر، تایمر، تنفس، ...)
