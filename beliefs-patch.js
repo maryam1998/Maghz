@@ -2714,26 +2714,166 @@
   if (document.readyState === 'complete') setTimeout(boot, 300);
   else window.addEventListener('load', function(){ setTimeout(boot, 300); });
 })();
-   
+
 /* =====================================================================
    پچ: نگه‌داری پایدار موسیقی مدیتیشن در IndexedDB
+   — با بستن/باز کردن اپ پاک نمی‌شه.
    ===================================================================== */
 (function(){
   'use strict';
+
   var DB_NAME = 'beliefs-patch-media';
-  var DB_VER  = 2;
-  ...
+  var DB_VER  = 2;              /* ارتقا از ۱ به ۲ برای افزودن store صوتی */
+  var STORE   = 'audio';
+  var KEY     = 'meditation_main';
+
+  var dbPromise = null;
+  var audioUrl  = null;
+
+  function openDb(){
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise(function(resolve, reject){
+      if (!window.indexedDB){ reject(new Error('no-idb')); return; }
+      var req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = function(){
+        var db = req.result;
+        if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos');
+        if (!db.objectStoreNames.contains(STORE))   db.createObjectStore(STORE);
+      };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror   = function(){ reject(req.error); };
+    });
+    dbPromise.catch(function(){ dbPromise = null; });
+    return dbPromise;
+  }
+  function tx(mode, fn){
+    return openDb().then(function(db){
+      return new Promise(function(resolve, reject){
+        var t = db.transaction(STORE, mode);
+        var out = fn(t.objectStore(STORE));
+        t.oncomplete = function(){ resolve(out && out.result); };
+        t.onerror    = function(){ reject(t.error); };
+        t.onabort    = function(){ reject(t.error); };
+      });
+    });
+  }
+  function put(blob){ return tx('readwrite', function(st){ return st.put(blob, KEY); }); }
+  function get()    { return tx('readonly',  function(st){ return st.get(KEY); }); }
+  function del()    { return tx('readwrite', function(st){ return st.delete(KEY); }); }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function toast(msg){ if (typeof window.toast === 'function') window.toast(msg); }
+
+  /* ---------- رندر پخش‌کننده ---------- */
+  function render(){
+    var wrap = document.getElementById('meditation-audio-wrap');
+    if (!wrap) return;
+
+    var st = window.state;
+    var meta = st && st.meditationAudio;
+    if (!meta || !meta.name){
+      if (wrap.innerHTML) wrap.innerHTML = '';
+      wrap.removeAttribute('data-sig');
+      return;
+    }
+
+    var sig = (meta.name || '') + ':' + (meta.size || 0);
+    var hasAudioEl = !!wrap.querySelector('audio');
+    if (wrap.getAttribute('data-sig') === sig && hasAudioEl){
+      var el0 = document.getElementById('meditation-audio-el');
+      if (el0 && !el0.src && audioUrl) el0.src = audioUrl;
+      return;
+    }
+    wrap.setAttribute('data-sig', sig);
+
+    wrap.innerHTML =
+      '<div style="margin-top:8px;padding:8px 8px 8px 36px;background:var(--surface-2);border-radius:10px;position:relative;">' +
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">🎵 ' + esc(meta.name) + '</div>' +
+        '<audio id="meditation-audio-el" controls preload="metadata" style="width:100%;height:36px;display:block;"></audio>' +
+        '<button type="button" id="meditation-audio-del" title="حذف موسیقی" ' +
+          'style="position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:50%;border:none;' +
+          'background:rgba(0,0,0,.08);color:var(--ink);font-size:14px;cursor:pointer;line-height:1;padding:0;">×</button>' +
+      '</div>';
+
+    var el = document.getElementById('meditation-audio-el');
+    if (audioUrl){ el.src = audioUrl; return; }
+    get().then(function(blob){
+      if (!blob) return;
+      audioUrl = URL.createObjectURL(blob);
+      el.src = audioUrl;
+    }).catch(function(){});
+  }
+
+  /* ---------- آپلود ---------- */
+  window.handleMeditationAudio = function(files){
+    if (!files || !files.length) return;
+    var f = files[0];
+    if (!f) return;
+    if (!f.type || f.type.indexOf('audio/') !== 0){
+      toast('فقط فایل صوتی انتخاب کن');
+      return;
+    }
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
+
+    put(f).then(function(){
+      var st = window.state;
+      if (!st) return;
+      st.meditationAudio = {
+        name: f.name || 'audio',
+        size: f.size || 0,
+        date: Date.now()
+      };
+      try { if (typeof window.saveState === 'function') window.saveState(); } catch(e){}
+
+      if (audioUrl){ try { URL.revokeObjectURL(audioUrl); } catch(e){} audioUrl = null; }
+      var wrap = document.getElementById('meditation-audio-wrap');
+      if (wrap) wrap.removeAttribute('data-sig');
+      render();
+      toast('موسیقی ذخیره شد 🎵');
+    }).catch(function(){
+      toast('ذخیره‌ی موسیقی ممکن نشد');
+    });
+  };
+
+  /* ---------- حذف ---------- */
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest('#meditation-audio-del')){
+      if (!window.confirm('این موسیقی حذف شود؟')) return;
+      del().catch(function(){});
+      if (window.state){
+        delete window.state.meditationAudio;
+        try { if (typeof window.saveState === 'function') window.saveState(); } catch(e){}
+      }
+      if (audioUrl){ try { URL.revokeObjectURL(audioUrl); } catch(e){} audioUrl = null; }
+      var wrap = document.getElementById('meditation-audio-wrap');
+      if (wrap){ wrap.removeAttribute('data-sig'); wrap.innerHTML = ''; }
+      toast('موسیقی حذف شد');
+    }
+  });
+
+  /* ---------- بعد از هر بار رندر شدن تب باورها، پخش‌کننده رو برگردون ---------- */
+  function hook(){
+    if (typeof window.renderBeliefsView === 'function' && !window.renderBeliefsView.__medAudioPatched){
+      var orig = window.renderBeliefsView;
+      window.renderBeliefsView = function(){
+        var r = orig.apply(this, arguments);
+        try { render(); } catch(e){}
+        return r;
+      };
+      window.renderBeliefsView.__medAudioPatched = true;
+    }
+    try { render(); } catch(e){}
+  }
+
   if (document.readyState === 'complete') setTimeout(hook, 700);
   else window.addEventListener('load', function(){ setTimeout(hook, 700); });
-})();                                    ← پایان بلوک جدید (پچ موسیقی)
-
-/* =====================================================================
-   حبابِ تاریخ برای همه‌ی تقویم‌ها (باورها، شکرگذاری، بازی فراوانی، هدف‌گذاری)
-   ===================================================================== */
-(function(){
-  var CELL_SEL = '...';
-  ...
-})();                                    ← پایان بلوک دوم (حباب)
+})();
 
 /* =====================================================================
    حبابِ تاریخ برای همه‌ی تقویم‌ها (باورها، شکرگذاری، بازی فراوانی، هدف‌گذاری)
