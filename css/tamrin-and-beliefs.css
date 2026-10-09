@@ -1320,3 +1320,11 @@ body.bg-mode-image #grat-root{background:transparent;}
 #grat-root .shx-item .t2{ font-size:11px; color:var(--muted); margin-top:2px; }
 #grat-root .shx-item .amt{ font-size:12.5px; font-weight:800; color:var(--emerald-700); white-space:nowrap; text-align:left; }
 #grat-root .shx-item .amt small{ display:block; font-size:10px; font-weight:600; color:var(--muted); }
+
+
+/* --- تب باورها: کارت‌های قدیمیِ index.html تا ساخته‌شدنِ نسخه‌ی جدید دیده نشوند (جلوگیری از پرش) --- */
+#grat-root #view-beliefs .belief-flow-card:not([data-new-card]){display:none !important;}
+
+/* --- تب باورها: کادرها هم‌عرضِ تب تمرین (کمتر تو‌در‌تو، حاشیه‌ی کمتر) --- */
+#grat-root #view-beliefs .belief-flow-card[data-new-card]{margin-left:8px; margin-right:8px; padding:14px 10px;}
+#grat-root #view-beliefs .belief-flow-card[data-new-card] .dp-step{padding:12px 10px; margin-left:0; margin-right:0;}
