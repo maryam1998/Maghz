@@ -495,6 +495,31 @@
         }
       }
 
+      /* نیشگونِ آسان‌تر: اگر یکی از دو انگشت روی (یا نزدیک) یک نوشته باشد، همان نوشته بزرگ/کوچک می‌شود */
+      {
+        let bestEl = null, bestD = 1e9;
+        const pad = 26;
+        svg.querySelectorAll('text[data-label="1"]').forEach(el=>{
+          const b = el.getBoundingClientRect();
+          pts.forEach(pt=>{
+            if (pt.x >= b.left - pad && pt.x <= b.right + pad && pt.y >= b.top - pad && pt.y <= b.bottom + pad){
+              const d = Math.hypot(pt.x - (b.left + b.right)/2, pt.y - (b.top + b.bottom)/2);
+              if (d < bestD){ bestD = d; bestEl = el; }
+            }
+          });
+        });
+        if (bestEl){
+          const type = bestEl.dataset.hit, id = bestEl.dataset.id, goalId = bestEl.dataset.goalid || null;
+          const node = getNodeRef(type, id, goalId);
+          if (node){
+            mode = 'resize-label';
+            resizeTarget = { type, id, goalId, startDist: dist(pts[0], pts[1]), startSize: node.labelSize || currentLabelSize(type, id) };
+            svg.classList.add('resizing');
+            return;
+          }
+        }
+      }
+
       if (hit1 && hit2 && hit1.dataset.hit === 'feeling' && hit2.dataset.hit === 'feeling' &&
           hit1.dataset.id === hit2.dataset.id) {
         const g = findHost(hit1.dataset.id);
@@ -1314,19 +1339,11 @@
       if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
       return '<span>'+esc(r.icon || '🌟')+'</span>';
     }
-    function ringsRowHTML(g){
-      const rs = ringsOf(g);
-      if (!rs.length) return '';
-      let h = '<div class="gs-rings"><div class="gs-trophies-h gs-rings-h">'+ICO_MAP+' نشانه‌های نزدیکی · '+toFa(rs.length)+(rs.length > 1 ? '<span class="gs-rhint">با انگشت جابه‌جا کن</span>' : '')+'</div><div class="gs-rrow">';
-      rs.forEach(r=>{
-        h += '<button type="button" class="gs-ring'+(RSEL===r.id?' sel':'')+'" data-gact="ring" data-rid="'+r.id+'" title="'+esc(r.label||'')+'" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
-             '<span class="ric">'+ringIconHTML(r)+'</span><span class="tnm">'+esc(r.label||'نزدیک شدن به هدف')+'</span></button>';
-      });
-      h += '</div>';
+    function ringDetailHTML(g, rs){
       const r = rs.find(x=>x.id===RSEL);
-      if (r){
-        const kids = countAllActions(r.actions||[]);
-        h += '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
+      if (!r) return '';
+      const kids = countAllActions(r.actions||[]);
+      return '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
              '<div class="trow"><span>'+(kids ? toFa(kids) : '')+'</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
              '<div class="gs-rbtns">'+
                '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
@@ -1334,23 +1351,33 @@
                (state.goals.filter(x=>!x.reached).length > 1 ? '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">انتقال به هدف دیگر</button>' : '')+
                '<button type="button" class="gs-mini" data-gact="ringdel" data-rid="'+r.id+'">حذف</button>'+
              '</div><div class="gs-sub" data-host="'+r.id+'">'+bodyHTML(r)+'</div></div>';
-      }
-      return h + '</div>';
     }
+    /* ردیف واحدِ «نشانه‌های نزدیکی + جام‌ها» با ترتیب دلخواه کاربر (g.itemOrder) */
     function trophiesHTML(g){
-      const ringsH = ringsRowHTML(g);
+      const rs = ringsOf(g);
       const arr = collectAch(g.actions, g.name || g.label || 'نشانه', []);
-      if (!arr.length && !ringsH) return '';
+      if (!arr.length && !rs.length) return '';
       arr.sort((a,b)=> (a.node.achievedAt||0) - (b.node.achievedAt||0));
-      let h = '<div class="gs-trophies">'+ringsH;
-      if (arr.length){
-        h += '<div class="gs-trophies-h">'+ICO_TROPHY+' دستاوردها · '+toFa(arr.length)+'</div><div class="gs-tgrid">';
-        arr.forEach(({node})=>{
-          h += '<button type="button" class="gs-trophy'+(TSEL===node.id?' sel':'')+'" data-gact="trophy" data-tid="'+node.id+'" title="'+esc(node.text||'')+'">'+
+      let items = rs.map(r=>({ id:r.id, kind:'ring', r:r })).concat(arr.map(x=>({ id:x.node.id, kind:'tr', x:x })));
+      const order = Array.isArray(g.itemOrder) ? g.itemOrder : [];
+      items = items.map((it, i)=>({ it, k: order.indexOf(it.id) >= 0 ? order.indexOf(it.id) : 1e6 + i }))
+                   .sort((a,b)=> a.k - b.k).map(o=>o.it);
+      let h = '<div class="gs-trophies"><div class="gs-trophies-h gs-rings-h">'+ICO_MAP+' نشانه‌های نزدیکی · '+toFa(rs.length)+
+              ' &nbsp;'+ICO_TROPHY+' دستاوردها · '+toFa(arr.length)+(items.length > 1 ? '<span class="gs-rhint">با انگشت جابه‌جا کن</span>' : '')+'</div>'+
+              '<div class="gs-rrow" data-host="'+g.id+'">';
+      items.forEach(it=>{
+        if (it.kind === 'ring'){
+          const r = it.r;
+          h += '<button type="button" class="gs-ring'+(RSEL===r.id?' sel':'')+'" data-cid="'+r.id+'" data-gact="ring" data-rid="'+r.id+'" title="'+esc(r.label||'')+'" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
+               '<span class="ric">'+ringIconHTML(r)+'</span><span class="tnm">'+esc(r.label||'نزدیک شدن به هدف')+'</span></button>';
+        } else {
+          const node = it.x.node;
+          h += '<button type="button" class="gs-trophy'+(TSEL===node.id?' sel':'')+'" data-cid="'+node.id+'" data-gact="trophy" data-tid="'+node.id+'" title="'+esc(node.text||'')+'">'+
                '<span class="tic">'+ICO_TROPHY+'</span><span class="tnm">'+esc(node.text||'بدون نام')+'</span></button>';
-        });
-        h += '</div>';
-      }
+        }
+      });
+      h += '</div>';
+      h += ringDetailHTML(g, rs);
       const sel = arr.find(x=>x.node.id===TSEL);
       if (sel){
         const n = sel.node;
@@ -1595,6 +1622,7 @@
             if (typeof toast === 'function') toast('دوره‌ی ' + pcOrd(pi.gp.past.length) + ' شروع شد');
           }
         } else if (a === 'trophy'){
+          if (suppressRingClick) return;
           TSEL = (TSEL === gact.dataset.tid) ? null : gact.dataset.tid; draw();
         } else if (a === 'unach'){
           const f2 = findActionNode(g.actions, gact.dataset.tid);
@@ -1817,7 +1845,7 @@
     (function(){
       let drag = null;
       function chipAt(x, y, except){
-        const chips = [...listEl.querySelectorAll('.gs-ring')];
+        const chips = [...listEl.querySelectorAll('.gs-rrow .gs-ring, .gs-rrow .gs-trophy')].filter(c=> c.parentNode === except.parentNode);
         for (const c of chips){
           if (c === except) continue;
           const b = c.getBoundingClientRect();
@@ -1826,9 +1854,9 @@
         return null;
       }
       listEl.addEventListener('pointerdown', (e)=>{
-        const chip = e.target.closest('.gs-ring');
-        if (!chip || (e.pointerType === 'mouse' && e.button !== 0)) return;
-        drag = { chip, id: chip.dataset.rid, x0: e.clientX, y0: e.clientY, moving:false, over:null, pid:e.pointerId };
+        const chip = e.target.closest('.gs-ring, .gs-trophy');
+        if (!chip || !chip.closest('.gs-rrow') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        drag = { chip, id: chip.dataset.cid, x0: e.clientX, y0: e.clientY, moving:false, over:null, pid:e.pointerId };
         try{ chip.setPointerCapture(e.pointerId); }catch(_){}
       });
       listEl.addEventListener('pointermove', (e)=>{
@@ -1856,11 +1884,14 @@
         d.chip.classList.remove('dragging'); d.chip.style.transform = '';
         if (d.over) d.over.classList.remove('drop');
         if (cancel || !d.over) return;
-        const from = state.rings.findIndex(r=>r.id === d.id);
-        const to = state.rings.findIndex(r=>r.id === d.over.dataset.rid);
+        const rowEl = d.chip.parentNode;
+        const host = findHost(rowEl.dataset.host); if (!host) return;
+        const ids = [...rowEl.querySelectorAll('.gs-ring, .gs-trophy')].map(c=>c.dataset.cid);
+        const from = ids.indexOf(d.id), to = ids.indexOf(d.over.dataset.cid);
         if (from < 0 || to < 0 || from === to) return;
-        const [mv] = state.rings.splice(from, 1);
-        state.rings.splice(to, 0, mv);
+        const [mv] = ids.splice(from, 1);
+        ids.splice(to, 0, mv);
+        host.itemOrder = ids;
         scheduleMapSave(); render(); draw();
       }
       listEl.addEventListener('pointerup', (e)=> finish(e, false));
