@@ -75,6 +75,61 @@
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
   function findHost(id){ return state.goals.find(g=>g.id===id) || state.rings.find(r=>r.id===id) || null; }
   function isRingHost(h){ return state.rings.indexOf(h) >= 0; }
+  function ringsOfGoal(g){ return state.rings.filter(r=>r.goalId === g.id); }
+  function goalBranchCount(g){
+    let n = countAllActions(g.actions);
+    ringsOfGoal(g).forEach(r=>{ n += countAllActions(r.actions); });
+    return n;
+  }
+  function ringIsOrphan(r){ return !state.goals.some(x=>x.id === r.goalId); }
+  /* نشانه‌ی بدون هدف (قدیمی) خودکار به نزدیک‌ترین هدف روی نقشه وصل می‌شود */
+  function autoLinkRings(){
+    if (!state.goals.length) return;
+    let ch = false;
+    state.rings.forEach(r=>{
+      if (!ringIsOrphan(r)) return;
+      let best = null;
+      state.goals.forEach(g=>{ const d = Math.hypot(g.x - r.x, g.y - r.y); if (!best || d < best.d) best = { g, d }; });
+      if (best){ r.goalId = best.g.id; ch = true; }
+    });
+    if (ch) scheduleMapSave();
+  }
+  function pickGoalDialog(title, cb){
+    const old = document.getElementById('pick-goal-dlg'); if (old) old.remove();
+    const gs = state.goals.filter(g=>!g.reached);
+    const ov = document.createElement('div');
+    ov.id = 'pick-goal-dlg'; ov.className = 'dur-ov';
+    ov.innerHTML = '<div class="dur-box" role="dialog"><div class="dur-t">'+esc(title)+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:8px;margin:14px 0 10px;max-height:50vh;overflow:auto;">'+
+      gs.map(g=>'<button type="button" data-pg="'+g.id+'" style="border:1.5px solid '+esc(g.color||'#c9972b')+';background:transparent;color:var(--text-main);border-radius:12px;padding:11px 10px;font-family:inherit;font-size:13.5px;cursor:pointer;">'+esc(g.icon||'🎯')+' '+esc(g.name||'هدف')+'</button>').join('')+
+      '</div><div class="dur-b"><button type="button" data-pg="">لغو</button></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e=>{
+      if (e.target === ov){ ov.remove(); return; }
+      const b = e.target.closest('[data-pg]'); if (!b) return;
+      ov.remove();
+      if (b.dataset.pg) cb(b.dataset.pg);
+    });
+  }
+  function createRingForGoal(g){
+    const R0 = (g.radius||20) + 120;
+    let best = null;
+    for (let i=0;i<16;i++){
+      const ang = (i/16)*Math.PI*2 + Math.random()*0.3;
+      const x = g.x + Math.cos(ang)*R0, y = g.y + Math.sin(ang)*R0;
+      let d = Math.hypot(state.me.x-x, state.me.y-y);
+      state.goals.forEach(o=>{ if (o !== g) d = Math.min(d, Math.hypot(o.x-x, o.y-y)); });
+      state.rings.forEach(o=>{ d = Math.min(d, Math.hypot(o.x-x, o.y-y)); });
+      if (!best || d > best.d) best = {x, y, d};
+    }
+    const nr = {
+      id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
+      x: best.x, y: best.y, radius: 30, note: '', images: [], icon: '🌟',
+      actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic', goalId: g.id
+    };
+    state.rings.push(nr);
+    return nr;
+  }
   const BRANCH_STYLES = { organic:'طبیعی', straight:'مستقیم', curve:'قوسی', wave:'موجی', elbow:'زاویه‌دار', step:'پله‌ای', zigzag:'زیگزاگ' };
   /* نوع خطِ مسیر اهداف (تنه‌ی هر هدف) — هم پیش‌فرض کلی و هم برای هر هدف جدا قابل تغییره */
   const TRUNK_STYLES = { solid:'خط راست', dashed:'خط‌چین', dotted:'نقطه‌چین', dashdot:'خط‌نقطه', long:'خط‌چین بلند', double:'دو خطی', glow:'درخشان', taper:'باریک‌شونده' };
@@ -164,7 +219,7 @@
       normalizeActions(g.actions);
     });
     if (!Array.isArray(state.rings)) state.rings = [];
-    if (typeof state.ringsCollapsed !== 'boolean') state.ringsCollapsed = false;
+    state.ringsCollapsed = false; /* نشانه‌ها همیشه روی مسیر هدف خودشان می‌مانند؛ فقط شاخه‌هایشان جمع می‌شود */
     state.rings.forEach(r=>{
       if (typeof r.x !== 'number') r.x = 0;
       if (typeof r.y !== 'number') r.y = 0;
@@ -1253,7 +1308,7 @@
              '<div class="gs-rbtns">'+
                '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
                '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
-               '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">جدا کردن از هدف</button>'+
+               (state.goals.filter(x=>!x.reached).length > 1 ? '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">انتقال به هدف دیگر</button>' : '')+
                '<button type="button" class="gs-mini" data-gact="ringdel" data-rid="'+r.id+'">حذف</button>'+
              '</div><div class="gs-sub" data-host="'+r.id+'">'+bodyHTML(r)+'</div></div>';
       }
@@ -1318,6 +1373,7 @@
     }
 
     function draw(){
+      autoLinkRings();
       const q = norm(searchEl.value.trim());
       const activeGoals = state.goals.filter(g=>!g.reached);
       const reachedGoals = state.goals.filter(g=>g.reached);
@@ -1520,22 +1576,7 @@
           if (f2){ f2.node.achieved = false; delete f2.node.achievedAt; TSEL = null; touch(g); draw(); if (typeof toast === 'function') toast('برگشت'); }
         } else if (a === 'addring'){
           if (isRingHost(g)) return;
-          const R0 = (g.radius||20) + 120;
-          let best = null;
-          for (let i=0;i<16;i++){
-            const ang = (i/16)*Math.PI*2 + Math.random()*0.3;
-            const x = g.x + Math.cos(ang)*R0, y = g.y + Math.sin(ang)*R0;
-            let d = Math.hypot(state.me.x-x, state.me.y-y);
-            state.goals.forEach(o=>{ if (o !== g) d = Math.min(d, Math.hypot(o.x-x, o.y-y)); });
-            state.rings.forEach(o=>{ d = Math.min(d, Math.hypot(o.x-x, o.y-y)); });
-            if (!best || d > best.d) best = {x, y, d};
-          }
-          const nr = {
-            id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
-            x: best.x, y: best.y, radius: 30, note: '', images: [], icon: '🌟',
-            actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic', goalId: g.id
-          };
-          state.rings.push(nr);
+          const nr = createRingForGoal(g);
           state.ringsCollapsed = false;
           RSEL = nr.id;
           touch(g); render(); draw();
@@ -1555,8 +1596,10 @@
           close(); openPanelForRing(gact.dataset.rid);
         } else if (a === 'ringunlink'){
           const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
-          r.goalId = ''; RSEL = null; touch(g); render(); draw();
-          if (typeof toast === 'function') toast('از هدف جدا شد (روی نقشه می‌ماند)');
+          pickGoalDialog('این نشانه زیر کدام هدف باشد؟', gid=>{
+            r.goalId = gid; RSEL = null; const ng = state.goals.find(x=>x.id===gid); if (ng) touch(ng); touch(g); render(); draw();
+            if (typeof toast === 'function') toast('به هدف انتخابی منتقل شد');
+          });
         } else if (a === 'ringdel'){
           const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
           if (!window.confirm('«' + (r.label || 'نشانه') + '» حذف بشه؟')) return;
@@ -1815,8 +1858,9 @@
 
   document.getElementById('collapse-all-btn').addEventListener('click', ()=>{
     const collapse = document.getElementById('collapse-all-btn').dataset.mode === 'collapse';
-    state.goals.forEach(g=>{ if (g.actions && g.actions.length) g.collapsed = collapse; });
-    state.ringsCollapsed = collapse;
+    state.goals.forEach(g=>{ if (goalBranchCount(g)) g.collapsed = collapse; });
+    state.rings.forEach(r=>{ if (ringIsOrphan(r) && r.actions && r.actions.length) r.collapsed = collapse; });
+    state.ringsCollapsed = false;
     render();
   });
 
@@ -2266,13 +2310,13 @@
     `;
   }
 
-  function branchesSVG(goal){
+  function branchesSVG(goal, trunkOnly){
     const cp = trunkControlPoints(goal);
     let out = isRingHost(goal)
       ? `<g class="ring-stem">${taperedPath(cp.p0,cp.p1,cp.p2,cp.p3,goal.color||RING_COLOR,3.2,1.6,0.6)}</g>`
       : trunkSVG(cp, goal.color, effTrunkStyle(goal));
     const n = goal.actions.length;
-    goal.actions.forEach((a,i)=>{
+    if (!trunkOnly) goal.actions.forEach((a,i)=>{
       const t = Math.min(0.9, 0.15 + i*0.09);
       const originPt = bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t);
       const originDir = bezierTangentAngle(cp.p0,cp.p1,cp.p2,cp.p3,t);
@@ -2376,16 +2420,17 @@
   function updateCollapseAllBtn(){
     const btn = document.getElementById('collapse-all-btn');
     if (!btn) return;
-    const withBranches = state.goals.filter(g => g.actions && g.actions.length);
-    btn.style.display = (withBranches.length || state.rings.length) ? '' : 'none';
-    const anyOpen = withBranches.some(g => !g.collapsed) || (state.rings.length && !state.ringsCollapsed);
+    const withBranches = state.goals.filter(g => goalBranchCount(g));
+    const orphanBr = state.rings.filter(r => ringIsOrphan(r) && r.actions && r.actions.length);
+    btn.style.display = (withBranches.length || orphanBr.length) ? '' : 'none';
+    const anyOpen = withBranches.some(g => !g.collapsed) || orphanBr.some(r => !r.collapsed);
     btn.dataset.mode = anyOpen ? 'collapse' : 'expand';
     const lbl = btn.querySelector('.lbl');
     if (lbl) lbl.textContent = anyOpen ? 'جمع همه' : 'باز همه';
     btn.classList.toggle('is-collapsed', !anyOpen);
   }
   function goalShutterSVG(g, r){
-    const n = countAllActions(g.actions);
+    const n = goalBranchCount(g);
     if (!n) return '';
     const cx = g.x, cy = g.y + r + 15;
     const col = g.color;
@@ -2509,23 +2554,24 @@
   function render(){
     let html = '';
     actionGeomMap = new Map();
+    autoLinkRings();
 
     if (focusGoalId && !state.goals.some(x=>x.id===focusGoalId)) focusGoalId = null;
     state.goals.forEach(g=>{
       const cls = [ (revealGoalId === g.id) ? 'np-reveal' : '', (focusGoalId === g.id) ? 'is-focus' : '' ].filter(Boolean).join(' ');
       const clsAttr = cls ? ` class="${cls}"` : '';
-      if (g.collapsed && g.actions.length){
-        html += `<g data-goal-branches="${g.id}"${clsAttr}>${collapsedLinkSVG(g)}</g>`;
-      } else {
-        html += `<g data-goal-branches="${g.id}"${clsAttr}>${branchesSVG(g)}</g>`;
-      }
+      /* جمع‌شده: مسیر (تنه) می‌ماند، فقط شاخه‌ها و زیرشاخه‌ها پنهان می‌شوند */
+      html += `<g data-goal-branches="${g.id}"${clsAttr}>${branchesSVG(g, !!(g.collapsed && g.actions.length))}</g>`;
     });
     if (!state.ringsCollapsed) state.rings.forEach(r=>{
       const lg = r.goalId && state.goals.find(x=>x.id===r.goalId);
       if (lg) html += ringLinkSVG(lg, r);
     });
     if (!state.ringsCollapsed) state.rings.forEach(r=>{
-      if (r.actions && r.actions.length) html += `<g data-goal-branches="${r.id}">${branchesSVG(Object.assign(r,{color:r.color||RING_COLOR}))}</g>`;
+      if (r.actions && r.actions.length){
+        const lgR = r.goalId && state.goals.find(x=>x.id===r.goalId);
+        html += `<g data-goal-branches="${r.id}">${branchesSVG(Object.assign(r,{color:r.color||RING_COLOR}), !!(r.collapsed || (lgR && lgR.collapsed)))}</g>`;
+      }
     });
     revealGoalId = null;
 
@@ -2580,7 +2626,6 @@
       html += `</g>`;
     });
 
-    html += ringsShutterSVG();
     (state.ringsCollapsed ? [] : state.rings).forEach(r=>{
       html += '<g class="rnode">';
       const rad = r.radius || 30;
@@ -2680,16 +2725,27 @@
   });
 
   document.getElementById('add-ring-btn').addEventListener('click', ()=>{
-    const rnd = Math.random()*40-20;
-    state.ringsCollapsed = false;
-    state.rings.push({
-      id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
-      x: state.me.x + rnd, y: state.me.y + 130,
-      radius: 30, note: '', images: [],
-      icon: '🌟',
-      actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic'
-    });
-    render();
+    const act = state.goals.filter(g=>!g.reached);
+    const finish = (g)=>{
+      state.ringsCollapsed = false;
+      if (g){
+        const nr = createRingForGoal(g); g.collapsed = false; g.lastActivity = Date.now();
+        render();
+        if (typeof toast === 'function') toast('نشانه‌ی نزدیکی به «' + (g.name || 'هدف') + '» وصل شد');
+      } else {
+        const rnd = Math.random()*40-20;
+        state.rings.push({
+          id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
+          x: state.me.x + rnd, y: state.me.y + 130,
+          radius: 30, note: '', images: [], icon: '🌟',
+          actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic'
+        });
+        render();
+      }
+    };
+    if (act.length > 1) pickGoalDialog('این نشانه‌ی نزدیکی زیر کدام هدف باشد؟', gid=>{ finish(state.goals.find(x=>x.id===gid)); });
+    else if (act.length === 1) finish(act[0]);
+    else finish(null);
   });
 
   const settingsOverlay = document.getElementById('settings-modal-overlay');
