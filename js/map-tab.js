@@ -75,6 +75,12 @@
   function findHost(id){ return state.goals.find(g=>g.id===id) || state.rings.find(r=>r.id===id) || null; }
   function isRingHost(h){ return state.rings.indexOf(h) >= 0; }
   const BRANCH_STYLES = { organic:'طبیعی', straight:'مستقیم', curve:'قوسی', wave:'موجی', elbow:'زاویه‌دار', step:'پله‌ای', zigzag:'زیگزاگ' };
+  /* نوع خطِ مسیر اهداف (تنه‌ی هر هدف) — هم پیش‌فرض کلی و هم برای هر هدف جدا قابل تغییره */
+  const TRUNK_STYLES = { solid:'خط راست', dashed:'خط‌چین', dotted:'نقطه‌چین', dashdot:'خط‌نقطه', long:'خط‌چین بلند', double:'دو خطی', glow:'درخشان', taper:'باریک‌شونده' };
+  function effTrunkStyle(host){
+    const s = (host && host.trunkStyle) || state.trunkStyle || 'dashed';
+    return TRUNK_STYLES[s] ? s : 'dashed';
+  }
   function effStyle(host, action){
     const s = (action && action.style) || (host && host.branchStyle) || 'organic';
     return BRANCH_STYLES[s] ? s : 'organic';
@@ -133,7 +139,9 @@
     if (typeof state.fontSize !== 'number' || state.fontSize < 8) state.fontSize = 14;
     if (typeof state.showDateStamps !== 'boolean') state.showDateStamps = true;
     if (typeof state.showEmotionWidget !== 'boolean') state.showEmotionWidget = true;
+    if (typeof state.trunkStyle !== 'string' || !TRUNK_STYLES[state.trunkStyle]) state.trunkStyle = 'dashed';
     state.goals.forEach(g=>{
+      if (typeof g.trunkStyle !== 'string' || (g.trunkStyle && !TRUNK_STYLES[g.trunkStyle])) g.trunkStyle = '';
       if (!Array.isArray(g.actions)) g.actions = [];
       if (typeof g.reached !== 'boolean') g.reached = false;
       if (typeof g.collapsed !== 'boolean') g.collapsed = false;
@@ -298,6 +306,7 @@
   let longPressTriggered = false;
   let pendingActionClick = null;
   let detachInProgress = false;
+  let holdArmed = false;
 
   function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
   function mid(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
@@ -482,65 +491,17 @@
 
         const tapImgIdx = hit.dataset.img === '1' ? +hit.dataset.imgidx : null;
         const tapIsLabel = hit.dataset.label === '1';
-        pendingActionClick = { goalId, actionId: id, dragImgIdx: tapImgIdx, dragLabel: tapIsLabel };
+        pendingActionClick = { goalId, actionId: id, dragImgIdx: tapImgIdx, dragLabel: tapIsLabel, sx: e.clientX, sy: e.clientY };
         longPressTriggered = false;
         detachInProgress = false;
+        holdArmed = false;
         if (longPressTimer) clearTimeout(longPressTimer);
+        /* نگه‌داشتن انگشت فقط شاخه را «آماده‌ی جدا شدن» می‌کند (با یک لرزش کوتاه).
+           جدا شدن/وصل شدن واقعی فقط وقتی انجام می‌شود که بعد از نگه‌داشتن، انگشت را بکشی.
+           اگر فقط نگه داشتی و رها کردی (یا آرام لمس کردی) هیچ چیز جدا نمی‌شود و پنل باز می‌شود. */
         longPressTimer = setTimeout(() => {
-          longPressTriggered = true;
-          detachInProgress = true;
-          const g2 = findHost(goalId);
-          if (g2) {
-            const found2 = findActionNode(g2.actions, id);
-            if (found2) {
-              if (found2.node.detached) {
-                found2.node.detached = false;
-                const cp = trunkControlPoints(g2);
-                const actionIndex = g2.actions.indexOf(found2.node);
-                const t = Math.min(0.9, 0.15 + actionIndex * 0.09);
-                const trunkPt = bezierPoint(cp.p0, cp.p1, cp.p2, cp.p3, t);
-                const originDir = bezierTangentAngle(cp.p0, cp.p1, cp.p2, cp.p3, t);
-                const side = actionIndex % 2 === 0 ? 1 : -1;
-                const rnd = seeded(g2.id+'-'+found2.node.id);
-                const angleOff = side*(0.8 + rnd()*0.5);
-                const weight = found2.node.weight || 5;
-                found2.node.dir = originDir + angleOff;
-                found2.node.len = (18 + weight*8);
-                found2.node.bend1 = side*(5+rnd()*9);
-                found2.node.bend2 = side*(-4+rnd()*12);
-                render();
-                mode = 'drag-node';
-                dragTarget = { type:'action', goalId, id, detached: false };
-                const currentPos = screenToWorld(e.clientX, e.clientY);
-                dragStart = { originX: trunkPt.x, originY: trunkPt.y, offX: currentPos.x - trunkPt.x, offY: currentPos.y - trunkPt.y };
-                svg.classList.add('node-drag');
-              } else {
-                const cp = trunkControlPoints(g2);
-                const actionIndex = g2.actions.indexOf(found2.node);
-                const t = Math.min(0.9, 0.15 + actionIndex * 0.09);
-                const trunkPt = bezierPoint(cp.p0, cp.p1, cp.p2, cp.p3, t);
-                found2.node.detached = true;
-                found2.node.originX = trunkPt.x;
-                found2.node.originY = trunkPt.y;
-                if (typeof found2.node.dir !== 'number') found2.node.dir = 0;
-                if (typeof found2.node.len !== 'number') found2.node.len = 30;
-                if (typeof found2.node.bend1 !== 'number') found2.node.bend1 = 0;
-                if (typeof found2.node.bend2 !== 'number') found2.node.bend2 = 0;
-                render();
-                const currentPos = screenToWorld(e.clientX, e.clientY);
-                mode = 'drag-node';
-                dragTarget = { type:'action', goalId, id, detached: true };
-                dragStart = {
-                  originX: found2.node.originX,
-                  originY: found2.node.originY,
-                  offX: currentPos.x - found2.node.originX,
-                  offY: currentPos.y - found2.node.originY
-                };
-                svg.classList.add('node-drag');
-              }
-            }
-          }
-          pendingActionClick = null;
+          holdArmed = true;
+          try{ if (navigator.vibrate) navigator.vibrate(15); }catch(_){}
         }, 600);
         return;
       }
@@ -603,6 +564,7 @@
   });
 
   svg.addEventListener('pointerup', (e)=>{
+    holdArmed = false;
     if (longPressTimer && pendingActionClick) {
       clearTimeout(longPressTimer);
       longPressTimer = null;
@@ -637,6 +599,40 @@
       requestAnimationFrame(processMove);
     }
   });
+
+  /* بعد از نگه‌داشتن + کشیدن: شاخه‌ی وصل را جدا می‌کند یا شاخه‌ی جداشده را به مسیر برمی‌گرداند */
+  function holdToggleBranch(g, node, goalId, e, sx, sy){
+    const id = node.id;
+    if (node.detached){
+      node.detached = false;
+      delete node.dir; delete node.len; delete node.bend1; delete node.bend2;
+      delete node.originX; delete node.originY;
+      render();
+    } else {
+      const ent0 = actionGeomMap.get(id);
+      if (!ent0) return;
+      node.detached = true;
+      node.originX = ent0.originPt.x;
+      node.originY = ent0.originPt.y;
+      if (typeof node.dir !== 'number') node.dir = 0;
+      if (typeof node.len !== 'number') node.len = 30;
+      if (typeof node.bend1 !== 'number') node.bend1 = 0;
+      if (typeof node.bend2 !== 'number') node.bend2 = 0;
+      render();
+    }
+    longPressTriggered = true;
+    detachInProgress = true;
+    const cur = screenToWorld(typeof sx === 'number' ? sx : e.clientX, typeof sy === 'number' ? sy : e.clientY);
+    mode = 'drag-node';
+    dragTarget = { type:'action', goalId, id, detached: !!node.detached };
+    if (node.detached){
+      dragStart = { offX: cur.x - node.originX, offY: cur.y - node.originY };
+    } else {
+      const ent = actionGeomMap.get(id);
+      dragStart = ent ? { offX: cur.x - ent.end.x, offY: cur.y - ent.end.y } : { offX:0, offY:0 };
+    }
+    svg.classList.add('node-drag');
+  }
 
   function processMove(){
     rafQueued = false;
@@ -681,13 +677,26 @@
     }
 
     if (longPressTimer && pendingActionClick) {
+      /* لرزش ناخواسته‌ی انگشت (چند پیکسل) حرکت حساب نمی‌شود */
+      const movedPx = Math.hypot(e.clientX - pendingActionClick.sx, e.clientY - pendingActionClick.sy);
+      if (movedPx < (holdArmed ? 10 : 6)) return;
       clearTimeout(longPressTimer);
       longPressTimer = null;
-      const { goalId, actionId, dragImgIdx, dragLabel } = pendingActionClick;
+      const { goalId, actionId, dragImgIdx, dragLabel, sx, sy } = pendingActionClick;
       const g = findHost(goalId);
       if (g) {
         const found = findActionNode(g.actions, actionId);
-        if (found && !found.node.detached) {
+        if (found && holdArmed) {
+          holdArmed = false;
+          holdToggleBranch(g, found.node, goalId, e, sx, sy);
+        } else if (found && found.node.detached) {
+          /* شاخه‌ی جداشده: با کشیدن مستقیم جابه‌جا می‌شود */
+          const ws = screenToWorld(sx, sy);
+          mode = 'drag-node';
+          dragTarget = { type:'action', goalId, id: actionId, detached: true };
+          dragStart = { offX: ws.x - found.node.originX, offY: ws.y - found.node.originY };
+          svg.classList.add('node-drag');
+        } else if (found) {
           const w = screenToWorld(e.clientX, e.clientY);
           if (dragImgIdx !== null && dragImgIdx !== undefined && found.node.images && found.node.images[dragImgIdx]) {
             mode = 'drag-image';
@@ -701,14 +710,15 @@
             elementDragStart = { startDX: found.node.labelDX || 0, startDY: found.node.labelDY || 0, wx: w.x, wy: w.y };
             svg.classList.add('node-drag');
           } else {
-            mode = 'drag-node';
-            dragTarget = { type:'action', goalId, id: actionId, detached: false };
-            const cp = trunkControlPoints(g);
-            const actionIndex = g.actions.indexOf(found.node);
-            const t = Math.min(0.9, 0.15 + actionIndex * 0.09);
-            const trunkPt = bezierPoint(cp.p0, cp.p1, cp.p2, cp.p3, t);
-            dragStart = { originX: trunkPt.x, originY: trunkPt.y, offX: w.x - trunkPt.x, offY: w.y - trunkPt.y };
-            svg.classList.add('node-drag');
+            /* کشیدن نوک شاخه‌ی وصل‌شده: جهت و طول از «مبدأ واقعی شاخه» (تنه یا شاخه‌ی مادر) حساب می‌شود */
+            const ent = actionGeomMap.get(actionId);
+            if (ent) {
+              const ws = screenToWorld(sx, sy);
+              mode = 'drag-node';
+              dragTarget = { type:'action', goalId, id: actionId, detached: false };
+              dragStart = { offX: ws.x - ent.end.x, offY: ws.y - ent.end.y };
+              svg.classList.add('node-drag');
+            }
           }
         }
       }
@@ -855,12 +865,10 @@
           node.originY = w.y - dragStart.offY;
           render();
         } else {
-          const cp = trunkControlPoints(g);
-          const actionIndex = g.actions.indexOf(node);
-          const t = Math.min(0.9, 0.15 + actionIndex * 0.09);
-          const trunkPt = bezierPoint(cp.p0, cp.p1, cp.p2, cp.p3, t);
-          const dx = (w.x - dragStart.offX) - trunkPt.x;
-          const dy = (w.y - dragStart.offY) - trunkPt.y;
+          const ent = actionGeomMap.get(node.id);
+          if (!ent) return;
+          const dx = (w.x - dragStart.offX) - ent.originPt.x;
+          const dy = (w.y - dragStart.offY) - ent.originPt.y;
           node.dir = Math.atan2(dy, dx);
           node.len = Math.max(8, Math.hypot(dx, dy));
           render();
@@ -876,6 +884,7 @@
   }
 
   function endPointer(e){
+    holdArmed = false;
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       longPressTimer = null;
@@ -2002,26 +2011,31 @@
     return {p0,p1,p2,p3};
   }
 
-  function trunkSVG(cp, color){
-    let out = '<g class="axon-core">' +
-              taperedPath(cp.p0, cp.p1, cp.p2, cp.p3, color, 2.2, 1.4, 0.42) +
-              '</g>';
-
-    const SEG = 9;
-    let myelin = '<g class="axon-myelin">';
-    for(let i = 0; i < SEG; i++){
-      const t0 = (i / SEG) + 0.025;
-      const t1 = ((i + 1) / SEG) - 0.025;
-      const a = bezierPoint(cp.p0, cp.p1, cp.p2, cp.p3, t0);
-      const b = bezierPoint(cp.p0, cp.p1, cp.p2, cp.p3, t1);
-      const w = (3.8 - i * 0.18).toFixed(2);
-      myelin += '<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) +
-                '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) +
-                '" stroke="' + color + '" stroke-width="' + w +
-                '" stroke-linecap="round" opacity="0.85"/>';
+  function trunkSVG(cp, color, style){
+    const P = a => a.x.toFixed(1) + ' ' + a.y.toFixed(1);
+    const D = c => 'M' + P(c.p0) + ' C' + P(c.p1) + ' ' + P(c.p2) + ' ' + P(c.p3);
+    const path = (c, w, op, dash, cap) =>
+      '<path d="' + D(c) + '" fill="none" stroke="' + color + '" stroke-width="' + w + '" opacity="' + op + '"' +
+      ' stroke-linecap="' + (cap || 'round') + '" stroke-linejoin="round"' +
+      (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' pointer-events="none"/>';
+    let body = '';
+    switch (style){
+      case 'solid':   body = path(cp, 3, 0.9); break;
+      case 'dotted':  body = path(cp, 3.6, 0.9, '0.1 8'); break;
+      case 'dashdot': body = path(cp, 3, 0.9, '14 7 2 7', 'butt'); break;
+      case 'long':    body = path(cp, 3, 0.9, '26 13', 'butt'); break;
+      case 'double': {
+        const dx = cp.p3.x - cp.p0.x, dy = cp.p3.y - cp.p0.y, L = Math.hypot(dx, dy) || 1;
+        const nx = -dy / L * 2.6, ny = dx / L * 2.6;
+        const sh = k => ({ p0:{x:cp.p0.x+nx*k,y:cp.p0.y+ny*k}, p1:{x:cp.p1.x+nx*k,y:cp.p1.y+ny*k}, p2:{x:cp.p2.x+nx*k,y:cp.p2.y+ny*k}, p3:{x:cp.p3.x+nx*k,y:cp.p3.y+ny*k} });
+        body = path(sh(1), 1.6, 0.9) + path(sh(-1), 1.6, 0.9); break;
+      }
+      case 'glow':    body = path(cp, 9, 0.16) + path(cp, 2.8, 0.95); break;
+      case 'taper':   body = taperedPath(cp.p0, cp.p1, cp.p2, cp.p3, color, 5.2, 1.6, 0.9); break;
+      case 'dashed':
+      default:        body = path(cp, 3, 0.9, '9 9', 'butt');
     }
-    myelin += '</g>';
-    return out + myelin;
+    return '<g class="goal-path" data-trunk-style="' + (style || 'dashed') + '">' + body + '</g>';
   }
 
   function wrapText(str, maxChars){
@@ -2246,7 +2260,7 @@
     const cp = trunkControlPoints(goal);
     let out = isRingHost(goal)
       ? `<g class="ring-stem">${taperedPath(cp.p0,cp.p1,cp.p2,cp.p3,goal.color||RING_COLOR,3.2,1.6,0.6)}</g>`
-      : trunkSVG(cp, goal.color);
+      : trunkSVG(cp, goal.color, effTrunkStyle(goal));
     const n = goal.actions.length;
     goal.actions.forEach((a,i)=>{
       const t = Math.min(0.9, 0.15 + i*0.09);
@@ -2311,16 +2325,9 @@
           out += `<text x="${end.x + radius * 0.7}" y="${end.y + radius * 0.7 + 4}" text-anchor="middle" font-size="10" fill="${effectiveTextColor()}" stroke="#0a0c18" stroke-width="2" paint-order="stroke">+${action.images.length - 3}</text>`;
         }
       } else {
-        const boutonR = radius;
-        const haloR   = radius * 2.1;
-        out += `<circle class="synaptic-bouton" cx="${end.x}" cy="${end.y}" r="${boutonR}" fill="${color}" style="color:${color};"/>`;
-        out += `<circle cx="${end.x}" cy="${end.y}" r="${haloR}" fill="none" stroke="${color}" stroke-width="0.7" opacity="0.35"/>`;
-        for (let k = 0; k < 3; k++) {
-          const a = (k / 3) * Math.PI * 2 - Math.PI / 2;
-          const vx = end.x + Math.cos(a) * (boutonR + 2.2);
-          const vy = end.y + Math.sin(a) * (boutonR + 2.2);
-          out += `<circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="${(1.1 * scale).toFixed(2)}" fill="${color}" opacity="0.55"/>`;
-        }
+        /* سرِ شاخه: یک نقطه‌ی ساده و تمیز؛ برای «کار روتین» یک حلقه‌ی پیشرفت هفتگی دور آن */
+        out += `<circle cx="${end.x}" cy="${end.y}" r="${radius}" fill="${color}" pointer-events="none"/>`;
+        if (action.isRoutine) out += routineTipSVG(action, end.x, end.y, radius, color, scale);
       }
     }
     out += `</g>` + childrenSvg;
@@ -2682,6 +2689,7 @@
   const settingsSwatches = document.getElementById('settings-swatches');
   const settingsShowDates = document.getElementById('settings-show-dates');
   const settingsShowEmotionWidget = document.getElementById('settings-show-emotion-widget');
+  let settingsTrunkStyle = 'dashed';
 
   PALETTE.forEach(c=>{
     const sw = document.createElement('div');
@@ -2704,6 +2712,8 @@
     settingsFontSizeVal.textContent = settingsFontSize.value;
     settingsShowDates.checked = state.showDateStamps !== false;
     settingsShowEmotionWidget.checked = state.showEmotionWidget !== false;
+    settingsTrunkStyle = effTrunkStyle(null);
+    buildTrunkPicker(document.getElementById('settings-trunk-style-picker'), settingsTrunkStyle, false, v=>{ settingsTrunkStyle = v; });
     try{
       const info = (window.getProfileInfo && window.getProfileInfo()) || {name:'', email:''};
       document.getElementById('settings-profile-name').value = info.name;
@@ -2724,6 +2734,7 @@
     state.fontSize = +settingsFontSize.value;
     state.showDateStamps = !!settingsShowDates.checked;
     state.showEmotionWidget = !!settingsShowEmotionWidget.checked;
+    state.trunkStyle = TRUNK_STYLES[settingsTrunkStyle] ? settingsTrunkStyle : 'dashed';
     try{
       if(window.setProfileName) window.setProfileName(document.getElementById('settings-profile-name').value);
     }catch(e){}
@@ -2925,6 +2936,51 @@
       e.preventDefault(); nb.focus(); pick(nb);
     };
   }
+  /* ---- انتخابگر نوع خط مسیر اهداف ---- */
+  const TRUNK_THUMB = {
+    solid:   '<path d="M6 32 L58 8" style="stroke-width:3"/>',
+    dashed:  '<path d="M6 32 L58 8" style="stroke-width:3" stroke-dasharray="8 6" stroke-linecap="butt"/>',
+    dotted:  '<path d="M6 32 L58 8" style="stroke-width:3.4" stroke-dasharray="0.1 6.5"/>',
+    dashdot: '<path d="M6 32 L58 8" style="stroke-width:3" stroke-dasharray="11 5 1.5 5" stroke-linecap="butt"/>',
+    long:    '<path d="M6 32 L58 8" style="stroke-width:3" stroke-dasharray="17 8" stroke-linecap="butt"/>',
+    double:  '<path d="M4.7 29.3 L56.7 5.3" style="stroke-width:1.6"/><path d="M7.3 34.7 L59.3 10.7" style="stroke-width:1.6"/>',
+    glow:    '<path d="M6 32 L58 8" style="stroke-width:9;opacity:.25"/><path d="M6 32 L58 8" style="stroke-width:2.6"/>',
+    taper:   '<path d="M6 36 L6 28 L58 8.6 L58 7.4 Z" style="fill:currentColor;stroke:none"/>'
+  };
+  function buildTrunkPicker(el, current, allowInherit, onPick){
+    if (!el) return;
+    const keys = (allowInherit ? [''] : []).concat(Object.keys(TRUNK_STYLES));
+    const name = k => k === '' ? 'مثل پیش‌فرض' : TRUNK_STYLES[k];
+    el.className = 'bs-picker';
+    el.setAttribute('role','radiogroup');
+    el.setAttribute('aria-label','نوع خط مسیر');
+    el.innerHTML = keys.map(k=>{
+      const on = k === current;
+      const thumb = TRUNK_THUMB[k === '' ? effTrunkStyle(null) : k];
+      return `<button type="button" class="bs-opt${on?' on':''}" role="radio" aria-checked="${on}" tabindex="${on?0:-1}" data-ts="${k}" aria-label="${name(k)}">`+
+        `<svg viewBox="0 0 64 40" aria-hidden="true"${k===''?' style="opacity:.6"':''}>${thumb}<circle cx="58" cy="8" r="3.6"/></svg><span>${name(k)}</span></button>`;
+    }).join('');
+    const pick = b=>{
+      el.querySelectorAll('.bs-opt').forEach(x=>{ const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); x.tabIndex = on ? 0 : -1; });
+      onPick(b.dataset.ts);
+    };
+    el.onclick = e=>{ const b = e.target.closest('.bs-opt'); if (b) pick(b); };
+    el.onkeydown = e=>{
+      const k = e.key;
+      if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k)) return;
+      const btns = Array.from(el.querySelectorAll('.bs-opt'));
+      let i = btns.indexOf(document.activeElement); if (i < 0) i = btns.findIndex(x=>x.classList.contains('on'));
+      const rtl = getComputedStyle(el).direction === 'rtl';
+      const fwd = (k === 'ArrowDown') || (k === (rtl ? 'ArrowLeft' : 'ArrowRight'));
+      const nb = btns[(i + (fwd ? 1 : -1) + btns.length) % btns.length];
+      e.preventDefault(); nb.focus(); pick(nb);
+    };
+  }
+  function mountTrunkBlock(g){
+    buildTrunkPicker(document.getElementById('trunk-style-picker'), g.trunkStyle || '', true, v=>{
+      g.trunkStyle = v; render(); scheduleMapSave();
+    });
+  }
   function mountBranchesBlock(kind, host){
     const block = document.getElementById('branches-block');
     const slot = kind === 'ring' ? document.getElementById('ring-branches-slot') : document.getElementById('panel-goal-only');
@@ -3020,6 +3076,7 @@
     document.getElementById('panel-goal-freq').value = g.freq || 'alpha';
     currentPanelGoalId = id;
     mountBranchesBlock('goal', g);
+    mountTrunkBlock(g);
     refreshActionsPanel(g);
     panel.classList.add('open');
   }
@@ -3542,26 +3599,47 @@
 
   const ROUTINE_DONE_MARK = 'انجام شد ✓';
 
-  function routineWidgetSVG(action, x, y, anchor, color){
+  /* حلقه‌ی پیشرفت هفتگیِ کار روتین: ۷ قوس = ۷ روز هفته (شنبه تا جمعه)
+     قوس پر = انجام شده، امروز با ضخامت بیشتر مشخص است، نقطه‌ی وسط فقط وقتی امروز انجام شده پر می‌شود
+     و اگر چند روز پشت‌سرهم انجام شده باشد عدد «روزهای پیاپی» بالای حلقه می‌آید. */
+  function routineStreak(action){
+    if (!action.logs) return 0;
+    const d = new Date(); d.setHours(0,0,0,0);
+    let n = 0;
+    if (!action.logs[pcJKey(d)]) d.setDate(d.getDate() - 1);
+    for (let i = 0; i < 90; i++){
+      if (!action.logs[pcJKey(d)]) break;
+      n++; d.setDate(d.getDate() - 1);
+    }
+    return n;
+  }
+  function routineTipSVG(action, cx, cy, radius, color, scale){
     if (!action.logs || typeof action.logs !== 'object') action.logs = {};
     const days = jalaaliCurrentWeekDates();
     const tKey = todayCalKey();
-    const doneToday = !!action.logs[tKey];
-    const cell = 9, gap = 2.5;
-    const totalW = cell*7 + gap*6;
-    const stripX = anchor === 'start' ? x : x - totalW;
-    const toggleCx = anchor === 'start' ? x - 13 : x + 13;
-    let html = `<g class="routine-widget">`;
-    html += `<circle data-routine-toggle="${action.id}" cx="${toggleCx}" cy="${y}" r="8" fill="${doneToday? color : 'transparent'}" stroke="${color}" stroke-width="1.4" style="cursor:pointer;pointer-events:all;"/>`;
-    if (doneToday) html += `<text x="${toggleCx}" y="${y+3}" text-anchor="middle" font-size="9" fill="#12142a" style="pointer-events:none;">✓</text>`;
-    html += `<g transform="translate(${stripX},${y-cell/2})">`;
-    days.forEach((d,i)=>{
+    const R = radius + 5.5 * Math.max(0.8, scale);
+    const sw = 2.2 * Math.max(0.8, scale);
+    const step = (Math.PI * 2) / 7, gap = 0.34;
+    let done = 0, html = '';
+    days.forEach((d, i)=>{
       const has = !!action.logs[d.key];
       const isToday = d.key === tKey;
-      html += `<rect data-routine-cell="${action.id}" data-key="${d.key}" x="${i*(cell+gap)}" y="0" width="${cell}" height="${cell}" rx="2" fill="${has?color:'rgba(255,255,255,0.10)'}" stroke="${isToday?color:'transparent'}" stroke-width="1" style="cursor:pointer;pointer-events:all;"/>`;
+      if (has) done++;
+      const a0 = -Math.PI/2 + i*step + gap/2, a1 = -Math.PI/2 + (i+1)*step - gap/2;
+      const x0 = cx + R*Math.cos(a0), y0 = cy + R*Math.sin(a0);
+      const x1 = cx + R*Math.cos(a1), y1 = cy + R*Math.sin(a1);
+      html += `<path d="M${x0.toFixed(2)} ${y0.toFixed(2)} A${R.toFixed(2)} ${R.toFixed(2)} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}" fill="none" stroke="${color}" stroke-width="${(isToday ? sw*1.45 : sw).toFixed(2)}" stroke-linecap="round" opacity="${has ? 0.95 : (isToday ? 0.55 : 0.2)}"/>`;
     });
-    html += `</g></g>`;
-    return html;
+    const todayDone = !!action.logs[tKey];
+    const streak = routineStreak(action);
+    let badge = '';
+    if (streak >= 2){
+      badge = `<text x="${cx}" y="${(cy - R - 3.5).toFixed(1)}" text-anchor="middle" font-size="${(8.5*Math.max(0.9,scale)).toFixed(1)}" font-weight="700" fill="${color}" stroke="#0a0c18" stroke-width="2" paint-order="stroke" style="pointer-events:none;">${toFa(streak)}</text>`;
+    }
+    const tip = `روتین: ${toFa(done)} از ۷ روزِ این هفته${streak ? ' · ' + toFa(streak) + ' روز پیاپی' : ''}`;
+    return `<g class="routine-tip" pointer-events="none"><title>${tip}</title>` +
+           (todayDone ? '' : `<circle cx="${cx}" cy="${cy}" r="${(radius*0.55).toFixed(2)}" fill="#0a0c18" opacity="0.55"/>`) +
+           html + badge + `</g>`;
   }
 
   function findActionAnywhere(actionId){
