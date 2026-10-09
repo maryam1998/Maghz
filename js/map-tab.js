@@ -83,7 +83,6 @@
     return n;
   }
   function ringIsOrphan(r){ return !state.goals.some(x=>x.id === r.goalId); }
-  /* فاصله‌ی یک نقطه تا مسیر (تنه‌ی) هدف روی نقشه */
   function distToGoalPath(g, x, y){
     let cp; try{ cp = trunkControlPoints(g); }catch(e){ return Infinity; }
     let best = Infinity;
@@ -94,7 +93,6 @@
     }
     return best;
   }
-  /* نشانه‌ای که روی مسیر یک هدف قرار بگیرد، خودکار زیرمجموعه‌ی همان هدف می‌شود */
   function autoLinkRings(){
     if (!state.goals.length) return;
     let ch = false;
@@ -152,7 +150,6 @@
     return nr;
   }
   const BRANCH_STYLES = { organic:'طبیعی', straight:'مستقیم', curve:'قوسی', wave:'موجی', elbow:'زاویه‌دار', step:'پله‌ای', zigzag:'زیگزاگ' };
-  /* نوع خطِ مسیر اهداف (تنه‌ی هر هدف) — هم پیش‌فرض کلی و هم برای هر هدف جدا قابل تغییره */
   const TRUNK_STYLES = { solid:'خط راست', dashed:'خط‌چین', dotted:'نقطه‌چین', dashdot:'خط‌نقطه', long:'خط‌چین بلند', double:'دو خطی', glow:'درخشان', taper:'باریک‌شونده' };
   function effTrunkStyle(host){
     const s = (host && host.trunkStyle) || state.trunkStyle || 'dashed';
@@ -189,6 +186,7 @@
       if (typeof a.labelDY !== 'number') a.labelDY = 0;
       if (typeof a.labelSize !== 'number') a.labelSize = null;
       if (!a.logs || typeof a.logs !== 'object') a.logs = {};
+      if (!a.entries || typeof a.entries !== 'object') a.entries = {};
       if (typeof a.isRoutine !== 'boolean') a.isRoutine = false;
       if (typeof a.detached !== 'boolean') a.detached = false;
       if (typeof a.style !== 'string' || (a.style && !BRANCH_STYLES[a.style])) a.style = '';
@@ -241,7 +239,7 @@
       normalizeActions(g.actions);
     });
     if (!Array.isArray(state.rings)) state.rings = [];
-    state.ringsCollapsed = false; /* نشانه‌ها همیشه روی مسیر هدف خودشان می‌مانند؛ فقط شاخه‌هایشان جمع می‌شود */
+    state.ringsCollapsed = false;
     state.rings.forEach(r=>{
       if (typeof r.x !== 'number') r.x = 0;
       if (typeof r.y !== 'number') r.y = 0;
@@ -495,7 +493,6 @@
         }
       }
 
-      /* نیشگونِ آسان‌تر: اگر یکی از دو انگشت روی (یا نزدیک) یک نوشته باشد، همان نوشته بزرگ/کوچک می‌شود */
       {
         let bestEl = null, bestD = 1e9;
         const pad = 26;
@@ -602,9 +599,6 @@
         detachInProgress = false;
         holdArmed = false;
         if (longPressTimer) clearTimeout(longPressTimer);
-        /* نگه‌داشتن انگشت فقط شاخه را «آماده‌ی جدا شدن» می‌کند (با یک لرزش کوتاه).
-           جدا شدن/وصل شدن واقعی فقط وقتی انجام می‌شود که بعد از نگه‌داشتن، انگشت را بکشی.
-           اگر فقط نگه داشتی و رها کردی (یا آرام لمس کردی) هیچ چیز جدا نمی‌شود و پنل باز می‌شود. */
         longPressTimer = setTimeout(() => {
           holdArmed = true;
           try{ if (navigator.vibrate) navigator.vibrate(15); }catch(_){}
@@ -706,7 +700,6 @@
     }
   });
 
-  /* بعد از نگه‌داشتن + کشیدن: شاخه‌ی وصل را جدا می‌کند یا شاخه‌ی جداشده را به مسیر برمی‌گرداند */
   function holdToggleBranch(g, node, goalId, e, sx, sy){
     const id = node.id;
     if (node.detached){
@@ -783,7 +776,6 @@
     }
 
     if (longPressTimer && pendingActionClick) {
-      /* لرزش ناخواسته‌ی انگشت (چند پیکسل) حرکت حساب نمی‌شود */
       const movedPx = Math.hypot(e.clientX - pendingActionClick.sx, e.clientY - pendingActionClick.sy);
       if (movedPx < (holdArmed ? 10 : 6)) return;
       clearTimeout(longPressTimer);
@@ -796,7 +788,6 @@
           holdArmed = false;
           holdToggleBranch(g, found.node, goalId, e, sx, sy);
         } else if (found && found.node.detached) {
-          /* شاخه‌ی جداشده: با کشیدن مستقیم جابه‌جا می‌شود */
           const ws = screenToWorld(sx, sy);
           mode = 'drag-node';
           dragTarget = { type:'action', goalId, id: actionId, detached: true };
@@ -816,7 +807,6 @@
             elementDragStart = { startDX: found.node.labelDX || 0, startDY: found.node.labelDY || 0, wx: w.x, wy: w.y };
             svg.classList.add('node-drag');
           } else {
-            /* کشیدن نوک شاخه‌ی وصل‌شده: جهت و طول از «مبدأ واقعی شاخه» (تنه یا شاخه‌ی مادر) حساب می‌شود */
             const ent = actionGeomMap.get(actionId);
             if (ent) {
               const ws = screenToWorld(sx, sy);
@@ -1106,7 +1096,7 @@
     if (id) focusGoal(id);
   });
 
-  /* ---- فهرست اهداف (بدون نشانه‌های نزدیکی) ---- */
+  /* ---- فهرست اهداف ---- */
   (function(){
     const ov = document.getElementById('goals-sheet-overlay');
     const listEl = document.getElementById('gs-list');
@@ -1183,11 +1173,27 @@
              '<button type="button" class="gs-mini" data-gact="addcancel">لغو</button></div>';
     }
     const DAYSEL = {};
+
+    /* ========== dayTimeHTML با ورودی‌های جداگانه ========== */
     function dayTimeHTML(n, pi){
       const jk = DAYSEL[n.id] || pi.todayJK;
       const ts = nodeDaySecs(n, jk);
-      return '<div class="gs-tchips"><button type="button" class="gs-tchip" data-nact="settime" data-jk="'+jk+'" title="ویرایش زمان این روز">⏱ '+jkLabel(jk)+' · '+(ts ? fmtDur(ts) : 'زمانی ثبت نشده')+' ✎</button></div>'+
-             (rangesText(n, jk) ? '<div class="pc-rng">🕒 '+rangesText(n, jk)+'</div>' : '');
+      const entries = nodeTimeEntries(n, jk);
+      let h = '<div class="gs-tchips">'+
+        '<button type="button" class="gs-tchip add" data-nact="addtime-day" data-jk="'+jk+'" title="ثبت زمان جدید برای این روز">⏱ '+jkLabel(jk)+' · '+(ts ? fmtDur(ts) : 'زمانی ثبت نشده')+' ＋</button>';
+      if (entries.length > 1){
+        h += '<button type="button" class="gs-tchip" data-nact="cleartime" data-jk="'+jk+'" title="پاک کردن همه‌ی زمان‌های این روز">🗑 همه</button>';
+      }
+      h += '</div>';
+      if (entries.length){
+        h += '<div class="gs-tentries">';
+        entries.forEach((e, i)=>{
+          h += '<div class="gs-tentry"><span>'+(i+1)+'. '+entryLabel(e)+'</span>'+
+               '<button type="button" class="gs-tchip" data-nact="delentry" data-jk="'+jk+'" data-eidx="'+i+'" title="حذف این ورودی">✕</button></div>';
+        });
+        h += '</div>';
+      }
+      return h;
     }
     function jkLabel(jk){
       const p = String(jk).split('-').map(Number);
@@ -1199,10 +1205,10 @@
       const ks = Object.keys(n.time || {}).filter(k=> +n.time[k] > 0).sort((a,b)=> jkOrder(b) - jkOrder(a));
       let h = '<div class="gs-tchips"><span class="gs-tlbl">⏱ زمان‌ها:</span>';
       ks.slice(0, 10).forEach(k=>{
-        h += '<button type="button" class="gs-tchip" data-nact="settime" data-jk="'+k+'" title="ویرایش زمان این روز">'+jkLabel(k)+' · '+fmtDur(n.time[k])+(rangesText(n, k) ? ' · 🕒 '+rangesText(n, k) : '')+' ✎</button>';
+        h += '<button type="button" class="gs-tchip" data-nact="settime" data-jk="'+k+'" title="ثبت زمان جدید">'+jkLabel(k)+' · '+fmtDur(n.time[k])+(rangesText(n, k) ? ' · 🕒 '+rangesText(n, k) : '')+' ＋</button>';
       });
       if (ks.length > 10) h += '<span class="gs-tlbl">و '+toFa(ks.length-10)+' روز دیگر</span>';
-      h += '<button type="button" class="gs-tchip add" data-nact="timeday" title="ثبت یا ویرایش زمان برای یک روز دیگر">＋ روز دیگر</button></div>';
+      h += '<button type="button" class="gs-tchip add" data-nact="timeday" title="ثبت زمان برای یک روز دیگر">＋ روز دیگر</button></div>';
       return h;
     }
     const DAYS_TOG = new Set();
@@ -1253,7 +1259,7 @@
         '<div class="gs-mrow">'+
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
           '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام..." autocomplete="off">'+
-          '<button type="button" class="gs-mtime'+(total?' on':'')+'" data-nact="addtime" title="ثبت زمان امروز (ساعت و دقیقه)">⌚'+(total ? ' '+fmtDur(total) : '')+'</button>'+
+          '<button type="button" class="gs-mtime'+(total?' on':'')+'" data-nact="addtime" title="ثبت زمان امروز">⌚'+(total ? ' '+fmtDur(total) : '')+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن" title="افزودن">＋</button>'+
           '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
           '<button type="button" class="gs-nach" data-nact="achieve" aria-label="دستاورد" title="دستاورد">'+ICO_TROPHY+'</button>'+
@@ -1269,1591 +1275,1596 @@
       }
       return h + '</div>';
     }
-    let TSEL = null;
-    let ICONSEL = null;
-    function collectAch(list, parent, out){
-      (list||[]).forEach(n=>{
-        if (n.achieved) out.push({ node:n, parent:parent });
-        collectAch(n.children, n.text || 'بدون نام', out);
-      });
-      return out;
-    }
-    let RSEL = null;
-    function ringsOf(g){ return state.rings.filter(r=>r.goalId === g.id); }
-    /* ---- نام/رنگ/آیکون یکسان برای هدف و نشانه‌ی نزدیکی ---- */
-    function hname(h){ return isRingHost(h) ? (h.label || 'نزدیک شدن به هدف') : (h.name || ''); }
-    function hcolor(h){ return h.color || RING_COLOR; }
-    function hiconHTML(h){
-      const img = h.images && h.images[0] && h.images[0].src;
-      if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
-      return '<span>'+esc(h.icon || (isRingHost(h) ? '🌟' : '🎯'))+'</span>';
-    }
-    function iconEditHTML(h){
-      let th = '';
-      (h.images||[]).forEach((im, i)=>{
-        th += '<span class="gs-ithumb"><img src="'+esc(im.src)+'" alt="" draggable="false"><button type="button" data-gact="iconimgdel" data-hid="'+h.id+'" data-idx="'+i+'" aria-label="حذف عکس">✕</button></span>';
-      });
-      return '<div class="gs-iedit">'+
-             '<input class="gs-iemoji" data-hid="'+h.id+'" value="'+esc(h.icon || '')+'" maxlength="8" placeholder="ایموجی" autocomplete="off">'+
-             '<button type="button" class="gs-mini gold" data-gact="iconimg" data-hid="'+h.id+'">عکس</button>'+th+'</div>';
-    }
-    (function(){
-      if (document.getElementById('gs-hostui-css')) return;
-      const st = document.createElement('style'); st.id = 'gs-hostui-css';
-      st.textContent =
-        '.gs-ico{--ic:#2dd4bf;width:34px;height:34px;flex:none;border-radius:50%;border:2px solid var(--ic);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;overflow:hidden;background:rgba(0,0,0,.12);}'+
-        '.gs-ico img{width:100%;height:100%;object-fit:cover;pointer-events:none;}'+
-        '.gs-ico span{pointer-events:none;}'+
-        '.gs-iedit{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}'+
-        '.dur-ov{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;}'+
-      '.dur-box{width:100%;max-width:330px;background:var(--panel-bg,#fff);color:var(--text-main);border:1px solid var(--panel-border);border-radius:20px;padding:18px 16px 14px;box-shadow:0 12px 40px rgba(0,0,0,.35);direction:rtl;text-align:center;}'+
-      '.dur-t{font-size:15px;font-weight:700;}'+
-      '.dur-s{font-size:11.5px;color:var(--text-dim);margin-top:3px;}'+
-      '.dur-in{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 12px;}'+
-      '.dur-in b{font-size:22px;color:var(--text-dim);}'+
-      '.dur-in label{display:flex;flex-direction:column;align-items:center;gap:4px;}'+
-      '.dur-in input{width:78px;height:54px;text-align:center;font-size:24px;font-weight:700;font-family:inherit;border:1px solid var(--panel-border);border-radius:14px;background:transparent;color:var(--text-main);}'+
-      '.dur-in span{font-size:11px;color:var(--text-dim);}'+
-      '.dur-q{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;}'+
-      '.dur-q button{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:11.5px;cursor:pointer;}'+
-      '.dur-tabs{display:flex;gap:6px;margin-top:12px;}'+
-      '.dur-tabs button{flex:1;border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:10px;padding:7px 4px;font-family:inherit;font-size:11.5px;cursor:pointer;}'+
-      '.dur-tabs button.on{background:rgba(201,151,43,.18);border-color:#c9972b;color:var(--text-main);font-weight:700;}'+
-      '.dur-in input[type=time]{width:112px;font-size:20px;direction:ltr;}'+
-      '.dur-rinfo{font-size:12px;color:var(--text-dim);margin:-2px 0 14px;}'+
-      '.pc-rng{font-size:11px;color:var(--text-dim);margin-top:2px;}'+
-      '.dur-b{display:flex;gap:8px;}'+
-      '.dur-b button{flex:1;border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:12px;padding:10px 6px;font-family:inherit;font-size:13px;cursor:pointer;}'+
-      '.dur-b .ok{background:#c9972b;border-color:#c9972b;color:#fff;font-weight:700;flex:1.4;}'+
-      '.dur-b .del{color:#e5484d;border-color:#e5484d;}'+
-      '.gs-ico-btn{cursor:pointer;}'+
-        '.gs-day.sel{outline:2px solid var(--text-main);outline-offset:1px;}'+
-        '.gs-iconpop{padding:8px 12px 10px;border-top:1px dashed var(--panel-border);}'+
-        '.gs-iemoji{width:64px;text-align:center;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:16px;padding:5px 4px;box-sizing:border-box;}'+
-        '.gs-ithumb{position:relative;width:34px;height:34px;flex:none;}'+
-        '.gs-ithumb img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--panel-border);}'+
-        '.gs-ithumb button{position:absolute;top:-6px;inset-inline-end:-6px;width:16px;height:16px;border-radius:50%;border:none;background:#e5484d;color:#fff;font-size:9px;line-height:16px;padding:0;cursor:pointer;}'+
-        '.gs-rnote{width:100%;box-sizing:border-box;min-height:54px;resize:vertical;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:13px;padding:7px 9px;}'+
-        '.gs-tag.rg{border-color:#2dd4bf;color:#2dd4bf;}';
-      document.head.appendChild(st);
-    })();
+      let TSEL = null;
+  let ICONSEL = null;
+  function collectAch(list, parent, out){
+    (list||[]).forEach(n=>{
+      if (n.achieved) out.push({ node:n, parent:parent });
+      collectAch(n.children, n.text || 'بدون نام', out);
+    });
+    return out;
+  }
+  let RSEL = null;
+  function ringsOf(g){ return state.rings.filter(r=>r.goalId === g.id); }
+  function hname(h){ return isRingHost(h) ? (h.label || 'نزدیک شدن به هدف') : (h.name || ''); }
+  function hcolor(h){ return h.color || RING_COLOR; }
+  function hiconHTML(h){
+    const img = h.images && h.images[0] && h.images[0].src;
+    if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
+    return '<span>'+esc(h.icon || (isRingHost(h) ? '🌟' : '🎯'))+'</span>';
+  }
+  function iconEditHTML(h){
+    let th = '';
+    (h.images||[]).forEach((im, i)=>{
+      th += '<span class="gs-ithumb"><img src="'+esc(im.src)+'" alt="" draggable="false"><button type="button" data-gact="iconimgdel" data-hid="'+h.id+'" data-idx="'+i+'" aria-label="حذف عکس">✕</button></span>';
+    });
+    return '<div class="gs-iedit">'+
+           '<input class="gs-iemoji" data-hid="'+h.id+'" value="'+esc(h.icon || '')+'" maxlength="8" placeholder="ایموجی" autocomplete="off">'+
+           '<button type="button" class="gs-mini gold" data-gact="iconimg" data-hid="'+h.id+'">عکس</button>'+th+'</div>';
+  }
+  (function(){
+    if (document.getElementById('gs-hostui-css')) return;
+    const st = document.createElement('style'); st.id = 'gs-hostui-css';
+    st.textContent =
+      '.gs-ico{--ic:#2dd4bf;width:34px;height:34px;flex:none;border-radius:50%;border:2px solid var(--ic);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;overflow:hidden;background:rgba(0,0,0,.12);}'+
+      '.gs-ico img{width:100%;height:100%;object-fit:cover;pointer-events:none;}'+
+      '.gs-ico span{pointer-events:none;}'+
+      '.gs-iedit{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}'+
+      '.dur-ov{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;}'+
+    '.dur-box{width:100%;max-width:330px;background:var(--panel-bg,#fff);color:var(--text-main);border:1px solid var(--panel-border);border-radius:20px;padding:18px 16px 14px;box-shadow:0 12px 40px rgba(0,0,0,.35);direction:rtl;text-align:center;}'+
+    '.dur-t{font-size:15px;font-weight:700;}'+
+    '.dur-s{font-size:11.5px;color:var(--text-dim);margin-top:3px;}'+
+    '.dur-in{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 12px;}'+
+    '.dur-in b{font-size:22px;color:var(--text-dim);}'+
+    '.dur-in label{display:flex;flex-direction:column;align-items:center;gap:4px;}'+
+    '.dur-in input{width:78px;height:54px;text-align:center;font-size:24px;font-weight:700;font-family:inherit;border:1px solid var(--panel-border);border-radius:14px;background:transparent;color:var(--text-main);}'+
+    '.dur-in span{font-size:11px;color:var(--text-dim);}'+
+    '.dur-q{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;}'+
+    '.dur-q button{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:11.5px;cursor:pointer;}'+
+    '.dur-tabs{display:flex;gap:6px;margin-top:12px;}'+
+    '.dur-tabs button{flex:1;border:1px solid var(--panel-border);background:transparent;color:var(--text-dim);border-radius:10px;padding:7px 4px;font-family:inherit;font-size:11.5px;cursor:pointer;}'+
+    '.dur-tabs button.on{background:rgba(201,151,43,.18);border-color:#c9972b;color:var(--text-main);font-weight:700;}'+
+    '.dur-in input[type=time]{width:112px;font-size:20px;direction:ltr;}'+
+    '.dur-rinfo{font-size:12px;color:var(--text-dim);margin:-2px 0 14px;}'+
+    '.pc-rng{font-size:11px;color:var(--text-dim);margin-top:2px;}'+
+    '.dur-b{display:flex;gap:8px;}'+
+    '.dur-b button{flex:1;border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:12px;padding:10px 6px;font-family:inherit;font-size:13px;cursor:pointer;}'+
+    '.dur-b .ok{background:#c9972b;border-color:#c9972b;color:#fff;font-weight:700;flex:1.4;}'+
+    '.dur-b .del{color:#e5484d;border-color:#e5484d;}'+
+    '.gs-ico-btn{cursor:pointer;}'+
+      '.gs-day.sel{outline:2px solid var(--text-main);outline-offset:1px;}'+
+      '.gs-iconpop{padding:8px 12px 10px;border-top:1px dashed var(--panel-border);}'+
+      '.gs-iemoji{width:64px;text-align:center;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:16px;padding:5px 4px;box-sizing:border-box;}'+
+      '.gs-ithumb{position:relative;width:34px;height:34px;flex:none;}'+
+      '.gs-ithumb img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--panel-border);}'+
+      '.gs-ithumb button{position:absolute;top:-6px;inset-inline-end:-6px;width:16px;height:16px;border-radius:50%;border:none;background:#e5484d;color:#fff;font-size:9px;line-height:16px;padding:0;cursor:pointer;}'+
+      '.gs-rnote{width:100%;box-sizing:border-box;min-height:54px;resize:vertical;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:13px;padding:7px 9px;}'+
+      '.gs-tag.rg{border-color:#2dd4bf;color:#2dd4bf;}'+
+      /* لیست ورودی‌های زمان */
+      '.gs-tentries{display:flex;flex-direction:column;gap:3px;margin-top:6px;padding:6px 8px;border:1px dashed var(--panel-border);border-radius:10px;background:rgba(127,127,127,.04);}'+
+      '.gs-tentry{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-main);}'+
+      '.gs-tentry>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'+
+      '.gs-tentry .gs-tchip{padding:1px 7px;font-size:10px;flex:none;}';
+    document.head.appendChild(st);
+  })();
 
-    (function(){
-      if (document.getElementById('gs-v2-css')) return;
-      const st = document.createElement('style'); st.id = 'gs-v2-css';
-      st.textContent =
-        /* برچسب سطح: شاخه / زیرشاخه */
-        '#gs-list .gs-lvl{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:10.5px;line-height:1.2;}'+
-        '#gs-list .gs-badge{padding:2px 9px;font-size:10px;letter-spacing:0;}'+
-        '#gs-list .gs-badge.sub{background:transparent;border:1px solid;}'+
-        '#gs-list .gs-par{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;}'+
-        /* تورفتگیِ واضح و خط اتصال برای زیرشاخه */
-        '#gs-list .gs-kids{margin-inline-start:18px;padding-inline-start:12px;border-inline-start:2px solid rgba(127,127,127,.3);gap:7px;}'+
-        '#gs-list .gs-kids > .gs-grp{position:relative;}'+
-        '#gs-list .gs-kids > .gs-grp::before{content:"";position:absolute;inset-inline-start:-12px;top:26px;width:12px;border-top:2px solid rgba(127,127,127,.3);}'+
-        '#gs-list .gs-node.main{background:rgba(127,127,127,.1);}'+
-        '#gs-list .gs-node.sub{background:rgba(127,127,127,.03);border:1px dashed rgba(127,127,127,.38);border-inline-start:3px solid var(--accent);}'+
-        '#gs-list .gs-node.sub .gs-lvl{margin-bottom:1px;}'+
-        /* کادر آزادِ نشانه‌ها و دستاوردها */
-        '#gs-list .gs-trophies{gap:6px;padding-top:8px;}'+
-        '#gs-list .gs-trophies-h{gap:10px;}'+
-        '#gs-list .gs-cnt{display:inline-flex;align-items:center;gap:4px;color:#2dd4bf;}'+
-        '#gs-list .gs-cnt.tr{color:#f0a020;}'+
-        '#gs-list .gs-cnt b{font-size:12px;color:var(--text-main);}'+
-        '#gs-list .gs-free{position:relative;display:block;min-height:96px;border:1px dashed var(--panel-border);border-radius:14px;background:rgba(127,127,127,.04);overflow:hidden;touch-action:pan-y;}'+
-        '#gs-list .gs-free > .gs-ring, #gs-list .gs-free > .gs-trophy{position:absolute;width:72px;height:80px;box-sizing:border-box;margin:0;justify-content:flex-start;touch-action:none;}'+
-        '#gs-list .gs-free > .dragging{position:absolute;z-index:6;transition:none;}'+
-        /* خلاصه‌ی دوره (پایین کارت) */
-        '#gs-list .gs-statswrap{display:flex;flex-direction:column;gap:6px;margin-top:2px;}'+
-        '#gs-list .gs-statsbar{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--panel-border);border-radius:12px;background:transparent;color:var(--text-dim);font-family:inherit;font-size:11.5px;padding:7px 10px;cursor:pointer;}'+
-        '#gs-list .gs-statsbar b{color:var(--text-main);}'+
-        '#gs-list .gs-statsbar .sp{flex:1;}'+
-        '#gs-list .gs-statsbar svg{width:16px;height:16px;flex:none;}'+
-        '#gs-list .gs-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}'+
-        '#gs-list .gs-stat{border:1px solid var(--panel-border);border-radius:12px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;}'+
-        '#gs-list .gs-stat.wide{grid-column:1 / -1;}'+
-        '#gs-list .gs-stat b{font-size:13px;color:var(--text-main);}'+
-        '#gs-list .gs-stat span{font-size:10.5px;color:var(--text-dim);}'+
-        '#gs-list .gs-statfoot{display:flex;}'+
-        '#gs-list .gs-hintline{font-size:10.5px;color:var(--text-dim);opacity:.8;}';
-      document.head.appendChild(st);
-    })();
-    function ringIconHTML(r){
-      const img = r.images && r.images[0] && r.images[0].src;
-      if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
-      return '<span>'+esc(r.icon || '🌟')+'</span>';
-    }
-    function ringDetailHTML(g, rs){
-      const r = rs.find(x=>x.id===RSEL);
-      if (!r) return '';
-      const kids = countAllActions(r.actions||[]);
-      return '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
-             '<div class="trow"><span>'+(kids ? toFa(kids) : '')+'</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
-             '<div class="gs-rbtns">'+
-               '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
-               '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
-               (state.goals.filter(x=>!x.reached).length > 1 ? '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">انتقال به هدف دیگر</button>' : '')+
-               '<button type="button" class="gs-mini" data-gact="ringdel" data-rid="'+r.id+'">حذف</button>'+
-             '</div><div class="gs-sub" data-host="'+r.id+'">'+bodyHTML(r)+'</div></div>';
-    }
-    /* ردیف واحدِ «نشانه‌های نزدیکی + جام‌ها» با ترتیب دلخواه کاربر (g.itemOrder) */
-    function trophiesHTML(g){
-      const rs = ringsOf(g);
-      const arr = collectAch(g.actions, g.name || g.label || 'نشانه', []);
-      if (!arr.length && !rs.length) return '';
-      arr.sort((a,b)=> (a.node.achievedAt||0) - (b.node.achievedAt||0));
-      let items = rs.map(r=>({ id:r.id, kind:'ring', r:r })).concat(arr.map(x=>({ id:x.node.id, kind:'tr', x:x })));
-      const order = Array.isArray(g.itemOrder) ? g.itemOrder : [];
-      items = items.map((it, i)=>({ it, k: order.indexOf(it.id) >= 0 ? order.indexOf(it.id) : 1e6 + i }))
-                   .sort((a,b)=> a.k - b.k).map(o=>o.it);
-      let h = '<div class="gs-trophies"><div class="gs-trophies-h gs-rings-h" title="'+(items.length > 1 ? 'هر کدام را با انگشت به هر جای کادر ببر' : '')+'">'+
-              '<span class="gs-cnt">'+ICO_MAP+'<b>'+toFa(rs.length)+'</b></span>'+
-              '<span class="gs-cnt tr">'+ICO_TROPHY+'<b>'+toFa(arr.length)+'</b></span></div>'+
-              '<div class="gs-rrow gs-free" data-host="'+g.id+'">';
-      items.forEach(it=>{
-        if (it.kind === 'ring'){
-          const r = it.r;
-          h += '<button type="button" class="gs-ring'+(RSEL===r.id?' sel':'')+'" data-cid="'+r.id+'" data-gact="ring" data-rid="'+r.id+'" title="'+esc(r.label||'')+'" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
-               '<span class="ric">'+ringIconHTML(r)+'</span><span class="tnm">'+esc(r.label||'نزدیک شدن به هدف')+'</span></button>';
-        } else {
-          const node = it.x.node;
-          h += '<button type="button" class="gs-trophy'+(TSEL===node.id?' sel':'')+'" data-cid="'+node.id+'" data-gact="trophy" data-tid="'+node.id+'" title="'+esc(node.text||'')+'">'+
-               '<span class="tic">'+ICO_TROPHY+'</span><span class="tnm">'+esc(node.text||'بدون نام')+'</span></button>';
-        }
-      });
-      h += '</div>';
-      h += ringDetailHTML(g, rs);
-      const sel = arr.find(x=>x.node.id===TSEL);
-      if (sel){
-        const n = sel.node;
-        let when = '';
-        if (n.achievedAt){ const d = new Date(n.achievedAt); const j = toJalaali(d.getFullYear(), d.getMonth()+1, d.getDate()); when = toFa(j.jy)+'/'+toFa(j.jm)+'/'+toFa(j.jd); }
-        const days = Object.keys(n.logs||{}).filter(k=>n.logs[k]).length;
-        const kids = countAllActions(n.children||[]);
-        h += '<div class="gs-tdetail"><b class="tt">'+esc(n.text||'بدون نام')+'</b><div class="trow">'+
-             '<span>زیرِ: '+esc(sel.parent)+'</span>'+(when?'<span>· رسیده‌ای در '+when+'</span>':'')+'</div>'+
-             '<div class="trow"><span>'+toFa(days)+' روز انجام شده</span>'+(kids?'<span>· '+toFa(kids)+'</span>':'')+'</div>'+
-             '<div><button type="button" class="gs-mini" data-gact="unach" data-tid="'+n.id+'">بازگرداندن</button></div></div>';
-      }
-      return h + '</div>';
-    }
-    function items_hint(g){
-      return (ringsOf(g).length + collectAch(g.actions, '', []).length) > 1 ? 'نشانه‌ها و دستاوردها را با انگشت به هر جای کادرشان ببر.' : '';
-    }
-    function bodyHTML(g){
-      const pi = periodInfo(g);
-      const nTotal = countAllActions(g.actions);
-      const todayCnt = goalTodayCount(g, pi.todayJK);
-      let h = '<div class="gs-body">';
-      if (isRingHost(g)){
-        h += '<input class="gs-rname" data-rid="'+g.id+'" value="'+esc(g.label||'')+'" placeholder="نام نشانه..." autocomplete="off">'+
-             '<textarea class="gs-rnote" data-rid="'+g.id+'" placeholder="نوشته‌ی زیر نشانه روی نقشه...">'+esc(g.note||'')+'</textarea>';
-      }
-      if (isRingHost(g)) h += iconEditHTML(g);
-      if (pi.finished){
-        h += '<div class="gs-done-banner">دوره‌ی '+pcOrd(pi.gp.past.length)+' تموم شد! برای ادامه، دوره‌ی بعدی را شروع کن؛ دوره‌های قبلی نگه داشته می‌شوند.<br>'+
-             '<button type="button" class="gs-mini gold" data-gact="newperiod" style="margin-top:6px;">شروع دوره‌ی '+pcOrd(pi.gp.past.length+1)+'</button></div>';
-      }
-      if (!nTotal && addingFor !== g.id){
-        h += '<div class="gs-empty" style="padding:10px 4px;">با ＋ شروع کن؛ مثلاً «گوش دادن به پادکست».</div>';
-      }
-      (g.actions||[]).forEach(a=>{ h += nodeHTML(a, g, pi, 0); });
-      h += trophiesHTML(g);
-      if (addingFor === g.id) h += addRowHTML(g.id, 'نام (مثلاً گوش دادن به پادکست)');
-      else h += '<div class="gs-addbtns"><button type="button" class="gs-mini gold" data-gact="addbranch" aria-label="افزودن">＋</button>'+
-                (isRingHost(g) ? '' : '<button type="button" class="gs-mini ring" data-gact="addring">'+ICO_MAP+' ＋ نزدیک شدن به هدف</button>')+'</div>';
-      /* خلاصه‌ی دوره: پایین کارت، جمع‌شونده؛ بین هدف و شاخه‌ها نمی‌آید */
-      const secToday = allNodes(g).reduce((x,n)=>x+nodeDaySecs(n, pi.todayJK),0);
-      const secPeriod = allNodes(g).reduce((x,n)=>x+nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)),0);
-      const so = STATS_OPEN.has(g.id);
-      h += '<div class="gs-statswrap"><button type="button" class="gs-statsbar'+(so?' open':'')+'" data-gact="stats">'+
-           '<span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span><span class="sp"></span>'+(so ? ICO_CHEV_UP : ICO_CHEV_DOWN)+'</button>';
-      if (so){
-        h += '<div class="gs-stats">'+
-             '<div class="gs-stat"><b>'+toFa(todayCnt)+' کار</b><span>انجام‌شده‌ی امروز</span></div>'+
-             '<div class="gs-stat"><b>'+(secToday ? fmtDur(secToday) : '—')+'</b><span>زمانِ امروز</span></div>'+
-             '<div class="gs-stat wide"><b>'+(secPeriod ? fmtDur(secPeriod) : '—')+'</b><span>مجموع زمانِ این دوره</span></div></div>'+
-             (pi.finished ? '' : '<div class="gs-statfoot"><button type="button" class="gs-mini" data-gact="days">تنظیم روزهای دوره</button></div>')+
-             (items_hint(g) ? '<div class="gs-hintline">'+items_hint(g)+'</div>' : '');
-      }
-      h += '</div>';
-      h += '</div>';
-      return h;
-    }
-
-    function draw(){
-      autoLinkRings();
-      const q = norm(searchEl.value.trim());
-      const activeGoals = state.goals.filter(g=>!g.reached);
-      const reachedGoals = state.goals.filter(g=>g.reached);
-      const rn = document.getElementById('gs-reached-n');
-      if (rn) rn.textContent = reachedGoals.length ? '(' + toFa(reachedGoals.length) + ')' : '';
-      const isReachedTab = tabKey === 'reached';
-      const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.goals.length ? [] : state.rings.filter(r=> !state.goals.some(x=>x.id===r.goalId)));
-      let rows = pool.map(g=>({ g, hit: q ? (norm(hname(g)).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
-                            .filter(r=> !q || r.hit !== null);
-      if (orderCache){
-        const ix = id => { const i = orderCache.indexOf(id); return i < 0 ? 1e9 : i; };
-        rows.sort((a,b)=> ix(a.g.id) - ix(b.g.id));
+  (function(){
+    if (document.getElementById('gs-v2-css')) return;
+    const st = document.createElement('style'); st.id = 'gs-v2-css';
+    st.textContent =
+      '#gs-list .gs-lvl{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:10.5px;line-height:1.2;}'+
+      '#gs-list .gs-badge{padding:2px 9px;font-size:10px;letter-spacing:0;}'+
+      '#gs-list .gs-badge.sub{background:transparent;border:1px solid;}'+
+      '#gs-list .gs-par{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;}'+
+      '#gs-list .gs-kids{margin-inline-start:18px;padding-inline-start:12px;border-inline-start:2px solid rgba(127,127,127,.3);gap:7px;}'+
+      '#gs-list .gs-kids > .gs-grp{position:relative;}'+
+      '#gs-list .gs-kids > .gs-grp::before{content:"";position:absolute;inset-inline-start:-12px;top:26px;width:12px;border-top:2px solid rgba(127,127,127,.3);}'+
+      '#gs-list .gs-node.main{background:rgba(127,127,127,.1);}'+
+      '#gs-list .gs-node.sub{background:rgba(127,127,127,.03);border:1px dashed rgba(127,127,127,.38);border-inline-start:3px solid var(--accent);}'+
+      '#gs-list .gs-node.sub .gs-lvl{margin-bottom:1px;}'+
+      '#gs-list .gs-trophies{gap:6px;padding-top:8px;}'+
+      '#gs-list .gs-trophies-h{gap:10px;}'+
+      '#gs-list .gs-cnt{display:inline-flex;align-items:center;gap:4px;color:#2dd4bf;}'+
+      '#gs-list .gs-cnt.tr{color:#f0a020;}'+
+      '#gs-list .gs-cnt b{font-size:12px;color:var(--text-main);}'+
+      '#gs-list .gs-free{position:relative;display:block;min-height:96px;border:1px dashed var(--panel-border);border-radius:14px;background:rgba(127,127,127,.04);overflow:hidden;touch-action:pan-y;}'+
+      '#gs-list .gs-free > .gs-ring, #gs-list .gs-free > .gs-trophy{position:absolute;width:72px;height:80px;box-sizing:border-box;margin:0;justify-content:flex-start;touch-action:none;}'+
+      '#gs-list .gs-free > .dragging{position:absolute;z-index:6;transition:none;}'+
+      '#gs-list .gs-statswrap{display:flex;flex-direction:column;gap:6px;margin-top:2px;}'+
+      '#gs-list .gs-statsbar{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--panel-border);border-radius:12px;background:transparent;color:var(--text-dim);font-family:inherit;font-size:11.5px;padding:7px 10px;cursor:pointer;}'+
+      '#gs-list .gs-statsbar b{color:var(--text-main);}'+
+      '#gs-list .gs-statsbar .sp{flex:1;}'+
+      '#gs-list .gs-statsbar svg{width:16px;height:16px;flex:none;}'+
+      '#gs-list .gs-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}'+
+      '#gs-list .gs-stat{border:1px solid var(--panel-border);border-radius:12px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;}'+
+      '#gs-list .gs-stat.wide{grid-column:1 / -1;}'+
+      '#gs-list .gs-stat b{font-size:13px;color:var(--text-main);}'+
+      '#gs-list .gs-stat span{font-size:10.5px;color:var(--text-dim);}'+
+      '#gs-list .gs-statfoot{display:flex;}'+
+      '#gs-list .gs-hintline{font-size:10.5px;color:var(--text-dim);opacity:.8;}';
+    document.head.appendChild(st);
+  })();
+  function ringIconHTML(r){
+    const img = r.images && r.images[0] && r.images[0].src;
+    if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
+    return '<span>'+esc(r.icon || '🌟')+'</span>';
+  }
+  function ringDetailHTML(g, rs){
+    const r = rs.find(x=>x.id===RSEL);
+    if (!r) return '';
+    const kids = countAllActions(r.actions||[]);
+    return '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
+           '<div class="trow"><span>'+(kids ? toFa(kids) : '')+'</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
+           '<div class="gs-rbtns">'+
+             '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
+             '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
+             (state.goals.filter(x=>!x.reached).length > 1 ? '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">انتقال به هدف دیگر</button>' : '')+
+             '<button type="button" class="gs-mini" data-gact="ringdel" data-rid="'+r.id+'">حذف</button>'+
+           '</div><div class="gs-sub" data-host="'+r.id+'">'+bodyHTML(r)+'</div></div>';
+  }
+  function trophiesHTML(g){
+    const rs = ringsOf(g);
+    const arr = collectAch(g.actions, g.name || g.label || 'نشانه', []);
+    if (!arr.length && !rs.length) return '';
+    arr.sort((a,b)=> (a.node.achievedAt||0) - (b.node.achievedAt||0));
+    let items = rs.map(r=>({ id:r.id, kind:'ring', r:r })).concat(arr.map(x=>({ id:x.node.id, kind:'tr', x:x })));
+    const order = Array.isArray(g.itemOrder) ? g.itemOrder : [];
+    items = items.map((it, i)=>({ it, k: order.indexOf(it.id) >= 0 ? order.indexOf(it.id) : 1e6 + i }))
+                 .sort((a,b)=> a.k - b.k).map(o=>o.it);
+    let h = '<div class="gs-trophies"><div class="gs-trophies-h gs-rings-h" title="'+(items.length > 1 ? 'هر کدام را با انگشت به هر جای کادر ببر' : '')+'">'+
+            '<span class="gs-cnt">'+ICO_MAP+'<b>'+toFa(rs.length)+'</b></span>'+
+            '<span class="gs-cnt tr">'+ICO_TROPHY+'<b>'+toFa(arr.length)+'</b></span></div>'+
+            '<div class="gs-rrow gs-free" data-host="'+g.id+'">';
+    items.forEach(it=>{
+      if (it.kind === 'ring'){
+        const r = it.r;
+        h += '<button type="button" class="gs-ring'+(RSEL===r.id?' sel':'')+'" data-cid="'+r.id+'" data-gact="ring" data-rid="'+r.id+'" title="'+esc(r.label||'')+'" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
+             '<span class="ric">'+ringIconHTML(r)+'</span><span class="tnm">'+esc(r.label||'نزدیک شدن به هدف')+'</span></button>';
       } else {
-        rows.sort((a,b)=>{
-          if (sortKey === 'growth') return goalPower(b.g) - goalPower(a.g);
-          if (sortKey === 'name') return String(hname(a.g)).localeCompare(String(hname(b.g)), 'fa');
-          return (b.g.lastActivity||0) - (a.g.lastActivity||0);
-        });
-        orderCache = rows.map(r=>r.g.id);
+        const node = it.x.node;
+        h += '<button type="button" class="gs-trophy'+(TSEL===node.id?' sel':'')+'" data-cid="'+node.id+'" data-gact="trophy" data-tid="'+node.id+'" title="'+esc(node.text||'')+'">'+
+             '<span class="tic">'+ICO_TROPHY+'</span><span class="tnm">'+esc(node.text||'بدون نام')+'</span></button>';
       }
-      countEl.textContent = pool.length ? (isReachedTab ? toFa(pool.length) + ' هدف' : toFa(activeGoals.length) + ' هدف' + (pool.length > activeGoals.length ? ' · ' + toFa(pool.length - activeGoals.length) + ' نزدیکی بدون هدف' : '')) : '';
-      if (!rows.length){
-        listEl.innerHTML = `<div class="gs-empty">${q ? 'موردی پیدا نشد.' : (isReachedTab ? 'هنوز هدفی به مرحله‌ی «محقق‌شده» نرسیده.<br>وقتی به یک هدف رسیدی، با دکمه‌ی ✓ کنار آن، به این فهرست منتقل می‌شود.' : (state.goals.length ? 'همه‌ی اهدافت محقق شده‌اند 🎉<br>با دکمه‌ی «＋ هدف جدید» هدف تازه‌ای بساز.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'))}</div>`;
-        return;
-      }
-      const scrollTop = listEl.scrollTop;
-      if (isReachedTab){
-        listEl.innerHTML = rows.map(({g})=>{
-          const n = countAllActions(g.actions);
-          let when = '';
-          if (g.reachedAt){
-            const d = new Date(g.reachedAt); const j = toJalaali(d.getFullYear(), d.getMonth()+1, d.getDate());
-            when = ' · محقق‌شده در ' + toFa(j.jy) + '/' + toFa(j.jm) + '/' + toFa(j.jd);
-          }
-          return `<div class="gs-item gs-reached-item" data-gid="${g.id}" style="--gs-c:${esc(g.color)}">
-            <div class="gs-row" data-act="none">
-              <span class="gs-dot" style="background:${g.color}"></span>
-              <div class="gs-main">
-                <div class="gs-name">${esc(g.name)}<span class="gs-tag ok">محقق شد ✓</span></div>
-                <div class="gs-meta">${when ? when.replace(/^\s*·\s*/, '') : ''}</div>
-              </div>
-              <button class="gs-mini" data-act="unreach" type="button">بازگرداندن</button>
-              <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
-              <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
-            </div>
-          </div>`;
-        }).join('');
-        listEl.scrollTop = scrollTop;
-        return;
-      }
-      listEl.innerHTML = rows.map(({g, hit})=>{
+    });
+    h += '</div>';
+    h += ringDetailHTML(g, rs);
+    const sel = arr.find(x=>x.node.id===TSEL);
+    if (sel){
+      const n = sel.node;
+      let when = '';
+      if (n.achievedAt){ const d = new Date(n.achievedAt); const j = toJalaali(d.getFullYear(), d.getMonth()+1, d.getDate()); when = toFa(j.jy)+'/'+toFa(j.jm)+'/'+toFa(j.jd); }
+      const days = Object.keys(n.logs||{}).filter(k=>n.logs[k]).length;
+      const kids = countAllActions(n.children||[]);
+      h += '<div class="gs-tdetail"><b class="tt">'+esc(n.text||'بدون نام')+'</b><div class="trow">'+
+           '<span>زیرِ: '+esc(sel.parent)+'</span>'+(when?'<span>· رسیده‌ای در '+when+'</span>':'')+'</div>'+
+           '<div class="trow"><span>'+toFa(days)+' روز انجام شده</span>'+(kids?'<span>· '+toFa(kids)+'</span>':'')+'</div>'+
+           '<div><button type="button" class="gs-mini" data-gact="unach" data-tid="'+n.id+'">بازگرداندن</button></div></div>';
+    }
+    return h + '</div>';
+  }
+  function items_hint(g){
+    return (ringsOf(g).length + collectAch(g.actions, '', []).length) > 1 ? 'نشانه‌ها و دستاوردها را با انگشت به هر جای کادرشان ببر.' : '';
+  }
+  function bodyHTML(g){
+    const pi = periodInfo(g);
+    const nTotal = countAllActions(g.actions);
+    const todayCnt = goalTodayCount(g, pi.todayJK);
+    let h = '<div class="gs-body">';
+    if (isRingHost(g)){
+      h += '<input class="gs-rname" data-rid="'+g.id+'" value="'+esc(g.label||'')+'" placeholder="نام نشانه..." autocomplete="off">'+
+           '<textarea class="gs-rnote" data-rid="'+g.id+'" placeholder="نوشته‌ی زیر نشانه روی نقشه...">'+esc(g.note||'')+'</textarea>';
+    }
+    if (isRingHost(g)) h += iconEditHTML(g);
+    if (pi.finished){
+      h += '<div class="gs-done-banner">دوره‌ی '+pcOrd(pi.gp.past.length)+' تموم شد! برای ادامه، دوره‌ی بعدی را شروع کن؛ دوره‌های قبلی نگه داشته می‌شوند.<br>'+
+           '<button type="button" class="gs-mini gold" data-gact="newperiod" style="margin-top:6px;">شروع دوره‌ی '+pcOrd(pi.gp.past.length+1)+'</button></div>';
+    }
+    if (!nTotal && addingFor !== g.id){
+      h += '<div class="gs-empty" style="padding:10px 4px;">با ＋ شروع کن؛ مثلاً «گوش دادن به پادکست».</div>';
+    }
+    (g.actions||[]).forEach(a=>{ h += nodeHTML(a, g, pi, 0); });
+    h += trophiesHTML(g);
+    if (addingFor === g.id) h += addRowHTML(g.id, 'نام (مثلاً گوش دادن به پادکست)');
+    else h += '<div class="gs-addbtns"><button type="button" class="gs-mini gold" data-gact="addbranch" aria-label="افزودن">＋</button>'+
+              (isRingHost(g) ? '' : '<button type="button" class="gs-mini ring" data-gact="addring">'+ICO_MAP+' ＋ نزدیک شدن به هدف</button>')+'</div>';
+    const secToday = allNodes(g).reduce((x,n)=>x+nodeDaySecs(n, pi.todayJK),0);
+    const secPeriod = allNodes(g).reduce((x,n)=>x+nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)),0);
+    const so = STATS_OPEN.has(g.id);
+    h += '<div class="gs-statswrap"><button type="button" class="gs-statsbar'+(so?' open':'')+'" data-gact="stats">'+
+         '<span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span><span class="sp"></span>'+(so ? ICO_CHEV_UP : ICO_CHEV_DOWN)+'</button>';
+    if (so){
+      h += '<div class="gs-stats">'+
+           '<div class="gs-stat"><b>'+toFa(todayCnt)+' کار</b><span>انجام‌شده‌ی امروز</span></div>'+
+           '<div class="gs-stat"><b>'+(secToday ? fmtDur(secToday) : '—')+'</b><span>زمانِ امروز</span></div>'+
+           '<div class="gs-stat wide"><b>'+(secPeriod ? fmtDur(secPeriod) : '—')+'</b><span>مجموع زمانِ این دوره</span></div></div>'+
+           (pi.finished ? '' : '<div class="gs-statfoot"><button type="button" class="gs-mini" data-gact="days">تنظیم روزهای دوره</button></div>')+
+           (items_hint(g) ? '<div class="gs-hintline">'+items_hint(g)+'</div>' : '');
+    }
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function draw(){
+    autoLinkRings();
+    const q = norm(searchEl.value.trim());
+    const activeGoals = state.goals.filter(g=>!g.reached);
+    const reachedGoals = state.goals.filter(g=>g.reached);
+    const rn = document.getElementById('gs-reached-n');
+    if (rn) rn.textContent = reachedGoals.length ? '(' + toFa(reachedGoals.length) + ')' : '';
+    const isReachedTab = tabKey === 'reached';
+    const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.goals.length ? [] : state.rings.filter(r=> !state.goals.some(x=>x.id===r.goalId)));
+    let rows = pool.map(g=>({ g, hit: q ? (norm(hname(g)).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
+                          .filter(r=> !q || r.hit !== null);
+    if (orderCache){
+      const ix = id => { const i = orderCache.indexOf(id); return i < 0 ? 1e9 : i; };
+      rows.sort((a,b)=> ix(a.g.id) - ix(b.g.id));
+    } else {
+      rows.sort((a,b)=>{
+        if (sortKey === 'growth') return goalPower(b.g) - goalPower(a.g);
+        if (sortKey === 'name') return String(hname(a.g)).localeCompare(String(hname(b.g)), 'fa');
+        return (b.g.lastActivity||0) - (a.g.lastActivity||0);
+      });
+      orderCache = rows.map(r=>r.g.id);
+    }
+    countEl.textContent = pool.length ? (isReachedTab ? toFa(pool.length) + ' هدف' : toFa(activeGoals.length) + ' هدف' + (pool.length > activeGoals.length ? ' · ' + toFa(pool.length - activeGoals.length) + ' نزدیکی بدون هدف' : '')) : '';
+    if (!rows.length){
+      listEl.innerHTML = `<div class="gs-empty">${q ? 'موردی پیدا نشد.' : (isReachedTab ? 'هنوز هدفی به مرحله‌ی «محقق‌شده» نرسیده.<br>وقتی به یک هدف رسیدی، با دکمه‌ی ✓ کنار آن، به این فهرست منتقل می‌شود.' : (state.goals.length ? 'همه‌ی اهدافت محقق شده‌اند 🎉<br>با دکمه‌ی «＋ هدف جدید» هدف تازه‌ای بساز.' : 'هنوز هدفی نساخته‌ای.<br>با دکمه‌ی «＋ هدف جدید» شروع کن.'))}</div>`;
+      return;
+    }
+    const scrollTop = listEl.scrollTop;
+    if (isReachedTab){
+      listEl.innerHTML = rows.map(({g})=>{
         const n = countAllActions(g.actions);
-        const p = goalPower(g);
-        const stale = g.lastActivity && (Date.now() - g.lastActivity) > 30*86400000;
-        const isR = isRingHost(g);
-        const hc = hcolor(g);
-        const lg = isR && g.goalId ? state.goals.find(x=>x.id===g.goalId) : null;
-        const tags = (isR ? '<span class="gs-tag rg">نزدیک شدن به هدف' + (lg ? ' · «' + esc(lg.name || 'هدف') + '»' : '') + '</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
-        const isOpen = OPEN.has(g.id) || (q && hit);
-        return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(hc)}">
-          <div class="gs-row" data-act="toggle">
-            <span class="gs-ico${isR ? '' : ' gs-ico-btn'}" ${isR ? '' : 'data-act="icon" title="تغییر آیکون یا عکس"'} style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
+        let when = '';
+        if (g.reachedAt){
+          const d = new Date(g.reachedAt); const j = toJalaali(d.getFullYear(), d.getMonth()+1, d.getDate());
+          when = ' · محقق‌شده در ' + toFa(j.jy) + '/' + toFa(j.jm) + '/' + toFa(j.jd);
+        }
+        return `<div class="gs-item gs-reached-item" data-gid="${g.id}" style="--gs-c:${esc(g.color)}">
+          <div class="gs-row" data-act="none">
+            <span class="gs-dot" style="background:${g.color}"></span>
             <div class="gs-main">
-              <div class="gs-name"><span class="gs-nm">${esc(hname(g))}</span>${tags}</div>
-              <div class="gs-meta">${g.lastActivity ? ago(g.lastActivity) : ''}</div>
-              ${hit ? `<div class="gs-hit">↳ ${esc(hit)}</div>` : ''}
-              <div class="gs-bar"><i style="width:${p}%;background:${hc}"></i></div>
+              <div class="gs-name">${esc(g.name)}<span class="gs-tag ok">محقق شد ✓</span></div>
+              <div class="gs-meta">${when ? when.replace(/^\s*·\s*/, '') : ''}</div>
             </div>
-            <button class="gs-ic" data-act="toggle" aria-label="باز یا بسته کردن">${isOpen ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
-            ${isR ? '' : `<button class="gs-ic" data-act="reach" aria-label="به این هدف رسیدم" title="به این هدف رسیدم">${ICO_CHECK}</button>`}
+            <button class="gs-mini" data-act="unreach" type="button">بازگرداندن</button>
             <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
             <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
           </div>
-          ${(!isR && ICONSEL === g.id) ? '<div class="gs-body gs-iconpop">' + iconEditHTML(g) + '</div>' : ''}
-          ${isOpen ? bodyHTML(g) : ''}
         </div>`;
       }).join('');
-      const freeRings = state.goals.length ? state.rings.filter(r=> ringIsOrphan(r)).length : 0;
-      if (freeRings) listEl.insertAdjacentHTML('beforeend', '<div class="gs-empty" style="padding:10px 6px;font-size:11.5px;">'+toFa(freeRings)+' نشانه‌ی آزاد روی نقشه هست؛ آن را روی مسیر یک هدف ببر تا خودکار زیرمجموعه‌اش شود.</div>');
       listEl.scrollTop = scrollTop;
-      layoutFree();
+      return;
     }
-    window.__reopenGoalsSheet = ()=>{ open(); };
-    function open(){ searchEl.value=''; orderCache = null; draw(); ov.classList.add('open'); layoutFree(); }
-    window.addEventListener('resize', ()=>{ try{ layoutFree(); }catch(e){} });
-    function close(){ ov.classList.remove('open'); }
-    function touch(g){ g.lastActivity = Date.now(); scheduleMapSave(); }
-    document.getElementById('goals-list-btn').addEventListener('click', open);
-    document.getElementById('gs-tabs').addEventListener('click', (e)=>{
-      const b = e.target.closest('.gs-chip'); if (!b) return;
-      tabKey = b.dataset.tab; orderCache = null;
-      [...document.querySelectorAll('#gs-tabs .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
-      draw();
-    });
-    document.getElementById('gs-add').addEventListener('click', ()=>{
-      tabKey = 'active';
-      [...document.querySelectorAll('#gs-tabs .gs-chip')].forEach(x=>x.classList.toggle('on', x.dataset.tab==='active'));
-      close();
-      document.dispatchEvent(new CustomEvent('maghz-add-goal'));
-    });
-    document.getElementById('gs-close').addEventListener('click', close);
-    ov.addEventListener('pointerdown', (e)=>{ if (e.target === ov) close(); });
-    searchEl.addEventListener('input', ()=>{ orderCache = null; draw(); });
-    { const so = document.getElementById('gs-sort'); if (so && so.id !== 'gs-tabs') so.remove(); }
-    if (document.getElementById('gs-sort')) document.getElementById('gs-sort').addEventListener('click', (e)=>{
-      const b = e.target.closest('.gs-chip'); if (!b) return;
-      sortKey = b.dataset.sort; orderCache = null;
-      [...document.querySelectorAll('#gs-sort .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
-      draw();
-    });
+    listEl.innerHTML = rows.map(({g, hit})=>{
+      const n = countAllActions(g.actions);
+      const p = goalPower(g);
+      const stale = g.lastActivity && (Date.now() - g.lastActivity) > 30*86400000;
+      const isR = isRingHost(g);
+      const hc = hcolor(g);
+      const lg = isR && g.goalId ? state.goals.find(x=>x.id===g.goalId) : null;
+      const tags = (isR ? '<span class="gs-tag rg">نزدیک شدن به هدف' + (lg ? ' · «' + esc(lg.name || 'هدف') + '»' : '') + '</span>' : '') + (stale ? '<span class="gs-tag">کم‌فعالیت</span>' : '');
+      const isOpen = OPEN.has(g.id) || (q && hit);
+      return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(hc)}">
+        <div class="gs-row" data-act="toggle">
+          <span class="gs-ico${isR ? '' : ' gs-ico-btn'}" ${isR ? '' : 'data-act="icon" title="تغییر آیکون یا عکس"'} style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
+          <div class="gs-main">
+            <div class="gs-name"><span class="gs-nm">${esc(hname(g))}</span>${tags}</div>
+            <div class="gs-meta">${g.lastActivity ? ago(g.lastActivity) : ''}</div>
+            ${hit ? `<div class="gs-hit">↳ ${esc(hit)}</div>` : ''}
+            <div class="gs-bar"><i style="width:${p}%;background:${hc}"></i></div>
+          </div>
+          <button class="gs-ic" data-act="toggle" aria-label="باز یا بسته کردن">${isOpen ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
+          ${isR ? '' : `<button class="gs-ic" data-act="reach" aria-label="به این هدف رسیدم" title="به این هدف رسیدم">${ICO_CHECK}</button>`}
+          <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
+          <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
+        </div>
+        ${(!isR && ICONSEL === g.id) ? '<div class="gs-body gs-iconpop">' + iconEditHTML(g) + '</div>' : ''}
+        ${isOpen ? bodyHTML(g) : ''}
+      </div>`;
+    }).join('');
+    const freeRings = state.goals.length ? state.rings.filter(r=> ringIsOrphan(r)).length : 0;
+    if (freeRings) listEl.insertAdjacentHTML('beforeend', '<div class="gs-empty" style="padding:10px 6px;font-size:11.5px;">'+toFa(freeRings)+' نشانه‌ی آزاد روی نقشه هست؛ آن را روی مسیر یک هدف ببر تا خودکار زیرمجموعه‌اش شود.</div>');
+    listEl.scrollTop = scrollTop;
+    layoutFree();
+  }
+  window.__reopenGoalsSheet = ()=>{ open(); };
+  function open(){ searchEl.value=''; orderCache = null; draw(); ov.classList.add('open'); layoutFree(); }
+  window.addEventListener('resize', ()=>{ try{ layoutFree(); }catch(e){} });
+  function close(){ ov.classList.remove('open'); }
+  function touch(g){ g.lastActivity = Date.now(); scheduleMapSave(); }
+  document.getElementById('goals-list-btn').addEventListener('click', open);
+  document.getElementById('gs-tabs').addEventListener('click', (e)=>{
+    const b = e.target.closest('.gs-chip'); if (!b) return;
+    tabKey = b.dataset.tab; orderCache = null;
+    [...document.querySelectorAll('#gs-tabs .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
+    draw();
+  });
+  document.getElementById('gs-add').addEventListener('click', ()=>{
+    tabKey = 'active';
+    [...document.querySelectorAll('#gs-tabs .gs-chip')].forEach(x=>x.classList.toggle('on', x.dataset.tab==='active'));
+    close();
+    document.dispatchEvent(new CustomEvent('maghz-add-goal'));
+  });
+  document.getElementById('gs-close').addEventListener('click', close);
+  ov.addEventListener('pointerdown', (e)=>{ if (e.target === ov) close(); });
+  searchEl.addEventListener('input', ()=>{ orderCache = null; draw(); });
+  { const so = document.getElementById('gs-sort'); if (so && so.id !== 'gs-tabs') so.remove(); }
+  if (document.getElementById('gs-sort')) document.getElementById('gs-sort').addEventListener('click', (e)=>{
+    const b = e.target.closest('.gs-chip'); if (!b) return;
+    sortKey = b.dataset.sort; orderCache = null;
+    [...document.querySelectorAll('#gs-sort .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
+    draw();
+  });
 
-    function focusAddInput(){
-      const el = listEl.querySelector('.gs-addin');
-      if (el) setTimeout(()=>{ try{ el.focus(); }catch(e){} }, 30);
+  function focusAddInput(){
+    const el = listEl.querySelector('.gs-addin');
+    if (el) setTimeout(()=>{ try{ el.focus(); }catch(e){} }, 30);
+  }
+  function commitAdd(g, forId, text){
+    text = String(text||'').trim();
+    if (!text) return;
+    const isGoal = (forId === g.id);
+    const node = { id:uid(), text, weight:5, color:null, children:[], detached:false, images:[], radius:isGoal?12:10, createdAt:Date.now(), logs:{}, entries:{} };
+    if (isGoal) g.actions.push(node);
+    else {
+      const f = findActionNode(g.actions, forId);
+      if (!f) return;
+      f.node.children = f.node.children || [];
+      f.node.children.push(node);
     }
-    function commitAdd(g, forId, text){
-      text = String(text||'').trim();
-      if (!text) return;
-      const isGoal = (forId === g.id);
-      const node = { id:uid(), text, weight:5, color:null, children:[], detached:false, images:[], radius:isGoal?12:10, createdAt:Date.now(), logs:{} };
-      if (isGoal) g.actions.push(node);
-      else {
-        const f = findActionNode(g.actions, forId);
-        if (!f) return;
-        f.node.children = f.node.children || [];
-        f.node.children.push(node);
-      }
-      g.collapsed = false;
-      touch(g);
-      render();
-      draw();
-      focusAddInput();
-    }
+    g.collapsed = false;
+    touch(g);
+    render();
+    draw();
+    focusAddInput();
+  }
 
-    function celebrate(color, x, y, big){
-      try{
-        const fl = document.createElement('div');
-        fl.className = 'fx-flash';
-        fl.style.setProperty('--fx-x', x+'px'); fl.style.setProperty('--fx-y', y+'px');
-        document.body.appendChild(fl); setTimeout(()=>fl.remove(), 800);
-        const cols = [color || '#ffd45a', '#ffd45a', '#ff7aa8', '#5ec8f0', '#7ee0a0', '#b79bff'];
-        const N = big ? 70 : 44;
-        for (let i=0;i<N;i++){
-          const c = document.createElement('i');
-          c.className = 'fx-confetti';
-          c.style.background = cols[i % cols.length];
-          document.body.appendChild(c);
-          const ang = (-Math.PI/2) + (Math.random()-.5) * Math.PI * 1.25;
-          const sp = (big?340:260) * (.45 + Math.random()*.75);
-          const dx = Math.cos(ang)*sp, dy = Math.sin(ang)*sp;
-          const rot = (Math.random()-.5) * 900;
-          const fall = 260 + Math.random()*220;
-          const anim = c.animate([
-            { transform:'translate('+x+'px,'+y+'px) rotate(0deg) scale(1)', opacity:1 },
-            { transform:'translate('+(x+dx*.7)+'px,'+(y+dy*.7)+'px) rotate('+(rot*.6)+'deg) scale(1)', opacity:1, offset:.45 },
-            { transform:'translate('+(x+dx)+'px,'+(y+dy+fall)+'px) rotate('+rot+'deg) scale(.7)', opacity:0 }
-          ], { duration: 1100 + Math.random()*700, easing:'cubic-bezier(.2,.7,.3,1)' });
-          anim.onfinish = ()=> c.remove();
-        }
-      }catch(e){}
-      try{ if (navigator.vibrate) navigator.vibrate(big ? [30,50,30,50,90] : [25,40,70]); }catch(e){}
-      try{
-        if (typeof isNothingSoundOn === 'function' && !isNothingSoundOn()) return;
-        const ctx = (typeof resumeAudio === 'function') ? resumeAudio() : null;
-        if (!ctx) return;
-        const notes = big ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [659.25, 783.99, 1046.5];
-        const t0 = ctx.currentTime;
-        notes.forEach((f, i)=>{
-          const o = ctx.createOscillator(), o2 = ctx.createOscillator(), gn = ctx.createGain();
-          o.type = 'triangle'; o.frequency.value = f;
-          o2.type = 'sine'; o2.frequency.value = f*2;
-          const st = t0 + i*0.085;
-          gn.gain.setValueAtTime(0.0001, st);
-          gn.gain.exponentialRampToValueAtTime(0.16, st+0.02);
-          gn.gain.exponentialRampToValueAtTime(0.0001, st + (i===notes.length-1 ? 0.9 : 0.35));
-          o.connect(gn); o2.connect(gn); gn.connect(ctx.destination);
-          o.start(st); o2.start(st); o.stop(st+1); o2.stop(st+1);
-        });
-      }catch(e){}
-    }
-    function onBodyClick(e, g){
-      const subEl = e.target.closest('.gs-sub');
-      if (subEl){ const hh = findHost(subEl.dataset.host); if (hh) g = hh; }
-      const gact = e.target.closest('[data-gact]');
-      if (gact){
-        const a = gact.dataset.gact;
-        if (a === 'days'){
-          const pi = periodInfo(g);
-          const n = askDays('دوره‌ی ' + pcOrd(pi.gp.past.length) + ' چند روزه باشه؟ (۱ تا ' + toFa(PC_MAX_DAYS) + ')', pi.gp.days);
-          if (n){ pi.gp.days = n; scheduleMapSave(); draw(); if (typeof toast === 'function') toast('دوره روی ' + toFa(n) + ' روز تنظیم شد'); }
-        } else if (a === 'newperiod'){
-          const pi = periodInfo(g);
-          const n = askDays('دوره‌ی ' + pcOrd(pi.gp.past.length+1) + ' چند روزه باشه؟ (۱ تا ' + toFa(PC_MAX_DAYS) + ')', pi.gp.days);
-          if (n){
-            pi.gp.past.push({ days: pi.gp.days, startDate: pi.gp.startDate });
-            pi.gp.days = n; pi.gp.startDate = pcLocalKey(new Date());
-            scheduleMapSave(); draw();
-            if (typeof toast === 'function') toast('دوره‌ی ' + pcOrd(pi.gp.past.length) + ' شروع شد');
-          }
-        } else if (a === 'stats'){
-          if (STATS_OPEN.has(g.id)) STATS_OPEN.delete(g.id); else STATS_OPEN.add(g.id);
-          draw();
-        } else if (a === 'trophy'){
-          if (suppressRingClick) return;
-          TSEL = (TSEL === gact.dataset.tid) ? null : gact.dataset.tid; draw();
-        } else if (a === 'unach'){
-          const f2 = findActionNode(g.actions, gact.dataset.tid);
-          if (f2){ f2.node.achieved = false; delete f2.node.achievedAt; TSEL = null; touch(g); draw(); if (typeof toast === 'function') toast('برگشت'); }
-        } else if (a === 'addring'){
-          if (isRingHost(g)) return;
-          const nr = createRingForGoal(g);
-          state.ringsCollapsed = false;
-          RSEL = nr.id;
-          touch(g); render(); draw();
-          if (typeof toast === 'function') toast('نشانه‌ی نزدیکی به هدف و نقشه وصل شد');
-          setTimeout(()=>{ const el = listEl.querySelector('.gs-rname[data-rid="'+nr.id+'"]'); if (el){ try{ el.focus(); el.select(); }catch(e){} } }, 40);
-        } else if (a === 'ring'){
-          if (suppressRingClick) return;
-          RSEL = (RSEL === gact.dataset.rid) ? null : gact.dataset.rid; draw();
-        } else if (a === 'ringmap'){
-          const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
-          close();
-          state.ringsCollapsed = false; r.collapsed = false; g.collapsed = false;
-          render();
-          animateCamTo(viewForPoints(goalPoints(g).concat(goalPoints(r)), 1.3));
-          const hh = document.getElementById('hint'); if (hh) hh.style.display = 'none';
-        } else if (a === 'ringedit'){
-          close(); openPanelForRing(gact.dataset.rid);
-        } else if (a === 'ringunlink'){
-          const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
-          pickGoalDialog('این نشانه زیر کدام هدف باشد؟', gid=>{
-            r.goalId = gid; RSEL = null; const ng = state.goals.find(x=>x.id===gid); if (ng) touch(ng); touch(g); render(); draw();
-            if (typeof toast === 'function') toast('به هدف انتخابی منتقل شد');
-          });
-        } else if (a === 'ringdel'){
-          const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
-          if (!window.confirm('«' + (r.label || 'نشانه') + '» حذف بشه؟')) return;
-          state.rings = state.rings.filter(x=>x.id!==r.id); RSEL = null; touch(g); render(); draw();
-        } else if (a === 'iconimg'){
-          const hh = findHost(gact.dataset.hid); if (!hh) return;
-          const inp = document.createElement('input');
-          inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true; inp.style.display = 'none';
-          document.body.appendChild(inp);
-          inp.addEventListener('change', async ()=>{
-            const files = Array.from(inp.files || []);
-            inp.remove();
-            if (!files.length) return;
-            const srcs = await cropImages(files);
-            if (!srcs.length) return;
-            hh.images = normalizeImages(hh.images);
-            hh.images = srcs.map(src=> ({ src, size: DEFAULT_IMG_SIZE, dx: 0, dy: 0 })).concat(hh.images);
-            touch(hh); render(); draw();
-          });
-          inp.click();
-        } else if (a === 'iconimgdel'){
-          const hh = findHost(gact.dataset.hid); if (!hh || !Array.isArray(hh.images)) return;
-          hh.images.splice(+gact.dataset.idx, 1);
-          touch(hh); render(); draw();
-        } else if (a === 'addbranch'){ addingFor = g.id; draw(); focusAddInput(); }
-        else if (a === 'addcancel'){ addingFor = null; draw(); }
-        else if (a === 'addok'){
-          const inp = listEl.querySelector('.gs-addin[data-for="'+gact.dataset.for+'"]');
-          commitAdd(g, gact.dataset.for, inp ? inp.value : '');
-        }
-        return;
+  function celebrate(color, x, y, big){
+    try{
+      const fl = document.createElement('div');
+      fl.className = 'fx-flash';
+      fl.style.setProperty('--fx-x', x+'px'); fl.style.setProperty('--fx-y', y+'px');
+      document.body.appendChild(fl); setTimeout(()=>fl.remove(), 800);
+      const cols = [color || '#ffd45a', '#ffd45a', '#ff7aa8', '#5ec8f0', '#7ee0a0', '#b79bff'];
+      const N = big ? 70 : 44;
+      for (let i=0;i<N;i++){
+        const c = document.createElement('i');
+        c.className = 'fx-confetti';
+        c.style.background = cols[i % cols.length];
+        document.body.appendChild(c);
+        const ang = (-Math.PI/2) + (Math.random()-.5) * Math.PI * 1.25;
+        const sp = (big?340:260) * (.45 + Math.random()*.75);
+        const dx = Math.cos(ang)*sp, dy = Math.sin(ang)*sp;
+        const rot = (Math.random()-.5) * 900;
+        const fall = 260 + Math.random()*220;
+        const anim = c.animate([
+          { transform:'translate('+x+'px,'+y+'px) rotate(0deg) scale(1)', opacity:1 },
+          { transform:'translate('+(x+dx*.7)+'px,'+(y+dy*.7)+'px) rotate('+(rot*.6)+'deg) scale(1)', opacity:1, offset:.45 },
+          { transform:'translate('+(x+dx)+'px,'+(y+dy+fall)+'px) rotate('+rot+'deg) scale(.7)', opacity:0 }
+        ], { duration: 1100 + Math.random()*700, easing:'cubic-bezier(.2,.7,.3,1)' });
+        anim.onfinish = ()=> c.remove();
       }
-      const nodeEl = e.target.closest('.gs-node');
-      if (!nodeEl) return;
-      const nid = nodeEl.dataset.nid;
-      const found = findActionNode(g.actions, nid);
-      if (!found) return;
-      const nact = e.target.closest('[data-nact]');
-      const dayEl = e.target.closest('.gs-day');
-      if (dayEl){
-        if (dayEl.disabled || dayEl.classList.contains('future')) return;
-        DAYSEL[found.node.id] = dayEl.dataset.jk;
-        doToggle(g, found.node, dayEl.dataset.jk, null);
-        return;
-      }
-      if (!nact) return;
-      if (nact.dataset.nact === 'today'){
+    }catch(e){}
+    try{ if (navigator.vibrate) navigator.vibrate(big ? [30,50,30,50,90] : [25,40,70]); }catch(e){}
+    try{
+      if (typeof isNothingSoundOn === 'function' && !isNothingSoundOn()) return;
+      const ctx = (typeof resumeAudio === 'function') ? resumeAudio() : null;
+      if (!ctx) return;
+      const notes = big ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [659.25, 783.99, 1046.5];
+      const t0 = ctx.currentTime;
+      notes.forEach((f, i)=>{
+        const o = ctx.createOscillator(), o2 = ctx.createOscillator(), gn = ctx.createGain();
+        o.type = 'triangle'; o.frequency.value = f;
+        o2.type = 'sine'; o2.frequency.value = f*2;
+        const st = t0 + i*0.085;
+        gn.gain.setValueAtTime(0.0001, st);
+        gn.gain.exponentialRampToValueAtTime(0.16, st+0.02);
+        gn.gain.exponentialRampToValueAtTime(0.0001, st + (i===notes.length-1 ? 0.9 : 0.35));
+        o.connect(gn); o2.connect(gn); gn.connect(ctx.destination);
+        o.start(st); o2.start(st); o.stop(st+1); o2.stop(st+1);
+      });
+    }catch(e){}
+  }
+  function onBodyClick(e, g){
+    const subEl = e.target.closest('.gs-sub');
+    if (subEl){ const hh = findHost(subEl.dataset.host); if (hh) g = hh; }
+    const gact = e.target.closest('[data-gact]');
+    if (gact){
+      const a = gact.dataset.gact;
+      if (a === 'days'){
         const pi = periodInfo(g);
-        doToggle(g, found.node, pi.todayJK, nact);
-      } else if (nact.dataset.nact === 'achieve'){
-        const node = found.node;
-        if (node.achieved){ node.achieved = false; delete node.achievedAt; touch(g); draw(); return; }
-        const r = nact.getBoundingClientRect();
-        node.achieved = true; node.achievedAt = Date.now(); TSEL = null;
-        touch(g); draw();
-        celebrate(node.color || g.color, r.left + r.width/2, r.top + r.height/2);
-        if (typeof toast === 'function') toast('🏆 به آرشیو دستاوردها رفت');
-      } else if (nact.dataset.nact === 'timer'){
-        /* تایمر حذف شد؛ دکمه‌ها حالا پنجره‌ی ثبت زمان را باز می‌کنند */
-        return;
-      } else if (nact.dataset.nact === 'addtime'){
-        const fnode = found.node, todayJK = periodInfo(g).todayJK;
-        askDuration({ title:'چقدر زمان ثبت بشه؟', sub:'امروز · ' + (fnode.text || ''), defMin:60 }, mm=>{
-          if (mm){ addMinutes(fnode, todayJK, mm); touch(g); render(); draw(); }
-        });
-      } else if (nact.dataset.nact === 'cal'){
-        if (DAYS_TOG.has(nid)) DAYS_TOG.delete(nid); else DAYS_TOG.add(nid);
+        const n = askDays('دوره‌ی ' + pcOrd(pi.gp.past.length) + ' چند روزه باشه؟ (۱ تا ' + toFa(PC_MAX_DAYS) + ')', pi.gp.days);
+        if (n){ pi.gp.days = n; scheduleMapSave(); draw(); if (typeof toast === 'function') toast('دوره روی ' + toFa(n) + ' روز تنظیم شد'); }
+      } else if (a === 'newperiod'){
+        const pi = periodInfo(g);
+        const n = askDays('دوره‌ی ' + pcOrd(pi.gp.past.length+1) + ' چند روزه باشه؟ (۱ تا ' + toFa(PC_MAX_DAYS) + ')', pi.gp.days);
+        if (n){
+          pi.gp.past.push({ days: pi.gp.days, startDate: pi.gp.startDate });
+          pi.gp.days = n; pi.gp.startDate = pcLocalKey(new Date());
+          scheduleMapSave(); draw();
+          if (typeof toast === 'function') toast('دوره‌ی ' + pcOrd(pi.gp.past.length) + ' شروع شد');
+        }
+      } else if (a === 'stats'){
+        if (STATS_OPEN.has(g.id)) STATS_OPEN.delete(g.id); else STATS_OPEN.add(g.id);
         draw();
-      } else if (nact.dataset.nact === 'settime'){
-        const jk = nact.dataset.jk;
-        const cur = Math.round(nodeDaySecs(found.node, jk) / 60);
-        const snode = found.node;
-        askDuration({ title:jkLabel(jk), sub:'زمان این روز · ' + (snode.text || ''), defMin:cur, allowZero:true, deletable:cur > 0 }, mm=>{
-          setDayMinutes(snode, jk, mm); touch(g); render(); draw();
-        });
-      } else if (nact.dataset.nact === 'timeday'){
-        const pi = periodInfo(g);
-        const dn = window.prompt('کدوم روزِ دوره؟ (۱ تا ' + toFa(pi.total) + ' — امروز روز ' + toFa(pi.dayNum) + ' است)', String(pi.dayNum));
-        if (dn === null) return;
-        const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
-        const di = parseInt(String(dn).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }), 10);
-        if (!di || di < 1 || di > pi.total || di > pi.dayNum){ if (typeof toast === 'function') toast('یه روز معتبر از دوره وارد کن'); return; }
-        const jk = pcJKey(new Date(pi.start.getFullYear(), pi.start.getMonth(), pi.start.getDate() + di - 1));
-        const cur = Math.round(nodeDaySecs(found.node, jk) / 60);
-        const tnode = found.node;
-        askDuration({ title:jkLabel(jk), sub:'زمان این روز · ' + (tnode.text || ''), defMin:cur || 60, allowZero:true, deletable:cur > 0 }, mm=>{
-          setDayMinutes(tnode, jk, mm); touch(g); render(); draw();
-        });
-      } else if (nact.dataset.nact === 'add'){
-        addingFor = nid; draw(); focusAddInput();
-      } else if (nact.dataset.nact === 'del'){
-        const hasKids = (found.node.children||[]).length;
-        if (!window.confirm('«' + (found.node.text || 'بدون نام') + '» ' + (hasKids ? 'همراه با زیرمجموعه‌اش ' : '') + 'حذف بشه؟')) return;
-        found.list.splice(found.list.indexOf(found.node), 1);
+      } else if (a === 'trophy'){
+        if (suppressRingClick) return;
+        TSEL = (TSEL === gact.dataset.tid) ? null : gact.dataset.tid; draw();
+      } else if (a === 'unach'){
+        const f2 = findActionNode(g.actions, gact.dataset.tid);
+        if (f2){ f2.node.achieved = false; delete f2.node.achievedAt; TSEL = null; touch(g); draw(); if (typeof toast === 'function') toast('برگشت'); }
+      } else if (a === 'addring'){
+        if (isRingHost(g)) return;
+        const nr = createRingForGoal(g);
+        state.ringsCollapsed = false;
+        RSEL = nr.id;
         touch(g); render(); draw();
+        if (typeof toast === 'function') toast('نشانه‌ی نزدیکی به هدف و نقشه وصل شد');
+        setTimeout(()=>{ const el = listEl.querySelector('.gs-rname[data-rid="'+nr.id+'"]'); if (el){ try{ el.focus(); el.select(); }catch(e){} } }, 40);
+      } else if (a === 'ring'){
+        if (suppressRingClick) return;
+        RSEL = (RSEL === gact.dataset.rid) ? null : gact.dataset.rid; draw();
+      } else if (a === 'ringmap'){
+        const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
+        close();
+        state.ringsCollapsed = false; r.collapsed = false; g.collapsed = false;
+        render();
+        animateCamTo(viewForPoints(goalPoints(g).concat(goalPoints(r)), 1.3));
+        const hh = document.getElementById('hint'); if (hh) hh.style.display = 'none';
+      } else if (a === 'ringedit'){
+        close(); openPanelForRing(gact.dataset.rid);
+      } else if (a === 'ringunlink'){
+        const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
+        pickGoalDialog('این نشانه زیر کدام هدف باشد؟', gid=>{
+          r.goalId = gid; RSEL = null; const ng = state.goals.find(x=>x.id===gid); if (ng) touch(ng); touch(g); render(); draw();
+          if (typeof toast === 'function') toast('به هدف انتخابی منتقل شد');
+        });
+      } else if (a === 'ringdel'){
+        const r = state.rings.find(x=>x.id===gact.dataset.rid); if (!r) return;
+        if (!window.confirm('«' + (r.label || 'نشانه') + '» حذف بشه؟')) return;
+        state.rings = state.rings.filter(x=>x.id!==r.id); RSEL = null; touch(g); render(); draw();
+      } else if (a === 'iconimg'){
+        const hh = findHost(gact.dataset.hid); if (!hh) return;
+        const inp = document.createElement('input');
+        inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true; inp.style.display = 'none';
+        document.body.appendChild(inp);
+        inp.addEventListener('change', async ()=>{
+          const files = Array.from(inp.files || []);
+          inp.remove();
+          if (!files.length) return;
+          const srcs = await cropImages(files);
+          if (!srcs.length) return;
+          hh.images = normalizeImages(hh.images);
+          hh.images = srcs.map(src=> ({ src, size: DEFAULT_IMG_SIZE, dx: 0, dy: 0 })).concat(hh.images);
+          touch(hh); render(); draw();
+        });
+        inp.click();
+      } else if (a === 'iconimgdel'){
+        const hh = findHost(gact.dataset.hid); if (!hh || !Array.isArray(hh.images)) return;
+        hh.images.splice(+gact.dataset.idx, 1);
+        touch(hh); render(); draw();
+      } else if (a === 'addbranch'){ addingFor = g.id; draw(); focusAddInput(); }
+      else if (a === 'addcancel'){ addingFor = null; draw(); }
+      else if (a === 'addok'){
+        const inp = listEl.querySelector('.gs-addin[data-for="'+gact.dataset.for+'"]');
+        commitAdd(g, gact.dataset.for, inp ? inp.value : '');
+      }
+      return;
+    }
+    const nodeEl = e.target.closest('.gs-node');
+    if (!nodeEl) return;
+    const nid = nodeEl.dataset.nid;
+    const found = findActionNode(g.actions, nid);
+    if (!found) return;
+    const nact = e.target.closest('[data-nact]');
+    const dayEl = e.target.closest('.gs-day');
+    if (dayEl){
+      if (dayEl.disabled || dayEl.classList.contains('future')) return;
+      DAYSEL[found.node.id] = dayEl.dataset.jk;
+      doToggle(g, found.node, dayEl.dataset.jk, null);
+      return;
+    }
+    if (!nact) return;
+    if (nact.dataset.nact === 'today'){
+      const pi = periodInfo(g);
+      doToggle(g, found.node, pi.todayJK, nact);
+    } else if (nact.dataset.nact === 'achieve'){
+      const node = found.node;
+      if (node.achieved){ node.achieved = false; delete node.achievedAt; touch(g); draw(); return; }
+      const r = nact.getBoundingClientRect();
+      node.achieved = true; node.achievedAt = Date.now(); TSEL = null;
+      touch(g); draw();
+      celebrate(node.color || g.color, r.left + r.width/2, r.top + r.height/2);
+      if (typeof toast === 'function') toast('🏆 به آرشیو دستاوردها رفت');
+    } else if (nact.dataset.nact === 'timer'){
+      return;
+    } else if (nact.dataset.nact === 'addtime'){
+      const fnode = found.node, todayJK = periodInfo(g).todayJK;
+      askDuration({ title:'ثبت زمان جدید', sub:'امروز · ' + (fnode.text || ''), defMin:60 }, mm=>{
+        if (mm > 0){ addMinutes(fnode, todayJK, mm); touch(g); render(); draw(); }
+      });
+    } else if (nact.dataset.nact === 'cal'){
+      if (DAYS_TOG.has(nid)) DAYS_TOG.delete(nid); else DAYS_TOG.add(nid);
+      draw();
+    } else if (nact.dataset.nact === 'addtime-day'){
+      /* ثبت ورودی جدید برای روز انتخاب‌شده */
+      const jk = nact.dataset.jk;
+      const snode = found.node;
+      askDuration({ title:'ثبت زمان جدید', sub:jkLabel(jk) + ' · ' + (snode.text || ''), defMin:60 }, mm=>{
+        if (mm > 0){ addMinutes(snode, jk, mm); touch(g); render(); draw(); }
+      });
+    } else if (nact.dataset.nact === 'delentry'){
+      /* حذف یک ورودی خاص */
+      const jk = nact.dataset.jk;
+      const idx = +nact.dataset.eidx;
+      deleteTimeEntry(found.node, jk, idx);
+      touch(g); render(); draw();
+    } else if (nact.dataset.nact === 'cleartime'){
+      const jk = nact.dataset.jk;
+      if (!window.confirm('همه‌ی زمان‌های ' + jkLabel(jk) + ' حذف بشه؟')) return;
+      clearDayTime(found.node, jk);
+      touch(g); render(); draw();
+    } else if (nact.dataset.nact === 'settime'){
+      /* حالا هر بار «ثبت زمان» یک ورودی جدید اضافه می‌کند */
+      const jk = nact.dataset.jk;
+      const snode = found.node;
+      askDuration({ title:'ثبت زمان جدید برای ' + jkLabel(jk), sub:(snode.text || ''), defMin:60 }, mm=>{
+        if (mm > 0){ addMinutes(snode, jk, mm); touch(g); render(); draw(); }
+      });
+    } else if (nact.dataset.nact === 'timeday'){
+      const pi = periodInfo(g);
+      const dn = window.prompt('کدوم روزِ دوره؟ (۱ تا ' + toFa(pi.total) + ' — امروز روز ' + toFa(pi.dayNum) + ' است)', String(pi.dayNum));
+      if (dn === null) return;
+      const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+      const di = parseInt(String(dn).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }), 10);
+      if (!di || di < 1 || di > pi.total || di > pi.dayNum){ if (typeof toast === 'function') toast('یه روز معتبر از دوره وارد کن'); return; }
+      const jk = pcJKey(new Date(pi.start.getFullYear(), pi.start.getMonth(), pi.start.getDate() + di - 1));
+      const tnode = found.node;
+      askDuration({ title:'ثبت زمان جدید برای ' + jkLabel(jk), sub:(tnode.text || ''), defMin:60 }, mm=>{
+        if (mm > 0){ addMinutes(tnode, jk, mm); touch(g); render(); draw(); }
+      });
+    } else if (nact.dataset.nact === 'add'){
+      addingFor = nid; draw(); focusAddInput();
+    } else if (nact.dataset.nact === 'del'){
+      const hasKids = (found.node.children||[]).length;
+      if (!window.confirm('«' + (found.node.text || 'بدون نام') + '» ' + (hasKids ? 'همراه با زیرمجموعه‌اش ' : '') + 'حذف بشه؟')) return;
+      found.list.splice(found.list.indexOf(found.node), 1);
+      touch(g); render(); draw();
+    }
+  }
+  function doToggle(g, node, jk, btn){
+    toggleRoutineLog(node.id, jk);
+    const nowDone = !!(node.logs && node.logs[jk]);
+    if (nowDone) touch(g); else scheduleMapSave();
+    draw();
+    if (nowDone){
+      if (btn){ const nb = listEl.querySelector('.gs-node[data-nid="'+node.id+'"] .gs-tick'); if (nb) nb.classList.add('pop'); }
+    }
+  }
+
+  listEl.addEventListener('click', (e)=>{
+    const item = e.target.closest('.gs-item'); if (!item) return;
+    const id = item.dataset.gid;
+    const g = findHost(id); if (!g) return;
+    if (e.target.closest('.gs-body')){ onBodyClick(e, g); return; }
+    const act = e.target.closest('[data-act]');
+    const kind = act ? act.dataset.act : 'toggle';
+    if (kind === 'none') return;
+    if (kind === 'icon'){ ICONSEL = (ICONSEL === id) ? null : id; draw(); return; }
+    if (kind === 'reach'){
+      const rb = act.getBoundingClientRect();
+      g.reached = true; g.reachedAt = Date.now(); OPEN.delete(id); touch(g); render(); draw();
+      celebrate(g.color, rb.left + rb.width/2, rb.top + rb.height/2, true);
+      if (typeof toast === 'function') toast('🏆 هدف محقق شد!');
+      return;
+    }
+    if (kind === 'unreach'){
+      g.reached = false; delete g.reachedAt; touch(g); render(); draw();
+      if (typeof toast === 'function') toast('برگشت به اهداف در جریان');
+      return;
+    }
+    if (isRingHost(g)){
+      if (kind === 'edit'){ close(); openPanelForRing(id); return; }
+      if (kind === 'map'){
+        close();
+        state.ringsCollapsed = false; g.collapsed = false;
+        render();
+        animateCamTo(viewForPoints(goalPoints(Object.assign({}, g, {x:g.x, y:g.y})), 1.4));
+        const h = document.getElementById('hint'); if (h) h.style.display = 'none';
+        return;
       }
     }
-    function doToggle(g, node, jk, btn){
-      toggleRoutineLog(node.id, jk);
-      const nowDone = !!(node.logs && node.logs[jk]);
-      if (nowDone) touch(g); else scheduleMapSave();
-      draw();
-      if (nowDone){
-        if (btn){ const nb = listEl.querySelector('.gs-node[data-nid="'+node.id+'"] .gs-tick'); if (nb) nb.classList.add('pop'); }
-      }
+    if (kind === 'edit'){ close(); openPanelForGoal(id); return; }
+    if (kind === 'map'){ close(); focusGoal(id); return; }
+    if (OPEN.has(id)){ OPEN.delete(id); if (addingFor && (addingFor === id || findActionNode(g.actions, addingFor))) addingFor = null; }
+    else OPEN.add(id);
+    draw();
+  });
+  listEl.addEventListener('input', (e)=>{
+    const t = e.target;
+    if (!t.classList || !t.classList.contains('gs-iemoji')) return;
+    const hh = findHost(t.dataset.hid); if (!hh) return;
+    const v = t.value.trim();
+    hh.icon = v || (isRingHost(hh) ? '🌟' : '🎯');
+    if (v && hh.images && hh.images.length) hh.images = [];
+    const ed = t.closest('.gs-iedit');
+    if (ed){
+      ed.querySelectorAll('.gs-ithumb').forEach(x=>x.remove());
+      const ic = ed.querySelector('.gs-ico'); if (ic) ic.innerHTML = hiconHTML(hh);
+    }
+    const rowIc = listEl.querySelector('.gs-item[data-gid="'+hh.id+'"] .gs-row .gs-ico'); if (rowIc) rowIc.innerHTML = hiconHTML(hh);
+    touch(hh); render();
+  });
+  listEl.addEventListener('change', (e)=>{
+    const t = e.target;
+    if (t.classList && t.classList.contains('gs-rname')){
+      const r = state.rings.find(x=>x.id===t.dataset.rid); if (!r) return;
+      r.label = t.value.trim() || 'نزدیک شدن به هدف';
+      r.lastActivity = Date.now();
+      const nm = listEl.querySelector('.gs-ring[data-rid="'+r.id+'"] .tnm'); if (nm) nm.textContent = r.label;
+      const nm2 = listEl.querySelector('.gs-item[data-gid="'+r.id+'"] .gs-nm'); if (nm2) nm2.textContent = r.label;
+      scheduleMapSave(); render();
+      return;
+    }
+    if (t.classList && t.classList.contains('gs-rnote')){
+      const r = state.rings.find(x=>x.id===t.dataset.rid); if (!r) return;
+      r.note = t.value; r.lastActivity = Date.now();
+      scheduleMapSave(); render();
+      return;
     }
 
-    listEl.addEventListener('click', (e)=>{
-      const item = e.target.closest('.gs-item'); if (!item) return;
-      const id = item.dataset.gid;
-      const g = findHost(id); if (!g) return;
-      if (e.target.closest('.gs-body')){ onBodyClick(e, g); return; }
-      const act = e.target.closest('[data-act]');
-      const kind = act ? act.dataset.act : 'toggle';
-      if (kind === 'none') return;
-      if (kind === 'icon'){ ICONSEL = (ICONSEL === id) ? null : id; draw(); return; }
-      if (kind === 'reach'){
-        const rb = act.getBoundingClientRect();
-        g.reached = true; g.reachedAt = Date.now(); OPEN.delete(id); touch(g); render(); draw();
-        celebrate(g.color, rb.left + rb.width/2, rb.top + rb.height/2, true);
-        if (typeof toast === 'function') toast('🏆 هدف محقق شد!');
-        return;
-      }
-      if (kind === 'unreach'){
-        g.reached = false; delete g.reachedAt; touch(g); render(); draw();
-        if (typeof toast === 'function') toast('برگشت به اهداف در جریان');
-        return;
-      }
-      if (isRingHost(g)){
-        if (kind === 'edit'){ close(); openPanelForRing(id); return; }
-        if (kind === 'map'){
-          close();
-          state.ringsCollapsed = false; g.collapsed = false;
-          render();
-          animateCamTo(viewForPoints(goalPoints(Object.assign({}, g, {x:g.x, y:g.y})), 1.4));
-          const h = document.getElementById('hint'); if (h) h.style.display = 'none';
-          return;
+    if (!t.classList || !t.classList.contains('gs-ntext')) return;
+    const item = t.closest('.gs-item'); if (!item) return;
+    const sub = t.closest('.gs-sub');
+    const g = findHost(sub ? sub.dataset.host : item.dataset.gid); if (!g) return;
+    const found = findActionNode(g.actions, t.dataset.nid);
+    if (!found) return;
+    found.node.text = t.value.trim() || 'بدون عنوان';
+    touch(g); render();
+  });
+  let suppressRingClick = false;
+  var CHIP_W = 72, CHIP_H = 80, CHIP_GAP = 8, FREE_PAD = 6, FREE_EXTRA = 34;
+  function freeChips(box){ return [...box.children].filter(c=> c.classList.contains('gs-ring') || c.classList.contains('gs-trophy')); }
+  function freeRange(box){ return Math.max(0, box.clientWidth - CHIP_W - FREE_PAD*2); }
+  function freeSetPx(chip, left, top){ chip.style.left = left + 'px'; chip.style.top = top + 'px'; }
+  function freeFit(box){
+    let mx = 0;
+    freeChips(box).forEach(c=>{ mx = Math.max(mx, (parseFloat(c.style.top) || 0) + CHIP_H); });
+    box.style.height = Math.max(CHIP_H + FREE_PAD*2 + FREE_EXTRA, mx + FREE_PAD + FREE_EXTRA) + 'px';
+  }
+  function layoutFree(){
+    listEl.querySelectorAll('.gs-free').forEach(box=>{
+      const W = box.clientWidth;
+      if (!W) return;
+      const host = findHost(box.dataset.host);
+      const pos = (host && host.itemPos) || {};
+      const range = freeRange(box);
+      const chips = freeChips(box);
+      const taken = [];
+      chips.forEach(c=>{
+        const p = pos[c.dataset.cid];
+        if (p && typeof p.x === 'number' && typeof p.y === 'number'){
+          const l = FREE_PAD + Math.min(1, Math.max(0, p.x)) * range, t = FREE_PAD + Math.max(0, p.y);
+          freeSetPx(c, l, t); taken.push({ l, t });
         }
-      }
-      if (kind === 'edit'){ close(); openPanelForGoal(id); return; }
-      if (kind === 'map'){ close(); focusGoal(id); return; }
-      if (OPEN.has(id)){ OPEN.delete(id); if (addingFor && (addingFor === id || findActionNode(g.actions, addingFor))) addingFor = null; }
-      else OPEN.add(id);
-      draw();
+      });
+      const cols = Math.max(1, Math.floor((W - FREE_PAD*2 + CHIP_GAP) / (CHIP_W + CHIP_GAP)));
+      const rtl = getComputedStyle(box).direction === 'rtl';
+      let slot = 0;
+      chips.forEach(c=>{
+        const p = pos[c.dataset.cid];
+        if (p && typeof p.x === 'number' && typeof p.y === 'number') return;
+        let l, t;
+        for (;; slot++){
+          const col = slot % cols, row = Math.floor(slot / cols);
+          const off = col * (CHIP_W + CHIP_GAP);
+          l = rtl ? (W - FREE_PAD - CHIP_W - off) : (FREE_PAD + off);
+          t = FREE_PAD + row * (CHIP_H + CHIP_GAP);
+          if (!taken.some(q=> Math.abs(q.l - l) < CHIP_W - 2 && Math.abs(q.t - t) < CHIP_H - 2)) break;
+        }
+        slot++;
+        freeSetPx(c, l, t); taken.push({ l, t });
+      });
+      freeFit(box);
     });
-    listEl.addEventListener('input', (e)=>{
-      const t = e.target;
-      if (!t.classList || !t.classList.contains('gs-iemoji')) return;
-      const hh = findHost(t.dataset.hid); if (!hh) return;
-      const v = t.value.trim();
-      hh.icon = v || (isRingHost(hh) ? '🌟' : '🎯');
-      if (v && hh.images && hh.images.length) hh.images = [];
-      const ed = t.closest('.gs-iedit');
-      if (ed){
-        ed.querySelectorAll('.gs-ithumb').forEach(x=>x.remove());
-        const ic = ed.querySelector('.gs-ico'); if (ic) ic.innerHTML = hiconHTML(hh);
-      }
-      const rowIc = listEl.querySelector('.gs-item[data-gid="'+hh.id+'"] .gs-row .gs-ico'); if (rowIc) rowIc.innerHTML = hiconHTML(hh);
-      touch(hh); render();
+  }
+  (function(){
+    let drag = null;
+    listEl.addEventListener('pointerdown', (e)=>{
+      const chip = e.target.closest('.gs-ring, .gs-trophy');
+      if (!chip || !chip.closest('.gs-free') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      const box = chip.parentNode;
+      drag = { chip, box, id: chip.dataset.cid, x0: e.clientX, y0: e.clientY,
+               l0: parseFloat(chip.style.left) || 0, t0: parseFloat(chip.style.top) || 0, moving:false, pid:e.pointerId };
+      try{ chip.setPointerCapture(e.pointerId); }catch(_){}
     });
-    listEl.addEventListener('change', (e)=>{
-      const t = e.target;
-      if (t.classList && t.classList.contains('gs-rname')){
-        const r = state.rings.find(x=>x.id===t.dataset.rid); if (!r) return;
-        r.label = t.value.trim() || 'نزدیک شدن به هدف';
-        r.lastActivity = Date.now();
-        const nm = listEl.querySelector('.gs-ring[data-rid="'+r.id+'"] .tnm'); if (nm) nm.textContent = r.label;
-        const nm2 = listEl.querySelector('.gs-item[data-gid="'+r.id+'"] .gs-nm'); if (nm2) nm2.textContent = r.label;
-        scheduleMapSave(); render();
-        return;
+    listEl.addEventListener('pointermove', (e)=>{
+      if (!drag || e.pointerId !== drag.pid) return;
+      const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+      if (!drag.moving){
+        if (Math.hypot(dx, dy) < 7) return;
+        drag.moving = true; drag.chip.classList.add('dragging');
       }
-      if (t.classList && t.classList.contains('gs-rnote')){
-        const r = state.rings.find(x=>x.id===t.dataset.rid); if (!r) return;
-        r.note = t.value; r.lastActivity = Date.now();
-        scheduleMapSave(); render();
-        return;
+      e.preventDefault();
+      const maxL = Math.max(0, drag.box.clientWidth - CHIP_W - FREE_PAD);
+      const l = Math.min(maxL, Math.max(FREE_PAD, drag.l0 + dx));
+      const t = Math.max(FREE_PAD, drag.t0 + dy);
+      freeSetPx(drag.chip, l, t);
+      freeFit(drag.box);
+    });
+    function overlaps(box, chip, l, t){
+      return freeChips(box).some(c=>{
+        if (c === chip) return false;
+        const cl = parseFloat(c.style.left) || 0, ct = parseFloat(c.style.top) || 0;
+        return Math.abs(cl - l) < CHIP_W + 2 && Math.abs(ct - t) < CHIP_H + 2;
+      });
+    }
+    function finish(e, cancel){
+      if (!drag || e.pointerId !== drag.pid) return;
+      const d = drag; drag = null;
+      try{ d.chip.releasePointerCapture(d.pid); }catch(_){}
+      if (!d.moving) return;
+      suppressRingClick = true; setTimeout(()=>{ suppressRingClick = false; }, 350);
+      d.chip.classList.remove('dragging');
+      let l = parseFloat(d.chip.style.left) || 0, t = parseFloat(d.chip.style.top) || 0;
+      if (cancel){ freeSetPx(d.chip, d.l0, d.t0); freeFit(d.box); return; }
+      if (overlaps(d.box, d.chip, l, t)){
+        const maxL = Math.max(0, d.box.clientWidth - CHIP_W - FREE_PAD);
+        let best = null, bd = 1e9;
+        for (let ox = -260; ox <= 260; ox += 10){
+          for (let oy = -260; oy <= 260; oy += 10){
+            const nl = l + ox, nt = t + oy;
+            if (nl < FREE_PAD || nl > maxL || nt < FREE_PAD) continue;
+            if (overlaps(d.box, d.chip, nl, nt)) continue;
+            const dist = ox*ox + oy*oy;
+            if (dist < bd){ bd = dist; best = { l:nl, t:nt }; }
+          }
+        }
+        if (best){ l = best.l; t = best.t; }
+        else { freeSetPx(d.chip, d.l0, d.t0); freeFit(d.box); return; }
       }
-
-      if (!t.classList || !t.classList.contains('gs-ntext')) return;
+      freeSetPx(d.chip, l, t); freeFit(d.box);
+      const host = findHost(d.box.dataset.host); if (!host) return;
+      const range = freeRange(d.box);
+      if (!host.itemPos || typeof host.itemPos !== 'object') host.itemPos = {};
+      host.itemPos[d.id] = { x: range ? Math.min(1, Math.max(0, (l - FREE_PAD) / range)) : 0, y: Math.max(0, Math.round(t - FREE_PAD)) };
+      scheduleMapSave();
+    }
+    listEl.addEventListener('pointerup', (e)=> finish(e, false));
+    listEl.addEventListener('pointercancel', (e)=> finish(e, true));
+  })();
+  listEl.addEventListener('keydown', (e)=>{
+    const t = e.target;
+    if (e.key !== 'Enter' || !t.classList) return;
+    if (t.classList.contains('gs-addin')){
+      e.preventDefault();
       const item = t.closest('.gs-item'); if (!item) return;
       const sub = t.closest('.gs-sub');
       const g = findHost(sub ? sub.dataset.host : item.dataset.gid); if (!g) return;
-      const found = findActionNode(g.actions, t.dataset.nid);
-      if (!found) return;
-      found.node.text = t.value.trim() || 'بدون عنوان';
-      touch(g); render();
-    });
-    /* نشانه‌های نزدیکی و دستاوردها: جایگذاریِ آزاد در کادر (هر جهت)، بدون چسبیدن به یک سمت */
-    let suppressRingClick = false;
-    var CHIP_W = 72, CHIP_H = 80, CHIP_GAP = 8, FREE_PAD = 6, FREE_EXTRA = 34;
-    function freeChips(box){ return [...box.children].filter(c=> c.classList.contains('gs-ring') || c.classList.contains('gs-trophy')); }
-    function freeRange(box){ return Math.max(0, box.clientWidth - CHIP_W - FREE_PAD*2); }
-    function freeSetPx(chip, left, top){ chip.style.left = left + 'px'; chip.style.top = top + 'px'; }
-    function freeFit(box){
-      let mx = 0;
-      freeChips(box).forEach(c=>{ mx = Math.max(mx, (parseFloat(c.style.top) || 0) + CHIP_H); });
-      box.style.height = Math.max(CHIP_H + FREE_PAD*2 + FREE_EXTRA, mx + FREE_PAD + FREE_EXTRA) + 'px';
+      commitAdd(g, t.dataset.for, t.value);
+    } else if (t.classList.contains('gs-ntext') || t.classList.contains('gs-rname') || t.classList.contains('gs-iemoji')){
+      e.preventDefault(); t.blur();
     }
-    function layoutFree(){
-      listEl.querySelectorAll('.gs-free').forEach(box=>{
-        const W = box.clientWidth;
-        if (!W) return;
-        const host = findHost(box.dataset.host);
-        const pos = (host && host.itemPos) || {};
-        const range = freeRange(box);
-        const chips = freeChips(box);
-        const taken = [];
-        chips.forEach(c=>{
-          const p = pos[c.dataset.cid];
-          if (p && typeof p.x === 'number' && typeof p.y === 'number'){
-            const l = FREE_PAD + Math.min(1, Math.max(0, p.x)) * range, t = FREE_PAD + Math.max(0, p.y);
-            freeSetPx(c, l, t); taken.push({ l, t });
-          }
-        });
-        /* چیپ‌های بدون جای ذخیره‌شده: به ترتیب، از سمت شروعِ خط (راست در فارسی) در اولین خانه‌ی خالی */
-        const cols = Math.max(1, Math.floor((W - FREE_PAD*2 + CHIP_GAP) / (CHIP_W + CHIP_GAP)));
-        const rtl = getComputedStyle(box).direction === 'rtl';
-        let slot = 0;
-        chips.forEach(c=>{
-          const p = pos[c.dataset.cid];
-          if (p && typeof p.x === 'number' && typeof p.y === 'number') return;
-          let l, t;
-          for (;; slot++){
-            const col = slot % cols, row = Math.floor(slot / cols);
-            const off = col * (CHIP_W + CHIP_GAP);
-            l = rtl ? (W - FREE_PAD - CHIP_W - off) : (FREE_PAD + off);
-            t = FREE_PAD + row * (CHIP_H + CHIP_GAP);
-            if (!taken.some(q=> Math.abs(q.l - l) < CHIP_W - 2 && Math.abs(q.t - t) < CHIP_H - 2)) break;
-          }
-          slot++;
-          freeSetPx(c, l, t); taken.push({ l, t });
-        });
-        freeFit(box);
-      });
+  });
+})();
+
+document.getElementById('collapse-all-btn').addEventListener('click', ()=>{
+  const collapse = document.getElementById('collapse-all-btn').dataset.mode === 'collapse';
+  state.goals.forEach(g=>{ if (goalBranchCount(g)) g.collapsed = collapse; });
+  state.rings.forEach(r=>{ if (ringIsOrphan(r) && r.actions && r.actions.length) r.collapsed = collapse; });
+  state.ringsCollapsed = false;
+  render();
+});
+
+document.getElementById('recenter-btn').addEventListener('click', ()=>{
+  focusGoalId = null;
+  render();
+  fitAllView();
+  document.getElementById('hint').style.display = 'none';
+});
+
+/* ---------------- rendering ---------------- */
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function seeded(seedStr){
+  let h = 1779033703 ^ seedStr.length;
+  for (let i=0;i<seedStr.length;i++){
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function(){
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
+function haloSVG(cx, cy, color, r, pulseFactor, freqKey){
+  const pf = pulseFactor || 1;
+  const freq = freqKey && FREQ_BANDS[freqKey] ? FREQ_BANDS[freqKey] : FREQ_BANDS.alpha;
+  const baseDur = freq.speed;
+  const innerDur = (baseDur * 0.8).toFixed(2);
+  const midDur   = baseDur.toFixed(2);
+  const outerDur = (baseDur * 1.35).toFixed(2);
+
+  return `
+    <circle cx="${cx}" cy="${cy}" r="${r*1.95*pf}" fill="${color}" opacity="0.10" filter="url(#glow)">
+      <animate attributeName="r" values="${r*1.7*pf};${r*2.2*pf};${r*1.7*pf}" dur="${outerDur}s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.07;0.16;0.07" dur="${outerDur}s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="${cx}" cy="${cy}" r="${r*1.4*pf}" fill="${color}" opacity="0.15" filter="url(#glow)">
+      <animate attributeName="r" values="${r*1.25*pf};${r*1.55*pf};${r*1.25*pf}" dur="${midDur}s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.13;0.24;0.13" dur="${midDur}s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="${cx}" cy="${cy}" r="${r*1.0*pf}" fill="none" stroke="${color}" stroke-width="1.4" opacity="0.6">
+      <animate attributeName="r" values="${r*0.88*pf};${r*1.08*pf};${r*0.88*pf}" dur="${innerDur}s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.45;0.75;0.45" dur="${innerDur}s" repeatCount="indefinite"/>
+    </circle>
+  `;
+}
+
+function userAuraSVG(cx, cy, r, userState){
+  const band = FREQ_BANDS[userState.band] || FREQ_BANDS.delta;
+  const freq = band.speed;
+  const progress = userState.progress;
+  const color = band.color;
+
+  const rippleCount = 3;
+  let ripples = '';
+  for (let i = 0; i < rippleCount; i++){
+    const delay = (i * freq / rippleCount).toFixed(2);
+    const dur   = (freq * 1.4).toFixed(2);
+    const op    = (0.35 + progress * 0.45).toFixed(2);
+    ripples +=
+      '<circle class="me-aura-ripple" cx="' + cx + '" cy="' + cy +
+      '" fill="none" stroke="' + color + '" stroke-width="' +
+      (1.4 + progress * 1.6).toFixed(2) + '" opacity="0">' +
+        '<animate attributeName="r" values="' + (r*1.15) + ';' + (r*3.2) + '" dur="' + dur + 's" begin="' + delay + 's" repeatCount="indefinite"/>' +
+        '<animate attributeName="opacity" values="' + op + ';0" dur="' + dur + 's" begin="' + delay + 's" repeatCount="indefinite"/>' +
+      '</circle>';
+  }
+
+  const glowR = r * (1.6 + progress * 0.9);
+  const glowOp = (0.15 + progress * 0.25).toFixed(2);
+  const glow =
+    '<circle class="me-aura-glow" cx="' + cx + '" cy="' + cy + '" r="' + glowR.toFixed(1) +
+    '" fill="' + color + '" opacity="' + glowOp + '"/>' +
+    '<circle class="me-aura-glow" cx="' + cx + '" cy="' + cy + '" r="' + (glowR*0.6).toFixed(1) +
+    '" fill="#ffffff" opacity="' + (glowOp * 0.55).toFixed(2) + '"/>';
+
+  return glow + ripples;
+}
+
+function addPhotoPlaceholderSVG(cx, cy, r, color){
+  const s = r * 0.42;
+  const cy2 = cy - r * 0.12;
+  return `
+    <g style="pointer-events:none;">
+      <circle cx="${cx}" cy="${cy2}" r="${s}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>
+      <line x1="${(cx - s*0.5).toFixed(1)}" y1="${cy2.toFixed(1)}" x2="${(cx + s*0.5).toFixed(1)}" y2="${cy2.toFixed(1)}" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>
+      <line x1="${cx}" y1="${(cy2 - s*0.5).toFixed(1)}" x2="${cx}" y2="${(cy2 + s*0.5).toFixed(1)}" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>
+    </g>
+  `;
+}
+
+function userAvatarSVG(cx, cy, r, color){
+  const headR  = r * 0.22;
+  const headY  = cy - r * 0.34;
+  const bodyT  = cy - r * 0.08;
+  const bodyB  = cy + r * 0.42;
+  const bodyW  = r * 0.34;
+
+  return `
+    <g class="me-avatar-silhouette" style="color:${color};">
+      <circle cx="${cx}" cy="${headY.toFixed(1)}" r="${headR.toFixed(1)}"/>
+      <path d="M${(cx - bodyW).toFixed(1)} ${bodyT.toFixed(1)}
+               Q${cx} ${(bodyT + r*0.06).toFixed(1)} ${(cx + bodyW).toFixed(1)} ${bodyT.toFixed(1)}
+               L${(cx + bodyW*1.12).toFixed(1)} ${bodyB.toFixed(1)}
+               Q${cx} ${(bodyB + r*0.08).toFixed(1)} ${(cx - bodyW*1.12).toFixed(1)} ${bodyB.toFixed(1)} Z"/>
+    </g>
+  `;
+}
+
+function userBandBadgeSVG(cx, cy, r, userState){
+  const band = FREQ_BANDS[userState.band] || FREQ_BANDS.delta;
+  const badgeY = cy - r - 22;
+  const textColor = effectiveTextColor();
+  const progressPct = Math.round(userState.progress * 100);
+  const barW = 68;
+  const barX = cx - barW/2;
+  const barY = badgeY + 8;
+
+  return `
+    <text x="${cx}" y="${badgeY}" text-anchor="middle" class="me-band-badge"
+          font-size="11" font-weight="700" fill="${textColor}">
+      ${band.label} · ${userState.stage}
+    </text>
+    <rect x="${barX}" y="${barY}" width="${barW}" height="4" rx="2"
+          fill="rgba(255,255,255,0.15)"/>
+    <rect x="${barX}" y="${barY}" width="${(barW * userState.progress).toFixed(1)}" height="4" rx="2"
+          fill="${band.color}"/>
+    <text x="${cx}" y="${barY + 15}" text-anchor="middle" class="me-band-badge"
+          font-size="9" opacity="0.75" fill="${textColor}">
+      رشد مدار · ${progressPct}٪
+    </text>
+  `;
+}
+
+function bezierPoint(p0,p1,p2,p3,t){
+  const mt=1-t;
+  return {
+    x: mt*mt*mt*p0.x + 3*mt*mt*t*p1.x + 3*mt*t*t*p2.x + t*t*t*p3.x,
+    y: mt*mt*mt*p0.y + 3*mt*mt*t*p1.y + 3*mt*t*t*p2.y + t*t*t*p3.y
+  };
+}
+function bezierTangentAngle(p0,p1,p2,p3,t){
+  const mt=1-t;
+  const dx = 3*mt*mt*(p1.x-p0.x) + 6*mt*t*(p2.x-p1.x) + 3*t*t*(p3.x-p2.x);
+  const dy = 3*mt*mt*(p1.y-p0.y) + 6*mt*t*(p2.y-p1.y) + 3*t*t*(p3.y-p2.y);
+  return Math.atan2(dy,dx);
+}
+
+function nearestOnBezier(cp, pt){
+  let bestT=0, bestD=Infinity, bestPt=cp.p0;
+  const N=40;
+  for(let i=0;i<=N;i++){
+    const t=i/N;
+    const p=bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t);
+    const d=Math.hypot(p.x-pt.x,p.y-pt.y);
+    if(d<bestD){bestD=d;bestT=t;bestPt=p;}
+  }
+  let lo=Math.max(0,bestT-1/N), hi=Math.min(1,bestT+1/N);
+  for(let iter=0; iter<14; iter++){
+    const t1=lo+(hi-lo)/3, t2=hi-(hi-lo)/3;
+    const p1=bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t1);
+    const p2=bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t2);
+    const d1=Math.hypot(p1.x-pt.x,p1.y-pt.y);
+    const d2=Math.hypot(p2.x-pt.x,p2.y-pt.y);
+    if(d1<d2){ hi=t2; if(d1<bestD){bestD=d1;bestPt=p1;} }
+    else { lo=t1; if(d2<bestD){bestD=d2;bestPt=p2;} }
+  }
+  return { pt:bestPt, dist:bestD };
+}
+
+let actionGeomMap = new Map();
+
+function trunkControlPoints(goal){
+  if (isRingHost(goal)){
+    const R = goal.radius || 30;
+    const a = Math.atan2(goal.y - state.me.y, goal.x - state.me.x);
+    const ux = Math.cos(a), uy = Math.sin(a), px = -uy, py = ux, LL = 130;
+    const q0 = {x:goal.x+ux*R, y:goal.y+uy*R};
+    const rr = seeded(goal.id+'-trunk');
+    const k1 = (rr()*0.5-0.25)*LL*0.3, k2 = (rr()*0.5-0.25)*LL*0.3;
+    return { p0:q0,
+      p1:{x:q0.x+ux*LL*0.33+px*k1, y:q0.y+uy*LL*0.33+py*k1},
+      p2:{x:q0.x+ux*LL*0.66+px*k2, y:q0.y+uy*LL*0.66+py*k2},
+      p3:{x:q0.x+ux*LL, y:q0.y+uy*LL} };
+  }
+  const p0={x:state.me.x,y:state.me.y}, p3={x:goal.x,y:goal.y};
+  const dx=p3.x-p0.x, dy=p3.y-p0.y;
+  const len=Math.hypot(dx,dy)||1;
+  const ux=dx/len, uy=dy/len;
+  const px=-uy, py=ux;
+  const rnd=seeded(goal.id+'-trunk');
+  const o1=(rnd()*0.5-0.25)*len*0.4;
+  const o2=(rnd()*0.5-0.25)*len*0.4;
+  const p1={x:p0.x+ux*len*0.33+px*o1, y:p0.y+uy*len*0.33+py*o1};
+  const p2={x:p0.x+ux*len*0.66+px*o2, y:p0.y+uy*len*0.66+py*o2};
+  return {p0,p1,p2,p3};
+}
+
+function trunkSVG(cp, color, style){
+  const P = a => a.x.toFixed(1) + ' ' + a.y.toFixed(1);
+  const D = c => 'M' + P(c.p0) + ' C' + P(c.p1) + ' ' + P(c.p2) + ' ' + P(c.p3);
+  const path = (c, w, op, dash, cap) =>
+    '<path d="' + D(c) + '" fill="none" stroke="' + color + '" stroke-width="' + w + '" opacity="' + op + '"' +
+    ' stroke-linecap="' + (cap || 'round') + '" stroke-linejoin="round"' +
+    (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' pointer-events="none"/>';
+  let body = '';
+  switch (style){
+    case 'solid':   body = path(cp, 3, 0.9); break;
+    case 'dotted':  body = path(cp, 3.6, 0.9, '0.1 8'); break;
+    case 'dashdot': body = path(cp, 3, 0.9, '14 7 2 7', 'butt'); break;
+    case 'long':    body = path(cp, 3, 0.9, '26 13', 'butt'); break;
+    case 'double': {
+      const dx = cp.p3.x - cp.p0.x, dy = cp.p3.y - cp.p0.y, L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L * 2.6, ny = dx / L * 2.6;
+      const sh = k => ({ p0:{x:cp.p0.x+nx*k,y:cp.p0.y+ny*k}, p1:{x:cp.p1.x+nx*k,y:cp.p1.y+ny*k}, p2:{x:cp.p2.x+nx*k,y:cp.p2.y+ny*k}, p3:{x:cp.p3.x+nx*k,y:cp.p3.y+ny*k} });
+      body = path(sh(1), 1.6, 0.9) + path(sh(-1), 1.6, 0.9); break;
     }
-    (function(){
-      let drag = null;
-      listEl.addEventListener('pointerdown', (e)=>{
-        const chip = e.target.closest('.gs-ring, .gs-trophy');
-        if (!chip || !chip.closest('.gs-free') || (e.pointerType === 'mouse' && e.button !== 0)) return;
-        const box = chip.parentNode;
-        drag = { chip, box, id: chip.dataset.cid, x0: e.clientX, y0: e.clientY,
-                 l0: parseFloat(chip.style.left) || 0, t0: parseFloat(chip.style.top) || 0, moving:false, pid:e.pointerId };
-        try{ chip.setPointerCapture(e.pointerId); }catch(_){}
-      });
-      listEl.addEventListener('pointermove', (e)=>{
-        if (!drag || e.pointerId !== drag.pid) return;
-        const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
-        if (!drag.moving){
-          if (Math.hypot(dx, dy) < 7) return;
-          drag.moving = true; drag.chip.classList.add('dragging');
-        }
-        e.preventDefault();
-        const maxL = Math.max(0, drag.box.clientWidth - CHIP_W - FREE_PAD);
-        const l = Math.min(maxL, Math.max(FREE_PAD, drag.l0 + dx));
-        const t = Math.max(FREE_PAD, drag.t0 + dy);
-        freeSetPx(drag.chip, l, t);
-        freeFit(drag.box);
-      });
-      function overlaps(box, chip, l, t){
-        return freeChips(box).some(c=>{
-          if (c === chip) return false;
-          const cl = parseFloat(c.style.left) || 0, ct = parseFloat(c.style.top) || 0;
-          return Math.abs(cl - l) < CHIP_W + 2 && Math.abs(ct - t) < CHIP_H + 2;
-        });
-      }
-      function finish(e, cancel){
-        if (!drag || e.pointerId !== drag.pid) return;
-        const d = drag; drag = null;
-        try{ d.chip.releasePointerCapture(d.pid); }catch(_){}
-        if (!d.moving) return;
-        suppressRingClick = true; setTimeout(()=>{ suppressRingClick = false; }, 350);
-        d.chip.classList.remove('dragging');
-        let l = parseFloat(d.chip.style.left) || 0, t = parseFloat(d.chip.style.top) || 0;
-        if (cancel){ freeSetPx(d.chip, d.l0, d.t0); freeFit(d.box); return; }
-        /* اگر روی چیپ دیگری افتاد، نزدیک‌ترین جای خالی را بگیر */
-        if (overlaps(d.box, d.chip, l, t)){
-          const maxL = Math.max(0, d.box.clientWidth - CHIP_W - FREE_PAD);
-          let best = null, bd = 1e9;
-          for (let ox = -260; ox <= 260; ox += 10){
-            for (let oy = -260; oy <= 260; oy += 10){
-              const nl = l + ox, nt = t + oy;
-              if (nl < FREE_PAD || nl > maxL || nt < FREE_PAD) continue;
-              if (overlaps(d.box, d.chip, nl, nt)) continue;
-              const dist = ox*ox + oy*oy;
-              if (dist < bd){ bd = dist; best = { l:nl, t:nt }; }
-            }
-          }
-          if (best){ l = best.l; t = best.t; }
-          else { freeSetPx(d.chip, d.l0, d.t0); freeFit(d.box); return; }
-        }
-        freeSetPx(d.chip, l, t); freeFit(d.box);
-        const host = findHost(d.box.dataset.host); if (!host) return;
-        const range = freeRange(d.box);
-        if (!host.itemPos || typeof host.itemPos !== 'object') host.itemPos = {};
-        host.itemPos[d.id] = { x: range ? Math.min(1, Math.max(0, (l - FREE_PAD) / range)) : 0, y: Math.max(0, Math.round(t - FREE_PAD)) };
-        scheduleMapSave();
-      }
-      listEl.addEventListener('pointerup', (e)=> finish(e, false));
-      listEl.addEventListener('pointercancel', (e)=> finish(e, true));
-    })();
-    listEl.addEventListener('keydown', (e)=>{
-      const t = e.target;
-      if (e.key !== 'Enter' || !t.classList) return;
-      if (t.classList.contains('gs-addin')){
-        e.preventDefault();
-        const item = t.closest('.gs-item'); if (!item) return;
-        const sub = t.closest('.gs-sub');
-        const g = findHost(sub ? sub.dataset.host : item.dataset.gid); if (!g) return;
-        commitAdd(g, t.dataset.for, t.value);
-      } else if (t.classList.contains('gs-ntext') || t.classList.contains('gs-rname') || t.classList.contains('gs-iemoji')){
-        e.preventDefault(); t.blur();
-      }
+    case 'glow':    body = path(cp, 9, 0.16) + path(cp, 2.8, 0.95); break;
+    case 'taper':   body = taperedPath(cp.p0, cp.p1, cp.p2, cp.p3, color, 5.2, 1.6, 0.9); break;
+    case 'dashed':
+    default:        body = path(cp, 3, 0.9, '9 9', 'butt');
+  }
+  return '<g class="goal-path" data-trunk-style="' + (style || 'dashed') + '">' + body + '</g>';
+}
+
+function wrapText(str, maxChars){
+  const words = String(str).split(/\s+/).filter(Boolean);
+  const lines = []; let cur='';
+  words.forEach(w=>{
+    if ((cur+' '+w).trim().length > maxChars && cur){ lines.push(cur.trim()); cur=w; }
+    else cur = (cur+' '+w).trim();
+  });
+  if (cur) lines.push(cur);
+  if (!lines.length) lines.push('');
+  if (lines.length > 4){ lines.length = 4; lines[3] = lines[3].slice(0, maxChars-1)+'…'; }
+  return lines;
+}
+
+function taperedPath(p0,p1,p2,p3,color,baseWidth,tipWidth,opacity){
+  const SEG = 7;
+  let out = '';
+  for (let s=0; s<SEG; s++){
+    const t0 = s/SEG, t1 = (s+1)/SEG;
+    const a = bezierPoint(p0,p1,p2,p3,t0);
+    const b = bezierPoint(p0,p1,p2,p3,t1);
+    const w = baseWidth + (tipWidth-baseWidth)*((s+0.5)/SEG);
+    out += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" opacity="${opacity}"/>`;
+  }
+  return out;
+}
+
+function polyCum(pts){ const c=[0]; for(let i=1;i<pts.length;i++) c.push(c[i-1]+Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y)); return c; }
+function polyPointAt(pts, t){
+  const c = polyCum(pts), T = c[c.length-1]*Math.max(0,Math.min(1,t));
+  for(let i=1;i<pts.length;i++){
+    if (T <= c[i] || i === pts.length-1){
+      const seg = (c[i]-c[i-1]) || 1, f = Math.max(0,Math.min(1,(T-c[i-1])/seg));
+      return { pt:{ x:pts[i-1].x+(pts[i].x-pts[i-1].x)*f, y:pts[i-1].y+(pts[i].y-pts[i-1].y)*f },
+               angle:Math.atan2(pts[i].y-pts[i-1].y, pts[i].x-pts[i-1].x) };
+    }
+  }
+  return { pt:pts[0], angle:0 };
+}
+function taperedPoly(pts, color, w0, w1, opacity){
+  const c = polyCum(pts), tot = c[c.length-1] || 1;
+  let out = '';
+  for(let i=1;i<pts.length;i++){
+    const f = ((c[i-1]+c[i])/2)/tot;
+    const w = w0 + (w1-w0)*f;
+    out += `<line x1="${pts[i-1].x.toFixed(1)}" y1="${pts[i-1].y.toFixed(1)}" x2="${pts[i].x.toFixed(1)}" y2="${pts[i].y.toFixed(1)}" stroke="${color}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"/>`;
+  }
+  return out;
+}
+function applyBranchStyle(geom, style, side){
+  if (!style || style === 'organic') return geom;
+  const o = geom.originPt, e = geom.end, L = geom.length || 1, dir = geom.dir;
+  const dvx = Math.cos(dir), dvy = Math.sin(dir), px = -dvy, py = dvx, sd = side || 1;
+  const at = (a,b)=>({ x:o.x+dvx*L*a+px*L*b, y:o.y+dvy*L*a+py*L*b });
+  switch(style){
+    case 'straight': geom.c1 = at(0.33,0); geom.c2 = at(0.72,0); break;
+    case 'curve':    geom.c1 = at(0.22,0.40*sd); geom.c2 = at(0.78,0.40*sd); break;
+    case 'wave':     geom.c1 = at(0.25,0.45*sd); geom.c2 = at(0.75,-0.45*sd); break;
+    case 'elbow': {
+      const horiz = Math.abs(e.x-o.x) >= Math.abs(e.y-o.y);
+      geom.poly = [o, horiz ? {x:e.x,y:o.y} : {x:o.x,y:e.y}, e]; break;
+    }
+    case 'step': {
+      const horiz = Math.abs(e.x-o.x) >= Math.abs(e.y-o.y);
+      geom.poly = horiz ? [o,{x:(o.x+e.x)/2,y:o.y},{x:(o.x+e.x)/2,y:e.y},e] : [o,{x:o.x,y:(o.y+e.y)/2},{x:e.x,y:(o.y+e.y)/2},e]; break;
+    }
+    case 'zigzag': {
+      const n = 6, amp = Math.min(0.13*L, 13), pts = [o];
+      for(let i=1;i<n;i++){ const k = (i%2?1:-1)*sd*amp; const b = at(i/n,0); pts.push({x:b.x+px*k, y:b.y+py*k}); }
+      pts.push(e); geom.poly = pts; break;
+    }
+  }
+  return geom;
+}
+
+function computeTwigGeom(goal, action, originPt, originDir, side, scale){
+  if (action.detached) {
+    const origin = {x: action.originX, y: action.originY};
+    const dir = action.dir;
+    const length = action.len;
+    const dvx = Math.cos(dir), dvy = Math.sin(dir);
+    const perpx = -dvy, perpy = dvx;
+    const bend1 = action.bend1 || 0;
+    const bend2 = action.bend2 || 0;
+    const c1 = { x: origin.x + dvx*length*0.33 + perpx*bend1, y: origin.y + dvy*length*0.33 + perpy*bend1 };
+    const c2 = { x: origin.x + dvx*length*0.72 + perpx*bend2, y: origin.y + dvy*length*0.72 + perpy*bend2 };
+    const end = { x: origin.x + dvx*length, y: origin.y + dvy*length };
+    return { originPt: origin, dir, length, c1, c2, end };
+  } else {
+    if (typeof action.dir !== 'number' || typeof action.len !== 'number'){
+      const rnd = seeded(goal.id+'-'+action.id);
+      const angleOff = side*(0.8 + rnd()*0.5);
+      const weight = action.weight || 5;
+      action.dir = originDir + angleOff;
+      action.len = (18 + weight*8) * scale;
+      action.bend1 = side*(5+rnd()*9)*scale;
+      action.bend2 = side*(-4+rnd()*12)*scale;
+    }
+    const dir = action.dir;
+    const length = action.len;
+    const dvx = Math.cos(dir), dvy = Math.sin(dir);
+    const perpx = -dvy, perpy = dvx;
+    const bend1 = action.bend1||0, bend2 = action.bend2||0;
+    const c1 = { x: originPt.x + dvx*length*0.33 + perpx*bend1, y: originPt.y + dvy*length*0.33 + perpy*bend1 };
+    const c2 = { x: originPt.x + dvx*length*0.72 + perpx*bend2, y: originPt.y + dvy*length*0.72 + perpy*bend2 };
+    const end = { x: originPt.x + dvx*length, y: originPt.y + dvy*length };
+    return { originPt, dir, length, c1, c2, end };
+  }
+}
+
+function renderImagesAtNode(cx, cy, images, radius, hitType, hitId, goalId) {
+  if (!images || !images.length) return '';
+  if (hitType === 'me') {
+    const img = images[0];
+    const clipId = `me-avatar-clip-${hitId || 'x'}`;
+    return `
+      <defs><clipPath id="${clipId}"><circle cx="${cx}" cy="${cy}" r="${radius}"/></clipPath></defs>
+      <image x="${cx - radius}" y="${cy - radius}" width="${radius*2}" height="${radius*2}" href="${img.src}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})" data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" data-img="1" data-imgidx="0" style="cursor:pointer;"/>
+    `;
+  }
+  let out = '';
+  const count = Math.min(images.length, 6);
+  for (let i = 0; i < count; i++) {
+    const img = images[i];
+    const size = img.size || DEFAULT_IMG_SIZE;
+    const angle = (i / count) * Math.PI * 2 - Math.PI/2;
+    const offX = Math.cos(angle) * radius * 0.6 + (img.dx || 0);
+    const offY = Math.sin(angle) * radius * 0.6 + (img.dy || 0);
+    const imgX = cx + offX - size/2;
+    const imgY = cy + offY - size/2;
+    out += `<image x="${imgX}" y="${imgY}" width="${size}" height="${size}" href="${img.src}" preserveAspectRatio="xMidYMid meet" data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" data-img="1" data-imgidx="${i}" style="cursor:pointer;"/>`;
+  }
+  if (images.length > 6) {
+    out += `<text x="${cx + radius * 0.5}" y="${cy + radius * 0.5 + 5}" text-anchor="middle" font-size="12" fill="${effectiveTextColor()}" stroke="#0a0c18" stroke-width="2" paint-order="stroke">+${images.length-6}</text>`;
+  }
+  return out;
+}
+
+function nodeIconSVG(cx, cy, r, images, icon, color, hitType, hitId, label, labelOffset, goalId, node, stampTs){
+  let content = '';
+
+  if (images && images.length && images[0] && images[0].src){
+    const img = images[0];
+    const clipId = 'iconclip-' + hitType + '-' + String(hitId || 'x').replace(/[^a-zA-Z0-9_-]/g, '');
+    content = '<defs><clipPath id="' + clipId + '"><circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"/></clipPath></defs>' +
+      '<image x="' + (cx - r) + '" y="' + (cy - r) + '" width="' + (r*2) + '" height="' + (r*2) + '" href="' + img.src + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + clipId + ')" style="pointer-events:none;"/>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="2" opacity="0.55" style="pointer-events:none;"/>';
+  } else if (icon && String(icon).trim()){
+    const fontSize = (r * 1.7).toFixed(1);
+    content = '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dy="0.36em" font-size="' + fontSize + '" style="pointer-events:none;user-select:none;font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',Vazirmatn,sans-serif;">' + esc(icon) + '</text>';
+  } else {
+    content = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + color + '" opacity="0.85"/>';
+  }
+
+  const hitArea = '<circle data-hit="' + hitType + '" data-id="' + (hitId || '') + '" data-goalid="' + (goalId || '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (r + 8) + '" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>';
+
+  const n = node || {};
+  const labelX = cx + (n.labelDX || 0);
+  const labelY = cy + (labelOffset || 0) + (n.labelDY || 0);
+  const textColor = effectiveTextColor();
+  const fs = n.labelSize || currentLabelSize(hitType, hitId);
+  const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(stampTs) : '';
+  const stampTspan = stamp ? '<tspan x="' + labelX + '" dy="' + ((+fs*1.15).toFixed(1)) + '" font-size="' + Math.max(9, (+fs)*0.62).toFixed(1) + '" fill-opacity="0.6" direction="ltr">' + esc(stamp) + '</tspan>' : '';
+
+  return content + hitArea + (label
+    ? '<text x="' + labelX + '" y="' + labelY + '" text-anchor="middle" class="node-label" font-size="' + fs + '" font-weight="' + (hitType === 'me' ? 700 : 600) + '" data-hit="' + hitType + '" data-id="' + (hitId || '') + '" data-goalid="' + (goalId || '') + '" data-label="1" style="cursor:pointer;" fill="' + textColor + '">' + esc(label) + stampTspan + '</text>'
+    : '');
+}
+
+function nodeWithImages(cx, cy, r, images, color, hitType, hitId, label, labelOffset, goalId, node, stampTs){
+  let imgTag = '';
+  if (images && images.length) {
+    imgTag = renderImagesAtNode(cx, cy, images, r, hitType, hitId, goalId);
+  }
+  const n = node || {};
+  const labelX = cx + (n.labelDX || 0);
+  const labelY = cy + (labelOffset || 6) + (n.labelDY || 0);
+  const textColor = effectiveTextColor();
+  const fillColor = (images && images.length) ? 'transparent' : color;
+  const fs = n.labelSize || currentLabelSize(hitType, hitId);
+  const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(stampTs) : '';
+  const stampTspan = stamp ? `<tspan x="${labelX}" dy="${(+fs*1.15).toFixed(1)}" font-size="${Math.max(9, (+fs)*0.62).toFixed(1)}" fill-opacity="0.6" direction="ltr">${esc(stamp)}</tspan>` : '';
+  const isMeWithPhoto = hitType === 'me' && images && images.length;
+  return `
+    ${isMeWithPhoto ? '' : `<circle data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" cx="${cx}" cy="${cy}" r="${r}" fill="${fillColor}" stroke="${color}" stroke-width="${hitType === 'me' ? 3.5 : 3}" style="cursor:pointer;"/>`}
+    ${imgTag}
+    ${isMeWithPhoto ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3.5" style="pointer-events:none;"/>` : ''}
+    ${label ? `<text x="${labelX}" y="${labelY}" text-anchor="middle" class="node-label" font-size="${fs}" font-weight="${hitType === 'me' ? 700 : 600}" data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" data-label="1" style="cursor:pointer;" fill="${textColor}">${esc(label)}${stampTspan}</text>` : ''}
+  `;
+}
+
+function reachedFeelingSVG(g){
+  const scale = g.feelingScale || 1;
+  const boxW = 220 * scale, boxH = 76 * scale;
+  const offX = g.feelingOffsetX || 0;
+  const offY = g.feelingOffsetY || 0;
+  const cx = g.x + offX;
+  const cy = g.y + offY;
+  const fs = Math.max(12, (state.fontSize || 14) - 2) * scale;
+  const labelY = cy - 16 * scale;
+  const boxX = cx - boxW/2;
+  const boxY = cy + 6 * scale;
+  const textColor = effectiveTextColor();
+  return `
+    <g data-hit="feeling" data-id="${g.id}" style="cursor:pointer;">
+      <text x="${cx}" y="${labelY}" text-anchor="middle" class="feeling-label" font-size="${fs}" fill="${textColor}" pointer-events="none">
+        حالا که به این هدف رسیده‌ای، چه حسی داری؟
+      </text>
+      <foreignObject x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" pointer-events="none">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="feeling-box" style="font-size:${13*scale}px;">
+          <textarea class="feeling-textarea" data-goalid="${g.id}" placeholder="همین‌جا بنویسش..." style="color:${textColor};font-size:${13*scale}px;">${esc(g.feeling||'')}</textarea>
+        </div>
+      </foreignObject>
+      <circle cx="${cx}" cy="${boxY + boxH/2}" r="${70*scale}" fill="#fff" fill-opacity="0.001" pointer-events="all"/>
+    </g>
+  `;
+}
+
+function branchesSVG(goal, trunkOnly){
+  const cp = trunkControlPoints(goal);
+  let out = isRingHost(goal)
+    ? `<g class="ring-stem">${taperedPath(cp.p0,cp.p1,cp.p2,cp.p3,goal.color||RING_COLOR,3.2,1.6,0.6)}</g>`
+    : trunkSVG(cp, goal.color, effTrunkStyle(goal));
+  const n = goal.actions.length;
+  if (!trunkOnly) goal.actions.forEach((a,i)=>{
+    const t = Math.min(0.9, 0.15 + i*0.09);
+    const originPt = bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t);
+    const originDir = bezierTangentAngle(cp.p0,cp.p1,cp.p2,cp.p3,t);
+    const side = i%2===0 ? 1 : -1;
+    out += twigRecursive(goal, originPt, originDir, a, side, 1);
+  });
+  return out;
+}
+
+function twigRecursive(goal, originPt, originDir, action, side, scale){
+  const weight = action.weight || 5;
+  const color = action.color || goal.color;
+  const geom = computeTwigGeom(goal, action, originPt, originDir, side, scale);
+  applyBranchStyle(geom, effStyle(goal, action), side);
+  const { c1, c2, end } = geom;
+  actionGeomMap.set(action.id, { goalId: goal.id, originPt: geom.originPt, end, scale });
+
+  const baseWidth = Math.max(1, (1.9 + weight*1.05) * scale);
+  const tipWidth = Math.max(0.7, baseWidth*0.38);
+
+  const goalNode = findHost(goal.id);
+  const isPruned = goalNode && goalNode.lastActivity &&
+                   (Date.now() - goalNode.lastActivity) > 30 * 86400000;
+  const twigClass = isPruned ? 'pruned-twig' : '';
+
+  let out = `<g class="${twigClass}"><title>${esc(action.text||'(بدون توضیح)')} — قطر ${weight}</title>`;
+  out += geom.poly ? taperedPoly(geom.poly, color, baseWidth, tipWidth, 0.92) : taperedPath(geom.originPt, c1, c2, end, color, baseWidth, tipWidth, 0.92);
+  out += footprintsSVG(goal, action, geom, color, scale);
+
+  const handleR = Math.max(15, 18*scale);
+  out += `<circle data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" cx="${end.x}" cy="${end.y}" r="${handleR}" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>`;
+
+  const kids = action.children || [];
+  let childrenSvg = '';
+  if (kids.length){
+    out += `<circle cx="${end.x}" cy="${end.y}" r="${Math.max(2, 2.6*scale)}" fill="none" stroke="${color}" stroke-width="1.2" opacity="0.55"/>`;
+    kids.forEach((child,i)=>{
+      const cSide = i%2===0 ? 1 : -1;
+      const tt = 0.5 + ((i+1)/(kids.length+1))*0.45;
+      let childOrigin, childDir;
+      if (geom.poly){ const q = polyPointAt(geom.poly, tt); childOrigin = q.pt; childDir = q.angle; }
+      else { childOrigin = bezierPoint(geom.originPt,c1,c2,end,tt); childDir = bezierTangentAngle(geom.originPt,c1,c2,end,tt); }
+      childrenSvg += twigRecursive(goal, childOrigin, childDir, child, cSide, scale*0.72);
     });
+  } else {
+    const radius = Math.max(1.8, 2 + weight * 0.28 * scale);
+    if (action.images && action.images.length) {
+      const count = Math.min(action.images.length, 3);
+      for (let i = 0; i < count; i++) {
+        const imgEntry = action.images[i];
+        const imgSize = imgEntry.size || DEFAULT_IMG_SIZE;
+        const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+        const offX = Math.cos(angle) * radius * 0.7 + (imgEntry.dx || 0);
+        const offY = Math.sin(angle) * radius * 0.7 + (imgEntry.dy || 0);
+        const imgX = end.x + offX - imgSize / 2;
+        const imgY = end.y + offY - imgSize / 2;
+        out += `<image x="${imgX}" y="${imgY}" width="${imgSize}" height="${imgSize}" href="${imgEntry.src}" preserveAspectRatio="xMidYMid meet" data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" data-img="1" data-imgidx="${i}" style="cursor:pointer;"/>`;
+      }
+      if (action.images.length > 3) {
+        out += `<text x="${end.x + radius * 0.7}" y="${end.y + radius * 0.7 + 4}" text-anchor="middle" font-size="10" fill="${effectiveTextColor()}" stroke="#0a0c18" stroke-width="2" paint-order="stroke">+${action.images.length - 3}</text>`;
+      }
+    } else {
+      out += `<circle cx="${end.x}" cy="${end.y}" r="${radius}" fill="${color}" pointer-events="none"/>`;
+      if (action.isRoutine) out += routineTipSVG(action, end.x, end.y, radius, color, scale);
+    }
+  }
+  out += `</g>` + childrenSvg;
+
+  const lines = wrapText(action.text, Math.max(10, Math.round(18*Math.min(1,scale+0.35))));
+  const anchor = side>0 ? 'start' : 'end';
+  const labelX = end.x + (side>0 ? 8 : -8) + (action.labelDX || 0);
+  const labelYBase = end.y + 4 + (action.labelDY || 0);
+  const fsize = action.labelSize || currentLabelSize('action', action.id);
+  const textColor = effectiveTextColor();
+  let text = `<text data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" data-label="1" x="${labelX}" y="${labelYBase}" text-anchor="${anchor}" class="branch-label" font-size="${(+fsize).toFixed(1)}" fill="${textColor}">`;
+  lines.forEach((line,i)=>{
+    text += `<tspan x="${labelX}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
+  });
+  const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(action.createdAt) : '';
+  if (stamp){
+    text += `<tspan x="${labelX}" dy="16" font-size="${Math.max(9, (+fsize)*0.62).toFixed(1)}" fill-opacity="0.6" direction="ltr">${esc(stamp)}</tspan>`;
+  }
+  text += `</text>`;
+  out += text;
+
+  return out;
+}
+
+let revealGoalId = null;
+function countAllActions(list){
+  return (list || []).reduce((n, a) => n + 1 + countAllActions(a.children), 0);
+}
+function toggleGoalCollapse(id, force){
+  const g = findHost(id);
+  if (!g) return;
+  g.collapsed = (typeof force === 'boolean') ? force : !g.collapsed;
+  if (!g.collapsed) revealGoalId = g.id;
+  render();
+}
+function updateCollapseAllBtn(){
+  const btn = document.getElementById('collapse-all-btn');
+  if (!btn) return;
+  const withBranches = state.goals.filter(g => goalBranchCount(g));
+  const orphanBr = state.rings.filter(r => ringIsOrphan(r) && r.actions && r.actions.length);
+  btn.style.display = (withBranches.length || orphanBr.length) ? '' : 'none';
+  const anyOpen = withBranches.some(g => !g.collapsed) || orphanBr.some(r => !r.collapsed);
+  btn.dataset.mode = anyOpen ? 'collapse' : 'expand';
+  const lbl = btn.querySelector('.lbl');
+  if (lbl) lbl.textContent = anyOpen ? 'جمع همه' : 'باز همه';
+  btn.classList.toggle('is-collapsed', !anyOpen);
+}
+function goalShutterSVG(g, r){
+  const n = goalBranchCount(g);
+  if (!n) return '';
+  const cx = g.x, cy = g.y + r + 15;
+  const col = g.color;
+  const num = n.toLocaleString('fa-IR');
+  const open = !g.collapsed;
+  const tc = effectiveTextColor();
+  const chev = open ? 'M-4 1.8 L0 -2.2 L4 1.8' : 'M-4 -1.8 L0 2.2 L4 -1.8';
+  return `<g class="goal-shutter ${open ? 'is-open' : 'is-closed'}" data-goal-toggle="${g.id}" style="cursor:pointer;">
+    <title>${open ? 'جمع کردن مسیر' : 'باز کردن مسیر'} (${num} شاخه)</title>
+    <rect x="${cx-34}" y="${cy-19}" width="68" height="38" rx="14" fill="#fff" fill-opacity="0.001"/>
+    <rect class="gs-pill" x="${cx-27}" y="${cy-11}" width="54" height="22" rx="11"
+          fill="${open ? 'none' : col}" fill-opacity="${open ? 0 : 0.92}" stroke="${col}" stroke-width="1.6" stroke-opacity="${open ? 0.75 : 1}"/>
+    <path d="${chev}" transform="translate(${cx-14},${cy})" fill="none" stroke="${open ? tc : '#1b1400'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="${open ? 0.75 : 0.95}"/>
+    <text x="${cx+7}" y="${cy+4.3}" text-anchor="middle" font-size="12" font-weight="700" fill="${open ? tc : '#1b1400'}" fill-opacity="${open ? 0.8 : 1}" style="pointer-events:none;">${num}</text>
+  </g>`;
+}
+let focusGoalId = null;
+let camAnimId = 0;
+function animateCamTo(t, ms){
+  cancelAnimationFrame(camAnimId);
+  ms = ms || 520;
+  const s0 = { x:cam.x, y:cam.y, scale:cam.scale };
+  const t0 = performance.now();
+  (function step(now){
+    const k = Math.min(1, (now - t0) / ms);
+    const e = 1 - Math.pow(1 - k, 3);
+    cam.x = s0.x + (t.x - s0.x) * e;
+    cam.y = s0.y + (t.y - s0.y) * e;
+    cam.scale = s0.scale + (t.scale - s0.scale) * e;
+    applyCam();
+    if (k < 1) camAnimId = requestAnimationFrame(step);
+  })(t0);
+}
+function viewForPoints(pts, maxScale){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  pts.forEach(p=>{ x0=Math.min(x0,p.x-p.r); y0=Math.min(y0,p.y-p.r); x1=Math.max(x1,p.x+p.r); y1=Math.max(y1,p.y+p.r); });
+  const W = window.innerWidth, H = window.innerHeight - 190;
+  const sc = Math.max(0.12, Math.min(maxScale || 1.2, Math.min(W/(x1-x0), H/(y1-y0))));
+  return { scale: sc, x: W/2 - ((x0+x1)/2)*sc, y: 70 + H/2 - ((y0+y1)/2)*sc };
+}
+function goalPoints(g){
+  const pts = [{x:g.x, y:g.y, r:(g.radius||20)+70}];
+  if (!g.collapsed){
+    (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x, y:e.end.y, r:80}); walk(a.children); }); })(g.actions);
+  }
+  return pts;
+}
+function focusGoal(id){
+  const g = findHost(id);
+  if (!g) return;
+  focusGoalId = id;
+  g.collapsed = false;
+  revealGoalId = id;
+  render();
+  animateCamTo(viewForPoints(goalPoints(g), 1.4));
+  const h = document.getElementById('hint'); if (h) h.style.display = 'none';
+}
+function exitFocus(){
+  focusGoalId = null;
+  render();
+  fitAllView();
+}
+function goalPower(g){
+  const w = (function sumW(list){ return (list||[]).reduce((s,a)=> s + (a.weight||0) + sumW(a.children), 0); })(g.actions);
+  return Math.min(100, w*3);
+}
+function toggleRingsCollapse(force){
+  state.ringsCollapsed = (typeof force === 'boolean') ? force : !state.ringsCollapsed;
+  render();
+}
+function ringsShutterSVG(){
+  const n = state.rings.length;
+  if (!n) return '';
+  const open = !state.ringsCollapsed;
+  const col = RING_COLOR;
+  const cx = state.me.x, cy = state.me.y + (state.me.radius || 34) + 58;
+  const num = n.toLocaleString('fa-IR');
+  const tc = effectiveTextColor();
+  const chev = open ? 'M-4 1.8 L0 -2.2 L4 1.8' : 'M-4 -1.8 L0 2.2 L4 -1.8';
+  return `<g class="goal-shutter ${open ? 'is-open' : 'is-closed'}" data-rings-toggle="1" style="cursor:pointer;">
+    <title>${open ? 'جمع کردن' : 'باز کردن'} نشانه‌های نزدیکی (${num})</title>
+    <rect x="${cx-48}" y="${cy-19}" width="96" height="38" rx="14" fill="#fff" fill-opacity="0.001"/>
+    <rect class="gs-pill" x="${cx-42}" y="${cy-11}" width="84" height="22" rx="11"
+          fill="${open ? 'none' : col}" fill-opacity="${open ? 0 : 0.92}" stroke="${col}" stroke-width="1.6" stroke-dasharray="${open ? '4 3' : 'none'}"/>
+    <path d="${chev}" transform="translate(${cx-30},${cy})" fill="none" stroke="${open ? tc : '#04201c'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <text x="${cx+8}" y="${cy+4.2}" text-anchor="middle" font-size="11" font-weight="700" fill="${open ? tc : '#04201c'}" style="pointer-events:none;">نزدیکی ${num}</text>
+  </g>`;
+}
+function fitAllView(){
+  const pts = [{x:state.me.x, y:state.me.y, r:(state.me.radius||34)+60}];
+  state.goals.forEach(g=>{ goalPoints(g).forEach(p=>pts.push(p)); });
+  if (!state.ringsCollapsed) state.rings.forEach(r=>{ pts.push({x:r.x,y:r.y,r:(r.radius||30)+30}); (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x,y:e.end.y,r:80}); walk(a.children); }); })(r.actions); });
+  animateCamTo(viewForPoints(pts, 1.2));
+}
+function pickGoalSpot(){
+  const R = 210 + Math.min(state.goals.length, 12) * 12;
+  let best = null;
+  for (let i=0;i<48;i++){
+    const a = (i/48)*Math.PI*2;
+    const x = state.me.x + Math.cos(a)*R, y = state.me.y + Math.sin(a)*R;
+    let d = 1e9;
+    state.goals.forEach(g=>{ d = Math.min(d, Math.hypot(g.x-x, g.y-y)); });
+    if (!best || d > best.d) best = {x,y,d};
+  }
+  return best;
+}
+function ringLinkSVG(g, r){
+  const col = r.color || RING_COLOR;
+  const dx = r.x - g.x, dy = r.y - g.y, d = Math.hypot(dx, dy) || 1;
+  const ux = dx/d, uy = dy/d;
+  const x1 = g.x + ux*((g.radius||20)+6), y1 = g.y + uy*((g.radius||20)+6);
+  const x2 = r.x - ux*((r.radius||30)+6), y2 = r.y - uy*((r.radius||30)+6);
+  const mx = (x1+x2)/2 - uy*d*0.12, my = (y1+y2)/2 + ux*d*0.12;
+  return `<path class="ring-link" d="M${x1.toFixed(1)} ${y1.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round" opacity="0.6" pointer-events="none"/>`;
+}
+function collapsedLinkSVG(g){
+  return `<line x1="${state.me.x}" y1="${state.me.y}" x2="${g.x}" y2="${g.y}" stroke="${g.color}" stroke-width="1.2" stroke-dasharray="3 6" stroke-linecap="round" opacity="0.28" pointer-events="none"/>`;
+}
+
+function render(){
+  let html = '';
+  actionGeomMap = new Map();
+  autoLinkRings();
+
+  if (focusGoalId && !state.goals.some(x=>x.id===focusGoalId)) focusGoalId = null;
+  state.goals.forEach(g=>{
+    const cls = [ (revealGoalId === g.id) ? 'np-reveal' : '', (focusGoalId === g.id) ? 'is-focus' : '' ].filter(Boolean).join(' ');
+    const clsAttr = cls ? ` class="${cls}"` : '';
+    html += `<g data-goal-branches="${g.id}"${clsAttr}>${branchesSVG(g, !!(g.collapsed && g.actions.length))}</g>`;
+  });
+  if (!state.ringsCollapsed) state.rings.forEach(r=>{
+    const lg = r.goalId && state.goals.find(x=>x.id===r.goalId);
+    if (lg && state.showRingLinks) html += ringLinkSVG(lg, r);
+  });
+  if (!state.ringsCollapsed) state.rings.forEach(r=>{
+    if (r.actions && r.actions.length){
+      const lgR = r.goalId && state.goals.find(x=>x.id===r.goalId);
+      html += `<g data-goal-branches="${r.id}">${branchesSVG(Object.assign(r,{color:r.color||RING_COLOR}), !!(r.collapsed || (lgR && lgR.collapsed)))}</g>`;
+    }
+  });
+  revealGoalId = null;
+
+  const textColor = effectiveTextColor();
+  const fs = Math.max(14, state.fontSize || 14);
+
+  const mx = state.me.x, my = state.me.y;
+  const meR = state.me.radius || 34;
+  const userState = getUserFrequencyState();
+  const userBand = FREQ_BANDS[userState.band] || FREQ_BANDS.delta;
+
+  html += userAuraSVG(mx, my, meR, userState);
+  html += haloSVG(mx, my, userBand.color, meR, 1, userState.band);
+
+  const meColor = state.me.color || userBand.color;
+  if (!state.me.images || !state.me.images.length){
+    html += `<circle data-hit="me" cx="${mx}" cy="${my}" r="${meR}"
+                     fill="${meColor}" stroke="${meColor}" stroke-width="3.5"
+                     style="cursor:pointer;"/>`;
+    html += addPhotoPlaceholderSVG(mx, my, meR, effectiveTextColor());
+    html += `<text x="${mx}" y="${my + meR*0.62}" text-anchor="middle"
+                  font-size="${Math.max(9, (state.fontSize||14) - 4)}"
+                  font-weight="${700}" fill="${effectiveTextColor()}"
+                  data-hit="me" data-label="1" style="cursor:pointer;">${esc(state.me.name)}</text>`;
+  } else {
+    html += nodeWithImages(mx, my, meR, state.me.images, meColor, 'me', '', state.me.name, 6, '', state.me);
+  }
+
+  html += userBandBadgeSVG(mx, my, meR, userState);
+
+  state.goals.forEach(g=>{
+    const r = g.radius || 20;
+    html += `<g class="gnode${focusGoalId === g.id ? ' is-focus' : ''}" data-gn="${g.id}">`;
+    html += haloSVG(g.x, g.y, g.color, r, 1, g.freq);
+    html += nodeIconSVG(g.x, g.y, r, g.images, g.icon, g.color, 'goal', g.id, g.name, -(r + 22), '', g, g.createdAt);
+
+    const freq = getFreq(g);
+    const weightSum = (function sumW(list){
+      return (list || []).reduce((s, a) => s + (a.weight || 0) + sumW(a.children), 0);
+    })(g.actions);
+    const circuitPower = Math.min(100, weightSum * 3);
+    const hasBranches = g.actions && g.actions.length;
+    const hudY = g.y + r + (hasBranches ? 46 : 42);
+    html += `<text class="goal-hud" x="${g.x}" y="${hudY}" text-anchor="middle">
+      ${g.collapsed && hasBranches ? `رشد ${circuitPower}٪` : `${freq.label} — ${freq.desc} · رشد ${circuitPower}٪`}
+    </text>`;
+    html += goalShutterSVG(g, r);
+    if (g.reached){
+      html += reachedFeelingSVG(g);
+    }
+    html += `</g>`;
+  });
+
+  (state.ringsCollapsed ? [] : state.rings).forEach(r=>{
+    html += '<g class="rnode">';
+    const rad = r.radius || 30;
+    const ringColor = r.color || RING_COLOR;
+    html += haloSVG(r.x, r.y, ringColor, rad, 1.2);
+    html += nodeIconSVG(r.x, r.y, rad, r.images, r.icon, ringColor, 'ring', r.id, '', 0, '', r);
+    if (r.label){
+      const lines = wrapText(r.label, 16);
+      let lx = r.x + (r.labelDX || 0);
+      let ly = r.y - (rad + 20) + (r.labelDY || 0);
+      const fsize = r.labelSize || currentLabelSize('ring', r.id);
+      let text = `<text data-hit="ring" data-id="${r.id}" data-label="1" x="${lx}" y="${ly}" text-anchor="middle" class="feeling-label" font-size="${fsize}" font-weight="700" style="cursor:pointer;fill:${ringColor};" fill="${ringColor}">`;
+      lines.forEach((line,i)=>{
+        text += `<tspan x="${lx}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
+      });
+      text += `</text>`;
+      html += text;
+    }
+    if (r.note){
+      const lines = wrapText(r.note, 22);
+      let ly = r.y + rad + 18;
+      let text = `<text x="${r.x}" y="${ly}" text-anchor="middle" class="branch-label" font-size="${fs-3}" fill="${textColor}">`;
+      lines.forEach((line,i)=>{
+        text += `<tspan x="${r.x}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
+      });
+      text += `</text>`;
+      html += text;
+    }
+    html += '</g>';
+  });
+
+  viewport.innerHTML = html;
+  svg.classList.toggle('focus-on', !!focusGoalId);
+  (function(){
+    const pill = document.getElementById('focus-pill');
+    if (!pill) return;
+    const fg = focusGoalId && findHost(focusGoalId);
+    pill.classList.toggle('show', !!fg);
+    if (fg) document.getElementById('fp-name').textContent = 'تمرکز: ' + fg.name;
   })();
+  updateCollapseAllBtn();
+  scheduleMapSave();
+}
 
-  document.getElementById('collapse-all-btn').addEventListener('click', ()=>{
-    const collapse = document.getElementById('collapse-all-btn').dataset.mode === 'collapse';
-    state.goals.forEach(g=>{ if (goalBranchCount(g)) g.collapsed = collapse; });
-    state.rings.forEach(r=>{ if (ringIsOrphan(r) && r.actions && r.actions.length) r.collapsed = collapse; });
-    state.ringsCollapsed = false;
-    render();
-  });
-
-  document.getElementById('recenter-btn').addEventListener('click', ()=>{
-    focusGoalId = null;
-    render();
-    fitAllView();
-    document.getElementById('hint').style.display = 'none';
-  });
-
-  /* ---------------- rendering ---------------- */
-  function esc(s){
-    return String(s??"").replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function seeded(seedStr){
-    let h = 1779033703 ^ seedStr.length;
-    for (let i=0;i<seedStr.length;i++){
-      h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
-      h = (h << 13) | (h >>> 19);
-    }
-    return function(){
-      h = Math.imul(h ^ (h >>> 16), 2246822507);
-      h = Math.imul(h ^ (h >>> 13), 3266489909);
-      h ^= h >>> 16;
-      return (h >>> 0) / 4294967296;
-    };
-  }
-
-  function haloSVG(cx, cy, color, r, pulseFactor, freqKey){
-    const pf = pulseFactor || 1;
-    const freq = freqKey && FREQ_BANDS[freqKey] ? FREQ_BANDS[freqKey] : FREQ_BANDS.alpha;
-    const baseDur = freq.speed;
-    const innerDur = (baseDur * 0.8).toFixed(2);
-    const midDur   = baseDur.toFixed(2);
-    const outerDur = (baseDur * 1.35).toFixed(2);
-
-    return `
-      <circle cx="${cx}" cy="${cy}" r="${r*1.95*pf}" fill="${color}" opacity="0.10" filter="url(#glow)">
-        <animate attributeName="r" values="${r*1.7*pf};${r*2.2*pf};${r*1.7*pf}" dur="${outerDur}s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.07;0.16;0.07" dur="${outerDur}s" repeatCount="indefinite"/>
-      </circle>
-      <circle cx="${cx}" cy="${cy}" r="${r*1.4*pf}" fill="${color}" opacity="0.15" filter="url(#glow)">
-        <animate attributeName="r" values="${r*1.25*pf};${r*1.55*pf};${r*1.25*pf}" dur="${midDur}s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.13;0.24;0.13" dur="${midDur}s" repeatCount="indefinite"/>
-      </circle>
-      <circle cx="${cx}" cy="${cy}" r="${r*1.0*pf}" fill="none" stroke="${color}" stroke-width="1.4" opacity="0.6">
-        <animate attributeName="r" values="${r*0.88*pf};${r*1.08*pf};${r*0.88*pf}" dur="${innerDur}s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.45;0.75;0.45" dur="${innerDur}s" repeatCount="indefinite"/>
-      </circle>
-    `;
-  }
-
-  function userAuraSVG(cx, cy, r, userState){
-    const band = FREQ_BANDS[userState.band] || FREQ_BANDS.delta;
-    const freq = band.speed;
-    const progress = userState.progress;
-    const color = band.color;
-
-    const rippleCount = 3;
-    let ripples = '';
-    for (let i = 0; i < rippleCount; i++){
-      const delay = (i * freq / rippleCount).toFixed(2);
-      const dur   = (freq * 1.4).toFixed(2);
-      const op    = (0.35 + progress * 0.45).toFixed(2);
-      ripples +=
-        '<circle class="me-aura-ripple" cx="' + cx + '" cy="' + cy +
-        '" fill="none" stroke="' + color + '" stroke-width="' +
-        (1.4 + progress * 1.6).toFixed(2) + '" opacity="0">' +
-          '<animate attributeName="r" values="' + (r*1.15) + ';' + (r*3.2) + '" dur="' + dur + 's" begin="' + delay + 's" repeatCount="indefinite"/>' +
-          '<animate attributeName="opacity" values="' + op + ';0" dur="' + dur + 's" begin="' + delay + 's" repeatCount="indefinite"/>' +
-        '</circle>';
-    }
-
-    const glowR = r * (1.6 + progress * 0.9);
-    const glowOp = (0.15 + progress * 0.25).toFixed(2);
-    const glow =
-      '<circle class="me-aura-glow" cx="' + cx + '" cy="' + cy + '" r="' + glowR.toFixed(1) +
-      '" fill="' + color + '" opacity="' + glowOp + '"/>' +
-      '<circle class="me-aura-glow" cx="' + cx + '" cy="' + cy + '" r="' + (glowR*0.6).toFixed(1) +
-      '" fill="#ffffff" opacity="' + (glowOp * 0.55).toFixed(2) + '"/>';
-
-    return glow + ripples;
-  }
-
-  function addPhotoPlaceholderSVG(cx, cy, r, color){
-    const s = r * 0.42;
-    const cy2 = cy - r * 0.12;
-    return `
-      <g style="pointer-events:none;">
-        <circle cx="${cx}" cy="${cy2}" r="${s}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>
-        <line x1="${(cx - s*0.5).toFixed(1)}" y1="${cy2.toFixed(1)}" x2="${(cx + s*0.5).toFixed(1)}" y2="${cy2.toFixed(1)}" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>
-        <line x1="${cx}" y1="${(cy2 - s*0.5).toFixed(1)}" x2="${cx}" y2="${(cy2 + s*0.5).toFixed(1)}" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>
-      </g>
-    `;
-  }
-
-  function userAvatarSVG(cx, cy, r, color){
-    const headR  = r * 0.22;
-    const headY  = cy - r * 0.34;
-    const bodyT  = cy - r * 0.08;
-    const bodyB  = cy + r * 0.42;
-    const bodyW  = r * 0.34;
-
-    return `
-      <g class="me-avatar-silhouette" style="color:${color};">
-        <circle cx="${cx}" cy="${headY.toFixed(1)}" r="${headR.toFixed(1)}"/>
-        <path d="M${(cx - bodyW).toFixed(1)} ${bodyT.toFixed(1)}
-                 Q${cx} ${(bodyT + r*0.06).toFixed(1)} ${(cx + bodyW).toFixed(1)} ${bodyT.toFixed(1)}
-                 L${(cx + bodyW*1.12).toFixed(1)} ${bodyB.toFixed(1)}
-                 Q${cx} ${(bodyB + r*0.08).toFixed(1)} ${(cx - bodyW*1.12).toFixed(1)} ${bodyB.toFixed(1)} Z"/>
-      </g>
-    `;
-  }
-
-  function userBandBadgeSVG(cx, cy, r, userState){
-    const band = FREQ_BANDS[userState.band] || FREQ_BANDS.delta;
-    const badgeY = cy - r - 22;
-    const textColor = effectiveTextColor();
-    const progressPct = Math.round(userState.progress * 100);
-    const barW = 68;
-    const barX = cx - barW/2;
-    const barY = badgeY + 8;
-
-    return `
-      <text x="${cx}" y="${badgeY}" text-anchor="middle" class="me-band-badge"
-            font-size="11" font-weight="700" fill="${textColor}">
-        ${band.label} · ${userState.stage}
-      </text>
-      <rect x="${barX}" y="${barY}" width="${barW}" height="4" rx="2"
-            fill="rgba(255,255,255,0.15)"/>
-      <rect x="${barX}" y="${barY}" width="${(barW * userState.progress).toFixed(1)}" height="4" rx="2"
-            fill="${band.color}"/>
-      <text x="${cx}" y="${barY + 15}" text-anchor="middle" class="me-band-badge"
-            font-size="9" opacity="0.75" fill="${textColor}">
-        رشد مدار · ${progressPct}٪
-      </text>
-    `;
-  }
-
-  function bezierPoint(p0,p1,p2,p3,t){
-    const mt=1-t;
-    return {
-      x: mt*mt*mt*p0.x + 3*mt*mt*t*p1.x + 3*mt*t*t*p2.x + t*t*t*p3.x,
-      y: mt*mt*mt*p0.y + 3*mt*mt*t*p1.y + 3*mt*t*t*p2.y + t*t*t*p3.y
-    };
-  }
-  function bezierTangentAngle(p0,p1,p2,p3,t){
-    const mt=1-t;
-    const dx = 3*mt*mt*(p1.x-p0.x) + 6*mt*t*(p2.x-p1.x) + 3*t*t*(p3.x-p2.x);
-    const dy = 3*mt*mt*(p1.y-p0.y) + 6*mt*t*(p2.y-p1.y) + 3*t*t*(p3.y-p2.y);
-    return Math.atan2(dy,dx);
-  }
-
-  function nearestOnBezier(cp, pt){
-    let bestT=0, bestD=Infinity, bestPt=cp.p0;
-    const N=40;
-    for(let i=0;i<=N;i++){
-      const t=i/N;
-      const p=bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t);
-      const d=Math.hypot(p.x-pt.x,p.y-pt.y);
-      if(d<bestD){bestD=d;bestT=t;bestPt=p;}
-    }
-    let lo=Math.max(0,bestT-1/N), hi=Math.min(1,bestT+1/N);
-    for(let iter=0; iter<14; iter++){
-      const t1=lo+(hi-lo)/3, t2=hi-(hi-lo)/3;
-      const p1=bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t1);
-      const p2=bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t2);
-      const d1=Math.hypot(p1.x-pt.x,p1.y-pt.y);
-      const d2=Math.hypot(p2.x-pt.x,p2.y-pt.y);
-      if(d1<d2){ hi=t2; if(d1<bestD){bestD=d1;bestPt=p1;} }
-      else { lo=t1; if(d2<bestD){bestD=d2;bestPt=p2;} }
-    }
-    return { pt:bestPt, dist:bestD };
-  }
-
-  let actionGeomMap = new Map();
-
-  function trunkControlPoints(goal){
-    if (isRingHost(goal)){
-      const R = goal.radius || 30;
-      const a = Math.atan2(goal.y - state.me.y, goal.x - state.me.x);
-      const ux = Math.cos(a), uy = Math.sin(a), px = -uy, py = ux, LL = 130;
-      const q0 = {x:goal.x+ux*R, y:goal.y+uy*R};
-      const rr = seeded(goal.id+'-trunk');
-      const k1 = (rr()*0.5-0.25)*LL*0.3, k2 = (rr()*0.5-0.25)*LL*0.3;
-      return { p0:q0,
-        p1:{x:q0.x+ux*LL*0.33+px*k1, y:q0.y+uy*LL*0.33+py*k1},
-        p2:{x:q0.x+ux*LL*0.66+px*k2, y:q0.y+uy*LL*0.66+py*k2},
-        p3:{x:q0.x+ux*LL, y:q0.y+uy*LL} };
-    }
-    const p0={x:state.me.x,y:state.me.y}, p3={x:goal.x,y:goal.y};
-    const dx=p3.x-p0.x, dy=p3.y-p0.y;
-    const len=Math.hypot(dx,dy)||1;
-    const ux=dx/len, uy=dy/len;
-    const px=-uy, py=ux;
-    const rnd=seeded(goal.id+'-trunk');
-    const o1=(rnd()*0.5-0.25)*len*0.4;
-    const o2=(rnd()*0.5-0.25)*len*0.4;
-    const p1={x:p0.x+ux*len*0.33+px*o1, y:p0.y+uy*len*0.33+py*o1};
-    const p2={x:p0.x+ux*len*0.66+px*o2, y:p0.y+uy*len*0.66+py*o2};
-    return {p0,p1,p2,p3};
-  }
-
-  function trunkSVG(cp, color, style){
-    const P = a => a.x.toFixed(1) + ' ' + a.y.toFixed(1);
-    const D = c => 'M' + P(c.p0) + ' C' + P(c.p1) + ' ' + P(c.p2) + ' ' + P(c.p3);
-    const path = (c, w, op, dash, cap) =>
-      '<path d="' + D(c) + '" fill="none" stroke="' + color + '" stroke-width="' + w + '" opacity="' + op + '"' +
-      ' stroke-linecap="' + (cap || 'round') + '" stroke-linejoin="round"' +
-      (dash ? ' stroke-dasharray="' + dash + '"' : '') + ' pointer-events="none"/>';
-    let body = '';
-    switch (style){
-      case 'solid':   body = path(cp, 3, 0.9); break;
-      case 'dotted':  body = path(cp, 3.6, 0.9, '0.1 8'); break;
-      case 'dashdot': body = path(cp, 3, 0.9, '14 7 2 7', 'butt'); break;
-      case 'long':    body = path(cp, 3, 0.9, '26 13', 'butt'); break;
-      case 'double': {
-        const dx = cp.p3.x - cp.p0.x, dy = cp.p3.y - cp.p0.y, L = Math.hypot(dx, dy) || 1;
-        const nx = -dy / L * 2.6, ny = dx / L * 2.6;
-        const sh = k => ({ p0:{x:cp.p0.x+nx*k,y:cp.p0.y+ny*k}, p1:{x:cp.p1.x+nx*k,y:cp.p1.y+ny*k}, p2:{x:cp.p2.x+nx*k,y:cp.p2.y+ny*k}, p3:{x:cp.p3.x+nx*k,y:cp.p3.y+ny*k} });
-        body = path(sh(1), 1.6, 0.9) + path(sh(-1), 1.6, 0.9); break;
-      }
-      case 'glow':    body = path(cp, 9, 0.16) + path(cp, 2.8, 0.95); break;
-      case 'taper':   body = taperedPath(cp.p0, cp.p1, cp.p2, cp.p3, color, 5.2, 1.6, 0.9); break;
-      case 'dashed':
-      default:        body = path(cp, 3, 0.9, '9 9', 'butt');
-    }
-    return '<g class="goal-path" data-trunk-style="' + (style || 'dashed') + '">' + body + '</g>';
-  }
-
-  function wrapText(str, maxChars){
-    const words = String(str).split(/\s+/).filter(Boolean);
-    const lines = []; let cur='';
-    words.forEach(w=>{
-      if ((cur+' '+w).trim().length > maxChars && cur){ lines.push(cur.trim()); cur=w; }
-      else cur = (cur+' '+w).trim();
-    });
-    if (cur) lines.push(cur);
-    if (!lines.length) lines.push('');
-    if (lines.length > 4){ lines.length = 4; lines[3] = lines[3].slice(0, maxChars-1)+'…'; }
-    return lines;
-  }
-
-  function taperedPath(p0,p1,p2,p3,color,baseWidth,tipWidth,opacity){
-    const SEG = 7;
-    let out = '';
-    for (let s=0; s<SEG; s++){
-      const t0 = s/SEG, t1 = (s+1)/SEG;
-      const a = bezierPoint(p0,p1,p2,p3,t0);
-      const b = bezierPoint(p0,p1,p2,p3,t1);
-      const w = baseWidth + (tipWidth-baseWidth)*((s+0.5)/SEG);
-      out += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${color}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" opacity="${opacity}"/>`;
-    }
-    return out;
-  }
-
-  function polyCum(pts){ const c=[0]; for(let i=1;i<pts.length;i++) c.push(c[i-1]+Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y)); return c; }
-  function polyPointAt(pts, t){
-    const c = polyCum(pts), T = c[c.length-1]*Math.max(0,Math.min(1,t));
-    for(let i=1;i<pts.length;i++){
-      if (T <= c[i] || i === pts.length-1){
-        const seg = (c[i]-c[i-1]) || 1, f = Math.max(0,Math.min(1,(T-c[i-1])/seg));
-        return { pt:{ x:pts[i-1].x+(pts[i].x-pts[i-1].x)*f, y:pts[i-1].y+(pts[i].y-pts[i-1].y)*f },
-                 angle:Math.atan2(pts[i].y-pts[i-1].y, pts[i].x-pts[i-1].x) };
-      }
-    }
-    return { pt:pts[0], angle:0 };
-  }
-  function taperedPoly(pts, color, w0, w1, opacity){
-    const c = polyCum(pts), tot = c[c.length-1] || 1;
-    let out = '';
-    for(let i=1;i<pts.length;i++){
-      const f = ((c[i-1]+c[i])/2)/tot;
-      const w = w0 + (w1-w0)*f;
-      out += `<line x1="${pts[i-1].x.toFixed(1)}" y1="${pts[i-1].y.toFixed(1)}" x2="${pts[i].x.toFixed(1)}" y2="${pts[i].y.toFixed(1)}" stroke="${color}" stroke-width="${w.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" opacity="${opacity}"/>`;
-    }
-    return out;
-  }
-  function applyBranchStyle(geom, style, side){
-    if (!style || style === 'organic') return geom;
-    const o = geom.originPt, e = geom.end, L = geom.length || 1, dir = geom.dir;
-    const dvx = Math.cos(dir), dvy = Math.sin(dir), px = -dvy, py = dvx, sd = side || 1;
-    const at = (a,b)=>({ x:o.x+dvx*L*a+px*L*b, y:o.y+dvy*L*a+py*L*b });
-    switch(style){
-      case 'straight': geom.c1 = at(0.33,0); geom.c2 = at(0.72,0); break;
-      case 'curve':    geom.c1 = at(0.22,0.40*sd); geom.c2 = at(0.78,0.40*sd); break;
-      case 'wave':     geom.c1 = at(0.25,0.45*sd); geom.c2 = at(0.75,-0.45*sd); break;
-      case 'elbow': {
-        const horiz = Math.abs(e.x-o.x) >= Math.abs(e.y-o.y);
-        geom.poly = [o, horiz ? {x:e.x,y:o.y} : {x:o.x,y:e.y}, e]; break;
-      }
-      case 'step': {
-        const horiz = Math.abs(e.x-o.x) >= Math.abs(e.y-o.y);
-        geom.poly = horiz ? [o,{x:(o.x+e.x)/2,y:o.y},{x:(o.x+e.x)/2,y:e.y},e] : [o,{x:o.x,y:(o.y+e.y)/2},{x:e.x,y:(o.y+e.y)/2},e]; break;
-      }
-      case 'zigzag': {
-        const n = 6, amp = Math.min(0.13*L, 13), pts = [o];
-        for(let i=1;i<n;i++){ const k = (i%2?1:-1)*sd*amp; const b = at(i/n,0); pts.push({x:b.x+px*k, y:b.y+py*k}); }
-        pts.push(e); geom.poly = pts; break;
-      }
-    }
-    return geom;
-  }
-
-  function computeTwigGeom(goal, action, originPt, originDir, side, scale){
-    if (action.detached) {
-      const origin = {x: action.originX, y: action.originY};
-      const dir = action.dir;
-      const length = action.len;
-      const dvx = Math.cos(dir), dvy = Math.sin(dir);
-      const perpx = -dvy, perpy = dvx;
-      const bend1 = action.bend1 || 0;
-      const bend2 = action.bend2 || 0;
-      const c1 = { x: origin.x + dvx*length*0.33 + perpx*bend1, y: origin.y + dvy*length*0.33 + perpy*bend1 };
-      const c2 = { x: origin.x + dvx*length*0.72 + perpx*bend2, y: origin.y + dvy*length*0.72 + perpy*bend2 };
-      const end = { x: origin.x + dvx*length, y: origin.y + dvy*length };
-      return { originPt: origin, dir, length, c1, c2, end };
-    } else {
-      if (typeof action.dir !== 'number' || typeof action.len !== 'number'){
-        const rnd = seeded(goal.id+'-'+action.id);
-        const angleOff = side*(0.8 + rnd()*0.5);
-        const weight = action.weight || 5;
-        action.dir = originDir + angleOff;
-        action.len = (18 + weight*8) * scale;
-        action.bend1 = side*(5+rnd()*9)*scale;
-        action.bend2 = side*(-4+rnd()*12)*scale;
-      }
-      const dir = action.dir;
-      const length = action.len;
-      const dvx = Math.cos(dir), dvy = Math.sin(dir);
-      const perpx = -dvy, perpy = dvx;
-      const bend1 = action.bend1||0, bend2 = action.bend2||0;
-      const c1 = { x: originPt.x + dvx*length*0.33 + perpx*bend1, y: originPt.y + dvy*length*0.33 + perpy*bend1 };
-      const c2 = { x: originPt.x + dvx*length*0.72 + perpx*bend2, y: originPt.y + dvy*length*0.72 + perpy*bend2 };
-      const end = { x: originPt.x + dvx*length, y: originPt.y + dvy*length };
-      return { originPt, dir, length, c1, c2, end };
-    }
-  }
-
-  function renderImagesAtNode(cx, cy, images, radius, hitType, hitId, goalId) {
-    if (!images || !images.length) return '';
-    if (hitType === 'me') {
-      const img = images[0];
-      const clipId = `me-avatar-clip-${hitId || 'x'}`;
-      return `
-        <defs><clipPath id="${clipId}"><circle cx="${cx}" cy="${cy}" r="${radius}"/></clipPath></defs>
-        <image x="${cx - radius}" y="${cy - radius}" width="${radius*2}" height="${radius*2}" href="${img.src}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})" data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" data-img="1" data-imgidx="0" style="cursor:pointer;"/>
-      `;
-    }
-    let out = '';
-    const count = Math.min(images.length, 6);
-    for (let i = 0; i < count; i++) {
-      const img = images[i];
-      const size = img.size || DEFAULT_IMG_SIZE;
-      const angle = (i / count) * Math.PI * 2 - Math.PI/2;
-      const offX = Math.cos(angle) * radius * 0.6 + (img.dx || 0);
-      const offY = Math.sin(angle) * radius * 0.6 + (img.dy || 0);
-      const imgX = cx + offX - size/2;
-      const imgY = cy + offY - size/2;
-      out += `<image x="${imgX}" y="${imgY}" width="${size}" height="${size}" href="${img.src}" preserveAspectRatio="xMidYMid meet" data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" data-img="1" data-imgidx="${i}" style="cursor:pointer;"/>`;
-    }
-    if (images.length > 6) {
-      out += `<text x="${cx + radius * 0.5}" y="${cy + radius * 0.5 + 5}" text-anchor="middle" font-size="12" fill="${effectiveTextColor()}" stroke="#0a0c18" stroke-width="2" paint-order="stroke">+${images.length-6}</text>`;
-    }
-    return out;
-  }
-
-  /* ========== تابع آیکون هدف/نشانه: عکس > ایموجی > دایره‌ی نرم ========== */
-  function nodeIconSVG(cx, cy, r, images, icon, color, hitType, hitId, label, labelOffset, goalId, node, stampTs){
-    let content = '';
-
-    if (images && images.length && images[0] && images[0].src){
-      const img = images[0];
-      const clipId = 'iconclip-' + hitType + '-' + String(hitId || 'x').replace(/[^a-zA-Z0-9_-]/g, '');
-      content = '<defs><clipPath id="' + clipId + '"><circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"/></clipPath></defs>' +
-        '<image x="' + (cx - r) + '" y="' + (cy - r) + '" width="' + (r*2) + '" height="' + (r*2) + '" href="' + img.src + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + clipId + ')" style="pointer-events:none;"/>' +
-        '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="2" opacity="0.55" style="pointer-events:none;"/>';
-    } else if (icon && String(icon).trim()){
-      const fontSize = (r * 1.7).toFixed(1);
-      content = '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dy="0.36em" font-size="' + fontSize + '" style="pointer-events:none;user-select:none;font-family:\'Apple Color Emoji\',\'Segoe UI Emoji\',\'Noto Color Emoji\',Vazirmatn,sans-serif;">' + esc(icon) + '</text>';
-    } else {
-      content = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + color + '" opacity="0.85"/>';
-    }
-
-    const hitArea = '<circle data-hit="' + hitType + '" data-id="' + (hitId || '') + '" data-goalid="' + (goalId || '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (r + 8) + '" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>';
-
-    const n = node || {};
-    const labelX = cx + (n.labelDX || 0);
-    const labelY = cy + (labelOffset || 0) + (n.labelDY || 0);
-    const textColor = effectiveTextColor();
-    const fs = n.labelSize || currentLabelSize(hitType, hitId);
-    const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(stampTs) : '';
-    const stampTspan = stamp ? '<tspan x="' + labelX + '" dy="' + ((+fs*1.15).toFixed(1)) + '" font-size="' + Math.max(9, (+fs)*0.62).toFixed(1) + '" fill-opacity="0.6" direction="ltr">' + esc(stamp) + '</tspan>' : '';
-
-    return content + hitArea + (label
-      ? '<text x="' + labelX + '" y="' + labelY + '" text-anchor="middle" class="node-label" font-size="' + fs + '" font-weight="' + (hitType === 'me' ? 700 : 600) + '" data-hit="' + hitType + '" data-id="' + (hitId || '') + '" data-goalid="' + (goalId || '') + '" data-label="1" style="cursor:pointer;" fill="' + textColor + '">' + esc(label) + stampTspan + '</text>'
-      : '');
-  }
-
-  function nodeWithImages(cx, cy, r, images, color, hitType, hitId, label, labelOffset, goalId, node, stampTs){
-    let imgTag = '';
-    if (images && images.length) {
-      imgTag = renderImagesAtNode(cx, cy, images, r, hitType, hitId, goalId);
-    }
-    const n = node || {};
-    const labelX = cx + (n.labelDX || 0);
-    const labelY = cy + (labelOffset || 6) + (n.labelDY || 0);
-    const textColor = effectiveTextColor();
-    const fillColor = (images && images.length) ? 'transparent' : color;
-    const fs = n.labelSize || currentLabelSize(hitType, hitId);
-    const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(stampTs) : '';
-    const stampTspan = stamp ? `<tspan x="${labelX}" dy="${(+fs*1.15).toFixed(1)}" font-size="${Math.max(9, (+fs)*0.62).toFixed(1)}" fill-opacity="0.6" direction="ltr">${esc(stamp)}</tspan>` : '';
-    const isMeWithPhoto = hitType === 'me' && images && images.length;
-    return `
-      ${isMeWithPhoto ? '' : `<circle data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" cx="${cx}" cy="${cy}" r="${r}" fill="${fillColor}" stroke="${color}" stroke-width="${hitType === 'me' ? 3.5 : 3}" style="cursor:pointer;"/>`}
-      ${imgTag}
-      ${isMeWithPhoto ? `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3.5" style="pointer-events:none;"/>` : ''}
-      ${label ? `<text x="${labelX}" y="${labelY}" text-anchor="middle" class="node-label" font-size="${fs}" font-weight="${hitType === 'me' ? 700 : 600}" data-hit="${hitType}" data-id="${hitId}" data-goalid="${goalId || ''}" data-label="1" style="cursor:pointer;" fill="${textColor}">${esc(label)}${stampTspan}</text>` : ''}
-    `;
-  }
-
-  function reachedFeelingSVG(g){
-    const scale = g.feelingScale || 1;
-    const boxW = 220 * scale, boxH = 76 * scale;
-    const offX = g.feelingOffsetX || 0;
-    const offY = g.feelingOffsetY || 0;
-    const cx = g.x + offX;
-    const cy = g.y + offY;
-    const fs = Math.max(12, (state.fontSize || 14) - 2) * scale;
-    const labelY = cy - 16 * scale;
-    const boxX = cx - boxW/2;
-    const boxY = cy + 6 * scale;
-    const textColor = effectiveTextColor();
-    return `
-      <g data-hit="feeling" data-id="${g.id}" style="cursor:pointer;">
-        <text x="${cx}" y="${labelY}" text-anchor="middle" class="feeling-label" font-size="${fs}" fill="${textColor}" pointer-events="none">
-          حالا که به این هدف رسیده‌ای، چه حسی داری؟
-        </text>
-        <foreignObject x="${boxX}" y="${boxY}" width="${boxW}" height="${boxH}" pointer-events="none">
-          <div xmlns="http://www.w3.org/1999/xhtml" class="feeling-box" style="font-size:${13*scale}px;">
-            <textarea class="feeling-textarea" data-goalid="${g.id}" placeholder="همین‌جا بنویسش..." style="color:${textColor};font-size:${13*scale}px;">${esc(g.feeling||'')}</textarea>
-          </div>
-        </foreignObject>
-        <circle cx="${cx}" cy="${boxY + boxH/2}" r="${70*scale}" fill="#fff" fill-opacity="0.001" pointer-events="all"/>
-      </g>
-    `;
-  }
-
-  function branchesSVG(goal, trunkOnly){
-    const cp = trunkControlPoints(goal);
-    let out = isRingHost(goal)
-      ? `<g class="ring-stem">${taperedPath(cp.p0,cp.p1,cp.p2,cp.p3,goal.color||RING_COLOR,3.2,1.6,0.6)}</g>`
-      : trunkSVG(cp, goal.color, effTrunkStyle(goal));
-    const n = goal.actions.length;
-    if (!trunkOnly) goal.actions.forEach((a,i)=>{
-      const t = Math.min(0.9, 0.15 + i*0.09);
-      const originPt = bezierPoint(cp.p0,cp.p1,cp.p2,cp.p3,t);
-      const originDir = bezierTangentAngle(cp.p0,cp.p1,cp.p2,cp.p3,t);
-      const side = i%2===0 ? 1 : -1;
-      out += twigRecursive(goal, originPt, originDir, a, side, 1);
-    });
-    return out;
-  }
-
-  function twigRecursive(goal, originPt, originDir, action, side, scale){
-    const weight = action.weight || 5;
-    const color = action.color || goal.color;
-    const geom = computeTwigGeom(goal, action, originPt, originDir, side, scale);
-    applyBranchStyle(geom, effStyle(goal, action), side);
-    const { c1, c2, end } = geom;
-    actionGeomMap.set(action.id, { goalId: goal.id, originPt: geom.originPt, end, scale });
-
-    const baseWidth = Math.max(1, (1.9 + weight*1.05) * scale);
-    const tipWidth = Math.max(0.7, baseWidth*0.38);
-
-    const goalNode = findHost(goal.id);
-    const isPruned = goalNode && goalNode.lastActivity &&
-                     (Date.now() - goalNode.lastActivity) > 30 * 86400000;
-    const twigClass = isPruned ? 'pruned-twig' : '';
-
-    let out = `<g class="${twigClass}"><title>${esc(action.text||'(بدون توضیح)')} — قطر ${weight}</title>`;
-    out += geom.poly ? taperedPoly(geom.poly, color, baseWidth, tipWidth, 0.92) : taperedPath(geom.originPt, c1, c2, end, color, baseWidth, tipWidth, 0.92);
-    out += footprintsSVG(goal, action, geom, color, scale);
-
-    const handleR = Math.max(15, 18*scale);
-    out += `<circle data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" cx="${end.x}" cy="${end.y}" r="${handleR}" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>`;
-
-    const kids = action.children || [];
-    let childrenSvg = '';
-    if (kids.length){
-      out += `<circle cx="${end.x}" cy="${end.y}" r="${Math.max(2, 2.6*scale)}" fill="none" stroke="${color}" stroke-width="1.2" opacity="0.55"/>`;
-      kids.forEach((child,i)=>{
-        const cSide = i%2===0 ? 1 : -1;
-        const tt = 0.5 + ((i+1)/(kids.length+1))*0.45;
-        let childOrigin, childDir;
-        if (geom.poly){ const q = polyPointAt(geom.poly, tt); childOrigin = q.pt; childDir = q.angle; }
-        else { childOrigin = bezierPoint(geom.originPt,c1,c2,end,tt); childDir = bezierTangentAngle(geom.originPt,c1,c2,end,tt); }
-        childrenSvg += twigRecursive(goal, childOrigin, childDir, child, cSide, scale*0.72);
-      });
-    } else {
-      const radius = Math.max(1.8, 2 + weight * 0.28 * scale);
-      if (action.images && action.images.length) {
-        const count = Math.min(action.images.length, 3);
-        for (let i = 0; i < count; i++) {
-          const imgEntry = action.images[i];
-          const imgSize = imgEntry.size || DEFAULT_IMG_SIZE;
-          const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-          const offX = Math.cos(angle) * radius * 0.7 + (imgEntry.dx || 0);
-          const offY = Math.sin(angle) * radius * 0.7 + (imgEntry.dy || 0);
-          const imgX = end.x + offX - imgSize / 2;
-          const imgY = end.y + offY - imgSize / 2;
-          out += `<image x="${imgX}" y="${imgY}" width="${imgSize}" height="${imgSize}" href="${imgEntry.src}" preserveAspectRatio="xMidYMid meet" data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" data-img="1" data-imgidx="${i}" style="cursor:pointer;"/>`;
-        }
-        if (action.images.length > 3) {
-          out += `<text x="${end.x + radius * 0.7}" y="${end.y + radius * 0.7 + 4}" text-anchor="middle" font-size="10" fill="${effectiveTextColor()}" stroke="#0a0c18" stroke-width="2" paint-order="stroke">+${action.images.length - 3}</text>`;
-        }
-      } else {
-        /* سرِ شاخه: یک نقطه‌ی ساده و تمیز؛ برای «کار روتین» یک حلقه‌ی پیشرفت هفتگی دور آن */
-        out += `<circle cx="${end.x}" cy="${end.y}" r="${radius}" fill="${color}" pointer-events="none"/>`;
-        if (action.isRoutine) out += routineTipSVG(action, end.x, end.y, radius, color, scale);
-      }
-    }
-    out += `</g>` + childrenSvg;
-
-    const lines = wrapText(action.text, Math.max(10, Math.round(18*Math.min(1,scale+0.35))));
-    const anchor = side>0 ? 'start' : 'end';
-    const labelX = end.x + (side>0 ? 8 : -8) + (action.labelDX || 0);
-    const labelYBase = end.y + 4 + (action.labelDY || 0);
-    const fsize = action.labelSize || currentLabelSize('action', action.id);
-    const textColor = effectiveTextColor();
-    let text = `<text data-hit="action" data-goalid="${goal.id}" data-id="${action.id}" data-label="1" x="${labelX}" y="${labelYBase}" text-anchor="${anchor}" class="branch-label" font-size="${(+fsize).toFixed(1)}" fill="${textColor}">`;
-    lines.forEach((line,i)=>{
-      text += `<tspan x="${labelX}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
-    });
-    const stamp = (state.showDateStamps !== false || state.showTimeStamps !== false) ? formatStamp(action.createdAt) : '';
-    if (stamp){
-      text += `<tspan x="${labelX}" dy="16" font-size="${Math.max(9, (+fsize)*0.62).toFixed(1)}" fill-opacity="0.6" direction="ltr">${esc(stamp)}</tspan>`;
-    }
-    text += `</text>`;
-    out += text;
-
-    return out;
-  }
-
-  let revealGoalId = null;
-  function countAllActions(list){
-    return (list || []).reduce((n, a) => n + 1 + countAllActions(a.children), 0);
-  }
-  function toggleGoalCollapse(id, force){
-    const g = findHost(id);
-    if (!g) return;
-    g.collapsed = (typeof force === 'boolean') ? force : !g.collapsed;
-    if (!g.collapsed) revealGoalId = g.id;
-    render();
-  }
-  function updateCollapseAllBtn(){
-    const btn = document.getElementById('collapse-all-btn');
-    if (!btn) return;
-    const withBranches = state.goals.filter(g => goalBranchCount(g));
-    const orphanBr = state.rings.filter(r => ringIsOrphan(r) && r.actions && r.actions.length);
-    btn.style.display = (withBranches.length || orphanBr.length) ? '' : 'none';
-    const anyOpen = withBranches.some(g => !g.collapsed) || orphanBr.some(r => !r.collapsed);
-    btn.dataset.mode = anyOpen ? 'collapse' : 'expand';
-    const lbl = btn.querySelector('.lbl');
-    if (lbl) lbl.textContent = anyOpen ? 'جمع همه' : 'باز همه';
-    btn.classList.toggle('is-collapsed', !anyOpen);
-  }
-  function goalShutterSVG(g, r){
-    const n = goalBranchCount(g);
-    if (!n) return '';
-    const cx = g.x, cy = g.y + r + 15;
-    const col = g.color;
-    const num = n.toLocaleString('fa-IR');
-    const open = !g.collapsed;
-    const tc = effectiveTextColor();
-    const chev = open ? 'M-4 1.8 L0 -2.2 L4 1.8' : 'M-4 -1.8 L0 2.2 L4 -1.8';
-    return `<g class="goal-shutter ${open ? 'is-open' : 'is-closed'}" data-goal-toggle="${g.id}" style="cursor:pointer;">
-      <title>${open ? 'جمع کردن مسیر' : 'باز کردن مسیر'} (${num} شاخه)</title>
-      <rect x="${cx-34}" y="${cy-19}" width="68" height="38" rx="14" fill="#fff" fill-opacity="0.001"/>
-      <rect class="gs-pill" x="${cx-27}" y="${cy-11}" width="54" height="22" rx="11"
-            fill="${open ? 'none' : col}" fill-opacity="${open ? 0 : 0.92}" stroke="${col}" stroke-width="1.6" stroke-opacity="${open ? 0.75 : 1}"/>
-      <path d="${chev}" transform="translate(${cx-14},${cy})" fill="none" stroke="${open ? tc : '#1b1400'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="${open ? 0.75 : 0.95}"/>
-      <text x="${cx+7}" y="${cy+4.3}" text-anchor="middle" font-size="12" font-weight="700" fill="${open ? tc : '#1b1400'}" fill-opacity="${open ? 0.8 : 1}" style="pointer-events:none;">${num}</text>
-    </g>`;
-  }
-  let focusGoalId = null;
-  let camAnimId = 0;
-  function animateCamTo(t, ms){
-    cancelAnimationFrame(camAnimId);
-    ms = ms || 520;
-    const s0 = { x:cam.x, y:cam.y, scale:cam.scale };
-    const t0 = performance.now();
-    (function step(now){
-      const k = Math.min(1, (now - t0) / ms);
-      const e = 1 - Math.pow(1 - k, 3);
-      cam.x = s0.x + (t.x - s0.x) * e;
-      cam.y = s0.y + (t.y - s0.y) * e;
-      cam.scale = s0.scale + (t.scale - s0.scale) * e;
-      applyCam();
-      if (k < 1) camAnimId = requestAnimationFrame(step);
-    })(t0);
-  }
-  function viewForPoints(pts, maxScale){
-    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-    pts.forEach(p=>{ x0=Math.min(x0,p.x-p.r); y0=Math.min(y0,p.y-p.r); x1=Math.max(x1,p.x+p.r); y1=Math.max(y1,p.y+p.r); });
-    const W = window.innerWidth, H = window.innerHeight - 190;
-    const sc = Math.max(0.12, Math.min(maxScale || 1.2, Math.min(W/(x1-x0), H/(y1-y0))));
-    return { scale: sc, x: W/2 - ((x0+x1)/2)*sc, y: 70 + H/2 - ((y0+y1)/2)*sc };
-  }
-  function goalPoints(g){
-    const pts = [{x:g.x, y:g.y, r:(g.radius||20)+70}];
-    if (!g.collapsed){
-      (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x, y:e.end.y, r:80}); walk(a.children); }); })(g.actions);
-    }
-    return pts;
-  }
-  function focusGoal(id){
-    const g = findHost(id);
-    if (!g) return;
-    focusGoalId = id;
-    g.collapsed = false;
-    revealGoalId = id;
-    render();
-    animateCamTo(viewForPoints(goalPoints(g), 1.4));
-    const h = document.getElementById('hint'); if (h) h.style.display = 'none';
-  }
-  function exitFocus(){
-    focusGoalId = null;
-    render();
-    fitAllView();
-  }
-  function goalPower(g){
-    const w = (function sumW(list){ return (list||[]).reduce((s,a)=> s + (a.weight||0) + sumW(a.children), 0); })(g.actions);
-    return Math.min(100, w*3);
-  }
-  function toggleRingsCollapse(force){
-    state.ringsCollapsed = (typeof force === 'boolean') ? force : !state.ringsCollapsed;
-    render();
-  }
-  function ringsShutterSVG(){
-    const n = state.rings.length;
-    if (!n) return '';
-    const open = !state.ringsCollapsed;
-    const col = RING_COLOR;
-    const cx = state.me.x, cy = state.me.y + (state.me.radius || 34) + 58;
-    const num = n.toLocaleString('fa-IR');
-    const tc = effectiveTextColor();
-    const chev = open ? 'M-4 1.8 L0 -2.2 L4 1.8' : 'M-4 -1.8 L0 2.2 L4 -1.8';
-    return `<g class="goal-shutter ${open ? 'is-open' : 'is-closed'}" data-rings-toggle="1" style="cursor:pointer;">
-      <title>${open ? 'جمع کردن' : 'باز کردن'} نشانه‌های نزدیکی (${num})</title>
-      <rect x="${cx-48}" y="${cy-19}" width="96" height="38" rx="14" fill="#fff" fill-opacity="0.001"/>
-      <rect class="gs-pill" x="${cx-42}" y="${cy-11}" width="84" height="22" rx="11"
-            fill="${open ? 'none' : col}" fill-opacity="${open ? 0 : 0.92}" stroke="${col}" stroke-width="1.6" stroke-dasharray="${open ? '4 3' : 'none'}"/>
-      <path d="${chev}" transform="translate(${cx-30},${cy})" fill="none" stroke="${open ? tc : '#04201c'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
-      <text x="${cx+8}" y="${cy+4.2}" text-anchor="middle" font-size="11" font-weight="700" fill="${open ? tc : '#04201c'}" style="pointer-events:none;">نزدیکی ${num}</text>
-    </g>`;
-  }
-  function fitAllView(){
-    const pts = [{x:state.me.x, y:state.me.y, r:(state.me.radius||34)+60}];
-    state.goals.forEach(g=>{ goalPoints(g).forEach(p=>pts.push(p)); });
-    if (!state.ringsCollapsed) state.rings.forEach(r=>{ pts.push({x:r.x,y:r.y,r:(r.radius||30)+30}); (function walk(list){ (list||[]).forEach(a=>{ const e = actionGeomMap.get(a.id); if (e && e.end) pts.push({x:e.end.x,y:e.end.y,r:80}); walk(a.children); }); })(r.actions); });
-    animateCamTo(viewForPoints(pts, 1.2));
-  }
-  function pickGoalSpot(){
-    const R = 210 + Math.min(state.goals.length, 12) * 12;
-    let best = null;
-    for (let i=0;i<48;i++){
-      const a = (i/48)*Math.PI*2;
-      const x = state.me.x + Math.cos(a)*R, y = state.me.y + Math.sin(a)*R;
-      let d = 1e9;
-      state.goals.forEach(g=>{ d = Math.min(d, Math.hypot(g.x-x, g.y-y)); });
-      if (!best || d > best.d) best = {x,y,d};
-    }
-    return best;
-  }
-  /* خطِ اتصالِ «نشانه‌ی نزدیکی» به هدفش روی نقشه */
-  function ringLinkSVG(g, r){
-    const col = r.color || RING_COLOR;
-    const dx = r.x - g.x, dy = r.y - g.y, d = Math.hypot(dx, dy) || 1;
-    const ux = dx/d, uy = dy/d;
-    const x1 = g.x + ux*((g.radius||20)+6), y1 = g.y + uy*((g.radius||20)+6);
-    const x2 = r.x - ux*((r.radius||30)+6), y2 = r.y - uy*((r.radius||30)+6);
-    const mx = (x1+x2)/2 - uy*d*0.12, my = (y1+y2)/2 + ux*d*0.12;
-    return `<path class="ring-link" d="M${x1.toFixed(1)} ${y1.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round" opacity="0.6" pointer-events="none"/>`;
-  }
-  function collapsedLinkSVG(g){
-    return `<line x1="${state.me.x}" y1="${state.me.y}" x2="${g.x}" y2="${g.y}" stroke="${g.color}" stroke-width="1.2" stroke-dasharray="3 6" stroke-linecap="round" opacity="0.28" pointer-events="none"/>`;
-  }
-
-  function render(){
-    let html = '';
-    actionGeomMap = new Map();
-    autoLinkRings();
-
-    if (focusGoalId && !state.goals.some(x=>x.id===focusGoalId)) focusGoalId = null;
-    state.goals.forEach(g=>{
-      const cls = [ (revealGoalId === g.id) ? 'np-reveal' : '', (focusGoalId === g.id) ? 'is-focus' : '' ].filter(Boolean).join(' ');
-      const clsAttr = cls ? ` class="${cls}"` : '';
-      /* جمع‌شده: مسیر (تنه) می‌ماند، فقط شاخه‌ها و زیرشاخه‌ها پنهان می‌شوند */
-      html += `<g data-goal-branches="${g.id}"${clsAttr}>${branchesSVG(g, !!(g.collapsed && g.actions.length))}</g>`;
-    });
-    if (!state.ringsCollapsed) state.rings.forEach(r=>{
-      const lg = r.goalId && state.goals.find(x=>x.id===r.goalId);
-      if (lg && state.showRingLinks) html += ringLinkSVG(lg, r);
-    });
-    if (!state.ringsCollapsed) state.rings.forEach(r=>{
-      if (r.actions && r.actions.length){
-        const lgR = r.goalId && state.goals.find(x=>x.id===r.goalId);
-        html += `<g data-goal-branches="${r.id}">${branchesSVG(Object.assign(r,{color:r.color||RING_COLOR}), !!(r.collapsed || (lgR && lgR.collapsed)))}</g>`;
-      }
-    });
-    revealGoalId = null;
-
-    const textColor = effectiveTextColor();
-    const fs = Math.max(14, state.fontSize || 14);
-
-    const mx = state.me.x, my = state.me.y;
-    const meR = state.me.radius || 34;
-    const userState = getUserFrequencyState();
-    const userBand = FREQ_BANDS[userState.band] || FREQ_BANDS.delta;
-
-    html += userAuraSVG(mx, my, meR, userState);
-    html += haloSVG(mx, my, userBand.color, meR, 1, userState.band);
-
-    const meColor = state.me.color || userBand.color;
-    if (!state.me.images || !state.me.images.length){
-      html += `<circle data-hit="me" cx="${mx}" cy="${my}" r="${meR}"
-                       fill="${meColor}" stroke="${meColor}" stroke-width="3.5"
-                       style="cursor:pointer;"/>`;
-      html += addPhotoPlaceholderSVG(mx, my, meR, effectiveTextColor());
-      html += `<text x="${mx}" y="${my + meR*0.62}" text-anchor="middle"
-                    font-size="${Math.max(9, (state.fontSize||14) - 4)}"
-                    font-weight="${700}" fill="${effectiveTextColor()}"
-                    data-hit="me" data-label="1" style="cursor:pointer;">${esc(state.me.name)}</text>`;
-    } else {
-      html += nodeWithImages(mx, my, meR, state.me.images, meColor, 'me', '', state.me.name, 6, '', state.me);
-    }
-
-    html += userBandBadgeSVG(mx, my, meR, userState);
-
-    /* اهداف */
-    state.goals.forEach(g=>{
-      const r = g.radius || 20;
-      html += `<g class="gnode${focusGoalId === g.id ? ' is-focus' : ''}" data-gn="${g.id}">`;
-      html += haloSVG(g.x, g.y, g.color, r, 1, g.freq);
-      html += nodeIconSVG(g.x, g.y, r, g.images, g.icon, g.color, 'goal', g.id, g.name, -(r + 22), '', g, g.createdAt);
-
-      const freq = getFreq(g);
-      const weightSum = (function sumW(list){
-        return (list || []).reduce((s, a) => s + (a.weight || 0) + sumW(a.children), 0);
-      })(g.actions);
-      const circuitPower = Math.min(100, weightSum * 3);
-      const hasBranches = g.actions && g.actions.length;
-      const hudY = g.y + r + (hasBranches ? 46 : 42);
-      html += `<text class="goal-hud" x="${g.x}" y="${hudY}" text-anchor="middle">
-        ${g.collapsed && hasBranches ? `رشد ${circuitPower}٪` : `${freq.label} — ${freq.desc} · رشد ${circuitPower}٪`}
-      </text>`;
-      html += goalShutterSVG(g, r);
-      if (g.reached){
-        html += reachedFeelingSVG(g);
-      }
-      html += `</g>`;
-    });
-
-    (state.ringsCollapsed ? [] : state.rings).forEach(r=>{
-      html += '<g class="rnode">';
-      const rad = r.radius || 30;
-      const ringColor = r.color || RING_COLOR;
-      html += haloSVG(r.x, r.y, ringColor, rad, 1.2);
-      html += nodeIconSVG(r.x, r.y, rad, r.images, r.icon, ringColor, 'ring', r.id, '', 0, '', r);
-      if (r.label){
-        const lines = wrapText(r.label, 16);
-        let lx = r.x + (r.labelDX || 0);
-        let ly = r.y - (rad + 20) + (r.labelDY || 0);
-        const fsize = r.labelSize || currentLabelSize('ring', r.id);
-        let text = `<text data-hit="ring" data-id="${r.id}" data-label="1" x="${lx}" y="${ly}" text-anchor="middle" class="feeling-label" font-size="${fsize}" font-weight="700" style="cursor:pointer;fill:${ringColor};" fill="${ringColor}">`;
-        lines.forEach((line,i)=>{
-          text += `<tspan x="${lx}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
-        });
-        text += `</text>`;
-        html += text;
-      }
-      if (r.note){
-        const lines = wrapText(r.note, 22);
-        let ly = r.y + rad + 18;
-        let text = `<text x="${r.x}" y="${ly}" text-anchor="middle" class="branch-label" font-size="${fs-3}" fill="${textColor}">`;
-        lines.forEach((line,i)=>{
-          text += `<tspan x="${r.x}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
-        });
-        text += `</text>`;
-        html += text;
-      }
-      html += '</g>';
-    });
-
-    viewport.innerHTML = html;
-    svg.classList.toggle('focus-on', !!focusGoalId);
-    (function(){
-      const pill = document.getElementById('focus-pill');
-      if (!pill) return;
-      const fg = focusGoalId && findHost(focusGoalId);
-      pill.classList.toggle('show', !!fg);
-      if (fg) document.getElementById('fp-name').textContent = 'تمرکز: ' + fg.name;
-    })();
-    updateCollapseAllBtn();
-    scheduleMapSave();
-  }
-
-  let renderDebounceTimer = null;
-  function debouncedRender(){
-    clearTimeout(renderDebounceTimer);
-    renderDebounceTimer = setTimeout(render, 220);
-  }
-
-  /* ---------------- modals ---------------- */
+let renderDebounceTimer = null;
+function debouncedRender(){
+  clearTimeout(renderDebounceTimer);
+  renderDebounceTimer = setTimeout(render, 220);
+          }
+    /* ---------------- modals ---------------- */
   const goalOverlay = document.getElementById('goal-modal-overlay');
   const goalNameInput = document.getElementById('goal-name-input');
   const goalIconInput = document.getElementById('goal-icon-input');
@@ -3176,7 +3187,6 @@
       e.preventDefault(); nb.focus(); pick(nb);
     };
   }
-  /* ---- انتخابگر نوع خط مسیر اهداف ---- */
   const TRUNK_THUMB = {
     solid:   '<path d="M6 32 L58 8" style="stroke-width:3"/>',
     dashed:  '<path d="M6 32 L58 8" style="stroke-width:3" stroke-dasharray="8 6" stroke-linecap="butt"/>',
@@ -3514,7 +3524,7 @@
       const found = findActionNode(g.actions, addSubBtn.dataset.aid);
       if (found){
         found.node.children = found.node.children || [];
-        const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now() };
+        const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now(), logs:{}, entries:{} };
         found.node.children.push(child);
         g.collapsed = false;
         refreshActionChildrenPanel();
@@ -3552,7 +3562,7 @@
   document.getElementById('add-branch-btn').addEventListener('click', ()=>{
     const g = findHost(currentPanelGoalId);
     if (!g) return;
-    const a = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:12, createdAt: Date.now() };
+    const a = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:12, createdAt: Date.now(), logs:{}, entries:{} };
     g.actions.push(a);
     g.collapsed = false;
     g.lastActivity = Date.now();
@@ -3576,7 +3586,7 @@
       const found = findActionNode(g.actions, addSubBtn.dataset.aid);
       if (found){
         found.node.children = found.node.children || [];
-        const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now() };
+        const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now(), logs:{}, entries:{} };
         found.node.children.push(child);
         g.collapsed = false;
         refreshActionsPanel(g);
@@ -3628,7 +3638,7 @@
     const found = findActionNode(g.actions, currentEditingAction.actionId);
     if (!found) return;
     found.node.children = found.node.children || [];
-    const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now() };
+    const child = { id:uid(), text:'', weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt: Date.now(), logs:{}, entries:{} };
     found.node.children.push(child);
     g.collapsed = false;
     refreshActionChildrenPanel();
@@ -3839,9 +3849,6 @@
 
   const ROUTINE_DONE_MARK = 'انجام شد ✓';
 
-  /* حلقه‌ی پیشرفت هفتگیِ کار روتین: ۷ قوس = ۷ روز هفته (شنبه تا جمعه)
-     قوس پر = انجام شده، امروز با ضخامت بیشتر مشخص است، نقطه‌ی وسط فقط وقتی امروز انجام شده پر می‌شود
-     و اگر چند روز پشت‌سرهم انجام شده باشد عدد «روزهای پیاپی» بالای حلقه می‌آید. */
   function routineStreak(action){
     if (!action.logs) return 0;
     const d = new Date(); d.setHours(0,0,0,0);
@@ -3938,7 +3945,7 @@
     return null;
   }
 
-  /* ================= زمان‌سنج روزانه + ردپا روی نقشه ================= */
+  /* ================= زمان‌سنج روزانه + ورودی‌ها ================= */
   function pcCache(){ return window.__pcKeyCache || (window.__pcKeyCache = new Map()); }
   function pcPeriodKeys(startDate, days){
     const c = pcCache(), ck = startDate + '|' + days;
@@ -3956,7 +3963,6 @@
   function nodeLogCount(n, keys){ let c = 0; if (n.logs) for (const k in n.logs){ if (n.logs[k] && (!keys || keys.has(k))) c++; } return c; }
   function nodeSecs(n, keys){ let t = 0; if (n.time) for (const k in n.time){ if (!keys || keys.has(k)) t += (+n.time[k] || 0); } return t; }
   function nodeDaySecs(n, jk){ return (n.time && +n.time[jk]) || 0; }
-  /* بازه‌های ساعتی هر روز: n.ranges[jk] = [{s:دقیقه‌ی شروع از نیمه‌شب, e:دقیقه‌ی پایان}] */
   let PENDING_RANGE = null;
   function fmtHM(min){ min = ((Math.round(min) % 1440) + 1440) % 1440; const h = Math.floor(min/60), m = min % 60; return toFa(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0')); }
   function nodeDayRanges(n, jk){ return (n.ranges && Array.isArray(n.ranges[jk])) ? n.ranges[jk] : []; }
@@ -3967,6 +3973,41 @@
     if (!Array.isArray(n.ranges[jk])) n.ranges[jk] = [];
     n.ranges[jk].push({ s:r.s, e:r.e });
   }
+
+  /* ====== ورودی‌های زمان: هر ثبت جداگانه ذخیره می‌شود ====== */
+  function nodeTimeEntries(n, jk){
+    return (n.entries && Array.isArray(n.entries[jk])) ? n.entries[jk] : [];
+  }
+  function entryLabel(e){
+    return e.kind === 'range'
+      ? ('🕒 ' + fmtHM(e.s) + ' تا ' + fmtHM(e.e) + ' — ' + fmtDur(e.mins * 60))
+      : ('⏱ ' + fmtDur(e.mins * 60));
+  }
+  function deleteTimeEntry(n, jk, idx){
+    const arr = nodeTimeEntries(n, jk);
+    const e = arr[idx];
+    if (!e) return;
+    arr.splice(idx, 1);
+    if (!arr.length && n.entries) delete n.entries[jk];
+    if (!n.time || typeof n.time !== 'object') n.time = {};
+    if (n.time[jk]){
+      n.time[jk] = Math.max(0, (n.time[jk] || 0) - (e.mins * 60));
+      if (!n.time[jk]) delete n.time[jk];
+    }
+    if (e.kind === 'range' && n.ranges && Array.isArray(n.ranges[jk])){
+      const ri = n.ranges[jk].findIndex(r => r.s === e.s && r.e === e.e);
+      if (ri >= 0) n.ranges[jk].splice(ri, 1);
+      if (!n.ranges[jk].length) delete n.ranges[jk];
+    }
+    scheduleMapSave();
+  }
+  function clearDayTime(n, jk){
+    if (n.time) delete n.time[jk];
+    if (n.ranges) delete n.ranges[jk];
+    if (n.entries) delete n.entries[jk];
+    scheduleMapSave();
+  }
+
   function fmtDur(sec){
     sec = Math.max(0, Math.round(sec));
     const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
@@ -3991,29 +4032,55 @@
     if (el > 0){
       if (!n.time || typeof n.time !== 'object') n.time = {};
       n.time[jk] = (n.time[jk] || 0) + el;
+      if (!n.entries || typeof n.entries !== 'object') n.entries = {};
+      if (!Array.isArray(n.entries[jk])) n.entries[jk] = [];
+      n.entries[jk].push({ kind:'dur', mins: Math.round(el/60), at: Date.now() });
       autoTick(n, jk);
     }
     scheduleMapSave();
     return el;
   }
+  /* هر بار ثبت = یک ورودی جدید */
   function addMinutes(n, jk, mins){
+    const range = PENDING_RANGE;
     const secs = Math.round(mins * 60);
     if (!secs) return;
     if (!n.time || typeof n.time !== 'object') n.time = {};
     n.time[jk] = Math.max(0, (n.time[jk] || 0) + secs);
     if (!n.time[jk]) delete n.time[jk];
-    if (secs > 0){ autoTick(n, jk); pushRange(n, jk, PENDING_RANGE); }
+
+    if (!n.entries || typeof n.entries !== 'object') n.entries = {};
+    if (!Array.isArray(n.entries[jk])) n.entries[jk] = [];
+    n.entries[jk].push(
+      range
+        ? { kind:'range', s:range.s, e:range.e, mins: Math.round(mins), at: Date.now() }
+        : { kind:'dur',   mins: Math.round(mins), at: Date.now() }
+    );
+
+    if (secs > 0) autoTick(n, jk);
+    if (range) pushRange(n, jk, range);
     scheduleMapSave();
   }
+  /* جایگزینی کل زمان یک روز (برای ویرایش صریح) */
   function setDayMinutes(node, jk, mins){
     if (!node.time || typeof node.time !== 'object') node.time = {};
     const secs = Math.round(mins * 60);
+    const range = PENDING_RANGE;
     if (node.ranges) delete node.ranges[jk];
-    if (secs > 0){ node.time[jk] = secs; autoTick(node, jk); pushRange(node, jk, PENDING_RANGE); }
-    else delete node.time[jk];
+    if (node.entries) delete node.entries[jk];
+    if (secs > 0){
+      node.time[jk] = secs;
+      if (!node.entries || typeof node.entries !== 'object') node.entries = {};
+      node.entries[jk] = [ range
+        ? { kind:'range', s:range.s, e:range.e, mins: Math.round(mins), at: Date.now() }
+        : { kind:'dur',   mins: Math.round(mins), at: Date.now() } ];
+      if (range) pushRange(node, jk, range);
+      autoTick(node, jk);
+    } else {
+      delete node.time[jk];
+    }
     scheduleMapSave();
   }
-  /* پنجره‌ی ثبت زمان: ساعت + دقیقه (به‌جای prompt) */
   function askDuration(opts, cb){
     const old = document.getElementById('dur-dlg'); if (old) old.remove();
     const d0 = Math.max(0, Math.round(opts.defMin || 0));
@@ -4055,7 +4122,7 @@
     const readRange = ()=>{
       const a = hm2min(fromEl.value), b = hm2min(toEl.value);
       if (a === null || b === null) return null;
-      let e = b; if (e <= a) e += 1440; /* مثلاً ۲۳ تا ۱ بامداد */
+      let e = b; if (e <= a) e += 1440;
       return { s:a, e:e, mins:e - a };
     };
     const updRInfo = ()=>{
@@ -4134,24 +4201,30 @@
       '.gs-tlbl{font-size:10.5px;color:var(--text-dim);}'+
       '.gs-tchip{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:3px 9px;font-family:inherit;font-size:10.5px;cursor:pointer;}'+
       '.gs-tchip.add{border-style:dashed;color:var(--text-dim);}'+
+      '.gs-tentries{display:flex;flex-direction:column;gap:3px;margin-top:6px;padding:6px 8px;border:1px dashed var(--panel-border);border-radius:10px;background:rgba(127,127,127,.04);}'+
+      '.gs-tentry{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-main);}'+
+      '.gs-tentry>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'+
+      '.gs-tentry .gs-tchip{padding:1px 7px;font-size:10px;flex:none;}'+
       '.pc-sub-row{display:flex;align-items:center;gap:6px;margin-top:5px;}'+
       '.pc-sub-nm{flex:1;min-width:0;color:var(--text-main);}'+
       '.pc-sub-t{color:var(--text-dim);font-size:10.5px;}'+
       '.pc-sub-row .btn{flex:none;padding:6px 10px;font-size:11px;}'+
       '.pc-sub-add{display:flex;gap:6px;margin-top:8px;}'+
       '.pc-sub-in{flex:1;min-width:0;border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:10px;padding:7px 9px;font-family:inherit;font-size:12.5px;}'+
-      '.pc-foot{display:flex;align-items:center;gap:8px;margin-top:8px;}';
+      '.pc-foot{display:flex;align-items:center;gap:8px;margin-top:8px;}'+
+      '.pc-tentries{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding:5px 7px;border:1px dashed var(--panel-border);border-radius:9px;background:rgba(127,127,127,.04);}'+
+      '.pc-tentry{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-main);}'+
+      '.pc-tentry>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'+
+      '.pc-tentry button{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:1px 7px;font-family:inherit;font-size:10px;cursor:pointer;flex:none;}';
     document.head.appendChild(st);
   })();
 
-  /* ردپا: هر روزِ تیک‌خورده = یک جفت کفش روی مسیر شاخه، از سرِ شاخه به سمت هدف */
   function stepPoint(geom, t){
     if (geom.poly){ const q = polyPointAt(geom.poly, t); return { x:q.pt.x, y:q.pt.y, a:q.angle }; }
     const pt = bezierPoint(geom.originPt, geom.c1, geom.c2, geom.end, t);
     return { x:pt.x, y:pt.y, a:bezierTangentAngle(geom.originPt, geom.c1, geom.c2, geom.end, t) };
   }
   function footprintsSVG(goal, action, geom, color, scale){
-    /* همه‌ی روزهای تیک‌خورده از ابتدا (همه‌ی دوره‌ها)؛ با شروع دوره‌ی جدید ردپاها پاک نمی‌شوند */
     const N = nodeLogCount(action, null);
     if (!N) return '';
     const col = goal.footColor || color;
@@ -4268,6 +4341,16 @@
         const nn = ctx.node;
         info += '<div class="pc-time-btns">'+
           '<button type="button" class="btn gold" data-pc-addtime="'+selJK+'">＋ زمان ('+dayLabel+')</button></div>';
+        /* لیست ورودی‌های زمان امروز (برای حذف تکی) */
+        const entries = nodeTimeEntries(nn, selJK);
+        if (entries.length){
+          info += '<div class="pc-tentries">';
+          entries.forEach((e, i)=>{
+            info += '<div class="pc-tentry"><span>'+(i+1)+'. '+entryLabel(e)+'</span>'+
+              '<button type="button" data-pc-delentry="'+selJK+'" data-eidx="'+i+'" title="حذف این ورودی">✕</button></div>';
+          });
+          info += '</div>';
+        }
       }
       {
         const rawC = ctx.goal.footColor || (ctx.node && ctx.node.color) || ctx.goal.color || '#2dd4bf';
@@ -4284,8 +4367,16 @@
           const kc = c.color || ctx.color;
           info += '<div class="pc-sub-row"><button type="button" class="pc-sub-tick" data-pc-subtick="'+c.id+'" data-jk="'+selJK+'" aria-label="تیک" style="border-color:'+esc(kc)+';background:'+(dn ? esc(kc) : 'transparent')+';">'+(dn ? '✓' : '')+'</button>'+
             '<span class="pc-sub-nm">'+esc(c.text || 'بدون نام')+'</span>'+
-            '<button type="button" class="pc-sub-set" data-pc-subset="'+c.id+'" data-jk="'+selJK+'" title="ثبت یا ویرایش زمان">'+(ts ? '⏱ '+fmtDur(ts)+' ✎' : '＋ زمان')+'</button></div>'+
-            (rangesText(c, selJK) ? '<div class="pc-rng">🕒 '+rangesText(c, selJK)+'</div>' : '');
+            '<button type="button" class="pc-sub-set" data-pc-subaddtime="'+c.id+'" data-jk="'+selJK+'" title="افزودن ورودی زمان جدید">＋ زمان</button></div>';
+          const earr = nodeTimeEntries(c, selJK);
+          if (earr.length){
+            info += '<div class="pc-tentries" style="margin-inline-start:30px;">';
+            earr.forEach((e, i)=>{
+              info += '<div class="pc-tentry"><span>'+(i+1)+'. '+entryLabel(e)+'</span>'+
+                '<button type="button" data-pc-delentry-sub="'+c.id+'" data-jk="'+selJK+'" data-eidx="'+i+'" title="حذف این ورودی">✕</button></div>';
+            });
+            info += '</div>';
+          }
         });
         info += '<div class="pc-sub-add"><input type="text" class="pc-sub-in" placeholder="مثلاً یوتیوب" autocomplete="off"><button type="button" class="btn gold" data-pc-subadd="1">افزودن</button></div></div>';
       }
@@ -4368,8 +4459,42 @@
       const c0 = pcContext();
       if (c0 && c0.node){
         const pnode = c0.node, pjk = ab.dataset.pcAddtime;
-        askDuration({ title:'چقدر زمان ثبت بشه؟', sub:jkLabel(pjk) + ' · ' + (pnode.text || ''), defMin:60 }, m=>{
-          if (m){ addMinutes(pnode, pjk, m); render(); renderPanelPeriodCal(); }
+        askDuration({ title:'ثبت زمان جدید', sub:jkLabel(pjk) + ' · ' + (pnode.text || ''), defMin:60 }, m=>{
+          if (m > 0){ addMinutes(pnode, pjk, m); render(); renderPanelPeriodCal(); }
+        });
+      }
+      return;
+    }
+    /* حذف یک ورودی از شاخه‌ی اصلی */
+    const de = t.closest('[data-pc-delentry]');
+    if (de){
+      const c0 = pcContext();
+      if (c0 && c0.node){
+        deleteTimeEntry(c0.node, de.dataset.pcDelentry, +de.dataset.eidx);
+        render(); renderPanelPeriodCal();
+      }
+      return;
+    }
+    /* حذف یک ورودی از زیرشاخه */
+    const des = t.closest('[data-pc-delentry-sub]');
+    if (des){
+      const c0 = pcContext();
+      const kid = c0 && c0.node ? findActionNode(c0.node.children || [], des.dataset.pcDelentrySub) : null;
+      if (kid){
+        deleteTimeEntry(kid.node, des.dataset.jk, +des.dataset.eidx);
+        render(); renderPanelPeriodCal();
+      }
+      return;
+    }
+    /* افزودن ورودی زمان جدید به یک زیرشاخه */
+    const sat = t.closest('[data-pc-subaddtime]');
+    if (sat){
+      const c0 = pcContext();
+      const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sat.dataset.pcSubaddtime) : null;
+      if (kid){
+        const knode = kid.node, kjk = sat.dataset.jk;
+        askDuration({ title:'ثبت زمان جدید', sub:jkLabel(kjk) + ' · ' + (knode.text || ''), defMin:60 }, mm=>{
+          if (mm > 0){ addMinutes(knode, kjk, mm); render(); renderPanelPeriodCal(); }
         });
       }
       return;
@@ -4387,7 +4512,7 @@
         const txt = ((inp && inp.value) || '').trim();
         if (!txt){ if (typeof toast === 'function') toast('یه اسم بنویس'); return; }
         if (!Array.isArray(c0.node.children)) c0.node.children = [];
-        c0.node.children.push({ id:uid(), text:txt, weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt:Date.now(), logs:{} });
+        c0.node.children.push({ id:uid(), text:txt, weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt:Date.now(), logs:{}, entries:{} });
         c0.goal.lastActivity = Date.now();
         scheduleMapSave(); render(); renderPanelPeriodCal();
         try{ refreshActionChildrenPanel(); }catch(err){}
@@ -4427,18 +4552,6 @@
         const knode = kid.node, hostNode = c0.node;
         askDuration({ title:jkLabel(jk), sub:'زمان این روز · ' + (knode.text || ''), defMin:kcur || 60, allowZero:true, deletable:kcur > 0 }, mm=>{
           setDayMinutes(knode, jk, mm); if (mm > 0) autoTick(hostNode, jk); render(); renderPanelPeriodCal();
-        });
-      }
-      return;
-    }
-    const sM = t.closest('[data-pc-subtime]');
-    if (sM){
-      const c0 = pcContext();
-      const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sM.dataset.pcSubtime) : null;
-      if (kid){
-        const knode2 = kid.node, hostNode2 = c0.node, kjk = sM.dataset.jk;
-        askDuration({ title:'چقدر زمان ثبت بشه؟', sub:jkLabel(kjk) + ' · ' + (knode2.text || ''), defMin:60 }, m=>{
-          if (m){ addMinutes(knode2, kjk, m); autoTick(hostNode2, kjk); render(); renderPanelPeriodCal(); }
         });
       }
       return;
@@ -4509,6 +4622,9 @@
     if (changed) scheduleMapSave();
   }
   try{ cleanupLegacyCalNotes(); }catch(e){ console.warn('[cal-cleanup]', e); }
+
+  /* ================= تابع کمکی jkLabel برای استفاده در سراسر فایل ================= */
+  function jkLabelGlobal(jk){ return jkLabel(jk); }
 
   window.frequencyMapRender = render;
 
