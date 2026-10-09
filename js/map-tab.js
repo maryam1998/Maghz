@@ -1206,6 +1206,7 @@
       return h;
     }
     const DAYS_TOG = new Set();
+    const STATS_OPEN = new Set();
     function nodeTotalSecs(n){
       let t = nodeSecs(n, null);
       (n.children||[]).forEach(ch=>{ t += nodeTotalSecs(ch); });
@@ -1226,6 +1227,7 @@
         const ts = nodeDaySecs(n, pi.todayJK);
         let mh = '<div class="gs-grp">'+
         '<div class="gs-node sub mini" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
+          '<div class="gs-lvl"><span class="gs-badge sub" style="color:'+esc(color)+';border-color:'+esc(color)+';">زیرشاخه</span><span class="gs-par">زیرِ «'+esc(parentName || 'شاخه')+'»</span></div>'+
           '<div class="gs-mrow">'+
             '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
             '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام (مثلاً یوتیوب)..." autocomplete="off">'+
@@ -1247,6 +1249,7 @@
       const total = nodeTotalSecs(n);
       let h = '<div class="gs-grp">'+
       '<div class="gs-node main" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
+        '<div class="gs-lvl"><span class="gs-badge" style="background:'+esc(color)+';">شاخه</span></div>'+
         '<div class="gs-mrow">'+
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
           '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام..." autocomplete="off">'+
@@ -1334,6 +1337,47 @@
         '.gs-tag.rg{border-color:#2dd4bf;color:#2dd4bf;}';
       document.head.appendChild(st);
     })();
+
+    (function(){
+      if (document.getElementById('gs-v2-css')) return;
+      const st = document.createElement('style'); st.id = 'gs-v2-css';
+      st.textContent =
+        /* برچسب سطح: شاخه / زیرشاخه */
+        '#gs-list .gs-lvl{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:10.5px;line-height:1.2;}'+
+        '#gs-list .gs-badge{padding:2px 9px;font-size:10px;letter-spacing:0;}'+
+        '#gs-list .gs-badge.sub{background:transparent;border:1px solid;}'+
+        '#gs-list .gs-par{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;}'+
+        /* تورفتگیِ واضح و خط اتصال برای زیرشاخه */
+        '#gs-list .gs-kids{margin-inline-start:18px;padding-inline-start:12px;border-inline-start:2px solid rgba(127,127,127,.3);gap:7px;}'+
+        '#gs-list .gs-kids > .gs-grp{position:relative;}'+
+        '#gs-list .gs-kids > .gs-grp::before{content:"";position:absolute;inset-inline-start:-12px;top:26px;width:12px;border-top:2px solid rgba(127,127,127,.3);}'+
+        '#gs-list .gs-node.main{background:rgba(127,127,127,.1);}'+
+        '#gs-list .gs-node.sub{background:rgba(127,127,127,.03);border:1px dashed rgba(127,127,127,.38);border-inline-start:3px solid var(--accent);}'+
+        '#gs-list .gs-node.sub .gs-lvl{margin-bottom:1px;}'+
+        /* کادر آزادِ نشانه‌ها و دستاوردها */
+        '#gs-list .gs-trophies{gap:6px;padding-top:8px;}'+
+        '#gs-list .gs-trophies-h{gap:10px;}'+
+        '#gs-list .gs-cnt{display:inline-flex;align-items:center;gap:4px;color:#2dd4bf;}'+
+        '#gs-list .gs-cnt.tr{color:#f0a020;}'+
+        '#gs-list .gs-cnt b{font-size:12px;color:var(--text-main);}'+
+        '#gs-list .gs-free{position:relative;display:block;min-height:96px;border:1px dashed var(--panel-border);border-radius:14px;background:rgba(127,127,127,.04);overflow:hidden;touch-action:pan-y;}'+
+        '#gs-list .gs-free > .gs-ring, #gs-list .gs-free > .gs-trophy{position:absolute;width:72px;height:80px;box-sizing:border-box;margin:0;justify-content:flex-start;touch-action:none;}'+
+        '#gs-list .gs-free > .dragging{position:absolute;z-index:6;transition:none;}'+
+        /* خلاصه‌ی دوره (پایین کارت) */
+        '#gs-list .gs-statswrap{display:flex;flex-direction:column;gap:6px;margin-top:2px;}'+
+        '#gs-list .gs-statsbar{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--panel-border);border-radius:12px;background:transparent;color:var(--text-dim);font-family:inherit;font-size:11.5px;padding:7px 10px;cursor:pointer;}'+
+        '#gs-list .gs-statsbar b{color:var(--text-main);}'+
+        '#gs-list .gs-statsbar .sp{flex:1;}'+
+        '#gs-list .gs-statsbar svg{width:16px;height:16px;flex:none;}'+
+        '#gs-list .gs-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;}'+
+        '#gs-list .gs-stat{border:1px solid var(--panel-border);border-radius:12px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;}'+
+        '#gs-list .gs-stat.wide{grid-column:1 / -1;}'+
+        '#gs-list .gs-stat b{font-size:13px;color:var(--text-main);}'+
+        '#gs-list .gs-stat span{font-size:10.5px;color:var(--text-dim);}'+
+        '#gs-list .gs-statfoot{display:flex;}'+
+        '#gs-list .gs-hintline{font-size:10.5px;color:var(--text-dim);opacity:.8;}';
+      document.head.appendChild(st);
+    })();
     function ringIconHTML(r){
       const img = r.images && r.images[0] && r.images[0].src;
       if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
@@ -1362,9 +1406,10 @@
       const order = Array.isArray(g.itemOrder) ? g.itemOrder : [];
       items = items.map((it, i)=>({ it, k: order.indexOf(it.id) >= 0 ? order.indexOf(it.id) : 1e6 + i }))
                    .sort((a,b)=> a.k - b.k).map(o=>o.it);
-      let h = '<div class="gs-trophies"><div class="gs-trophies-h gs-rings-h">'+ICO_MAP+' نشانه‌های نزدیکی · '+toFa(rs.length)+
-              ' &nbsp;'+ICO_TROPHY+' دستاوردها · '+toFa(arr.length)+(items.length > 1 ? '<span class="gs-rhint">با انگشت جابه‌جا کن</span>' : '')+'</div>'+
-              '<div class="gs-rrow" data-host="'+g.id+'">';
+      let h = '<div class="gs-trophies"><div class="gs-trophies-h gs-rings-h" title="'+(items.length > 1 ? 'هر کدام را با انگشت به هر جای کادر ببر' : '')+'">'+
+              '<span class="gs-cnt">'+ICO_MAP+'<b>'+toFa(rs.length)+'</b></span>'+
+              '<span class="gs-cnt tr">'+ICO_TROPHY+'<b>'+toFa(arr.length)+'</b></span></div>'+
+              '<div class="gs-rrow gs-free" data-host="'+g.id+'">';
       items.forEach(it=>{
         if (it.kind === 'ring'){
           const r = it.r;
@@ -1392,6 +1437,9 @@
       }
       return h + '</div>';
     }
+    function items_hint(g){
+      return (ringsOf(g).length + collectAch(g.actions, '', []).length) > 1 ? 'نشانه‌ها و دستاوردها را با انگشت به هر جای کادرشان ببر.' : '';
+    }
     function bodyHTML(g){
       const pi = periodInfo(g);
       const nTotal = countAllActions(g.actions);
@@ -1402,10 +1450,6 @@
              '<textarea class="gs-rnote" data-rid="'+g.id+'" placeholder="نوشته‌ی زیر نشانه روی نقشه...">'+esc(g.note||'')+'</textarea>';
       }
       if (isRingHost(g)) h += iconEditHTML(g);
-      h += '<div class="gs-psum"><span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span>'+
-           '<span>· امروز <b>'+toFa(todayCnt)+'</b> کار</span>'+
-           '<span>· ⏱ امروز <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeDaySecs(n, pi.todayJK),0))+'</b> · دوره <b>'+fmtDur(allNodes(g).reduce((a,n)=>a+nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)),0))+'</b></span><span class="sp"></span>'+
-           (pi.finished ? '' : '<button type="button" class="gs-mini" data-gact="days">تنظیم روزهای دوره</button>')+'</div>';
       if (pi.finished){
         h += '<div class="gs-done-banner">دوره‌ی '+pcOrd(pi.gp.past.length)+' تموم شد! برای ادامه، دوره‌ی بعدی را شروع کن؛ دوره‌های قبلی نگه داشته می‌شوند.<br>'+
              '<button type="button" class="gs-mini gold" data-gact="newperiod" style="margin-top:6px;">شروع دوره‌ی '+pcOrd(pi.gp.past.length+1)+'</button></div>';
@@ -1418,6 +1462,21 @@
       if (addingFor === g.id) h += addRowHTML(g.id, 'نام (مثلاً گوش دادن به پادکست)');
       else h += '<div class="gs-addbtns"><button type="button" class="gs-mini gold" data-gact="addbranch" aria-label="افزودن">＋</button>'+
                 (isRingHost(g) ? '' : '<button type="button" class="gs-mini ring" data-gact="addring">'+ICO_MAP+' ＋ نزدیک شدن به هدف</button>')+'</div>';
+      /* خلاصه‌ی دوره: پایین کارت، جمع‌شونده؛ بین هدف و شاخه‌ها نمی‌آید */
+      const secToday = allNodes(g).reduce((x,n)=>x+nodeDaySecs(n, pi.todayJK),0);
+      const secPeriod = allNodes(g).reduce((x,n)=>x+nodeSecs(n, pcPeriodKeys(pi.gp.startDate, pi.gp.days)),0);
+      const so = STATS_OPEN.has(g.id);
+      h += '<div class="gs-statswrap"><button type="button" class="gs-statsbar'+(so?' open':'')+'" data-gact="stats">'+
+           '<span>دوره‌ی <b>'+toFa(pi.total)+' روزه</b> · روز <b>'+toFa(pi.dayNum)+'</b></span><span class="sp"></span>'+(so ? ICO_CHEV_UP : ICO_CHEV_DOWN)+'</button>';
+      if (so){
+        h += '<div class="gs-stats">'+
+             '<div class="gs-stat"><b>'+toFa(todayCnt)+' کار</b><span>انجام‌شده‌ی امروز</span></div>'+
+             '<div class="gs-stat"><b>'+(secToday ? fmtDur(secToday) : '—')+'</b><span>زمانِ امروز</span></div>'+
+             '<div class="gs-stat wide"><b>'+(secPeriod ? fmtDur(secPeriod) : '—')+'</b><span>مجموع زمانِ این دوره</span></div></div>'+
+             (pi.finished ? '' : '<div class="gs-statfoot"><button type="button" class="gs-mini" data-gact="days">تنظیم روزهای دوره</button></div>')+
+             (items_hint(g) ? '<div class="gs-hintline">'+items_hint(g)+'</div>' : '');
+      }
+      h += '</div>';
       h += '</div>';
       return h;
     }
@@ -1504,9 +1563,11 @@
       const freeRings = state.goals.length ? state.rings.filter(r=> ringIsOrphan(r)).length : 0;
       if (freeRings) listEl.insertAdjacentHTML('beforeend', '<div class="gs-empty" style="padding:10px 6px;font-size:11.5px;">'+toFa(freeRings)+' نشانه‌ی آزاد روی نقشه هست؛ آن را روی مسیر یک هدف ببر تا خودکار زیرمجموعه‌اش شود.</div>');
       listEl.scrollTop = scrollTop;
+      layoutFree();
     }
     window.__reopenGoalsSheet = ()=>{ open(); };
-    function open(){ searchEl.value=''; orderCache = null; draw(); ov.classList.add('open'); }
+    function open(){ searchEl.value=''; orderCache = null; draw(); ov.classList.add('open'); layoutFree(); }
+    window.addEventListener('resize', ()=>{ try{ layoutFree(); }catch(e){} });
     function close(){ ov.classList.remove('open'); }
     function touch(g){ g.lastActivity = Date.now(); scheduleMapSave(); }
     document.getElementById('goals-list-btn').addEventListener('click', open);
@@ -1621,6 +1682,9 @@
             scheduleMapSave(); draw();
             if (typeof toast === 'function') toast('دوره‌ی ' + pcOrd(pi.gp.past.length) + ' شروع شد');
           }
+        } else if (a === 'stats'){
+          if (STATS_OPEN.has(g.id)) STATS_OPEN.delete(g.id); else STATS_OPEN.add(g.id);
+          draw();
         } else if (a === 'trophy'){
           if (suppressRingClick) return;
           TSEL = (TSEL === gact.dataset.tid) ? null : gact.dataset.tid; draw();
@@ -1840,23 +1904,62 @@
       found.node.text = t.value.trim() || 'بدون عنوان';
       touch(g); render();
     });
-    /* جابه‌جایی نشانه‌های نزدیکی در ردیف با انگشت (یا ماوس) */
+    /* نشانه‌های نزدیکی و دستاوردها: جایگذاریِ آزاد در کادر (هر جهت)، بدون چسبیدن به یک سمت */
     let suppressRingClick = false;
+    var CHIP_W = 72, CHIP_H = 80, CHIP_GAP = 8, FREE_PAD = 6, FREE_EXTRA = 34;
+    function freeChips(box){ return [...box.children].filter(c=> c.classList.contains('gs-ring') || c.classList.contains('gs-trophy')); }
+    function freeRange(box){ return Math.max(0, box.clientWidth - CHIP_W - FREE_PAD*2); }
+    function freeSetPx(chip, left, top){ chip.style.left = left + 'px'; chip.style.top = top + 'px'; }
+    function freeFit(box){
+      let mx = 0;
+      freeChips(box).forEach(c=>{ mx = Math.max(mx, (parseFloat(c.style.top) || 0) + CHIP_H); });
+      box.style.height = Math.max(CHIP_H + FREE_PAD*2 + FREE_EXTRA, mx + FREE_PAD + FREE_EXTRA) + 'px';
+    }
+    function layoutFree(){
+      listEl.querySelectorAll('.gs-free').forEach(box=>{
+        const W = box.clientWidth;
+        if (!W) return;
+        const host = findHost(box.dataset.host);
+        const pos = (host && host.itemPos) || {};
+        const range = freeRange(box);
+        const chips = freeChips(box);
+        const taken = [];
+        chips.forEach(c=>{
+          const p = pos[c.dataset.cid];
+          if (p && typeof p.x === 'number' && typeof p.y === 'number'){
+            const l = FREE_PAD + Math.min(1, Math.max(0, p.x)) * range, t = FREE_PAD + Math.max(0, p.y);
+            freeSetPx(c, l, t); taken.push({ l, t });
+          }
+        });
+        /* چیپ‌های بدون جای ذخیره‌شده: به ترتیب، از سمت شروعِ خط (راست در فارسی) در اولین خانه‌ی خالی */
+        const cols = Math.max(1, Math.floor((W - FREE_PAD*2 + CHIP_GAP) / (CHIP_W + CHIP_GAP)));
+        const rtl = getComputedStyle(box).direction === 'rtl';
+        let slot = 0;
+        chips.forEach(c=>{
+          const p = pos[c.dataset.cid];
+          if (p && typeof p.x === 'number' && typeof p.y === 'number') return;
+          let l, t;
+          for (;; slot++){
+            const col = slot % cols, row = Math.floor(slot / cols);
+            const off = col * (CHIP_W + CHIP_GAP);
+            l = rtl ? (W - FREE_PAD - CHIP_W - off) : (FREE_PAD + off);
+            t = FREE_PAD + row * (CHIP_H + CHIP_GAP);
+            if (!taken.some(q=> Math.abs(q.l - l) < CHIP_W - 2 && Math.abs(q.t - t) < CHIP_H - 2)) break;
+          }
+          slot++;
+          freeSetPx(c, l, t); taken.push({ l, t });
+        });
+        freeFit(box);
+      });
+    }
     (function(){
       let drag = null;
-      function chipAt(x, y, except){
-        const chips = [...listEl.querySelectorAll('.gs-rrow .gs-ring, .gs-rrow .gs-trophy')].filter(c=> c.parentNode === except.parentNode);
-        for (const c of chips){
-          if (c === except) continue;
-          const b = c.getBoundingClientRect();
-          if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) return c;
-        }
-        return null;
-      }
       listEl.addEventListener('pointerdown', (e)=>{
         const chip = e.target.closest('.gs-ring, .gs-trophy');
-        if (!chip || !chip.closest('.gs-rrow') || (e.pointerType === 'mouse' && e.button !== 0)) return;
-        drag = { chip, id: chip.dataset.cid, x0: e.clientX, y0: e.clientY, moving:false, over:null, pid:e.pointerId };
+        if (!chip || !chip.closest('.gs-free') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        const box = chip.parentNode;
+        drag = { chip, box, id: chip.dataset.cid, x0: e.clientX, y0: e.clientY,
+                 l0: parseFloat(chip.style.left) || 0, t0: parseFloat(chip.style.top) || 0, moving:false, pid:e.pointerId };
         try{ chip.setPointerCapture(e.pointerId); }catch(_){}
       });
       listEl.addEventListener('pointermove', (e)=>{
@@ -1867,32 +1970,50 @@
           drag.moving = true; drag.chip.classList.add('dragging');
         }
         e.preventDefault();
-        drag.chip.style.transform = 'translate('+dx+'px,'+dy+'px) scale(1.08)';
-        const over = chipAt(e.clientX, e.clientY, drag.chip);
-        if (over !== drag.over){
-          if (drag.over) drag.over.classList.remove('drop');
-          if (over) over.classList.add('drop');
-          drag.over = over;
-        }
+        const maxL = Math.max(0, drag.box.clientWidth - CHIP_W - FREE_PAD);
+        const l = Math.min(maxL, Math.max(FREE_PAD, drag.l0 + dx));
+        const t = Math.max(FREE_PAD, drag.t0 + dy);
+        freeSetPx(drag.chip, l, t);
+        freeFit(drag.box);
       });
+      function overlaps(box, chip, l, t){
+        return freeChips(box).some(c=>{
+          if (c === chip) return false;
+          const cl = parseFloat(c.style.left) || 0, ct = parseFloat(c.style.top) || 0;
+          return Math.abs(cl - l) < CHIP_W + 2 && Math.abs(ct - t) < CHIP_H + 2;
+        });
+      }
       function finish(e, cancel){
         if (!drag || e.pointerId !== drag.pid) return;
         const d = drag; drag = null;
         try{ d.chip.releasePointerCapture(d.pid); }catch(_){}
         if (!d.moving) return;
         suppressRingClick = true; setTimeout(()=>{ suppressRingClick = false; }, 350);
-        d.chip.classList.remove('dragging'); d.chip.style.transform = '';
-        if (d.over) d.over.classList.remove('drop');
-        if (cancel || !d.over) return;
-        const rowEl = d.chip.parentNode;
-        const host = findHost(rowEl.dataset.host); if (!host) return;
-        const ids = [...rowEl.querySelectorAll('.gs-ring, .gs-trophy')].map(c=>c.dataset.cid);
-        const from = ids.indexOf(d.id), to = ids.indexOf(d.over.dataset.cid);
-        if (from < 0 || to < 0 || from === to) return;
-        const [mv] = ids.splice(from, 1);
-        ids.splice(to, 0, mv);
-        host.itemOrder = ids;
-        scheduleMapSave(); render(); draw();
+        d.chip.classList.remove('dragging');
+        let l = parseFloat(d.chip.style.left) || 0, t = parseFloat(d.chip.style.top) || 0;
+        if (cancel){ freeSetPx(d.chip, d.l0, d.t0); freeFit(d.box); return; }
+        /* اگر روی چیپ دیگری افتاد، نزدیک‌ترین جای خالی را بگیر */
+        if (overlaps(d.box, d.chip, l, t)){
+          const maxL = Math.max(0, d.box.clientWidth - CHIP_W - FREE_PAD);
+          let best = null, bd = 1e9;
+          for (let ox = -260; ox <= 260; ox += 10){
+            for (let oy = -260; oy <= 260; oy += 10){
+              const nl = l + ox, nt = t + oy;
+              if (nl < FREE_PAD || nl > maxL || nt < FREE_PAD) continue;
+              if (overlaps(d.box, d.chip, nl, nt)) continue;
+              const dist = ox*ox + oy*oy;
+              if (dist < bd){ bd = dist; best = { l:nl, t:nt }; }
+            }
+          }
+          if (best){ l = best.l; t = best.t; }
+          else { freeSetPx(d.chip, d.l0, d.t0); freeFit(d.box); return; }
+        }
+        freeSetPx(d.chip, l, t); freeFit(d.box);
+        const host = findHost(d.box.dataset.host); if (!host) return;
+        const range = freeRange(d.box);
+        if (!host.itemPos || typeof host.itemPos !== 'object') host.itemPos = {};
+        host.itemPos[d.id] = { x: range ? Math.min(1, Math.max(0, (l - FREE_PAD) / range)) : 0, y: Math.max(0, Math.round(t - FREE_PAD)) };
+        scheduleMapSave();
       }
       listEl.addEventListener('pointerup', (e)=> finish(e, false));
       listEl.addEventListener('pointercancel', (e)=> finish(e, true));
