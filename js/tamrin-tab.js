@@ -850,12 +850,17 @@ window.openGratImageViewer = function(gid, idx){ openGratEntryAlbum(gid, idx||0)
 function gratRowClick(id){
   const g = (state.gratitude||[]).find(x=>x.id===id);
   if(!g) return;
-  if(g.source !== 'purchase' && !g.txId){ openGratEditor(id); return; }
-  if(g.txId){
-    const tx = state.history.find(h=>h.id===g.txId);
-    if(tx){ showReceipt(tx); goto('receipt'); }
-  }
+  openGratEditor(id);
 }
+function viewGratReceipt(){
+  const g = (state.gratitude||[]).find(x=>x.id===editingGratId);
+  if(!g || !g.txId) return;
+  const tx = (state.history||[]).find(h=>h.id===g.txId);
+  if(!tx) return;
+  closeGratEditor();
+  showReceipt(tx); goto('receipt');
+}
+window.viewGratReceipt = viewGratReceipt;
 (function(){
   var modal, imgEl, scale=1, startDist=0, startScale=1, lastX=0, lastY=0, offX=0, offY=0, dragging=false, lastTapTime=0;
   var viewerImages=[], viewerIndex=0, swipeStartX=0, swipeStartY=0;
@@ -1177,17 +1182,13 @@ function renderHome(){
     const row = document.createElement('div');
     row.className = 'tx-item';
     row.onclick = ()=>{
-      if(g.source==='manual'){ goto('history'); openGratEditor(g.id); return; }
-      if(g.txId){
-        const tx = state.history.find(h=>h.id===g.txId);
-        if(tx){ showReceipt(tx); goto('receipt'); }
-      }
+      goto('history'); openGratEditor(g.id);
     };
-    if(g.source==='manual') row.style.cursor = 'pointer';
+    row.style.cursor = 'pointer';
     row.innerHTML = `
       <div class="ic">${gratIconOrImage(g)}</div>
       <div class="mid">
-        <div class="t1">${nl2br(escapeHtml(gratDisplayText(g.text)))}</div>
+        <div class="t1">${nl2br(escapeHtml(gratDisplayText(g.text, g)))}</div>
         <div class="t2">${g.day} ${g.date} - ${g.time}</div>
         ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false" loading="lazy" decoding="async"></button>`).join('')}</div>` : ''}
         ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls preload="none" src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
@@ -1794,7 +1795,12 @@ async function addGratitude(){
   toast(shared ? 'ثبت شد و با بقیه به اشتراک گذاشته شد 🌍' : 'ثبت شد — فقط برای خودم 🤫');
   if(shared) syncGratitudeShare(newEntry);
 }
-function gratDisplayText(text){
+function gratDisplayText(text, g){
+  if(g && g.source === 'purchase'){
+    const nm = (text || '').trim();
+    if(!nm) return '🛍 خرید';
+    return /رو خریدم\s*$/.test(nm) ? nm : nm + ' رو خریدم';
+  }
   if(!text || !text.trim()) return '🙏 شکرگذاری';
   return text.startsWith('خدایا شکرت که') ? text : `خدایا شکرت که: ${text}`;
 }
@@ -1818,7 +1824,7 @@ function renderHistory(){
   let itemsHTML = '';
   const histAll = [...state.gratitude].reverse();
   histAll.slice(0, gratListLimit.hist).forEach(g=>{
-    const displayText = gratDisplayText(g.text);
+    const displayText = gratDisplayText(g.text, g);
     itemsHTML += `
       <div class="tx-item" style="cursor:pointer;" onclick="gratRowClick(${g.id})">
         <div class="ic">${gratIconOrImage(g)}</div>
@@ -1890,7 +1896,13 @@ function openGratEditor(id){
   let rawText = g.text || '';
   if(rawText.startsWith('خدایا شکرت که: ')) rawText = rawText.replace('خدایا شکرت که: ', '');
   else if(rawText.startsWith('خدایا شکرت که')) rawText = rawText.replace('خدایا شکرت که', '');
+  const isPurchase = g.source === 'purchase';
+  rawText = rawText.replace(/\s*رو خریدم\s*$/, '');
   document.getElementById('grat-edit-text').value = rawText;
+  document.getElementById('grat-edit-text').placeholder = isPurchase ? 'نام خرید (مثلاً یک دست مبل)... — «رو خریدم» خودکار اضافه می‌شود' : 'متن شکرگذاری...';
+  const rcB = document.getElementById('grat-edit-receipt-btn'); if(rcB) rcB.style.display = (isPurchase && g.txId) ? '' : 'none';
+  const visB = document.getElementById('grat-edit-vis-box'); if(visB) visB.style.display = isPurchase ? 'none' : '';
+  const ttl = document.getElementById('grat-edit-title'); if(ttl) ttl.textContent = isPurchase ? 'ویرایش خرید' : 'ویرایش شکرگذاری';
   gratEditImages = (g.images || []).slice();
   gratEditAudios = (g.audios || []).slice();
   gratEditVideos = (g.videos || []).map(v=>Object.assign({}, v));
@@ -1912,7 +1924,8 @@ async function saveGratEdit(){
   if(editingGratId==null) return;
   const g = (state.gratitude||[]).find(x=>x.id===editingGratId);
   if(!g) return;
-  const newText = (document.getElementById('grat-edit-text').value||'').trim();
+  let newText = (document.getElementById('grat-edit-text').value||'').trim();
+  if(g.source === 'purchase') newText = newText.replace(/\s*رو خریدم\s*$/, '').trim();
   const hasImages = gratEditImages.length > 0;
   const hasAudios = gratEditAudios.length > 0;
   const hasVideos = gratEditVideos.length > 0;
@@ -1929,7 +1942,7 @@ async function saveGratEdit(){
   gratVidDelete(removedVideos);
   g.image = g.images.length ? g.images[0].src : null;
   const visR = document.querySelector('input[name="grat-edit-vis"]:checked');
-  let wantShared = visR ? visR.value === 'public' : wasShared;
+  let wantShared = (g.source === 'purchase') ? !!wasShared : (visR ? visR.value === 'public' : wasShared);
   if(wantShared && !wasShared && !window.supabaseClient){ wantShared = false; toast('این قابلیت هنوز فعال نشده 🌱'); }
   g.shared = wantShared;
   saveState();
