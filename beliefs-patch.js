@@ -971,17 +971,17 @@
 
     var html = '' +
       '<div class="belief-flow-card" data-new-card="1" style="background:linear-gradient(135deg,rgba(43,191,171,.08),rgba(94,200,240,.05));border-color:rgba(43,191,171,.3);">' +
-        '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🌌 قلمرو ممکن‌ها</div>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">فراتر از دنیای فیزیکی که می‌بینی، یه میدان از انرژی، اطلاعات و آگاهی هست که به مکان و زمان گره نخورده. بهش می‌گن <b>قلمرو ممکن‌ها</b> یا <b>میدان کوانتومی</b>.</p>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">توی این میدان، همه‌ی احتمالات از قبل هستن — مثل موج. زندگی امروز تو، فقط یکی از بی‌نهایت حالتیه که می‌تونه باشه. بقیه‌ی حالت‌ها هم اون‌جان، منتظر.</p>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>یه نکته:</b> تو این تمرین‌ها چیز جدیدی «نمی‌سازی» — فقط خودت رو با یکی از احتمالاتی که از قبل هست، هماهنگ می‌کنی.</p>' +
-      '</div>' +
+  '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🌌 قلمرو ممکن‌ها</div>' +
+  '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">تصور کن در <b>ذهنِ</b> تو فضایی شبیه به یک «میدان احتمالات» وجود دارد. <b>علم اعصاب</b> به ما می‌گوید مغز ثابت نیست — از خاصیت <b>نوروپلاستیسیتی</b> (انعطاف‌پذیری عصبی) برخوردار است؛ مثل زمینی که آماده‌ی کشت است. هر <b>قصد</b> و <b>حسِ</b> متمرکزی، اتصالات عصبی‌ات را از نظر فیزیکی بازسازی می‌کند.</p>' +
+  '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">واقعیت امروز تو، فقط عادت‌ترین مسیرِ عصبیِ فعلی توست. <b>استعاره‌ی «موج احتمالات»</b> — که از فیزیک کوانتوم وام گرفته‌ایم — یادآوری می‌کند: تا وقتی آن احتمال را با <b>باور و احساس</b> واقعی «انتخاب» نکرده‌ای، سایر مسیرها در ذهنت به‌صورت بالقوه باقی می‌مانند.</p>' +
+  '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;background:rgba(43,191,171,.10);padding:10px 12px;border-radius:10px;border-right:3px solid #2bbfab;"><b>یه نکته:</b> تو این تمرین‌ها چیز جدیدی از بیرون «نمی‌سازی» — فقط مسیرهای عصبیِ تازه‌ای را در ذهن خودت تقویت می‌کنی که تا حالا فعال نبودند.</p>' +
+'</div>' +
 
       '<div class="belief-flow-card" data-new-card="1" style="margin-top:14px;">' +
-        '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🕳️ چرا باید «هیچ» شوی؟</div>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">اگه از «منِ قدیمی» به میدان سیگنال بفرستی، همون چیز قدیمی رو برمی‌گردونی. باید اول «هیچ» شی — یعنی از هویت قدیمی، از ترس‌ها و از کمبودها فاصله بگیری. توی اون سکوت و خالی بودن، به قلمرو ممکن‌ها وصل می‌شی.</p>' +
-        '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;">وقتی «هیچ» می‌شی، از جای <b>کلیت</b> و <b>فراوانی</b> حرف می‌زنی — خودت رو با فرکانس اون واقعیتِ ممکن توی میدان هماهنگ می‌کنی.</p>' +
-      '</div>' +
+  '<div class="bf-head" style="font-size:13.5px;margin-bottom:8px;">🕳️ چرا باید «هیچ» شوی؟</div>' +
+  '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0 0 8px;">اگر از «منِ قدیمی» شروع کنی، مغزت همون الگوهای عصبیِ قدیمی رو دوباره اجرا می‌کنه. باید اول «هیچ» شی — یعنی موقتاً از هویت قدیمی، از ترس‌ها و از داستان‌های تکرارشونده فاصله بگیری. در اون سکوت و خالی بودن، <b>شبکه‌ی حالت پیش‌فرض مغز (DMN)</b> — همون بخشی که مدام با خودش حرف می‌زنه — آروم می‌شه.</p>' +
+  '<p style="font-size:12px;color:var(--ink-soft);line-height:1.9;margin:0;">وقتی «هیچ» می‌شی، <b>RAS</b> (سیستم فعال‌ساز شبکه‌ای مغزت) دوباره تنظیم می‌شه و می‌تونه اون نشانه‌ها و فرصت‌هایی رو ببینه که قبلاً از فیلتر توجهت رد می‌شدن. این یعنی گفت‌وگو با <b>انعطاف‌پذیری مغزت</b> — نه با کائنات.</p>' +
+'</div>' +
 
       '<div class="belief-flow-card" id="dispenza-protocol-card" data-new-card="1" style="margin-top:14px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
