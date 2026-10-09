@@ -3053,6 +3053,7 @@ function wireRasEmptyState(){
     wrapEmotionSave();
     wireEvents();
     dpRestorePossibilities();
+     try { rasRenderMission(); } catch(e){}
     try { renderFutureText(); } catch(e){}
     try { renderSeedSection(); } catch(e){}
     try { dpRenderProgress(); } catch(e){}
