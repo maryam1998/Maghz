@@ -310,11 +310,11 @@
   vvDbPromise = new Promise(function(resolve, reject){
     if (!window.indexedDB){ reject(new Error('no-idb')); return; }
     var req;
-    try { req = indexedDB.open('beliefs-patch-media', 2); } catch(e){ reject(e); return; }
+    /* بدون شماره‌ی نسخه باز می‌کنیم تا ارتقای اجباری پشت تب/اتصال قدیمی گیر نکند */
+    try { req = indexedDB.open('beliefs-patch-media'); } catch(e){ reject(e); return; }
     req.onupgradeneeded = function(){
       var db = req.result;
       if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos');
-      if (!db.objectStoreNames.contains('images')) db.createObjectStore('images');
     };
     req.onsuccess = function(){
       var db = req.result;
@@ -323,7 +323,7 @@
       resolve(db);
     };
     req.onerror = function(){ reject(req.error); };
-    req.onblocked = function(){ /* منتظر می‌مانیم تا اتصال قدیمی بسته شود */ };
+    req.onblocked = function(){};
   });
   vvDbPromise.catch(function(){ vvDbPromise = null; });
   return vvDbPromise;
@@ -343,21 +343,68 @@
   function vvGet(id){ return vvTx('readonly', function(st){ return st.get(id); }); }
   function vvDel(id){ return vvTx('readwrite', function(st){ return st.delete(id); }); }
    
-/* --- توابع کمکی برای ذخیره‌ی عکس‌ها در IndexedDB --- */
-function vvTxStore(storeName, mode, fn){
-  return vvDb().then(function(db){
+/* --- ذخیره‌ی عکس‌ها در IndexedDB جداگانه (با زمان‌سنج تا هیچ‌وقت گیر نکند) --- */
+var vgDbPromise = null;
+function vgDb(){
+  if (vgDbPromise) return vgDbPromise;
+  vgDbPromise = new Promise(function(resolve, reject){
+    if (!window.indexedDB){ reject(new Error('no-idb')); return; }
+    var req;
+    try { req = indexedDB.open('beliefs-patch-images', 1); } catch(e){ reject(e); return; }
+    req.onupgradeneeded = function(){
+      var db = req.result;
+      if (!db.objectStoreNames.contains('images')) db.createObjectStore('images');
+    };
+    req.onsuccess = function(){
+      var db = req.result;
+      db.onversionchange = function(){ try { db.close(); } catch(e){} vgDbPromise = null; };
+      db.onclose = function(){ vgDbPromise = null; };
+      resolve(db);
+    };
+    req.onerror = function(){ reject(req.error); };
+  });
+  vgDbPromise.catch(function(){ vgDbPromise = null; });
+  return vgDbPromise;
+}
+function vgWithTimeout(p, ms){
+  return new Promise(function(resolve, reject){
+    var done = false;
+    var tm = setTimeout(function(){ if (!done){ done = true; reject(new Error('timeout')); } }, ms || 6000);
+    p.then(function(v){ if (!done){ done = true; clearTimeout(tm); resolve(v); } },
+           function(e){ if (!done){ done = true; clearTimeout(tm); reject(e); } });
+  });
+}
+function vgTx(mode, fn){
+  return vgWithTimeout(vgDb().then(function(db){
     return new Promise(function(resolve, reject){
-      var tx = db.transaction(storeName, mode);
-      var out = fn(tx.objectStore(storeName));
+      var tx = db.transaction('images', mode);
+      var out = fn(tx.objectStore('images'));
       tx.oncomplete = function(){ resolve(out && out.result); };
       tx.onerror = function(){ reject(tx.error); };
       tx.onabort = function(){ reject(tx.error); };
     });
-  });
+  }), 8000);
 }
-function vgPutBlob(id, blob){ return vvTxStore('images', 'readwrite', function(st){ return st.put(blob, id); }); }
-function vgGetBlob(id){ return vvTxStore('images', 'readonly', function(st){ return st.get(id); }); }
-function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ return st.delete(id); }); }
+/* عکس‌های نسخه‌ی قبلی ممکن است توی دیتابیس مدیا بوده باشند؛ بدون ارتقا فقط می‌خوانیم */
+function vgLegacyGet(id){
+  return vgWithTimeout(vvDb().then(function(db){
+    if (!db.objectStoreNames.contains('images')) return null;
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction('images', 'readonly');
+      var rq = tx.objectStore('images').get(id);
+      tx.oncomplete = function(){ resolve(rq.result || null); };
+      tx.onerror = function(){ reject(tx.error); };
+      tx.onabort = function(){ reject(tx.error); };
+    });
+  }), 4000).catch(function(){ return null; });
+}
+function vgPutBlob(id, blob){ return vgTx('readwrite', function(st){ return st.put(blob, id); }); }
+function vgGetBlob(id){
+  return vgTx('readonly', function(st){ return st.get(id); }).then(function(b){
+    return b || vgLegacyGet(id);
+  }, function(){ return vgLegacyGet(id); });
+}
+function vgDelBlob(id){ return vgTx('readwrite', function(st){ return st.delete(id); }); }
 
   function vvList(){
     var cb = state && state.currentBelief;
@@ -549,13 +596,39 @@ function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ re
     if (!el) return;
     if (vgThumbUrls[im.id]){ el.src = vgThumbUrls[im.id]; return; }
     vgGetBlob(im.id).then(function(blob){
-      if (!blob){ vgMarkMissing(el); return; }
+      if (!blob){ vgMarkMissing(el); vgShowCleanup(); return; }
       vgThumbUrls[im.id] = URL.createObjectURL(blob);
       el.src = vgThumbUrls[im.id];
     }).catch(function(){
-      if ((tries || 0) < 3) setTimeout(function(){ vgLoadThumb(im, box, (tries || 0) + 1); }, 600 * ((tries || 0) + 1));
-      else vgMarkMissing(el);
+      if ((tries || 0) < 2) setTimeout(function(){ vgLoadThumb(im, box, (tries || 0) + 1); }, 600 * ((tries || 0) + 1));
+      else { vgMarkMissing(el); vgShowCleanup(); }
     });
+  }
+
+  function vgShowCleanup(){
+    var box = document.getElementById('visual-gallery');
+    if (!box || box.querySelector('#vg-clean-btn')) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.id = 'vg-clean-btn'; b.className = 'btn tiny';
+    b.style.cssText = 'margin-top:8px;width:100%;';
+    b.textContent = '🧹 پاک‌کردن عکس‌های خراب/خالی';
+    b.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      var bad = box.querySelectorAll('.vg-thumb.vg-missing');
+      if (!bad.length){ b.remove(); return; }
+      if (!window.confirm(bad.length + ' عکس خالی پاک شود؟')) return;
+      var ids = {};
+      bad.forEach(function(x){ var i = x.querySelector('img'); if (i) ids[i.getAttribute('data-img-id') || ''] = 1; });
+      var list = vgImages();
+      var keep = list.filter(function(im){ return !(im.id ? ids[im.id] : (!im.src && ids[''])); });
+      if (VG_SRC){ list.length = 0; keep.forEach(function(x){ list.push(x); }); }
+      else state.currentBelief.visualImages = keep;
+      try { saveState(); } catch(e){}
+      box.removeAttribute('data-sig');
+      renderVisualGalleryMine();
+      if (typeof toast === 'function') toast('عکس‌های خالی پاک شد');
+    });
+    box.appendChild(b);
   }
 
   function renderVisualGalleryMine(){
@@ -704,6 +777,10 @@ function vgDelBlob(id){ return vvTxStore('images', 'readwrite', function(st){ re
   vgGoto(Math.min(VG_VIEW.idx, left - 1), false);
   if (typeof toast === 'function') toast('عکس حذف شد');
 }
+  function vgOverviewHide(){
+    var o = document.getElementById('vg-overview');
+    if (o) o.style.display = 'none';
+  }
   function vgOverviewToggle(){
   var o = document.getElementById('vg-overview');
   if (!o) return;
@@ -3188,13 +3265,19 @@ function wireRasEmptyState(){
     if (!files || !files.length) return;
     var f = files[0];
     if (!f) return;
-    if (!f.type || f.type.indexOf('audio/') !== 0){
+    var okType = (f.type && f.type.indexOf('audio/') === 0) ||
+      /\.(mp3|m4a|aac|wav|ogg|oga|opus|flac|weba|webm|amr|3gp|mp4)$/i.test(f.name || '');
+    if (!okType){
       toast('فقط فایل صوتی انتخاب کن');
       return;
     }
     try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e){}
 
-    put(f).then(function(){
+    var putP = new Promise(function(res, rej){
+      var tm = setTimeout(function(){ rej(new Error('timeout')); }, 10000);
+      put(f).then(function(v){ clearTimeout(tm); res(v); }, function(e){ clearTimeout(tm); rej(e); });
+    });
+    putP.then(function(){
       var st = window.state;
       if (!st) return;
       st.meditationAudio = {
@@ -3209,8 +3292,18 @@ function wireRasEmptyState(){
       if (wrap) wrap.removeAttribute('data-sig');
       render();
       toast('موسیقی ذخیره شد 🎵');
-    }).catch(function(){
-      toast('ذخیره‌ی موسیقی ممکن نشد');
+    }).catch(function(err){
+      /* اگه ذخیره‌ی دائمی نشد، حداقل برای همین نشست پخش بشه */
+      try {
+        var st2 = window.state;
+        if (st2){ st2.meditationAudio = { name: f.name || 'audio', size: f.size || 0, date: Date.now() }; }
+        if (audioUrl){ try { URL.revokeObjectURL(audioUrl); } catch(e){} }
+        audioUrl = URL.createObjectURL(f);
+        var wrap2 = document.getElementById('meditation-audio-wrap');
+        if (wrap2) wrap2.removeAttribute('data-sig');
+        render();
+      } catch(e2){}
+      toast('موسیقی فقط برای همین بار ذخیره شد (حافظه‌ی مرورگر اجازه نداد)');
     });
   };
 
