@@ -30,9 +30,16 @@
     if (dbP) return dbP;
     dbP = new Promise(function(res, rej){
       if (!window.indexedDB){ rej(new Error('no-idb')); return; }
-      var r = indexedDB.open('beliefs-patch-media', 1);
-      r.onupgradeneeded = function(){ if (!r.result.objectStoreNames.contains('videos')) r.result.createObjectStore('videos'); };
-      r.onsuccess = function(){ res(r.result); };
+      var r = indexedDB.open('beliefs-patch-media', 2);
+      r.onupgradeneeded = function(){
+        if (!r.result.objectStoreNames.contains('videos')) r.result.createObjectStore('videos');
+        if (!r.result.objectStoreNames.contains('images')) r.result.createObjectStore('images');
+      };
+      r.onsuccess = function(){
+        var d = r.result;
+        d.onversionchange = function(){ try { d.close(); } catch(e){} dbP = null; };
+        res(d);
+      };
       r.onerror = function(){ rej(r.error); };
     });
     dbP.catch(function(){ dbP = null; });
@@ -421,7 +428,7 @@
     var open = isOpen();
     if (open && !running) start();
     else if (!open && running) stop();
-  }, 900);
+  }, 400);
 
   /* لمس / زوم / ورق‌زدن */
   document.addEventListener('touchstart', function(e){
