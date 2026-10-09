@@ -1309,7 +1309,7 @@ body.bg-mode-image #grat-root{background:transparent;}
 }
 
 /* بازی فراوانی: کارت دوره و مسیر عصبی پایین صفحه، جمع‌وجور */
-#grat-root .shop-bottom{ margin-top:18px; }
+#grat-root .shop-bottom{ margin:18px 14px 14px; }
 #grat-root .shop-bottom .shop-period-card{ padding:8px 10px; margin:0 0 8px; border-radius:12px; }
 #grat-root .shop-bottom .shop-period-head{ font-size:11px; margin-bottom:6px; }
 #grat-root .shop-bottom #shop-mini-cal{ gap:2px; max-width:78%; margin:0 auto; }
@@ -1318,7 +1318,8 @@ body.bg-mode-image #grat-root{background:transparent;}
 #grat-root .shop-bottom #shop-mini-cal-info .btn, #grat-root .shop-bottom #shop-mini-cal-info button{ padding:6px 10px; font-size:11px; }
 #grat-root .shop-bottom .section-label h2{ font-size:11.5px; }
 #grat-root .shop-bottom .neural-card{ padding:8px 10px 8px; border-radius:12px; margin:0; }
-#grat-root .shop-bottom .neural-card svg{ height:78px; width:100%; }
+#grat-root .shop-bottom .neural-card > svg[viewBox="0 0 380 175"]{ height:78px; width:100%; }
+#grat-root .shop-bottom .neural-card svg:not([viewBox="0 0 380 175"]){ width:1.15em; height:1.15em; max-width:none; vertical-align:-0.2em; }
 #grat-root .shop-bottom .neural-card .np-status{ font-size:11px; margin-top:4px; line-height:1.5; }
 #grat-root .shop-bottom .neural-card .np-habit-btn{ padding:6px 10px; font-size:11px; margin-top:6px !important; }
 #grat-root .shop-bottom .neural-card .np-stats-grid{ margin-top:6px; gap:6px; }
