@@ -1965,7 +1965,7 @@
     try { saveState(); } catch(e){}
     input.value = '';
     input.style.display = 'none';
-    rasRenderSignals();
+    try { rasRenderMission(); } catch(e){};
     autoPracticeFiber('tracking');
   }
 
