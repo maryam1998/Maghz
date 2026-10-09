@@ -1959,10 +1959,10 @@ function restoreSeedFromArchive(id){
   (item.videos || []).forEach(function(vd){
     if (!cb.visualVideos.some(function(x){ return x.id === vd.id; })) cb.visualVideos.push(vd);
   });
-  if (!Array.isArray(cb.visualImages)) cb.visualImages = [];
-  (item.images || []).forEach(function(img){
-    cb.visualImages.push({ id: Date.now() + Math.random(), src: img.src });
-  });
+if (!Array.isArray(cb.visualImages)) cb.visualImages = [];
+(item.images || []).forEach(function(img){
+  cb.visualImages.push({ id: img.id, w: img.w, h: img.h });
+});
   try { saveState(); } catch(e){}
   var textInput = document.getElementById('seed-text-input');
   if (textInput) textInput.value = cb.visualNote;
