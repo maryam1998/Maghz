@@ -69,7 +69,8 @@
     textColor: DEFAULT_TEXT_COLOR,
     fontSize: 14,
     showDateStamps: true,
-    showTimeStamps: true
+    showTimeStamps: true,
+    showRingLinks: false
   };
 
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
@@ -82,15 +83,35 @@
     return n;
   }
   function ringIsOrphan(r){ return !state.goals.some(x=>x.id === r.goalId); }
-  /* نشانه‌ی بدون هدف (قدیمی) خودکار به نزدیک‌ترین هدف روی نقشه وصل می‌شود */
+  /* فاصله‌ی یک نقطه تا مسیر (تنه‌ی) هدف روی نقشه */
+  function distToGoalPath(g, x, y){
+    let cp; try{ cp = trunkControlPoints(g); }catch(e){ return Infinity; }
+    let best = Infinity;
+    for (let i=0;i<=28;i++){
+      const q = bezierPoint(cp.p0, cp.p1, cp.p2, cp.p3, i/28);
+      const d = Math.hypot(q.x - x, q.y - y);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+  /* نشانه‌ای که روی مسیر یک هدف قرار بگیرد، خودکار زیرمجموعه‌ی همان هدف می‌شود */
   function autoLinkRings(){
     if (!state.goals.length) return;
     let ch = false;
     state.rings.forEach(r=>{
-      if (!ringIsOrphan(r)) return;
+      const th = (r.radius || 30) + 40;
+      const cur = state.goals.find(x=>x.id === r.goalId);
+      if (cur && distToGoalPath(cur, r.x, r.y) <= th) return;
       let best = null;
-      state.goals.forEach(g=>{ const d = Math.hypot(g.x - r.x, g.y - r.y); if (!best || d < best.d) best = { g, d }; });
-      if (best){ r.goalId = best.g.id; ch = true; }
+      state.goals.forEach(g=>{
+        if (g.reached || g === cur) return;
+        const d = distToGoalPath(g, r.x, r.y);
+        if (d <= th && (!best || d < best.d)) best = { g, d };
+      });
+      if (best){
+        r.goalId = best.g.id; best.g.lastActivity = Date.now(); ch = true;
+        if (typeof toast === 'function') toast('نشانه روی مسیر «' + (best.g.name || 'هدف') + '» قرار گرفت و زیرمجموعه‌اش شد');
+      }
     });
     if (ch) scheduleMapSave();
   }
@@ -195,6 +216,7 @@
     if (typeof state.fontSize !== 'number' || state.fontSize < 8) state.fontSize = 14;
     if (typeof state.showDateStamps !== 'boolean') state.showDateStamps = true;
     if (typeof state.showTimeStamps !== 'boolean') state.showTimeStamps = true;
+    if (typeof state.showRingLinks !== 'boolean') state.showRingLinks = false;
     if (typeof state.showEmotionWidget !== 'boolean') state.showEmotionWidget = true;
     if (typeof state.trunkStyle !== 'string' || !TRUNK_STYLES[state.trunkStyle]) state.trunkStyle = 'dashed';
     state.goals.forEach(g=>{
@@ -251,6 +273,7 @@
       fontSize: 14,
       showDateStamps: true,
       showTimeStamps: true,
+      showRingLinks: false,
       showEmotionWidget: true
     };
   }
@@ -1380,7 +1403,7 @@
       const rn = document.getElementById('gs-reached-n');
       if (rn) rn.textContent = reachedGoals.length ? '(' + toFa(reachedGoals.length) + ')' : '';
       const isReachedTab = tabKey === 'reached';
-      const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.rings.filter(r=> !state.goals.some(x=>x.id===r.goalId)));
+      const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.goals.length ? [] : state.rings.filter(r=> !state.goals.some(x=>x.id===r.goalId)));
       let rows = pool.map(g=>({ g, hit: q ? (norm(hname(g)).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
                             .filter(r=> !q || r.hit !== null);
       if (orderCache){
@@ -1451,6 +1474,8 @@
           ${isOpen ? bodyHTML(g) : ''}
         </div>`;
       }).join('');
+      const freeRings = state.goals.length ? state.rings.filter(r=> ringIsOrphan(r)).length : 0;
+      if (freeRings) listEl.insertAdjacentHTML('beforeend', '<div class="gs-empty" style="padding:10px 6px;font-size:11.5px;">'+toFa(freeRings)+' نشانه‌ی آزاد روی نقشه هست؛ آن را روی مسیر یک هدف ببر تا خودکار زیرمجموعه‌اش شود.</div>');
       listEl.scrollTop = scrollTop;
     }
     window.__reopenGoalsSheet = ()=>{ open(); };
@@ -2565,7 +2590,7 @@
     });
     if (!state.ringsCollapsed) state.rings.forEach(r=>{
       const lg = r.goalId && state.goals.find(x=>x.id===r.goalId);
-      if (lg) html += ringLinkSVG(lg, r);
+      if (lg && state.showRingLinks) html += ringLinkSVG(lg, r);
     });
     if (!state.ringsCollapsed) state.rings.forEach(r=>{
       if (r.actions && r.actions.length){
@@ -2725,27 +2750,17 @@
   });
 
   document.getElementById('add-ring-btn').addEventListener('click', ()=>{
-    const act = state.goals.filter(g=>!g.reached);
-    const finish = (g)=>{
-      state.ringsCollapsed = false;
-      if (g){
-        const nr = createRingForGoal(g); g.collapsed = false; g.lastActivity = Date.now();
-        render();
-        if (typeof toast === 'function') toast('نشانه‌ی نزدیکی به «' + (g.name || 'هدف') + '» وصل شد');
-      } else {
-        const rnd = Math.random()*40-20;
-        state.rings.push({
-          id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
-          x: state.me.x + rnd, y: state.me.y + 130,
-          radius: 30, note: '', images: [], icon: '🌟',
-          actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic'
-        });
-        render();
-      }
-    };
-    if (act.length > 1) pickGoalDialog('این نشانه‌ی نزدیکی زیر کدام هدف باشد؟', gid=>{ finish(state.goals.find(x=>x.id===gid)); });
-    else if (act.length === 1) finish(act[0]);
-    else finish(null);
+    const rnd = Math.random()*40-20;
+    state.ringsCollapsed = false;
+    state.rings.push({
+      id: uid(), label:'نزدیک شدن به هدف', color: RING_COLOR,
+      x: state.me.x + rnd, y: state.me.y + 130,
+      radius: 30, note: '', images: [],
+      icon: '🌟',
+      actions: [], collapsed:false, logs:{}, lastActivity: Date.now(), branchStyle:'organic'
+    });
+    render();
+    if (typeof toast === 'function') toast('نشانه اضافه شد — روی مسیر یک هدف ببرش تا خودکار زیرمجموعه‌اش شود');
   });
 
   const settingsOverlay = document.getElementById('settings-modal-overlay');
@@ -2755,6 +2770,7 @@
   const settingsSwatches = document.getElementById('settings-swatches');
   const settingsShowDates = document.getElementById('settings-show-dates');
   const settingsShowTimes = document.getElementById('settings-show-times');
+  const settingsShowRingLinks = document.getElementById('settings-show-ringlinks');
   const settingsShowEmotionWidget = document.getElementById('settings-show-emotion-widget');
   let settingsTrunkStyle = 'dashed';
 
@@ -2779,6 +2795,7 @@
     settingsFontSizeVal.textContent = settingsFontSize.value;
     settingsShowDates.checked = state.showDateStamps !== false;
     if (settingsShowTimes) settingsShowTimes.checked = state.showTimeStamps !== false;
+    if (settingsShowRingLinks) settingsShowRingLinks.checked = !!state.showRingLinks;
     settingsShowEmotionWidget.checked = state.showEmotionWidget !== false;
     settingsTrunkStyle = effTrunkStyle(null);
     buildTrunkPicker(document.getElementById('settings-trunk-style-picker'), settingsTrunkStyle, false, v=>{ settingsTrunkStyle = v; });
@@ -2802,6 +2819,7 @@
     state.fontSize = +settingsFontSize.value;
     state.showDateStamps = !!settingsShowDates.checked;
     if (settingsShowTimes) state.showTimeStamps = !!settingsShowTimes.checked;
+    if (settingsShowRingLinks) state.showRingLinks = !!settingsShowRingLinks.checked;
     state.showEmotionWidget = !!settingsShowEmotionWidget.checked;
     state.trunkStyle = TRUNK_STYLES[settingsTrunkStyle] ? settingsTrunkStyle : 'dashed';
     try{
