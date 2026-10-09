@@ -2030,6 +2030,323 @@
       }
     }
   }
+     /* =====================================================================
+   مأموریت ذهن — نسخه‌ی جدید
+   ===================================================================== */
+
+var RAS_MISSIONS = [
+  { id: 'opportunity', label: 'فرصت‌های کوچیک', emoji: '✨' },
+  { id: 'calm',        label: 'لحظه‌های آرامش',  emoji: '😌' },
+  { id: 'beauty',      label: 'زیبایی',           emoji: '🌸' },
+  { id: 'kindness',    label: 'مهربانی',          emoji: '💗' },
+  { id: 'growth',      label: 'رشد',              emoji: '🌱' },
+  { id: 'signs',       label: 'نشانه‌های کوچیک',  emoji: '🌀' }
+];
+
+var RAS_FEELS = [
+  { id: 'normal', label: 'معمولی', emoji: '🙂' },
+  { id: 'calm',   label: 'آروم',    emoji: '😌' },
+  { id: 'bright', label: 'روشن',    emoji: '✨' },
+  { id: 'strong', label: 'قوی',     emoji: '🔥' }
+];
+
+var RAS_WEEK_DAYS = ['ش','ی','د','س','چ','پ','ج'];
+
+function rasGetMission(){
+  return (state && state.rasMission) ? state.rasMission : null;
+}
+
+function rasMissionDayCount(){
+  var m = rasGetMission();
+  if (!m) return 0;
+  try {
+    var start = ndKeyToDate(m.startDate);
+    var today = new Date(); today.setHours(0,0,0,0);
+    var diff = Math.floor((today - start) / 86400000) + 1;
+    return Math.max(1, diff);
+  } catch(e){ return 1; }
+}
+
+function rasSignalsForDay(dk){
+  var all = Array.isArray(state.rasSignals) ? state.rasSignals : [];
+  return all.filter(function(s){ return rasDayKeyFromTs(s.ts) === dk; });
+}
+
+function rasSignalsForLast7Days(){
+  var out = [];
+  var today = new Date(); today.setHours(0,0,0,0);
+  for (var i = 6; i >= 0; i--){
+    var d = new Date(today); d.setDate(d.getDate() - i);
+    var dk = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+    out.push({ date: d, key: dk, count: rasSignalsForDay(dk).length });
+  }
+  return out;
+}
+
+function rasStartMission(chipId, customLabel){
+  var label = customLabel || '';
+  if (!label && chipId){
+    for (var i = 0; i < RAS_MISSIONS.length; i++){
+      if (RAS_MISSIONS[i].id === chipId){ label = RAS_MISSIONS[i].label; break; }
+    }
+  }
+  if (!label) return;
+  if (!state.rasMission || typeof state.rasMission !== 'object') state.rasMission = {};
+  state.rasMission = {
+    label: label,
+    chip: chipId || 'custom',
+    startDate: dpTodayKey(),
+    endedAt: null
+  };
+  try { saveState(); } catch(e){}
+  rasRenderMission();
+  if (typeof toast === 'function') toast('مأموریت شروع شد 🎯');
+}
+
+function rasEndMission(){
+  var m = rasGetMission();
+  if (!m) return;
+  if (!window.confirm('مأموریت فعلی رو تموم کنی و یکی جدید انتخاب کنی؟')) return;
+  if (!Array.isArray(state.rasMissionHistory)) state.rasMissionHistory = [];
+  state.rasMissionHistory.push({
+    label: m.label, chip: m.chip,
+    startDate: m.startDate, endedAt: dpTodayKey()
+  });
+  state.rasMission = null;
+  try { saveState(); } catch(e){}
+  rasRenderMission();
+}
+
+function rasOpenRecordSheet(){
+  var overlay = document.getElementById('ras-record-sheet');
+  if (!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'ras-record-sheet';
+    overlay.className = 'ras-sheet-overlay';
+    overlay.innerHTML = rasRecordSheetHtml();
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e){
+      if (e.target === overlay) rasCloseRecordSheet();
+    });
+  }
+  overlay.classList.add('open');
+  rasSheetSelectedFeel = 'normal';
+  rasSheetUpdateFeelUI();
+  var ta = document.getElementById('ras-sheet-text');
+  if (ta){ ta.value = ''; setTimeout(function(){ try { ta.focus(); } catch(e){} }, 120); }
+  var sb = document.getElementById('ras-sheet-save');
+  if (sb) sb.disabled = true;
+}
+
+function rasCloseRecordSheet(){
+  var overlay = document.getElementById('ras-record-sheet');
+  if (overlay) overlay.classList.remove('open');
+  try { document.activeElement && document.activeElement.blur(); } catch(e){}
+}
+
+var rasSheetSelectedFeel = 'normal';
+
+function rasSheetUpdateFeelUI(){
+  var btns = document.querySelectorAll('#ras-record-sheet .ras-sheet-feel');
+  for (var i = 0; i < btns.length; i++){
+    btns[i].classList.toggle('selected', btns[i].getAttribute('data-feel') === rasSheetSelectedFeel);
+  }
+}
+
+function rasSheetCheckSave(){
+  var ta = document.getElementById('ras-sheet-text');
+  var sb = document.getElementById('ras-sheet-save');
+  if (!ta || !sb) return;
+  sb.disabled = !ta.value.trim();
+}
+
+function rasSaveFromSheet(){
+  var ta = document.getElementById('ras-sheet-text');
+  if (!ta) return;
+  var text = ta.value.trim();
+  if (!text) return;
+  if (!Array.isArray(state.rasSignals)) state.rasSignals = [];
+  state.rasSignals.push({
+    id: 'sig_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    ts: Date.now(),
+    text: text,
+    feel: rasSheetSelectedFeel || 'normal'
+  });
+  try { saveState(); } catch(e){}
+  rasCloseRecordSheet();
+  rasRenderMission();
+  autoPracticeFiber('tracking');
+  if (typeof toast === 'function') toast('ثبت شد ✨');
+}
+
+function rasDeleteSignal(id){
+  if (!Array.isArray(state.rasSignals)) return;
+  state.rasSignals = state.rasSignals.filter(function(s){ return s.id !== id; });
+  try { saveState(); } catch(e){}
+  rasRenderMission();
+}
+
+function rasFeedLast3(){
+  var all = Array.isArray(state.rasSignals) ? state.rasSignals.slice() : [];
+  all.sort(function(a,b){ return b.ts - a.ts; });
+  return all.slice(0, 3);
+}
+
+function rasFeelingMeta(id){
+  for (var i = 0; i < RAS_FEELS.length; i++) if (RAS_FEELS[i].id === id) return RAS_FEELS[i];
+  return RAS_FEELS[0];
+}
+
+function rasRecordSheetHtml(){
+  var feelsHtml = RAS_FEELS.map(function(f){
+    return '<button type="button" class="ras-sheet-feel" data-feel="' + f.id + '">' +
+      '<span>' + f.emoji + '</span><span>' + f.label + '</span>' +
+    '</button>';
+  }).join('');
+  return '<div class="ras-sheet-card">' +
+    '<div class="ras-sheet-handle"></div>' +
+    '<div class="ras-sheet-title">✋ چی دیدی؟</div>' +
+    '<textarea id="ras-sheet-text" class="ras-sheet-text" placeholder="مثلاً: یه لبخند از یه غریبه توی صف نون..."></textarea>' +
+    '<div class="ras-sheet-feel-lbl">حست چی بود؟</div>' +
+    '<div class="ras-sheet-feels">' + feelsHtml + '</div>' +
+    '<div class="ras-sheet-actions">' +
+      '<button type="button" class="ras-sheet-cancel" data-ras-sheet="cancel">لغو</button>' +
+      '<button type="button" class="ras-sheet-save" id="ras-sheet-save" data-ras-sheet="save" disabled>ذخیره</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function rasEmptyStateHtml(){
+  var chipsHtml = RAS_MISSIONS.map(function(m){
+    return '<button type="button" class="ras-chip" data-ras-chip="' + m.id + '">' +
+      '<span>' + m.emoji + '</span><span>' + m.label + '</span>' +
+    '</button>';
+  }).join('');
+  return '<div class="ras-empty">' +
+    '<span class="ras-empty-icon">👁️</span>' +
+    '<div class="ras-empty-title">امروز می‌خوای چه چیزی رو بیشتر ببینی؟</div>' +
+    '<div class="ras-empty-desc">ذهن تو هر لحظه داره فیلتر می‌کنه. اگه بدونی دنبال چی می‌گردی، همون چیز یهو «همه‌جا» ظاهر می‌شه.</div>' +
+    '<div class="ras-chips" id="ras-chips">' + chipsHtml + '</div>' +
+    '<textarea class="ras-custom-input" id="ras-custom-input" placeholder="یا خودت بنویس: چیزی که می‌خوام ببینم..."></textarea>' +
+    '<button type="button" class="ras-start-btn" id="ras-start-btn" disabled>🚀 شروع مأموریت</button>' +
+  '</div>';
+}
+
+function rasActiveStateHtml(m){
+  var day = rasMissionDayCount();
+  var todayCount = rasSignalsForDay(dpTodayKey()).length;
+  var weekCount = rasSignalsForLast7Days().reduce(function(s,d){ return s + d.count; }, 0);
+  var totalCount = Array.isArray(state.rasSignals) ? state.rasSignals.length : 0;
+
+  var heatDays = rasSignalsForLast7Days();
+  var todayKey = dpTodayKey();
+  var heatHtml = heatDays.map(function(d, i){
+    var lvl = d.count === 0 ? '' : (d.count <= 2 ? 'l1' : (d.count <= 4 ? 'l2' : 'l3'));
+    var isToday = d.key === todayKey;
+    return '<div class="ras-heat-day ' + lvl + (isToday ? ' today' : '') + '" title="' + d.key + ' — ' + d.count + '">' +
+      (d.count > 0 ? d.count : '') +
+      '<small>' + RAS_WEEK_DAYS[i] + '</small>' +
+    '</div>';
+  }).join('');
+
+  var feed = rasFeedLast3();
+  var feedHtml = '';
+  if (!feed.length){
+    feedHtml = '<div class="ras-feed-empty">امروز هنوز چیزی ندیدی؟<br>چشم‌هات رو باز کن 👀</div>';
+  } else {
+    feedHtml = feed.map(function(s){
+      var d = new Date(s.ts);
+      var timeStr = d.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'});
+      var dateStr = rasDayKeyFromTs(s.ts) === todayKey ? 'امروز' : d.toLocaleDateString('fa-IR');
+      var feel = rasFeelingMeta(s.feel || 'normal');
+      return '<div class="ras-feed-item">' +
+        '<div class="ras-feed-meta">' +
+          '<span class="ras-feed-time">🌀 ' + dateStr + ' ' + timeStr + '</span>' +
+          '<span class="ras-feed-feel ras-feel-' + feel.id + '">' + feel.emoji + ' ' + feel.label + '</span>' +
+        '</div>' +
+        '<div class="ras-feed-text">' + escapeHtml(s.text) + '</div>' +
+        '<button type="button" class="ras-feed-del" data-ras-del="' + s.id + '" title="حذف">×</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  var recordBtnClass = 'ras-record-btn' + (todayCount === 0 ? ' pulse' : '');
+
+  return '<div class="ras-active">' +
+    '<div class="ras-active-header">' +
+      '<div class="ras-active-label">✨ ' + escapeHtml(m.label) +
+        '<small>روز ' + toFa(day) + ' • از ' + m.startDate + '</small>' +
+      '</div>' +
+      '<button type="button" class="ras-change-btn" id="ras-change-btn" title="تغییر مأموریت">↻</button>' +
+    '</div>' +
+    '<button type="button" class="' + recordBtnClass + '" id="ras-record-btn">' +
+      '✋ ' + (todayCount === 0 ? 'امروز چیزی دیدی؟ ثبت کن' : 'ثبت نشانه‌ی جدید') +
+    '</button>' +
+    '<div class="ras-stats">' +
+      '<div class="ras-stat"><span class="ras-stat-num">' + toFa(todayCount) + '</span><span class="ras-stat-lbl">امروز</span></div>' +
+      '<div class="ras-stat"><span class="ras-stat-num">' + toFa(weekCount) + '</span><span class="ras-stat-lbl">این هفته</span></div>' +
+      '<div class="ras-stat"><span class="ras-stat-num">' + toFa(totalCount) + '</span><span class="ras-stat-lbl">کل</span></div>' +
+    '</div>' +
+    '<div class="ras-feed-title">📊 پیشرفت هفته<span>هفته‌ی اخیر</span></div>' +
+    '<div class="ras-heatmap">' + heatHtml + '</div>' +
+    '<div style="margin-top:22px;"></div>' +
+    '<div class="ras-feed-title">📖 آخرین نشانه‌ها<span>' + toFa(feed.length) + ' از ' + toFa(totalCount) + '</span></div>' +
+    feedHtml +
+  '</div>';
+}
+
+function rasRenderMission(){
+  var box = document.getElementById('ras-mission-content');
+  if (!box) return;
+  var m = rasGetMission();
+  if (!m){ box.innerHTML = rasEmptyStateHtml(); wireRasEmptyState(); }
+  else { box.innerHTML = rasActiveStateHtml(m); }
+}
+
+function wireRasEmptyState(){
+  var chips = document.querySelectorAll('#ras-chips .ras-chip');
+  var input = document.getElementById('ras-custom-input');
+  var btn = document.getElementById('ras-start-btn');
+  var selectedChip = null;
+
+  function refresh(){
+    var hasCustom = input && input.value.trim().length > 0;
+    var hasChip = !!selectedChip;
+    if (btn) btn.disabled = !(hasCustom || hasChip);
+    if (input) input.style.borderColor = '';
+  }
+
+  for (var i = 0; i < chips.length; i++){
+    (function(chip){
+      chip.addEventListener('click', function(){
+        var id = chip.getAttribute('data-ras-chip');
+        if (selectedChip === id){ selectedChip = null; chip.classList.remove('selected'); }
+        else {
+          for (var j = 0; j < chips.length; j++) chips[j].classList.remove('selected');
+          chip.classList.add('selected');
+          selectedChip = id;
+          if (input) input.value = '';
+        }
+        refresh();
+      });
+    })(chips[i]);
+  }
+  if (input){
+    input.addEventListener('input', function(){
+      if (input.value.trim()){
+        selectedChip = null;
+        for (var j = 0; j < chips.length; j++) chips[j].classList.remove('selected');
+      }
+      refresh();
+    });
+  }
+  if (btn){
+    btn.addEventListener('click', function(){
+      if (input && input.value.trim()) rasStartMission(null, input.value.trim());
+      else if (selectedChip) rasStartMission(selectedChip, null);
+    });
+  }
+}
 
   function dpGetTodaySteps(){
     if (!state.dispenzaDailyProgress) state.dispenzaDailyProgress = {};
