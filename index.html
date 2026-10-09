@@ -1261,7 +1261,7 @@
   <div class="modal-overlay" id="grat-edit-modal">
     <div class="modal-card" style="text-align:right;">
       <div class="m-seal" style="text-align:center;">🙏</div>
-      <h2 style="text-align:center;">ویرایش شکرگذاری</h2>
+      <h2 id="grat-edit-title" style="text-align:center;">ویرایش شکرگذاری</h2>
       <textarea id="grat-edit-text" rows="4" placeholder="متن شکرگذاری..."></textarea>
       <div class="grat-media-bar">
         <input type="file" id="grat-edit-media-input" accept="image/*" multiple style="display:none" onchange="handleGratMedia(this.files, 'edit')">
@@ -1273,11 +1273,12 @@
       <div class="gv-grid" id="grat-edit-image-thumbs"></div>
       <div id="grat-edit-video-list"></div>
       <div id="grat-edit-audio-list"></div>
-      <div class="visibility-options" style="margin-top:12px;">
+      <div class="visibility-options" id="grat-edit-vis-box" style="margin-top:12px;">
         <label><input type="radio" name="grat-edit-vis" value="private" checked> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-lock"/></svg> فقط برای خودم</label>
         <label><input type="radio" name="grat-edit-vis" value="public"> <svg class="ico" viewBox="0 0 24 24"><use href="#ico-globe"/></svg> اشتراک‌گذاری با بقیه</label>
       </div>
       <button class="primary-btn" style="margin:16px 0 8px;" onclick="saveGratEdit()">ذخیره تغییرات</button>
+      <button class="ghost-btn" id="grat-edit-receipt-btn" style="margin:0 0 8px;display:none;" onclick="viewGratReceipt()">🧾 مشاهده رسید خرید</button>
       <button class="ghost-btn" style="margin:0 0 8px;" onclick="deleteGratEntry()">🗑 حذف این شکرگذاری</button>
       <button class="ghost-btn" style="margin:0;" onclick="closeGratEditor()">انصراف</button>
     </div>
