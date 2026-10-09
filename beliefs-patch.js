@@ -2670,6 +2670,22 @@
     /* افزودن عکس و نمایش گالری حالا با نسخه‌ی این فایله (بدون برش اجباری) */
     window.handleVisualImages = vgAddFiles;
     window.renderVisualGallery = renderVisualGalleryMine;
+    /* بعد از ویرایش/تأیید، جای اسکرول نپرد (لیست‌ها دوباره ساخته می‌شوند) */
+    if (typeof window.__keepScroll === 'function'){
+      var ks = window.__keepScroll;
+      try { renderFutureText = ks(renderFutureText); } catch(e){}
+      try { renderSeedSection = ks(renderSeedSection); } catch(e){}
+      try { renderSeedArchiveBox = ks(renderSeedArchiveBox); } catch(e){}
+      try { renderArchiveBox = ks(renderArchiveBox); } catch(e){}
+      try { renderVisualGalleryMine = ks(renderVisualGalleryMine); } catch(e){}
+      try { renderVisualVideos = ks(renderVisualVideos); } catch(e){}
+      try { dpRenderProgress = ks(dpRenderProgress); } catch(e){}
+      try { saveFutureText = ks(saveFutureText); } catch(e){}
+      try { archiveSeedVersion = ks(archiveSeedVersion); } catch(e){}
+      try { deleteSeedFromArchive = ks(deleteSeedFromArchive); } catch(e){}
+      try { restoreSeedFromArchive = ks(restoreSeedFromArchive); } catch(e){}
+      window.renderVisualGallery = renderVisualGalleryMine;
+    }
     /* برای دکمه‌ی برگشت گوشی (back-nav-fix.js) در دسترس باشن */
     window.vgClose = vgClose;
     window.vgOpenFrom = vgOpenFrom;
