@@ -1112,7 +1112,7 @@
         '<div class="gs-node sub mini" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
           '<div class="gs-mrow">'+
             '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
-            '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام زیرشاخه (مثلاً یوتیوب)..." autocomplete="off">'+
+            '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام (مثلاً یوتیوب)..." autocomplete="off">'+
             '<button type="button" class="gs-mtime'+(ts?' on':'')+'" data-nact="settime" data-jk="'+pi.todayJK+'" title="ثبت یا ویرایش زمان امروز">'+(ts ? fmtDur(ts) : '＋ زمان')+'</button>'+
             '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
             '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
@@ -1120,7 +1120,7 @@
           '</div>'+
           (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+dayTimeHTML(n, pi) : '')+
         '</div>';
-        if (addingFor === n.id) mh += '<div class="gs-kids">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
+        if (addingFor === n.id) mh += '<div class="gs-kids">'+addRowHTML(n.id, 'نام')+'</div>';
         if ((n.children||[]).length){
           mh += '<div class="gs-kids">';
           (n.children||[]).forEach(ch=>{ mh += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام'); });
@@ -1133,8 +1133,8 @@
       '<div class="gs-node main" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
         '<div class="gs-mrow">'+
           '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
-          '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام شاخه..." autocomplete="off">'+
-          '<span class="gs-mtime'+(total?' on':'')+'" title="مجموع ساعات">'+(total ? '⏱ '+fmtDur(total) : '')+'</span>'+
+          '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام..." autocomplete="off">'+
+          '<button type="button" class="gs-mtime'+(total?' on':'')+'" data-nact="addtime" title="ثبت زمان امروز (ساعت و دقیقه)">⌚'+(total ? ' '+fmtDur(total) : '')+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="add" aria-label="افزودن" title="افزودن">＋</button>'+
           '<button type="button" class="gs-nbtn gs-tmr'+(timerRunning(n)?' on':'')+'" data-nact="timer" aria-label="تایمر" title="تایمر">'+(timerRunning(n) ? '⏹ '+timerLiveHTML(n) : '⏱')+'</button>'+
           '<button type="button" class="gs-nbtn" data-nact="cal" aria-label="روزها" title="روزها و زمان‌ها">📅</button>'+
@@ -1143,7 +1143,7 @@
         '</div>'+
         (daysOpen ? '<div class="gs-days">'+c.h+'</div>'+dayTimeHTML(n, pi) : '')+
       '</div>';
-      if (addingFor === n.id) h += '<div class="gs-kids">'+addRowHTML(n.id, 'نام زیرشاخه')+'</div>';
+      if (addingFor === n.id) h += '<div class="gs-kids">'+addRowHTML(n.id, 'نام')+'</div>';
       if (kids.length || (n.children||[]).length){
         h += '<div class="gs-kids">';
         (n.children||[]).forEach(ch=>{ h += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام'); });
@@ -1187,7 +1187,22 @@
         '.gs-ico img{width:100%;height:100%;object-fit:cover;pointer-events:none;}'+
         '.gs-ico span{pointer-events:none;}'+
         '.gs-iedit{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}'+
-        '.gs-ico-btn{cursor:pointer;}'+
+        '.dur-ov{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px;}'+
+      '.dur-box{width:100%;max-width:330px;background:var(--panel-bg,#fff);color:var(--text-main);border:1px solid var(--panel-border);border-radius:20px;padding:18px 16px 14px;box-shadow:0 12px 40px rgba(0,0,0,.35);direction:rtl;text-align:center;}'+
+      '.dur-t{font-size:15px;font-weight:700;}'+
+      '.dur-s{font-size:11.5px;color:var(--text-dim);margin-top:3px;}'+
+      '.dur-in{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 12px;}'+
+      '.dur-in b{font-size:22px;color:var(--text-dim);}'+
+      '.dur-in label{display:flex;flex-direction:column;align-items:center;gap:4px;}'+
+      '.dur-in input{width:78px;height:54px;text-align:center;font-size:24px;font-weight:700;font-family:inherit;border:1px solid var(--panel-border);border-radius:14px;background:transparent;color:var(--text-main);}'+
+      '.dur-in span{font-size:11px;color:var(--text-dim);}'+
+      '.dur-q{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;}'+
+      '.dur-q button{border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:11.5px;cursor:pointer;}'+
+      '.dur-b{display:flex;gap:8px;}'+
+      '.dur-b button{flex:1;border:1px solid var(--panel-border);background:transparent;color:var(--text-main);border-radius:12px;padding:10px 6px;font-family:inherit;font-size:13px;cursor:pointer;}'+
+      '.dur-b .ok{background:#c9972b;border-color:#c9972b;color:#fff;font-weight:700;flex:1.4;}'+
+      '.dur-b .del{color:#e5484d;border-color:#e5484d;}'+
+      '.gs-ico-btn{cursor:pointer;}'+
         '.gs-day.sel{outline:2px solid var(--text-main);outline-offset:1px;}'+
         '.gs-iconpop{padding:8px 12px 10px;border-top:1px dashed var(--panel-border);}'+
         '.gs-iemoji{width:64px;text-align:center;border:1px solid var(--panel-border);border-radius:10px;background:transparent;color:var(--text-main);font-family:inherit;font-size:16px;padding:5px 4px;box-sizing:border-box;}'+
@@ -1216,7 +1231,7 @@
       if (r){
         const kids = countAllActions(r.actions||[]);
         h += '<div class="gs-tdetail gs-rdetail" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
-             '<div class="trow"><span>'+(kids ? toFa(kids)+' شاخه' : 'بدون شاخه')+'</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
+             '<div class="trow"><span>'+(kids ? toFa(kids) : '')+'</span><span>· متصل به «'+esc(g.name||'هدف')+'»</span></div>'+
              '<div class="gs-rbtns">'+
                '<button type="button" class="gs-mini gold" data-gact="ringmap" data-rid="'+r.id+'">نمایش روی نقشه</button>'+
                '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
@@ -1249,8 +1264,8 @@
         const kids = countAllActions(n.children||[]);
         h += '<div class="gs-tdetail"><b class="tt">'+esc(n.text||'بدون نام')+'</b><div class="trow">'+
              '<span>زیرِ: '+esc(sel.parent)+'</span>'+(when?'<span>· رسیده‌ای در '+when+'</span>':'')+'</div>'+
-             '<div class="trow"><span>'+toFa(days)+' روز انجام شده</span>'+(kids?'<span>· '+toFa(kids)+' زیرشاخه</span>':'')+'</div>'+
-             '<div><button type="button" class="gs-mini" data-gact="unach" data-tid="'+n.id+'">بازگرداندن به شاخه‌های فعال</button></div></div>';
+             '<div class="trow"><span>'+toFa(days)+' روز انجام شده</span>'+(kids?'<span>· '+toFa(kids)+'</span>':'')+'</div>'+
+             '<div><button type="button" class="gs-mini" data-gact="unach" data-tid="'+n.id+'">بازگرداندن</button></div></div>';
       }
       return h + '</div>';
     }
@@ -1273,12 +1288,12 @@
              '<button type="button" class="gs-mini gold" data-gact="newperiod" style="margin-top:6px;">شروع دوره‌ی '+pcOrd(pi.gp.past.length+1)+'</button></div>';
       }
       if (!nTotal && addingFor !== g.id){
-        h += '<div class="gs-empty" style="padding:10px 4px;">هنوز شاخه‌ای نداری.<br>مثلاً «گوش دادن به پادکست» را اضافه کن، بعد زیرشاخه‌اش (مثلاً «۱۰ دقیقه گوش دادم»).</div>';
+        h += '<div class="gs-empty" style="padding:10px 4px;">با ＋ شروع کن؛ مثلاً «گوش دادن به پادکست».</div>';
       }
       (g.actions||[]).forEach(a=>{ h += nodeHTML(a, g, pi, 0); });
       h += trophiesHTML(g);
-      if (addingFor === g.id) h += addRowHTML(g.id, 'نام شاخه (مثلاً گوش دادن به پادکست)');
-      else h += '<div class="gs-addbtns"><button type="button" class="gs-mini gold" data-gact="addbranch">＋ شاخه‌ی جدید</button>'+
+      if (addingFor === g.id) h += addRowHTML(g.id, 'نام (مثلاً گوش دادن به پادکست)');
+      else h += '<div class="gs-addbtns"><button type="button" class="gs-mini gold" data-gact="addbranch" aria-label="افزودن">＋</button>'+
                 (isRingHost(g) ? '' : '<button type="button" class="gs-mini ring" data-gact="addring">'+ICO_MAP+' ＋ نزدیک شدن به هدف</button>')+'</div>';
       h += '</div>';
       return h;
@@ -1291,7 +1306,6 @@
       const rn = document.getElementById('gs-reached-n');
       if (rn) rn.textContent = reachedGoals.length ? '(' + toFa(reachedGoals.length) + ')' : '';
       const isReachedTab = tabKey === 'reached';
-      document.getElementById('gs-sort').style.display = isReachedTab ? 'none' : '';
       const pool = isReachedTab ? reachedGoals : activeGoals.concat(state.rings.filter(r=> !state.goals.some(x=>x.id===r.goalId)));
       let rows = pool.map(g=>({ g, hit: q ? (norm(hname(g)).includes(q) ? '' : findInActions(g.actions, q)) : '' }))
                             .filter(r=> !q || r.hit !== null);
@@ -1325,7 +1339,7 @@
               <span class="gs-dot" style="background:${g.color}"></span>
               <div class="gs-main">
                 <div class="gs-name">${esc(g.name)}<span class="gs-tag ok">محقق شد ✓</span></div>
-                <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'}${when}</div>
+                <div class="gs-meta">${when ? when.replace(/^\s*·\s*/, '') : ''}</div>
               </div>
               <button class="gs-mini" data-act="unreach" type="button">بازگرداندن</button>
               <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
@@ -1350,11 +1364,11 @@
             <span class="gs-ico${isR ? '' : ' gs-ico-btn'}" ${isR ? '' : 'data-act="icon" title="تغییر آیکون یا عکس"'} style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
             <div class="gs-main">
               <div class="gs-name"><span class="gs-nm">${esc(hname(g))}</span>${tags}</div>
-              <div class="gs-meta">${n ? toFa(n) + ' شاخه' : 'بدون شاخه'} · رشد ${toFa(p)}٪${g.lastActivity ? ' · ' + ago(g.lastActivity) : ''}</div>
-              ${hit ? `<div class="gs-hit">شاخه: ${esc(hit)}</div>` : ''}
+              <div class="gs-meta">${g.lastActivity ? ago(g.lastActivity) : ''}</div>
+              ${hit ? `<div class="gs-hit">↳ ${esc(hit)}</div>` : ''}
               <div class="gs-bar"><i style="width:${p}%;background:${hc}"></i></div>
             </div>
-            <button class="gs-ic" data-act="toggle" aria-label="باز یا بسته کردن شاخه‌ها">${isOpen ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
+            <button class="gs-ic" data-act="toggle" aria-label="باز یا بسته کردن">${isOpen ? ICO_CHEV_UP : ICO_CHEV_DOWN}</button>
             ${isR ? '' : `<button class="gs-ic" data-act="reach" aria-label="به این هدف رسیدم" title="به این هدف رسیدم">${ICO_CHECK}</button>`}
             <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
             <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
@@ -1385,7 +1399,8 @@
     document.getElementById('gs-close').addEventListener('click', close);
     ov.addEventListener('pointerdown', (e)=>{ if (e.target === ov) close(); });
     searchEl.addEventListener('input', ()=>{ orderCache = null; draw(); });
-    document.getElementById('gs-sort').addEventListener('click', (e)=>{
+    { const so = document.getElementById('gs-sort'); if (so && so.id !== 'gs-tabs') so.remove(); }
+    if (document.getElementById('gs-sort')) document.getElementById('gs-sort').addEventListener('click', (e)=>{
       const b = e.target.closest('.gs-chip'); if (!b) return;
       sortKey = b.dataset.sort; orderCache = null;
       [...document.querySelectorAll('#gs-sort .gs-chip')].forEach(x=>x.classList.toggle('on', x===b));
@@ -1484,7 +1499,7 @@
           TSEL = (TSEL === gact.dataset.tid) ? null : gact.dataset.tid; draw();
         } else if (a === 'unach'){
           const f2 = findActionNode(g.actions, gact.dataset.tid);
-          if (f2){ f2.node.achieved = false; delete f2.node.achievedAt; TSEL = null; touch(g); draw(); if (typeof toast === 'function') toast('به شاخه‌های فعال برگشت'); }
+          if (f2){ f2.node.achieved = false; delete f2.node.achievedAt; TSEL = null; touch(g); draw(); if (typeof toast === 'function') toast('برگشت'); }
         } else if (a === 'addring'){
           if (isRingHost(g)) return;
           const R0 = (g.radius||20) + 120;
@@ -1585,16 +1600,20 @@
         if (timerRunning(found.node)) stopTimer(found.node); else startTimer(found.node);
         touch(g); render(); draw();
       } else if (nact.dataset.nact === 'addtime'){
-        const mm = askMinutes('چند دقیقه اضافه بشه؟ (عدد منفی = کم کردن)');
-        if (mm){ addMinutes(found.node, periodInfo(g).todayJK, mm); touch(g); render(); draw(); }
+        const fnode = found.node, todayJK = periodInfo(g).todayJK;
+        askDuration({ title:'چقدر زمان ثبت بشه؟', sub:'امروز · ' + (fnode.text || ''), defMin:60 }, mm=>{
+          if (mm){ addMinutes(fnode, todayJK, mm); touch(g); render(); draw(); }
+        });
       } else if (nact.dataset.nact === 'cal'){
         if (DAYS_TOG.has(nid)) DAYS_TOG.delete(nid); else DAYS_TOG.add(nid);
         draw();
       } else if (nact.dataset.nact === 'settime'){
         const jk = nact.dataset.jk;
         const cur = Math.round(nodeDaySecs(found.node, jk) / 60);
-        const mm = askSetMinutes('زمانِ «' + jkLabel(jk) + '» چند دقیقه باشه؟ (۰ = حذف زمان)', cur);
-        if (mm !== null){ setDayMinutes(found.node, jk, mm); touch(g); render(); draw(); }
+        const snode = found.node;
+        askDuration({ title:jkLabel(jk), sub:'زمان این روز · ' + (snode.text || ''), defMin:cur, allowZero:true, deletable:cur > 0 }, mm=>{
+          setDayMinutes(snode, jk, mm); touch(g); render(); draw();
+        });
       } else if (nact.dataset.nact === 'timeday'){
         const pi = periodInfo(g);
         const dn = window.prompt('کدوم روزِ دوره؟ (۱ تا ' + toFa(pi.total) + ' — امروز روز ' + toFa(pi.dayNum) + ' است)', String(pi.dayNum));
@@ -1604,13 +1623,15 @@
         if (!di || di < 1 || di > pi.total || di > pi.dayNum){ if (typeof toast === 'function') toast('یه روز معتبر از دوره وارد کن'); return; }
         const jk = pcJKey(new Date(pi.start.getFullYear(), pi.start.getMonth(), pi.start.getDate() + di - 1));
         const cur = Math.round(nodeDaySecs(found.node, jk) / 60);
-        const mm = askSetMinutes('زمانِ «' + jkLabel(jk) + '» چند دقیقه باشه؟ (۰ = حذف زمان)', cur || 30);
-        if (mm !== null){ setDayMinutes(found.node, jk, mm); touch(g); render(); draw(); }
+        const tnode = found.node;
+        askDuration({ title:jkLabel(jk), sub:'زمان این روز · ' + (tnode.text || ''), defMin:cur || 60, allowZero:true, deletable:cur > 0 }, mm=>{
+          setDayMinutes(tnode, jk, mm); touch(g); render(); draw();
+        });
       } else if (nact.dataset.nact === 'add'){
         addingFor = nid; draw(); focusAddInput();
       } else if (nact.dataset.nact === 'del'){
         const hasKids = (found.node.children||[]).length;
-        if (!window.confirm('«' + (found.node.text || 'بدون نام') + '» ' + (hasKids ? 'همراه با زیرشاخه‌هایش ' : '') + 'حذف بشه؟')) return;
+        if (!window.confirm('«' + (found.node.text || 'بدون نام') + '» ' + (hasKids ? 'همراه با زیرمجموعه‌اش ' : '') + 'حذف بشه؟')) return;
         found.list.splice(found.list.indexOf(found.node), 1);
         touch(g); render(); draw();
       }
@@ -2924,7 +2945,7 @@
     const action = found.node;
     panelTarget = {type:'action', goalId, actionId};
     currentEditingAction = {goalId, actionId};
-    panelTitle.textContent = 'ویرایش شاخه';
+    panelTitle.textContent = 'ویرایش';
     panelDot.style.background = action.color || g.color;
     panelName.value = action.text || '';
     panelName.disabled = false;
@@ -2945,7 +2966,7 @@
     panelActionWeightVal.textContent = toFa(action.weight || 5);
     document.getElementById('panel-action-routine').checked = !!action.isRoutine;
     panelDeleteBtn.classList.remove('hidden');
-    panelDeleteBtn.textContent = 'حذف شاخه';
+    panelDeleteBtn.textContent = 'حذف';
     buildStylePicker(document.getElementById('panel-action-style'), action.style || '', true, v=>{ action.style = v; render(); });
     refreshActionChildrenPanel();
     panel.classList.add('open');
@@ -3078,7 +3099,7 @@
           <input type="checkbox" class="a-routine" data-aid="${a.id}" style="width:14px;height:14px;" ${a.isRoutine ? 'checked' : ''}>
           <span style="font-size:11px;">این یه کار روتینه</span>
         </label>
-        <button class="btn tiny add-sub" data-aid="${a.id}">＋ زیرشاخه</button>
+        <button class="btn tiny add-sub" data-aid="${a.id}">＋</button>
         <div class="children">${renderActionTree(a.children||[], depth+1, a.color||goalColor)}</div>
       </div>
     `}).join('');
@@ -3656,15 +3677,6 @@
     if (secs > 0) autoTick(n, jk);
     scheduleMapSave();
   }
-  function askSetMinutes(question, def){
-    const input = window.prompt(question, String(def));
-    if (input === null) return null;
-    const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
-    const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }).replace('٫', '.');
-    const v = parseFloat(norm);
-    if (isNaN(v) || v < 0 || v > 1440){ if (typeof toast === 'function') toast('یه عدد بین ۰ تا ۱۴۴۰ دقیقه وارد کن'); return null; }
-    return v;
-  }
   function setDayMinutes(node, jk, mins){
     if (!node.time || typeof node.time !== 'object') node.time = {};
     const secs = Math.round(mins * 60);
@@ -3672,14 +3684,48 @@
     else delete node.time[jk];
     scheduleMapSave();
   }
-  function askMinutes(question){
-    const input = window.prompt(question, '30');
-    if (input === null) return 0;
-    const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
-    const norm = String(input).replace(/[۰-۹٠-٩]/g, c=>{ const i = fa.indexOf(c); return i > -1 ? i : ar.indexOf(c); }).replace('٫', '.');
-    const v = parseFloat(norm);
-    if (!v || isNaN(v) || Math.abs(v) > 1440){ if (typeof toast === 'function') toast('یه عدد بین ۱ تا ۱۴۴۰ دقیقه وارد کن'); return 0; }
-    return v;
+  /* پنجره‌ی ثبت زمان: ساعت + دقیقه (به‌جای prompt) */
+  function askDuration(opts, cb){
+    const old = document.getElementById('dur-dlg'); if (old) old.remove();
+    const d0 = Math.max(0, Math.round(opts.defMin || 0));
+    const ov = document.createElement('div');
+    ov.id = 'dur-dlg'; ov.className = 'dur-ov';
+    ov.innerHTML =
+      '<div class="dur-box" role="dialog" aria-label="ثبت زمان">'+
+        '<div class="dur-t">'+esc(opts.title || 'ثبت زمان')+'</div>'+
+        (opts.sub ? '<div class="dur-s">'+esc(opts.sub)+'</div>' : '')+
+        '<div class="dur-in">'+
+          '<label><input id="dur-h" type="number" inputmode="numeric" min="0" max="24" value="'+Math.floor(d0/60)+'"><span>ساعت</span></label>'+
+          '<b>:</b>'+
+          '<label><input id="dur-m" type="number" inputmode="numeric" min="0" max="59" value="'+(d0%60)+'"><span>دقیقه</span></label>'+
+        '</div>'+
+        '<div class="dur-q">'+[15,30,60,120].map(m=>'<button type="button" data-q="'+m+'">'+(m<60 ? toFa(m)+' دقیقه' : toFa(m/60)+' ساعت')+'</button>').join('')+'</div>'+
+        '<div class="dur-b">'+
+          '<button type="button" class="ok" data-d="ok">ثبت</button>'+
+          (opts.deletable ? '<button type="button" class="del" data-d="del">حذف زمان</button>' : '')+
+          '<button type="button" data-d="no">لغو</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    const hEl = ov.querySelector('#dur-h'), mEl = ov.querySelector('#dur-m');
+    const close = ()=>{ ov.remove(); };
+    const total = ()=>{
+      const h = Math.max(0, Math.min(24, parseInt(hEl.value, 10) || 0));
+      const m = Math.max(0, Math.min(59, parseInt(mEl.value, 10) || 0));
+      return h * 60 + m;
+    };
+    ov.addEventListener('click', e=>{
+      if (e.target === ov){ close(); return; }
+      const q = e.target.closest('[data-q]');
+      if (q){ const m = +q.dataset.q; hEl.value = Math.floor(m/60); mEl.value = m % 60; return; }
+      const b = e.target.closest('[data-d]'); if (!b) return;
+      if (b.dataset.d === 'no'){ close(); return; }
+      if (b.dataset.d === 'del'){ close(); cb(0); return; }
+      const t = total();
+      if (t <= 0 && !opts.allowZero){ if (typeof toast === 'function') toast('ساعت یا دقیقه رو وارد کن'); return; }
+      close(); cb(t);
+    });
+    setTimeout(()=>{ try{ hEl.focus(); hEl.select(); }catch(e){} }, 60);
   }
   setInterval(()=>{
     document.querySelectorAll('.tm-live[data-start]').forEach(el=>{ el.textContent = fmtClock((Date.now() - (+el.dataset.start)) / 1000); });
@@ -3698,7 +3744,7 @@
       '.gs-node.main{padding:10px 12px;box-shadow:0 1px 0 rgba(127,127,127,.15);}'+
       '.gs-node.sub{background:rgba(127,127,127,.04);padding:7px 9px;}'+
       '.gs-node.main .gs-mrow .gs-ntext{font-size:14px;font-weight:700;}'+
-      '.gs-node.main .gs-mtime{border:none;padding:0 2px;}'+
+      '.gs-node.main .gs-mtime{padding:3px 8px;}'+
       '.gs-node.mini{padding:5px 8px;}'+
       '.gs-mrow{display:flex;align-items:center;gap:5px;}'+
       '.gs-mrow .gs-ntext{flex:1;min-width:0;font-size:12.5px;font-weight:600;}'+
@@ -3820,8 +3866,8 @@
     document.getElementById(ctx.p+'-title').textContent = '🧭 دوره‌ی '+(past.length ? pcOrd(past.length)+' — ' : '')+toFa(total)+' روزه';
     document.getElementById(ctx.p+'-progress').textContent = 'روز '+toFa(dayNum)+' / '+toFa(total);
     document.getElementById(ctx.p+'-hint').textContent = isGoal
-      ? 'گزارشِ کارهای همه‌ی شاخه‌ها و زیرشاخه‌های این هدف. کار را داخل هر شاخه ثبت کن؛ برای دیدن جزئیات هر روز، روی آن بزن.'
-      : ('روی هر روز بزن تا انجام‌شدنِ این شاخه ثبت یا برداشته شود.' + (ctx.sources.length ? ' روزهای کم‌رنگ یعنی فقط زیرشاخه‌ها انجام شده‌اند.' : ''));
+      ? 'گزارشِ کارهای همه‌ی این هدف. برای دیدن جزئیات هر روز، روی آن بزن.'
+      : ('روی هر روز بزن تا انجام‌شدنش ثبت یا برداشته شود.' + (ctx.sources.length ? ' روزهای کم‌رنگ یعنی فقط موارد داخلش انجام شده‌اند.' : ''));
 
     const infoEl = document.getElementById(ctx.p+'-info');
     const openPast = {};
@@ -3847,7 +3893,7 @@
       const daySecs = srcNodes.reduce((a,n)=> a + nodeDaySecs(n, selJK), 0);
       const perSecs = srcNodes.reduce((a,n)=> a + nodeSecs(n, keys), 0);
       const dayLabel = selJK === todayJK ? 'امروز' : pcFaDate(selDate);
-      info += '<div class="pc-info pc-time"><b>⏱ زمان</b><div>'+dayLabel+': <b>'+fmtDur(daySecs)+'</b> · مجموع دوره: <b>'+fmtDur(perSecs)+'</b>'+(!isGoal && ctx.sources.length ? ' <span>(با زیرشاخه‌ها)</span>' : '')+'</div>';
+      info += '<div class="pc-info pc-time"><b>⏱ زمان</b><div>'+dayLabel+': <b>'+fmtDur(daySecs)+'</b> · مجموع دوره: <b>'+fmtDur(perSecs)+'</b>'+(!isGoal && ctx.sources.length ? ' <span>(با موارد داخلش)</span>' : '')+'</div>';
       if (!isGoal){
         const nn = ctx.node, run = timerRunning(nn);
         info += '<div class="pc-time-btns">'+(run
@@ -3862,9 +3908,9 @@
       }
       info += '</div>';
       if (!isGoal){
-        info += '<div class="pc-info pc-subs"><b>زیرشاخه‌ها — '+dayLabel+'</b>';
+        info += '<div class="pc-info pc-subs"><b>'+dayLabel+'</b>';
         const kidsList = ctx.node.children || [];
-        if (!kidsList.length) info += '<div class="pc-hint" style="margin-top:6px;">هنوز زیرشاخه‌ای نداری؛ مثلاً «یوتیوب» یا «کتاب» را اضافه کن، بعد هر روز تیک بزن و زمانش را ثبت کن.</div>';
+        if (!kidsList.length) info += '<div class="pc-hint" style="margin-top:6px;">مثلاً «یوتیوب» یا «کتاب» را اضافه کن، بعد هر روز تیک بزن و زمانش را ثبت کن.</div>';
         kidsList.forEach(c=>{
           const run = timerRunning(c), ts = nodeDaySecs(c, selJK), dn = !!(c.logs && c.logs[selJK]);
           const kc = c.color || ctx.color;
@@ -3873,7 +3919,7 @@
             '<button type="button" class="pc-sub-set" data-pc-subset="'+c.id+'" data-jk="'+selJK+'" title="ثبت یا ویرایش زمان">'+(ts ? '⏱ '+fmtDur(ts)+' ✎' : '＋ زمان')+'</button>'+
             '<button type="button" class="btn'+(run ? '' : ' gold')+'" data-pc-subtimer="'+c.id+'">'+(run ? '⏹ '+timerLiveHTML(c) : '▶️')+'</button></div>';
         });
-        info += '<div class="pc-sub-add"><input type="text" class="pc-sub-in" placeholder="نام زیرشاخه (مثلاً یوتیوب)" autocomplete="off"><button type="button" class="btn gold" data-pc-subadd="1">افزودن</button></div></div>';
+        info += '<div class="pc-sub-add"><input type="text" class="pc-sub-in" placeholder="مثلاً یوتیوب" autocomplete="off"><button type="button" class="btn gold" data-pc-subadd="1">افزودن</button></div></div>';
       }
     }
     const endOfPeriod = new Date(start.getFullYear(), start.getMonth(), start.getDate()+total);
@@ -3953,8 +3999,10 @@
     if (ab){
       const c0 = pcContext();
       if (c0 && c0.node){
-        const m = askMinutes('چند دقیقه اضافه بشه؟ (عدد منفی = کم کردن)');
-        if (m){ addMinutes(c0.node, ab.dataset.pcAddtime, m); render(); renderPanelPeriodCal(); }
+        const pnode = c0.node, pjk = ab.dataset.pcAddtime;
+        askDuration({ title:'چقدر زمان ثبت بشه؟', sub:jkLabel(pjk) + ' · ' + (pnode.text || ''), defMin:60 }, m=>{
+          if (m){ addMinutes(pnode, pjk, m); render(); renderPanelPeriodCal(); }
+        });
       }
       return;
     }
@@ -3969,7 +4017,7 @@
       if (c0 && c0.node){
         const box = sa.closest('.pc-subs'), inp = box && box.querySelector('.pc-sub-in');
         const txt = ((inp && inp.value) || '').trim();
-        if (!txt){ if (typeof toast === 'function') toast('اسم زیرشاخه را بنویس'); return; }
+        if (!txt){ if (typeof toast === 'function') toast('یه اسم بنویس'); return; }
         if (!Array.isArray(c0.node.children)) c0.node.children = [];
         c0.node.children.push({ id:uid(), text:txt, weight:5, color:null, children:[], detached:false, images:[], radius:10, createdAt:Date.now(), logs:{} });
         c0.goal.lastActivity = Date.now();
@@ -4007,8 +4055,11 @@
       const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sSet.dataset.pcSubset) : null;
       if (kid){
         const jk = sSet.dataset.jk;
-        const mm = askSetMinutes('چند دقیقه برای «'+(kid.node.text || 'زیرشاخه')+'» ثبت بشه؟ (۰ = حذف زمان)', Math.round(nodeDaySecs(kid.node, jk)/60) || 30);
-        if (mm !== null){ setDayMinutes(kid.node, jk, mm); if (mm > 0) autoTick(c0.node, jk); render(); renderPanelPeriodCal(); }
+        const kcur = Math.round(nodeDaySecs(kid.node, jk)/60);
+        const knode = kid.node, hostNode = c0.node;
+        askDuration({ title:jkLabel(jk), sub:'زمان این روز · ' + (knode.text || ''), defMin:kcur || 60, allowZero:true, deletable:kcur > 0 }, mm=>{
+          setDayMinutes(knode, jk, mm); if (mm > 0) autoTick(hostNode, jk); render(); renderPanelPeriodCal();
+        });
       }
       return;
     }
@@ -4017,8 +4068,10 @@
       const c0 = pcContext();
       const kid = c0 && c0.node ? findActionNode(c0.node.children || [], sM.dataset.pcSubtime) : null;
       if (kid){
-        const m = askMinutes('چند دقیقه ثبت بشه؟ (عدد منفی = کم کردن)');
-        if (m){ addMinutes(kid.node, sM.dataset.jk, m); if (m > 0) autoTick(c0.node, sM.dataset.jk); render(); renderPanelPeriodCal(); }
+        const knode2 = kid.node, hostNode2 = c0.node, kjk = sM.dataset.jk;
+        askDuration({ title:'چقدر زمان ثبت بشه؟', sub:jkLabel(kjk) + ' · ' + (knode2.text || ''), defMin:60 }, m=>{
+          if (m){ addMinutes(knode2, kjk, m); autoTick(hostNode2, kjk); render(); renderPanelPeriodCal(); }
+        });
       }
       return;
     }

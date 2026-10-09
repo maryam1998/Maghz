@@ -1865,20 +1865,20 @@ function renderShopHistory(){
   if(records.length===0){ empty.style.display='block'; return; }
   empty.style.display='none';
   [...records].reverse().forEach(r=>{
-    const firstItem = r.items && r.items[0] ? r.items[0] : null;
-    const itemCount = (r.items||[]).reduce((s,it)=>s+it.qty,0);
-    const title = firstItem ? (r.items.length>1 ? `${firstItem.name} و ${(r.items.length-1).toLocaleString('fa-IR')} مورد دیگر` : firstItem.name) : 'خرید';
-    const row = document.createElement('div');
-    row.className = 'tx-item';
-    row.onclick = ()=>{ showReceipt(r); goto('receipt'); };
-    row.innerHTML = `
-      <div class="ic">${firstItem ? iconOrImage(firstItem) : '🛍️'}</div>
-      <div class="mid">
-        <div class="t1">${escapeHtml(title)}</div>
-        <div class="t2">${r.day} ${r.date} - ${r.time} · ${itemCount.toLocaleString('fa-IR')} قلم</div>
-      </div>
-      <div class="amt">${formatMoney(r.total)}</div>`;
-    list.appendChild(row);
+    (r.items||[]).forEach(it=>{
+      const qty = it.qty || 1;
+      const row = document.createElement('div');
+      row.className = 'shx-item';
+      row.onclick = ()=>{ showReceipt(r); goto('receipt'); };
+      row.innerHTML = `
+        <div class="ic">${iconOrImage(it)}</div>
+        <div class="mid">
+          <div class="t1">${escapeHtml(it.name||'')}</div>
+          <div class="t2">${r.day} ${r.date} - ${r.time}${qty>1 ? ' · ×'+qty.toLocaleString('fa-IR') : ''}</div>
+        </div>
+        <div class="amt">${formatMoney(qty*(it.price||0))}${qty>1 ? '<small>هر کدام '+formatMoney(it.price||0)+'</small>' : ''}</div>`;
+      list.appendChild(row);
+    });
   });
 }
 
