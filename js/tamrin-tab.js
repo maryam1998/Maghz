@@ -1799,7 +1799,7 @@ function gratDisplayText(text, g){
   if(g && g.source === 'purchase'){
     const nm = (text || '').trim();
     if(!nm) return '🛍 خرید';
-    return /رو خریدم\s*$/.test(nm) ? nm : nm + ' رو خریدم';
+    return nm;
   }
   if(!text || !text.trim()) return '🙏 شکرگذاری';
   return text.startsWith('خدایا شکرت که') ? text : `خدایا شکرت که: ${text}`;
@@ -1897,9 +1897,8 @@ function openGratEditor(id){
   if(rawText.startsWith('خدایا شکرت که: ')) rawText = rawText.replace('خدایا شکرت که: ', '');
   else if(rawText.startsWith('خدایا شکرت که')) rawText = rawText.replace('خدایا شکرت که', '');
   const isPurchase = g.source === 'purchase';
-  rawText = rawText.replace(/\s*رو خریدم\s*$/, '');
   document.getElementById('grat-edit-text').value = rawText;
-  document.getElementById('grat-edit-text').placeholder = isPurchase ? 'نام خرید (مثلاً یک دست مبل)... — «رو خریدم» خودکار اضافه می‌شود' : 'متن شکرگذاری...';
+  document.getElementById('grat-edit-text').placeholder = isPurchase ? 'متن این خرید را بنویس یا ویرایش کن...' : 'متن شکرگذاری...';
   const rcB = document.getElementById('grat-edit-receipt-btn'); if(rcB) rcB.style.display = (isPurchase && g.txId) ? '' : 'none';
   const visB = document.getElementById('grat-edit-vis-box'); if(visB) visB.style.display = isPurchase ? 'none' : '';
   const ttl = document.getElementById('grat-edit-title'); if(ttl) ttl.textContent = isPurchase ? 'ویرایش خرید' : 'ویرایش شکرگذاری';
@@ -1925,7 +1924,6 @@ async function saveGratEdit(){
   const g = (state.gratitude||[]).find(x=>x.id===editingGratId);
   if(!g) return;
   let newText = (document.getElementById('grat-edit-text').value||'').trim();
-  if(g.source === 'purchase') newText = newText.replace(/\s*رو خریدم\s*$/, '').trim();
   const hasImages = gratEditImages.length > 0;
   const hasAudios = gratEditAudios.length > 0;
   const hasVideos = gratEditVideos.length > 0;
