@@ -2722,8 +2722,8 @@
 (function(){
   'use strict';
 
-  var DB_NAME = 'beliefs-patch-media';
-  var DB_VER  = 2;              /* ارتقا از ۱ به ۲ برای افزودن store صوتی */
+  var DB_NAME = 'beliefs-patch-audio';   /* دیتابیس جداگانه — بدون تعارض با ویدیوها */
+var DB_VER  = 1;
   var STORE   = 'audio';
   var KEY     = 'meditation_main';
 
@@ -2736,10 +2736,9 @@
       if (!window.indexedDB){ reject(new Error('no-idb')); return; }
       var req = indexedDB.open(DB_NAME, DB_VER);
       req.onupgradeneeded = function(){
-        var db = req.result;
-        if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos');
-        if (!db.objectStoreNames.contains(STORE))   db.createObjectStore(STORE);
-      };
+  var db = req.result;
+  if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+};
       req.onsuccess = function(){ resolve(req.result); };
       req.onerror   = function(){ reject(req.error); };
     });
