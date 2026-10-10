@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '**.zip'
+      - '.github/workflows/unzip-and-clean.yml'
   workflow_dispatch:
 
 permissions:
