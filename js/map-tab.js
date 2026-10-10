@@ -2223,7 +2223,7 @@ document.getElementById('recenter-btn').addEventListener('click', ()=>{
   focusGoalId = null;
   render();
   fitAllView();
-  document.getElementById('hint').style.display = 'none';
+  { const _h = document.getElementById('hint'); if (_h) _h.style.display = 'none'; }
 });
 
 /* ---------------- rendering ---------------- */
@@ -2328,31 +2328,6 @@ function userAvatarSVG(cx, cy, r, color){
                L${(cx + bodyW*1.12).toFixed(1)} ${bodyB.toFixed(1)}
                Q${cx} ${(bodyB + r*0.08).toFixed(1)} ${(cx - bodyW*1.12).toFixed(1)} ${bodyB.toFixed(1)} Z"/>
     </g>
-  `;
-}
-
-function userBandBadgeSVG(cx, cy, r, userState){
-  const band = FREQ_BANDS[userState.band] || FREQ_BANDS.delta;
-  const badgeY = cy - r - 22;
-  const textColor = effectiveTextColor();
-  const progressPct = Math.round(userState.progress * 100);
-  const barW = 68;
-  const barX = cx - barW/2;
-  const barY = badgeY + 8;
-
-  return `
-    <text x="${cx}" y="${badgeY}" text-anchor="middle" class="me-band-badge"
-          font-size="11" font-weight="700" fill="${textColor}">
-      ${band.label} · ${userState.stage}
-    </text>
-    <rect x="${barX}" y="${barY}" width="${barW}" height="4" rx="2"
-          fill="rgba(255,255,255,0.15)"/>
-    <rect x="${barX}" y="${barY}" width="${(barW * userState.progress).toFixed(1)}" height="4" rx="2"
-          fill="${band.color}"/>
-    <text x="${cx}" y="${barY + 15}" text-anchor="middle" class="me-band-badge"
-          font-size="9" opacity="0.75" fill="${textColor}">
-      رشد مدار · ${progressPct}٪
-    </text>
   `;
 }
 
@@ -3007,8 +2982,6 @@ function render(){
   } else {
     html += nodeWithImages(mx, my, meR, state.me.images, meColor, 'me', '', state.me.name, 6, '', state.me);
   }
-
-  html += userBandBadgeSVG(mx, my, meR, userState);
 
   state.goals.forEach(g=>{
     const r = g.radius || 20;
