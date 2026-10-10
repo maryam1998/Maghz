@@ -1408,8 +1408,8 @@
       '#gs-list .gs-cnt{display:inline-flex;align-items:center;gap:4px;color:#2dd4bf;}'+
       '#gs-list .gs-cnt.tr{color:#f0a020;}'+
       '#gs-list .gs-cnt b{font-size:12px;color:var(--text-main);}'+
-      '#gs-list .gs-free{position:relative;display:block;min-height:96px;border:1px dashed var(--panel-border);border-radius:14px;background:rgba(127,127,127,.04);overflow:hidden;touch-action:pan-y;}'+
-      '#gs-list .gs-free > .gs-ring, #gs-list .gs-free > .gs-trophy{position:absolute;width:72px;height:80px;box-sizing:border-box;margin:0;justify-content:flex-start;touch-action:none;}'+
+      '#gs-list .gs-free{position:relative;display:block;min-height:0;border:none;background:none;overflow:hidden;touch-action:pan-y;}'+
+      '#gs-list .gs-free > .gs-ring, #gs-list .gs-free > .gs-trophy{position:absolute;width:60px;height:64px;box-sizing:border-box;margin:0;justify-content:flex-start;touch-action:none;}'+
       '#gs-list .gs-free > .dragging{position:absolute;z-index:6;transition:none;}'+
       '#gs-list .gs-statswrap{display:flex;flex-direction:column;gap:6px;margin-top:2px;}'+
       '#gs-list .gs-statsbar{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--panel-border);border-radius:12px;background:transparent;color:var(--text-dim);font-family:inherit;font-size:11.5px;padding:7px 10px;cursor:pointer;}'+
@@ -1446,7 +1446,7 @@
              '<button type="button" class="gs-mini" data-gact="ringedit" data-rid="'+r.id+'">ویرایش</button>'+
              (state.goals.filter(x=>!x.reached).length > 1 ? '<button type="button" class="gs-mini" data-gact="ringunlink" data-rid="'+r.id+'">انتقال به هدف دیگر</button>' : '')+
              '<button type="button" class="gs-mini" data-gact="ringdel" data-rid="'+r.id+'">حذف</button>'+
-           '</div><div class="gs-sub" data-host="'+r.id+'">'+bodyHTML(r)+'</div></div>';
+           '</div><div class="gs-sub" data-host="'+r.id+'">'+bodyHTML(r, true)+'</div></div>';
   }
   function trophiesHTML(g){
     const rs = ringsOf(g);
@@ -1491,7 +1491,7 @@
   function items_hint(g){
     return (ringsOf(g).length + collectAch(g.actions, '', []).length) > 1 ? 'نشانه‌ها و دستاوردها را با انگشت به هر جای کادرشان ببر.' : '';
   }
-  function bodyHTML(g){
+  function bodyHTML(g, nested){
     const pi = periodInfo(g);
     const nTotal = countAllActions(g.actions);
     const todayCnt = goalTodayCount(g, pi.todayJK);
@@ -1527,6 +1527,7 @@
            (items_hint(g) ? '<div class="gs-hintline">'+items_hint(g)+'</div>' : '');
     }
     h += '</div>';
+    if (!nested) h += '<button type="button" class="gs-collapse" data-gact="collapse" aria-label="جمع کردن">'+ICO_CHEV_UP+'<span>جمع کردن</span></button>';
     h += '</div>';
     return h;
   }
@@ -1630,6 +1631,7 @@
   function open(){ searchEl.value=''; orderCache = null; draw(); ov.classList.add('open'); layoutFree(); }
   window.addEventListener('resize', ()=>{ try{ layoutFree(); }catch(e){} });
   function close(){ ov.classList.remove('open'); }
+  (function(){ const gb = document.querySelector('.gs-grab'); if (gb) gb.addEventListener('click', close); })();
   function touch(g){ g.lastActivity = Date.now(); scheduleMapSave(); }
   document.getElementById('goals-list-btn').addEventListener('click', open);
   document.getElementById('gs-tabs').addEventListener('click', (e)=>{
@@ -1742,6 +1744,12 @@
           pi.gp.days = n; pi.gp.startDate = pcLocalKey(new Date());
           scheduleMapSave(); draw();
           if (typeof toast === 'function') toast('دوره‌ی ' + pcOrd(pi.gp.past.length) + ' شروع شد');
+        }
+      } else if (a === 'collapse'){
+        const _it = gact.closest('.gs-item'); const _id = _it && _it.dataset.gid;
+        if (_id){
+          OPEN.delete(_id); addingFor = null; draw();
+          const _row = listEl.querySelector('.gs-item[data-gid="'+_id+'"]'); if (_row) _row.scrollIntoView({block:'nearest'});
         }
       } else if (a === 'stats'){
         if (STATS_OPEN.has(g.id)) STATS_OPEN.delete(g.id); else STATS_OPEN.add(g.id);
@@ -1995,7 +2003,7 @@
   });
   let suppressRingClick = false;
   let sortClickGuard = false;
-  var CHIP_W = 72, CHIP_H = 80, CHIP_GAP = 8, FREE_PAD = 6, FREE_EXTRA = 34;
+  var CHIP_W = 60, CHIP_H = 64, CHIP_GAP = 4, FREE_PAD = 2, FREE_EXTRA = 10;
   function freeChips(box){ return [...box.children].filter(c=> c.classList.contains('gs-ring') || c.classList.contains('gs-trophy')); }
   function freeRange(box){ return Math.max(0, box.clientWidth - CHIP_W - FREE_PAD*2); }
   function freeSetPx(chip, left, top){ chip.style.left = left + 'px'; chip.style.top = top + 'px'; }
@@ -2819,6 +2827,35 @@ function focusGoal(id){
   animateCamTo(viewForPoints(goalPoints(g), 1.4));
   const h = document.getElementById('hint'); if (h) h.style.display = 'none';
 }
+/* API جستجوی سراسری (js/global-search.js): هدف‌ها، نشانه‌های «نزدیک شدن به هدف»، شاخه‌ها و زیرشاخه‌ها */
+window.__mapSearch = {
+  find: function(match){
+    const out = [];
+    function walk(list, host, depth){
+      (list||[]).forEach(a=>{
+        const txt = a.text || '';
+        if (txt && (match(txt) || (a.note && match(a.note)))) out.push({ label: txt, kind: depth ? 'زیرشاخه' : 'شاخه', host: (isRingHost(host) ? (host.label || 'نزدیک شدن به هدف') : (host.name || '')), hostId: host.id });
+        walk(a.children, host, depth+1);
+      });
+    }
+    (state.goals||[]).forEach(g=>{
+      if ((g.name && match(g.name)) || (g.note && match(g.note))) out.push({ label: g.name || 'هدف', kind: 'هدف', host: '', hostId: g.id });
+      walk(g.actions, g, 0);
+    });
+    (state.rings||[]).forEach(r=>{
+      if ((r.label && match(r.label)) || (r.note && match(r.note))) out.push({ label: r.label || 'نزدیک شدن به هدف', kind: 'نزدیک شدن به هدف', host: '', hostId: r.id });
+      walk(r.actions, r, 0);
+    });
+    return out;
+  },
+  focus: function(r){
+    const host = findHost(r.hostId);
+    if (!host) return;
+    if (isRingHost(host)) state.ringsCollapsed = false;
+    focusGoal(r.hostId);
+  }
+};
+
 function exitFocus(){
   focusGoalId = null;
   render();
@@ -3843,6 +3880,7 @@ function debouncedRender(){
     }
   });
 
+  (function(){ const pc = document.getElementById('panel-collapse'); if (pc) pc.addEventListener('click', ()=> document.getElementById('panel-close').click()); })();
   document.getElementById('panel-close').addEventListener('click', ()=>{
     panel.classList.remove('open');
     document.getElementById('panel-note-wrap').classList.remove('hidden');
