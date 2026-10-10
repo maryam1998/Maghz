@@ -50,6 +50,11 @@
   const DEFAULT_TEXT_COLOR = "#eef0fa";
   const NODE_FILL = "#12142a";
   const DEFAULT_IMG_SIZE = 50;
+  const ICON_SCALE_MIN = 0.5, ICON_SCALE_MAX = 3;
+  function iconScaleOf(h){
+    const v = h && typeof h.iconScale === 'number' ? h.iconScale : 1;
+    return Math.max(ICON_SCALE_MIN, Math.min(ICON_SCALE_MAX, v || 1));
+  }
 
   const AUTO_TEXT_COLOR_MARKERS = [DEFAULT_TEXT_COLOR, '#ffffff', '#fff', '#000000', '#000'];
   function autoTextColor(){
@@ -236,6 +241,7 @@
       if (typeof g.lastActivity !== 'number') g.lastActivity = g.createdAt || Date.now();
       if (typeof g.branchStyle !== 'string' || !BRANCH_STYLES[g.branchStyle]) g.branchStyle = 'organic';
       if (typeof g.icon !== 'string' || !g.icon) g.icon = '🎯';
+      g.iconScale = iconScaleOf(g);
       normalizeActions(g.actions);
     });
     if (!Array.isArray(state.rings)) state.rings = [];
@@ -257,6 +263,7 @@
       if (typeof r.lastActivity !== 'number') r.lastActivity = Date.now();
       if (typeof r.branchStyle !== 'string' || !BRANCH_STYLES[r.branchStyle]) r.branchStyle = 'organic';
       if (typeof r.icon !== 'string' || !r.icon) r.icon = '🌟';
+      r.iconScale = iconScaleOf(r);
       if (typeof r.goalId !== 'string') r.goalId = '';
       normalizeActions(r.actions);
     });
@@ -1330,13 +1337,17 @@
     });
     return '<div class="gs-iedit">'+
            '<input class="gs-iemoji" data-hid="'+h.id+'" value="'+esc(h.icon || '')+'" maxlength="8" placeholder="ایموجی" autocomplete="off">'+
-           '<button type="button" class="gs-mini gold" data-gact="iconimg" data-hid="'+h.id+'">عکس</button>'+th+'</div>';
+           '<button type="button" class="gs-mini gold" data-gact="iconimg" data-hid="'+h.id+'">عکس</button>'+th+
+           '<div class="gs-isz"><span>اندازه‌ی ایکون و عکس</span><input type="range" class="gs-iscale" data-hid="'+h.id+'" min="50" max="300" step="5" value="'+Math.round(iconScaleOf(h)*100)+'" aria-label="اندازه‌ی ایکون و عکس"><b class="gs-isv">'+toFa(Math.round(iconScaleOf(h)*100))+'٪</b><button type="button" class="gs-mini" data-gact="iconscalereset" data-hid="'+h.id+'">اولیه</button></div></div>';
   }
   (function(){
     if (document.getElementById('gs-hostui-css')) return;
     const st = document.createElement('style'); st.id = 'gs-hostui-css';
     st.textContent =
-      '.gs-ico{--ic:#2dd4bf;width:34px;height:34px;flex:none;border-radius:50%;border:2px solid var(--ic);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;overflow:hidden;background:rgba(0,0,0,.12);}'+
+      '.gs-ico{--ic:#2dd4bf;--isz:34px;width:var(--isz);height:var(--isz);flex:none;border-radius:50%;border:2px solid var(--ic);display:flex;align-items:center;justify-content:center;font-size:calc(var(--isz)*.53);line-height:1;overflow:hidden;background:rgba(0,0,0,.12);transition:width .15s,height .15s;}'+
+      '.gs-isz{flex:1 1 100%;display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-dim);}'+
+      '.gs-isz input[type=range]{flex:1;min-width:0;accent-color:var(--ic,#2dd4bf);height:28px;}'+
+      '.gs-isz .gs-isv{min-width:42px;text-align:center;color:var(--text-main);font-size:12px;}'+
       '.gs-ico img{width:100%;height:100%;object-fit:cover;pointer-events:none;}'+
       '.gs-ico span{pointer-events:none;}'+
       '.gs-iedit{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}'+
@@ -1414,6 +1425,11 @@
       '#gs-list .gs-hintline{font-size:10.5px;color:var(--text-dim);opacity:.8;}';
     document.head.appendChild(st);
   })();
+  function listIconPx(h, base, lo, hi){ return Math.max(lo, Math.min(hi, Math.round(base * iconScaleOf(h)))); }
+  function applyIconScaleToList(hh){
+    const row = listEl.querySelector('.gs-item[data-gid="'+hh.id+'"] .gs-row .gs-ico'); if (row) row.style.setProperty('--isz', listIconPx(hh, 34, 26, 64) + 'px');
+    const chip = listEl.querySelector('.gs-ring[data-rid="'+hh.id+'"]'); if (chip) chip.style.setProperty('--isz', listIconPx(hh, 36, 28, 50) + 'px');
+  }
   function ringIconHTML(r){
     const img = r.images && r.images[0] && r.images[0].src;
     if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
@@ -1448,7 +1464,7 @@
     items.forEach(it=>{
       if (it.kind === 'ring'){
         const r = it.r;
-        h += '<button type="button" class="gs-ring'+(RSEL===r.id?' sel':'')+'" data-cid="'+r.id+'" data-gact="ring" data-rid="'+r.id+'" title="'+esc(r.label||'')+'" style="--rc:'+esc(r.color || RING_COLOR)+'">'+
+        h += '<button type="button" class="gs-ring'+(RSEL===r.id?' sel':'')+'" data-cid="'+r.id+'" data-gact="ring" data-rid="'+r.id+'" title="'+esc(r.label||'')+'" style="--rc:'+esc(r.color || RING_COLOR)+';--isz:'+listIconPx(r, 36, 28, 50)+'px">'+
              '<span class="ric">'+ringIconHTML(r)+'</span><span class="tnm">'+esc(r.label||'نزدیک شدن به هدف')+'</span></button>';
       } else {
         const node = it.x.node;
@@ -1588,7 +1604,7 @@
       return `<div class="gs-item${isOpen ? ' open' : ''}" data-gid="${g.id}" style="--gs-c:${esc(hc)}">
         <div class="gs-row" data-act="toggle">
           ${(canSort && !isR) ? '<span class="gs-grip" data-act="grip" role="button" aria-label="جابه‌جایی ترتیب هدف" title="بگیر و بکش تا ترتیب عوض شود">'+GRIP_SVG+'</span>' : ''}
-          <span class="gs-ico${isR ? '' : ' gs-ico-btn'}" ${isR ? '' : 'data-act="icon" title="تغییر آیکون یا عکس"'} style="--ic:${esc(hc)}">${hiconHTML(g)}</span>
+          <span class="gs-ico${isR ? '' : ' gs-ico-btn'}" ${isR ? '' : 'data-act="icon" title="تغییر آیکون یا عکس"'} style="--ic:${esc(hc)};--isz:${listIconPx(g, 34, 26, 64)}px">${hiconHTML(g)}</span>
           <div class="gs-main">
             <div class="gs-name"><span class="gs-nm">${esc(hname(g))}</span>${tags}</div>
             <div class="gs-meta">${g.lastActivity ? ago(g.lastActivity) : ''}</div>
@@ -1782,6 +1798,9 @@
           touch(hh); render(); draw();
         });
         inp.click();
+      } else if (a === 'iconscalereset'){
+        const hh = findHost(gact.dataset.hid); if (!hh) return;
+        hh.iconScale = 1; touch(hh); render(); draw();
       } else if (a === 'iconimgdel'){
         const hh = findHost(gact.dataset.hid); if (!hh || !Array.isArray(hh.images)) return;
         hh.images.splice(+gact.dataset.idx, 1);
@@ -1926,6 +1945,14 @@
   });
   listEl.addEventListener('input', (e)=>{
     const t = e.target;
+    if (t.classList && t.classList.contains('gs-iscale')){
+      const hh = findHost(t.dataset.hid); if (!hh) return;
+      hh.iconScale = Math.max(ICON_SCALE_MIN, Math.min(ICON_SCALE_MAX, (+t.value || 100) / 100));
+      const lab = t.parentNode.querySelector('.gs-isv'); if (lab) lab.textContent = toFa(Math.round(hh.iconScale*100)) + '٪';
+      applyIconScaleToList(hh);
+      touch(hh); render();
+      return;
+    }
     if (!t.classList || !t.classList.contains('gs-iemoji')) return;
     const hh = findHost(t.dataset.hid); if (!hh) return;
     const v = t.value.trim();
@@ -2557,8 +2584,11 @@ function renderImagesAtNode(cx, cy, images, radius, hitType, hitId, goalId) {
   return out;
 }
 
-function nodeIconSVG(cx, cy, r, images, icon, color, hitType, hitId, label, labelOffset, goalId, node, stampTs){
+function nodeIconSVG(cx, cy, r0, images, icon, color, hitType, hitId, label, labelOffset, goalId, node, stampTs){
   let content = '';
+  const isc = iconScaleOf(node);
+  const r = r0 * isc;
+  if (labelOffset && r > r0) labelOffset += (labelOffset < 0 ? -1 : 1) * (r - r0);
 
   if (images && images.length && images[0] && images[0].src){
     const img = images[0];
@@ -2573,7 +2603,7 @@ function nodeIconSVG(cx, cy, r, images, icon, color, hitType, hitId, label, labe
     content = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + color + '" opacity="0.85"/>';
   }
 
-  const hitArea = '<circle data-hit="' + hitType + '" data-id="' + (hitId || '') + '" data-goalid="' + (goalId || '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (r + 8) + '" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>';
+  const hitArea = '<circle data-hit="' + hitType + '" data-id="' + (hitId || '') + '" data-goalid="' + (goalId || '') + '" cx="' + cx + '" cy="' + cy + '" r="' + (Math.max(r, r0) + 8) + '" fill="#fff" fill-opacity="0.001" style="cursor:pointer;pointer-events:all;"/>';
 
   const n = node || {};
   const labelX = cx + (n.labelDX || 0);
@@ -2872,6 +2902,56 @@ function ringLinkSVG(g, r){
   const mx = (x1+x2)/2 - uy*d*0.12, my = (y1+y2)/2 + ux*d*0.12;
   return `<path class="ring-link" d="M${x1.toFixed(1)} ${y1.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round" opacity="0.6" pointer-events="none"/>`;
 }
+function ringApproachDays(r){
+  const set = new Set();
+  const add = n => { if (n && n.logs) for (const k in n.logs){ if (n.logs[k] === true || (n.logs[k] && typeof n.logs[k] === 'object')) set.add(k); } };
+  add(r);
+  (function walk(list){ (list||[]).forEach(a=>{ add(a); walk(a.children); }); })(r.actions);
+  return set;
+}
+function footPrintShapeSVG(x, y, deg, left, size, color, op){
+  const k = size / 16;
+  return '<g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + deg.toFixed(0) + ') scale(' + (left ? -k : k).toFixed(3) + ' ' + k.toFixed(3) + ')" fill="' + color + '" opacity="' + op.toFixed(2) + '">' +
+    '<ellipse cx="0" cy="1.5" rx="3.6" ry="5.4"/><ellipse cx="0" cy="8.6" rx="2.8" ry="2.9"/>' +
+    '<circle cx="-3.4" cy="-5.6" r="1.3"/><circle cx="-1.5" cy="-7.4" r="1.15"/><circle cx="0.7" cy="-7.9" r="1.05"/><circle cx="2.6" cy="-7.1" r="1"/><circle cx="4" cy="-5.2" r="0.9"/></g>';
+}
+/* رد پای «نزدیک شدن به هدف»: از نشانه به سمت هدف، یک جفت‌ردِ چپ و راست برای هر روزِ انجام‌شده */
+function ringFootprintsSVG(g, r){
+  const days = ringApproachDays(r);
+  const N = days.size;
+  if (!N) return '';
+  const col = r.color || RING_COLOR;
+  const rr = (r.radius||30) * Math.max(1, iconScaleOf(r));
+  const gr = (g.radius||20) * Math.max(1, iconScaleOf(g));
+  const dx = g.x - r.x, dy = g.y - r.y, d = Math.hypot(dx, dy) || 1;
+  const ux = dx/d, uy = dy/d;
+  const x0 = r.x + ux*(rr+10), y0 = r.y + uy*(rr+10);
+  const x2 = g.x - ux*(gr+10), y2 = g.y - uy*(gr+10);
+  const L = Math.hypot(x2-x0, y2-y0);
+  if (L < 20) return '';
+  const cx = (x0+x2)/2 + uy*L*0.1, cy = (y0+y2)/2 - ux*L*0.1;
+  const B  = t => ({ x:(1-t)*(1-t)*x0 + 2*(1-t)*t*cx + t*t*x2, y:(1-t)*(1-t)*y0 + 2*(1-t)*t*cy + t*t*y2 });
+  const Bd = t => Math.atan2(2*(1-t)*(cy-y0) + 2*t*(y2-cy), 2*(1-t)*(cx-x0) + 2*t*(x2-cx));
+  let sp = 17;
+  const usable = L * 0.92;
+  if (N * sp > usable) sp = usable / N;
+  const size = Math.max(6, Math.min(14, sp * 0.95));
+  const span = sp / L;
+  const todayJK = pcJKey(new Date());
+  const todayDone = days.has(todayJK);
+  let out = '<g class="ring-foot-trail" style="pointer-events:none;' + (todayDone ? 'filter:drop-shadow(0 0 3px ' + col + ');' : '') + '"><title>' + esc((r.label || 'نزدیک شدن به هدف') + ' — ' + N + ' روز قدم برداشته‌ای') + '</title>';
+  for (let i=0; i<N; i++){
+    const t = Math.min(0.97, 0.03 + (i + 0.5) * span);
+    const p = B(t), a = Bd(t);
+    const side = (i % 2 === 0) ? 1 : -1;
+    const off = size * 0.38 * side;
+    const px = p.x + (-Math.sin(a)) * off, py = p.y + Math.cos(a) * off;
+    const newest = (i === N-1);
+    const op = newest && todayDone ? 1 : 0.38 + 0.5 * (N > 1 ? i/(N-1) : 1);
+    out += footPrintShapeSVG(px, py, a*180/Math.PI + 90, side < 0, size, col, op);
+  }
+  return out + '</g>';
+}
 function collapsedLinkSVG(g){
   return `<line x1="${state.me.x}" y1="${state.me.y}" x2="${g.x}" y2="${g.y}" stroke="${g.color}" stroke-width="1.2" stroke-dasharray="3 6" stroke-linecap="round" opacity="0.28" pointer-events="none"/>`;
 }
@@ -2890,6 +2970,10 @@ function render(){
   if (!state.ringsCollapsed) state.rings.forEach(r=>{
     const lg = r.goalId && state.goals.find(x=>x.id===r.goalId);
     if (lg && state.showRingLinks) html += ringLinkSVG(lg, r);
+  });
+  if (!state.ringsCollapsed) state.rings.forEach(r=>{
+    const lg = r.goalId && state.goals.find(x=>x.id===r.goalId);
+    if (lg) html += ringFootprintsSVG(lg, r);
   });
   if (!state.ringsCollapsed) state.rings.forEach(r=>{
     if (r.actions && r.actions.length){
@@ -2929,7 +3013,7 @@ function render(){
   state.goals.forEach(g=>{
     const r = g.radius || 20;
     html += `<g class="gnode${focusGoalId === g.id ? ' is-focus' : ''}" data-gn="${g.id}">`;
-    html += haloSVG(g.x, g.y, g.color, r, 1, g.freq);
+    html += haloSVG(g.x, g.y, g.color, r * Math.max(1, iconScaleOf(g)), 1, g.freq);
     html += nodeIconSVG(g.x, g.y, r, g.images, g.icon, g.color, 'goal', g.id, g.name, -(r + 22), '', g, g.createdAt);
 
     const freq = getFreq(g);
@@ -2953,12 +3037,12 @@ function render(){
     html += '<g class="rnode">';
     const rad = r.radius || 30;
     const ringColor = r.color || RING_COLOR;
-    html += haloSVG(r.x, r.y, ringColor, rad, 1.2);
+    html += haloSVG(r.x, r.y, ringColor, rad * Math.max(1, iconScaleOf(r)), 1.2);
     html += nodeIconSVG(r.x, r.y, rad, r.images, r.icon, ringColor, 'ring', r.id, '', 0, '', r);
     if (r.label){
       const lines = wrapText(r.label, 16);
       let lx = r.x + (r.labelDX || 0);
-      let ly = r.y - (rad + 20) + (r.labelDY || 0);
+      let ly = r.y - (rad * Math.max(1, iconScaleOf(r)) + 20) + (r.labelDY || 0);
       const fsize = r.labelSize || currentLabelSize('ring', r.id);
       let text = `<text data-hit="ring" data-id="${r.id}" data-label="1" x="${lx}" y="${ly}" text-anchor="middle" class="feeling-label" font-size="${fsize}" font-weight="700" style="cursor:pointer;fill:${ringColor};" fill="${ringColor}">`;
       lines.forEach((line,i)=>{
@@ -2969,7 +3053,7 @@ function render(){
     }
     if (r.note){
       const lines = wrapText(r.note, 22);
-      let ly = r.y + rad + 18;
+      let ly = r.y + rad * Math.max(1, iconScaleOf(r)) + 18;
       let text = `<text x="${r.x}" y="${ly}" text-anchor="middle" class="branch-label" font-size="${fs-3}" fill="${textColor}">`;
       lines.forEach((line,i)=>{
         text += `<tspan x="${r.x}" dy="${i===0?0:16}">${esc(line)}</tspan>`;
