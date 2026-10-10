@@ -1016,3 +1016,22 @@ body.echw-hidden-by-setting #echw{ display:none !important; }
 html[data-theme="dark"] .np-emotion-row button{
   color:#fff; background:var(--surface, #20232f);
 }
+
+/* ===== کادرهای جام و «نزدیک شدن به هدف» حذف شد؛ فشرده‌تر ===== */
+.gs-ring,.gs-trophy,.gs-rrow .gs-trophy{width:60px !important;border:none !important;background:none !important;box-shadow:none !important;padding:2px 0 0 !important;border-radius:10px;}
+.gs-ring.sel,.gs-trophy.sel{background:rgba(127,127,127,.16) !important;}
+.gs-ring.drop,.gs-rrow .gs-trophy.drop{background:rgba(127,127,127,.22) !important;}
+.gs-ring.dragging,.gs-rrow .gs-trophy.dragging{filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));}
+.gs-ring .ric{border:none !important;background:none !important;}
+.gs-trophy .tic{background:none !important;box-shadow:none !important;color:#f0a020 !important;width:30px;height:30px;}
+.gs-trophy .tic svg{width:26px;height:26px;}
+#gs-list .gs-free{border:none !important;background:none !important;min-height:0 !important;}
+#gs-list .gs-trophies{padding-top:4px;}
+
+/* ===== دکمه‌ی جمع‌کردن (کرکره) دم دست ===== */
+.gs-grab{width:56px;height:6px;cursor:pointer;position:relative;}
+.gs-grab::after{content:"";position:absolute;inset:-12px -34px;}
+.gs-collapse{align-self:center;display:flex;align-items:center;justify-content:center;gap:4px;min-width:96px;height:30px;padding:0 16px;border-radius:999px;border:1px solid var(--panel-border);background:rgba(127,127,127,.1);color:var(--text-dim);font-family:inherit;font-size:11.5px;cursor:pointer;}
+.gs-collapse:active{background:rgba(127,127,127,.22);}
+#panel-collapse{position:sticky;bottom:-20px;align-self:center;margin-top:auto;flex:none;min-width:130px;height:36px;padding:0 18px;border-radius:999px;border:1px solid var(--panel-border);background:var(--panel-bg);color:var(--text-main);font-family:inherit;font-size:12.5px;cursor:pointer;box-shadow:0 -6px 14px rgba(0,0,0,.18);z-index:3;}
+#panel-collapse:active{background:rgba(127,127,127,.2);}
