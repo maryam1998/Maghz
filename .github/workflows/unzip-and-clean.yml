@@ -49,6 +49,8 @@ jobs:
               echo "==> $z"
               tmp=$(mktemp -d)
               unzip -q -o "$z" -d "$tmp"
+              # توکن پیش‌فرض اجازه‌ی ساخت/تغییر workflow ندارد؛ پس هرچه داخل .github باشد نادیده گرفته می‌شود
+              find "$tmp" -type d -name .github -prune -exec rm -rf {} +
 
               # اگه همه‌چیز داخل یک پوشه‌ی اصلی بود (مثل Maghz-main/)، اون پوشه برداشته میشه
               entries=( "$tmp"/* )
