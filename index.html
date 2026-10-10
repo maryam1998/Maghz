@@ -564,7 +564,7 @@
     <li><b>بتا (۱۲–۳۰ Hz):</b> تمرکز، تصمیم‌گیری، کارهای روزانه.</li>
     <li><b>گاما (۳۰+ Hz):</b> اوج تمرکز، بینش ناگهانی، حس یگانگی.</li>
   </ul>
-  <p>هر هدف روی نقشه، یه باند فرکانسی داره که می‌تونی از پنل ویرایش هدف انتخابش کنی. هاله‌ی دور هدف، با همون سرعت می‌تپه — یعنی داری مغزت رو یاد می‌دی وقتی به اون هدف فکر می‌کنه، خودش رو روی اون موج تنظیم کنه.</p>
+  <p>هر هدف روی نقشه، هاله‌ای داره که با سرعت یک باند فرکانسی می‌تپه — یعنی داری مغزت رو یاد می‌دی وقتی به اون هدف فکر می‌کنه، خودش رو روی اون موج تنظیم کنه.</p>
     </div>
        
     <div class="help-section">
@@ -638,14 +638,7 @@
       <div class="pc-grid" id="gp-goal-cal"></div>
       <div id="gp-goal-info"></div>
     </div>
-    <label class="small" style="margin-top:6px;">باند فرکانسی غالب این هدف</label>
-    <select id="panel-goal-freq" style="width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:13px;margin-bottom:10px;">
-      <option value="delta">دلتا (۰.۵–۴ Hz) — بازسازی و درمان عمیق</option>
-      <option value="theta">تتا (۴–۸ Hz) — مدیتیشن و خلاقیت</option>
-      <option value="alpha">آلفا (۸–۱۲ Hz) — آرامش هوشیار</option>
-      <option value="beta">بتا (۱۲–۳۰ Hz) — تمرکز فعال</option>
-      <option value="gamma">گاما (۳۰+ Hz) — اوج تمرکز و بینش</option>
-    </select>
+    <div class="fs-slot" id="fs-slot-goal"></div>
     <div id="trunk-block">
       <label class="small">نوع خط مسیر این هدف (خطی که از «من» تا هدف کشیده می‌شه)</label>
       <div id="trunk-style-picker"></div>
@@ -666,6 +659,7 @@
     </div>
     <label class="small">توضیحات (چند خطی)</label>
     <textarea id="panel-ring-note" placeholder="چیزی که حس می‌کنی..." style="min-height:80px;flex:none;"></textarea>
+    <div class="fs-slot" id="fs-slot-ring"></div>
     <div id="ring-branches-slot" style="margin-top:12px;"></div>
   </div>
 
@@ -682,6 +676,7 @@
     <span id="panel-action-weight-val">۵</span>
     <label class="small" style="margin-top:10px;">شکل این شاخه</label>
     <div id="panel-action-style"></div>
+    <div class="fs-slot" id="fs-slot-action"></div>
     <button class="btn full" id="panel-action-reset-pos" type="button" style="margin-top:10px;">↩︎ برگرداندن این شاخه به جای اصلی‌اش</button>
     <label class="small" style="margin-top:10px;display:flex;align-items:center;gap:8px;cursor:pointer;">
       <input type="checkbox" id="panel-action-routine" style="width:16px;height:16px;">
@@ -1340,6 +1335,7 @@
   </nav>
 </div>
 </div>
+<script src="js/edit-mark.js"></script>
 <script src="neural-pathway.js"></script>
 <script src="js/tamrin-tab.js"></script>
 

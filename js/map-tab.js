@@ -3367,7 +3367,8 @@ function debouncedRender(){
   };
   (function(){
     const st = document.createElement('style');
-    st.textContent = '.bs-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 4px;}'+
+    st.textContent = '.fs-slot{margin:10px 0 4px;}.fs-row{display:flex;align-items:center;gap:10px;margin-top:4px;}.fs-range{flex:1;min-width:0;}.fs-val{min-width:26px;text-align:center;font-size:13px;color:var(--text-main);}.fs-reset{flex:none;padding:5px 10px;font-size:11.5px;}'+
+      '.bs-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 4px;}'+
       '.bs-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;padding:5px 2px;border-radius:12px;border:1.5px solid var(--panel-border);background:var(--input-bg);color:var(--text-main);font-family:inherit;font-size:11px;cursor:pointer;}'+
       '.bs-opt svg{width:46px;height:30px;}.bs-opt svg path{fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}'+
       '.bs-opt svg circle{fill:var(--accent);}'+
@@ -3444,6 +3445,35 @@ function debouncedRender(){
       e.preventDefault(); nb.focus(); pick(nb);
     };
   }
+  function mountFontSizeControl(slotId, type, id, goalId){
+    const slot = document.getElementById(slotId);
+    if (!slot) return;
+    const node = getNodeRef(type, id, goalId);
+    if (!node){ slot.innerHTML = ''; return; }
+    slot.innerHTML = '<label class="small">اندازه‌ی نوشته روی نقشه</label>'+
+      '<div class="fs-row"><input type="range" class="fs-range" min="8" max="60" step="1">'+
+      '<span class="fs-val"></span><button type="button" class="btn fs-reset">پیش‌فرض</button></div>';
+    const range = slot.querySelector('.fs-range');
+    const val = slot.querySelector('.fs-val');
+    const sync = ()=>{
+      const cur = Math.round(node.labelSize || currentLabelSize(type, id));
+      range.value = cur;
+      val.textContent = toFa(cur);
+    };
+    sync();
+    let raf = 0;
+    range.addEventListener('input', ()=>{
+      const v = +range.value;
+      val.textContent = toFa(v);
+      node.labelSize = v;
+      if (raf) return;
+      raf = requestAnimationFrame(()=>{ raf = 0; render(); scheduleMapSave(); });
+    });
+    slot.querySelector('.fs-reset').addEventListener('click', ()=>{
+      node.labelSize = null;
+      render(); scheduleMapSave(); sync();
+    });
+  }
   function mountTrunkBlock(g){
     buildTrunkPicker(document.getElementById('trunk-style-picker'), g.trunkStyle || '', true, v=>{
       g.trunkStyle = v; render(); scheduleMapSave();
@@ -3491,6 +3521,7 @@ function debouncedRender(){
     panelDeleteBtn.classList.remove('hidden');
     panelDeleteBtn.textContent = 'حذف';
     buildStylePicker(document.getElementById('panel-action-style'), action.style || '', true, v=>{ action.style = v; render(); });
+    mountFontSizeControl('fs-slot-action','action',actionId,goalId);
     refreshActionChildrenPanel();
     panel.classList.add('open');
   }
@@ -3541,7 +3572,7 @@ function debouncedRender(){
     panelDeleteBtn.classList.remove('hidden');
     panelDeleteBtn.textContent = 'حذف هدف';
     document.getElementById('panel-reached').checked = !!g.reached;
-    document.getElementById('panel-goal-freq').value = g.freq || 'alpha';
+    mountFontSizeControl('fs-slot-goal','goal',id,id);
     currentPanelGoalId = id;
     mountBranchesBlock('goal', g);
     mountTrunkBlock(g);
@@ -3575,6 +3606,7 @@ function debouncedRender(){
     panelDeleteBtn.classList.remove('hidden');
     panelDeleteBtn.textContent = 'حذف نشانه';
     currentPanelGoalId = id;
+    mountFontSizeControl('fs-slot-ring','ring',id,'');
     mountBranchesBlock('ring', r);
     refreshActionsPanel(r);
     panel.classList.add('open');
@@ -3929,7 +3961,6 @@ function debouncedRender(){
         if (g.reached && !wasReached) g.reachedAt = Date.now();
         if (!g.reached) delete g.reachedAt;
         g.images = images;
-        g.freq = document.getElementById('panel-goal-freq').value || 'alpha';
         g.icon = (panelIcon.value || '').trim() || '🎯';
       }
     } else if (panelTarget.type==='action'){

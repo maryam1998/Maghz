@@ -1793,6 +1793,20 @@ function getStyles(){
 /* =====================================================================
    بقیه‌ی توابع (متن آینده، بذر، تقویم، مأموریت ذهن)
    ===================================================================== */
+var futureEditMark = null;
+function futureTextHtml(text){
+  var m = futureEditMark;
+  if (!m || !window.EditMark) return escapeHtml(text);
+  return EditMark.markHtml(text, m.range, escapeHtml);
+}
+function setFutureEditMark(oldText, newText){
+  if (!window.EditMark) return;
+  var r = EditMark.diffRange(oldText, newText);
+  if (!r) return;
+  var mk = { range: r, revealed: false };
+  futureEditMark = mk;
+  setTimeout(function(){ if (futureEditMark === mk) futureEditMark = null; }, 8000);
+}
 function renderFutureText(){
   var v = getActiveVersion();
   var display = document.getElementById('future-display');
@@ -1801,12 +1815,13 @@ function renderFutureText(){
     var hasText = v && v.text && v.text.trim();
     var hasAudio = v && v.audio;
     if (hasText || hasAudio){
-      display.innerHTML = (hasText ? '«' + escapeHtml(v.text) + '»' : '') +
+      display.innerHTML = (hasText ? '«' + futureTextHtml(v.text) + '»' : '') +
         (hasAudio ? '<audio controls preload="metadata" src="' + v.audio + '" style="width:100%;height:36px;display:block;' + (hasText ? 'margin-top:10px;' : '') + '"></audio>' : '');
     } else {
       display.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0;font-style:normal;">هنوز چیزی ثبت نکردی.<br><span style="font-size:11px;">روی همین کادر بزن و بنویس، یا با 🎙️ ویس بگذار.</span></div>';
     }
   }
+  if (display && futureEditMark && window.EditMark){ EditMark.revealIn(display, !futureEditMark.revealed); futureEditMark.revealed = true; }
   if (archiveCount) archiveCount.textContent = toFa((state.futureTextVersions || []).length);
   renderMiniCal();
   updateRegisterBtn();
@@ -2694,6 +2709,7 @@ function wireRasEmptyState(){
     if (v){
       if (!Array.isArray(v.prevTexts)) v.prevTexts = [];
       v.prevTexts.push({ text: v.text, at: Date.now() });
+      setFutureEditMark(v.text, newText);
       v.text = newText;
       state.futureText = newText;
       state.futureStartDate = v.startDate;

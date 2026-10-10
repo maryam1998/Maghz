@@ -1899,11 +1899,11 @@ function renderHistory(){
   histAll.slice(0, gratListLimit.hist).forEach(g=>{
     const displayText = gratDisplayText(g.text, g);
     itemsHTML += `
-      <div class="tx-item" style="cursor:pointer;" onclick="gratRowClick(${g.id})">
+      <div class="tx-item" data-gid="${g.id}" style="cursor:pointer;" onclick="gratRowClick(${g.id})">
         <div class="ic">${gratIconOrImage(g)}</div>
         <div class="mid">
           <div class="t1">${nl2br(escapeHtml(displayText))}</div>
-          <div class="t2">${g.day} ${g.date} - ${g.time}</div>
+          <div class="t2">${g.day} ${g.date} - ${g.time}${g.editedAt ? '<span class="em-edited">✏️ ویرایش‌شده</span>' : ''}</div>
           ${(g.images && g.images.length) ? `<div class="gv-grid">${g.images.map((im,idx)=>`<button type="button" class="gv-thumb" onclick="event.stopPropagation();openGratEntryAlbum(${g.id},${idx})"><img src="${im.src}" alt="" draggable="false" loading="lazy" decoding="async"></button>`).join('')}</div>` : ''}
           ${(g.audios && g.audios.length) ? g.audios.map(a=>`<div class="audio-player-box" onclick="event.stopPropagation()"><audio controls preload="none" src="${a.src}"></audio><span class="ap-name">${escapeHtmlSafe(a.name||'')}</span></div>`).join('') : ''}
           ${(g.videos && g.videos.length) ? g.videos.map(v=>`<div class="gv-vid" onclick="event.stopPropagation()"><video controls playsinline preload="metadata" data-gvid="${v.id}"></video></div>`).join('') : ''}
@@ -2016,6 +2016,7 @@ async function saveGratEdit(){
   let wantShared = (g.source === 'purchase') ? !!wasShared : (visR ? visR.value === 'public' : wasShared);
   if(wantShared && !wasShared && !window.supabaseClient){ wantShared = false; toast('این قابلیت هنوز فعال نشده 🌱'); }
   g.shared = wantShared;
+  g.editedAt = Date.now();
   saveState();
   if(wasShared){
     unsyncGratitudeShare(oldEntrySnapshot);
@@ -2023,9 +2024,11 @@ async function saveGratEdit(){
   } else if(wantShared){
     syncGratitudeShare(g);
   }
+  try{ const eIdx = [...state.gratitude].reverse().findIndex(x=>x.id===g.id); if(eIdx >= gratListLimit.hist) gratListLimit.hist = eIdx + 1; }catch(e){}
   closeGratEditor();
   renderHistory();
   renderHome();
+  try{ if(window.EditMark) EditMark.revealGrat(g.id); }catch(e){}
   toast('شکرگذاری ویرایش شد');
 }
 function deleteGratEntry(){
