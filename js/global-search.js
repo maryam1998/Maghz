@@ -52,7 +52,6 @@
     '<span class="gs2-cnt" id="gs2-cnt"></span><button type="button" id="gs2-prev" aria-label="قبلی">▲</button>'+
     '<button type="button" id="gs2-next" aria-label="بعدی">▼</button><button type="button" id="gs2-close" aria-label="بستن">✕</button></div>'+
     '<div id="gs2-res"></div>';
-  document.body.appendChild(fab);
   document.body.appendChild(ui);
 
   var input = $('gs2-q'), cnt = $('gs2-cnt'), resBox = $('gs2-res');
@@ -233,7 +232,24 @@
     try { input.blur(); } catch(e){}
   }
 
-  fab.addEventListener('click', function(){ ui.classList.contains('open') ? close() : open(); });
+  /* دکمه‌ی جستجو فقط در تب «تمرین»، داخل نوار بالای هر صفحه (مثل دکمه‌های استاندارد هدر) */
+  function toggleSearch(){ ui.classList.contains('open') ? close() : open(); }
+  function addTopSearchBtn(host, first){
+    if (!host || host.querySelector('.gs2-top')) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'icon-btn gs2-top'; b.title = 'جستجو'; b.setAttribute('aria-label', 'جستجو');
+    b.innerHTML = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+    b.addEventListener('click', toggleSearch);
+    if (first) host.insertBefore(b, host.firstChild); else host.appendChild(b);
+  }
+  (function(){
+    var root = $('grat-root'); if (!root) return;
+    var st2 = document.createElement('style');
+    st2.textContent = '#grat-root .topbar .gs2-top{margin-inline-start:auto;}#grat-root .greeting-actions .gs2-top{margin-inline-start:0;}';
+    document.head.appendChild(st2);
+    addTopSearchBtn(root.querySelector('.greeting-actions'), true);
+    [].forEach.call(root.querySelectorAll('.topbar'), function(tb){ addTopSearchBtn(tb, false); });
+  })();
   $('gs2-close').addEventListener('click', close);
   $('gs2-next').addEventListener('click', function(){ if (cur < 0 && ranges.length) goTo(0); else goTo(cur + 1); });
   $('gs2-prev').addEventListener('click', function(){ if (cur < 0 && ranges.length) goTo(ranges.length - 1); else goTo(cur - 1); });
