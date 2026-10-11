@@ -977,6 +977,7 @@
         if (node.detached) {
           node.originX = w.x - dragStart.offX;
           node.originY = w.y - dragStart.offY;
+          snapOriginToTrunk(g, node);
           render();
         } else {
           const ent = actionGeomMap.get(node.id);
@@ -997,6 +998,19 @@
     }
   }
 
+  /* شاخه‌ی جداشده وقتی نزدیک مسیر هدف شد، خودکار به مسیر می‌چسبد */
+  function snapOriginToTrunk(g, node){
+    try{
+      const cp = trunkControlPoints(g);
+      const res = nearestOnBezier(cp, { x: node.originX, y: node.originY });
+      const thr = Math.max(34 / cam.scale, 14);
+      if (res && res.dist < thr){
+        node.originX = res.pt.x; node.originY = res.pt.y;
+        return true;
+      }
+    }catch(_){}
+    return false;
+  }
   function endPointer(e){
     holdArmed = false;
     if (longPressTimer) {
@@ -1255,7 +1269,7 @@
       (n.children||[]).forEach(ch=>{ t += nodeTotalSecs(ch); });
       return t;
     }
-    function nodeHTML(n, g, pi, depth, parentName){
+    function nodeHTML(n, g, pi, depth, parentName, nsib){
       if (n.achieved){
         let hh = '';
         (n.children||[]).forEach(ch=>{ hh += nodeHTML(ch, g, pi, depth, parentName); });
@@ -1272,6 +1286,7 @@
         '<div class="gs-node sub mini" data-nid="'+n.id+'" style="border-inline-start-color:'+esc(color)+';">'+
           '<div class="gs-lvl"><span class="gs-badge sub" style="color:'+esc(color)+';border-color:'+esc(color)+';">زیرشاخه</span><span class="gs-par">زیرِ «'+esc(parentName || 'شاخه')+'»</span></div>'+
           '<div class="gs-mrow">'+
+            ((nsib||0) > 1 ? '<span class="gs-ngrip" role="button" aria-label="جابه‌جایی ترتیب زیرشاخه" title="بگیر و بکش تا ترتیب عوض شود">'+GRIP_SVG+'</span>' : '')+
             '<button type="button" class="gs-tick" data-nact="today" aria-label="امروز انجام دادم" style="border-color:'+esc(color)+';background:'+(todayDone?esc(color):'transparent')+';">'+(todayDone?'✓':'')+'</button>'+
             '<input class="gs-ntext" data-nid="'+n.id+'" value="'+esc(n.text)+'" placeholder="نام (مثلاً یوتیوب)..." autocomplete="off">'+
             (ts ? '<span class="gs-mtime on" title="زمان امروز">'+fmtDur(ts)+'</span>' : '')+
@@ -1284,7 +1299,7 @@
         if (addingFor === n.id) mh += '<div class="gs-kids">'+addRowHTML(n.id, 'نام')+'</div>';
         if ((n.children||[]).length){
           mh += '<div class="gs-kids">';
-          (n.children||[]).forEach(ch=>{ mh += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام'); });
+          (n.children||[]).forEach(ch=>{ mh += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام', kids.length); });
           mh += '</div>';
         }
         return mh + '</div>';
@@ -1307,7 +1322,7 @@
       if (addingFor === n.id) h += '<div class="gs-kids">'+addRowHTML(n.id, 'نام')+'</div>';
       if (kids.length || (n.children||[]).length){
         h += '<div class="gs-kids">';
-        (n.children||[]).forEach(ch=>{ h += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام'); });
+        (n.children||[]).forEach(ch=>{ h += nodeHTML(ch, g, pi, depth+1, n.text || 'بدون نام', kids.length); });
         h += '</div>';
       }
       return h + '</div>';
@@ -1330,7 +1345,7 @@
     if (img) return '<img src="'+esc(img)+'" alt="" draggable="false">';
     return '<span>'+esc(h.icon || (isRingHost(h) ? '🌟' : '🎯'))+'</span>';
   }
-  function iconEditHTML(h){
+  function iconEditHTML(h, withOk){
     let th = '';
     (h.images||[]).forEach((im, i)=>{
       th += '<span class="gs-ithumb"><img src="'+esc(im.src)+'" alt="" draggable="false"><button type="button" data-gact="iconimgdel" data-hid="'+h.id+'" data-idx="'+i+'" aria-label="حذف عکس">✕</button></span>';
@@ -1338,7 +1353,9 @@
     return '<div class="gs-iedit">'+
            '<input class="gs-iemoji" data-hid="'+h.id+'" value="'+esc(h.icon || '')+'" maxlength="8" placeholder="ایموجی" autocomplete="off">'+
            '<button type="button" class="gs-mini gold" data-gact="iconimg" data-hid="'+h.id+'">عکس</button>'+th+
-           '<div class="gs-isz"><span>اندازه‌ی ایکون و عکس</span><input type="range" class="gs-iscale" data-hid="'+h.id+'" min="50" max="300" step="5" value="'+Math.round(iconScaleOf(h)*100)+'" aria-label="اندازه‌ی ایکون و عکس"><b class="gs-isv">'+toFa(Math.round(iconScaleOf(h)*100))+'٪</b><button type="button" class="gs-mini" data-gact="iconscalereset" data-hid="'+h.id+'">اولیه</button></div></div>';
+           '<div class="gs-isz"><span>اندازه‌ی ایکون و عکس</span><input type="range" class="gs-iscale" data-hid="'+h.id+'" min="50" max="300" step="5" value="'+Math.round(iconScaleOf(h)*100)+'" aria-label="اندازه‌ی ایکون و عکس"><b class="gs-isv">'+toFa(Math.round(iconScaleOf(h)*100))+'٪</b><button type="button" class="gs-mini" data-gact="iconscalereset" data-hid="'+h.id+'">اولیه</button></div>'+
+           (withOk ? '<div class="gs-isz"><button type="button" class="gs-mini gold gs-iok" data-gact="iconclose" data-hid="'+h.id+'" style="flex:1;">تأیید</button></div>' : '')+
+           '</div>';
   }
   (function(){
     if (document.getElementById('gs-hostui-css')) return;
@@ -1617,7 +1634,7 @@
           <button class="gs-ic" data-act="map" aria-label="نمایش روی نقشه">${ICO_MAP}</button>
           <button class="gs-ic" data-act="edit" aria-label="ویرایش">${ICO_EDIT}</button>
         </div>
-        ${(!isR && ICONSEL === g.id) ? '<div class="gs-body gs-iconpop">' + iconEditHTML(g) + '</div>' : ''}
+        ${(!isR && ICONSEL === g.id) ? '<div class="gs-body gs-iconpop">' + iconEditHTML(g, true) + '</div>' : ''}
         ${isOpen ? bodyHTML(g) : ''}
       </div>`;
     }).join('');
@@ -1628,7 +1645,7 @@
     layoutFree();
   }
   window.__reopenGoalsSheet = ()=>{ open(); };
-  function open(){ searchEl.value=''; orderCache = null; draw(); ov.classList.add('open'); layoutFree(); }
+  function open(){ searchEl.value=''; orderCache = null; ICONSEL = null; const _sh = ov.querySelector('.gs-sheet'); if (_sh){ _sh.classList.remove('tall'); _sh.style.transform=''; } draw(); ov.classList.add('open'); layoutFree(); }
   window.addEventListener('resize', ()=>{ try{ layoutFree(); }catch(e){} });
   function close(){ ov.classList.remove('open'); }
   (function(){ const gb = document.querySelector('.gs-grab'); if (gb) gb.addEventListener('click', close); })();
@@ -1647,6 +1664,65 @@
     document.dispatchEvent(new CustomEvent('maghz-add-goal'));
   });
   document.getElementById('gs-close').addEventListener('click', close);
+  /* ✕ پایین‌راست + کشیدن کرکره‌ای (پایین = بستن، بالا = بزرگ‌تر شدن) */
+  (function(){
+    const sheet = ov.querySelector('.gs-sheet'); if (!sheet) return;
+    if (!document.getElementById('gs-sheet-ux-css')){
+      const st = document.createElement('style'); st.id = 'gs-sheet-ux-css';
+      st.textContent =
+        '.gs-sheet{transition:max-height .22s ease;}'+
+        '.gs-sheet.tall{max-height:calc(100dvh - 64px - 14px);}'+
+        '.gs-sheet.dragging{transition:none;}'+
+        '.gs-sheet .gs-grab, .gs-sheet .gs-head{touch-action:none;}'+
+        '.gs-sheet .gs-grab{height:6px;margin-bottom:12px;cursor:grab;}'+
+        '.gs-sheet .gs-grab::after{inset:-14px -90px;}'+
+        '.gs-foot{flex:none;display:flex;justify-content:flex-end;direction:ltr;padding-top:8px;}'+
+        '.gs-foot .gs-x{width:46px;height:46px;border-radius:50%;border:1px solid var(--panel-border);background:rgba(127,127,127,.14);color:var(--text-main);font-size:18px;padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.2);}'+
+        '.gs-foot .gs-x:active{transform:scale(.92);}';
+      document.head.appendChild(st);
+    }
+    const xb = document.getElementById('gs-close');
+    const foot = document.createElement('div'); foot.className = 'gs-foot';
+    if (xb) foot.appendChild(xb);
+    sheet.appendChild(foot);
+    const zones = sheet.querySelectorAll('.gs-grab, .gs-head');
+    let sy = 0, dy = 0, drag = false, moved = false, pid = null, st0 = 0;
+    function down(e){
+      if (e.target.closest('button, input, a')) return;
+      drag = true; moved = false; dy = 0; sy = e.clientY; st0 = Date.now(); pid = e.pointerId;
+      try{ e.currentTarget.setPointerCapture(pid); }catch(_){}
+    }
+    function move(e){
+      if (!drag || e.pointerId !== pid) return;
+      dy = e.clientY - sy;
+      if (!moved && Math.abs(dy) > 6){ moved = true; sheet.classList.add('dragging'); }
+      if (!moved) return;
+      sheet.style.transform = dy > 0 ? 'translateY(' + dy + 'px)' : '';
+    }
+    function up(e){
+      if (!drag || (e && e.pointerId !== pid)) return;
+      drag = false;
+      sheet.classList.remove('dragging');
+      if (!moved) return;
+      const fast = Math.abs(dy) / Math.max(1, Date.now() - st0) > 0.6;
+      sheet.style.transition = 'transform .2s ease, max-height .22s ease';
+      if (dy > 0 && (dy > 90 || (fast && dy > 30))){
+        if (sheet.classList.contains('tall')){ sheet.classList.remove('tall'); sheet.style.transform = ''; }
+        else { sheet.style.transform = 'translateY(100%)'; setTimeout(()=>{ close(); sheet.style.transform = ''; sheet.style.transition = ''; }, 190); return; }
+      } else if (dy < -40 || (fast && dy < -20)){
+        sheet.classList.add('tall'); sheet.style.transform = '';
+      } else { sheet.style.transform = ''; }
+      setTimeout(()=>{ sheet.style.transition = ''; }, 260);
+    }
+    zones.forEach(z=>{
+      z.addEventListener('pointerdown', down);
+      z.addEventListener('pointermove', move);
+      z.addEventListener('pointerup', up);
+      z.addEventListener('pointercancel', up);
+    });
+    /* بعد از کشیدن، کلیکِ دستگیره (بستن) نباید اجرا شود */
+    sheet.addEventListener('click', (e)=>{ if (moved && e.target.closest('.gs-grab, .gs-head')){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  })();
   ov.addEventListener('pointerdown', (e)=>{ if (e.target === ov) close(); });
   searchEl.addEventListener('input', ()=>{ orderCache = null; draw(); });
   { const so = document.getElementById('gs-sort'); if (so && so.id !== 'gs-tabs') so.remove(); }
@@ -1806,6 +1882,8 @@
           touch(hh); render(); draw();
         });
         inp.click();
+      } else if (a === 'iconclose'){
+        ICONSEL = null; draw();
       } else if (a === 'iconscalereset'){
         const hh = findHost(gact.dataset.hid); if (!hh) return;
         hh.iconScale = 1; touch(hh); render(); draw();
@@ -1913,7 +1991,7 @@
   }
 
   listEl.addEventListener('click', (e)=>{
-    if (sortClickGuard || e.target.closest('.gs-grip')) return;
+    if (sortClickGuard || e.target.closest('.gs-grip, .gs-ngrip')) return;
     const item = e.target.closest('.gs-item'); if (!item) return;
     const id = item.dataset.gid;
     const g = findHost(id); if (!g) return;
@@ -2048,6 +2126,113 @@
       freeFit(box);
     });
   }
+
+  /* ---- جابه‌جایی ترتیب زیرشاخه‌ها (بگیر و بکش با دستگیره) ---- */
+  (function(){
+    if (!document.getElementById('gs-ngrip-css')){
+      const st = document.createElement('style'); st.id = 'gs-ngrip-css';
+      st.textContent =
+        '.gs-ngrip{flex:none;width:22px;height:28px;margin-inline-end:-4px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);opacity:.8;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:8px;}'+
+        '.gs-ngrip svg{width:12px;height:17px;}'+
+        '.gs-ngrip:active{opacity:1;background:rgba(127,127,127,.18);}'+
+        '.gs-grp.gs-ndrag{position:fixed;z-index:70;margin:0;pointer-events:none;background:var(--panel-bg);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.42);transform:scale(1.02);}'+
+        '.gs-grp.gs-ndrag::before{display:none !important;}'+
+        '.gs-nph{flex:none;box-sizing:border-box;border:2px dashed var(--accent);border-radius:12px;background:rgba(127,127,127,.07);}';
+      document.head.appendChild(st);
+    }
+    let sd = null;
+    const isGrp = el => el && el.classList && el.classList.contains('gs-grp');
+    function others(){ return [...sd.kids.children].filter(c=> isGrp(c) && c !== sd.grp); }
+    function update(){
+      if (!sd || !sd.started) return;
+      const cy = sd.y;
+      sd.grp.style.top = (cy - sd.offY) + 'px';
+      const sibs = others();
+      let before = null;
+      for (const el of sibs){
+        const r = el.getBoundingClientRect();
+        if (cy < r.top + r.height / 2){ before = el; break; }
+      }
+      if (before){
+        if (sd.ph.nextElementSibling !== before) sd.kids.insertBefore(sd.ph, before);
+      } else if (sibs.length){
+        const last = sibs[sibs.length - 1];
+        if (last.nextElementSibling !== sd.ph) last.after(sd.ph);
+      }
+      const lr = listEl.getBoundingClientRect(), edge = 56;
+      sd.scroll = cy < lr.top + edge ? -Math.ceil((lr.top + edge - cy) / 6)
+                : (cy > lr.bottom - edge ? Math.ceil((cy - (lr.bottom - edge)) / 6) : 0);
+    }
+    function loop(){
+      if (!sd || !sd.started) return;
+      if (sd.scroll){ listEl.scrollTop += sd.scroll; update(); }
+      sd.raf = requestAnimationFrame(loop);
+    }
+    function start(){
+      const grp = sd.grp, r = grp.getBoundingClientRect();
+      const ph = document.createElement('div');
+      ph.className = 'gs-nph'; ph.style.height = r.height + 'px';
+      sd.origNext = grp.nextSibling;
+      grp.parentNode.insertBefore(ph, grp);
+      sd.ph = ph; sd.offY = sd.y0 - r.top; sd.started = true; sd.scroll = 0;
+      grp.classList.add('gs-ndrag');
+      grp.style.width = r.width + 'px'; grp.style.left = r.left + 'px'; grp.style.top = r.top + 'px';
+      listEl.classList.add('gs-sorting');
+      try{ if (navigator.vibrate) navigator.vibrate(8); }catch(_){}
+      sd.raf = requestAnimationFrame(loop);
+    }
+    function commit(d){
+      const item = d.kids.closest('.gs-item'); if (!item) return;
+      const g = findHost(item.dataset.gid); if (!g) return;
+      const nodeOf = el => el.querySelector(':scope > .gs-node');
+      const mine = nodeOf(d.grp); if (!mine) return;
+      const found = findActionNode(g.actions, mine.dataset.nid); if (!found) return;
+      const list = found.list;
+      const inList = id => list.some(x=>x.id === id);
+      const order = [...d.kids.children].filter(isGrp).map(c=>{ const n = nodeOf(c); return n ? n.dataset.nid : null; }).filter(id=> id && inList(id));
+      const set = new Set(order);
+      const byId = {}; list.forEach(x=>{ byId[x.id] = x; });
+      let k = 0;
+      const next = list.map(x=> set.has(x.id) ? byId[order[k++]] : x);
+      list.splice(0, list.length, ...next);
+      touch(g); render();
+    }
+    function end(e, cancel){
+      if (!sd || (e && e.pointerId !== sd.pid)) return;
+      const d = sd; sd = null;
+      try{ d.grip.releasePointerCapture(d.pid); }catch(_){}
+      if (!d.started) return;
+      cancelAnimationFrame(d.raf);
+      const grp = d.grp;
+      grp.classList.remove('gs-ndrag');
+      grp.style.width = ''; grp.style.left = ''; grp.style.top = '';
+      if (cancel) d.kids.insertBefore(grp, d.origNext && d.origNext.parentNode === d.kids ? d.origNext : null);
+      else d.kids.insertBefore(grp, d.ph);
+      d.ph.remove();
+      listEl.classList.remove('gs-sorting');
+      sortClickGuard = true; setTimeout(()=>{ sortClickGuard = false; }, 350);
+      if (!cancel){ commit(d); draw(); }
+    }
+    listEl.addEventListener('pointerdown', (e)=>{
+      const grip = e.target.closest('.gs-ngrip');
+      if (!grip || sd || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      const grp = grip.closest('.gs-grp'); if (!grp) return;
+      const kids = grp.parentNode; if (!kids || !kids.classList.contains('gs-kids')) return;
+      e.preventDefault();
+      sd = { grp, kids, grip, pid:e.pointerId, y0:e.clientY, y:e.clientY, started:false };
+      try{ grip.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    listEl.addEventListener('pointermove', (e)=>{
+      if (!sd || e.pointerId !== sd.pid) return;
+      sd.y = e.clientY;
+      if (!sd.started){ if (Math.abs(e.clientY - sd.y0) < 5) return; start(); }
+      e.preventDefault();
+      update();
+    });
+    listEl.addEventListener('pointerup', (e)=> end(e, false));
+    listEl.addEventListener('pointercancel', (e)=> end(e, true));
+    listEl.addEventListener('lostpointercapture', (e)=> end(e, true));
+  })();
   /* ---- جابه‌جایی ترتیب اهداف (بگیر و بکش با دستگیره) ---- */
   (function(){
     let sd = null;
@@ -4258,6 +4443,7 @@ function debouncedRender(){
   function nodeSecs(n, keys){ let t = 0; if (n.time) for (const k in n.time){ if (!keys || keys.has(k)) t += (+n.time[k] || 0); } return t; }
   function nodeDaySecs(n, jk){ return (n.time && +n.time[jk]) || 0; }
   let PENDING_RANGE = null;
+  let PENDING_NOTE = '';
   function fmtHM(min){ min = ((Math.round(min) % 1440) + 1440) % 1440; const h = Math.floor(min/60), m = min % 60; return toFa(String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0')); }
   function nodeDayRanges(n, jk){ return (n.ranges && Array.isArray(n.ranges[jk])) ? n.ranges[jk] : []; }
   function rangesText(n, jk){ return nodeDayRanges(n, jk).map(r=> fmtHM(r.s) + ' تا ' + fmtHM(r.e)).join('، '); }
@@ -4273,9 +4459,17 @@ function debouncedRender(){
     return (n.entries && Array.isArray(n.entries[jk])) ? n.entries[jk] : [];
   }
   function entryLabel(e){
-    return e.kind === 'range'
+    const base = e.kind === 'range'
       ? ('🕒 ' + fmtHM(e.s) + ' تا ' + fmtHM(e.e) + ' — ' + fmtDur(e.mins * 60))
       : ('⏱ ' + fmtDur(e.mins * 60));
+    return base + (e.note ? '<span class="tm-note">📝 ' + esc(e.note) + '</span>' : '');
+  }
+  function mkEntry(range, mins){
+    const en = range
+      ? { kind:'range', s:range.s, e:range.e, mins: Math.round(mins), at: Date.now() }
+      : { kind:'dur',   mins: Math.round(mins), at: Date.now() };
+    if (PENDING_NOTE) en.note = PENDING_NOTE;
+    return en;
   }
   function deleteTimeEntry(n, jk, idx){
     const arr = nodeTimeEntries(n, jk);
@@ -4345,11 +4539,7 @@ function debouncedRender(){
 
     if (!n.entries || typeof n.entries !== 'object') n.entries = {};
     if (!Array.isArray(n.entries[jk])) n.entries[jk] = [];
-    n.entries[jk].push(
-      range
-        ? { kind:'range', s:range.s, e:range.e, mins: Math.round(mins), at: Date.now() }
-        : { kind:'dur',   mins: Math.round(mins), at: Date.now() }
-    );
+    n.entries[jk].push(mkEntry(range, mins));
 
     if (secs > 0) autoTick(n, jk);
     if (range) pushRange(n, jk, range);
@@ -4365,9 +4555,7 @@ function debouncedRender(){
     if (secs > 0){
       node.time[jk] = secs;
       if (!node.entries || typeof node.entries !== 'object') node.entries = {};
-      node.entries[jk] = [ range
-        ? { kind:'range', s:range.s, e:range.e, mins: Math.round(mins), at: Date.now() }
-        : { kind:'dur',   mins: Math.round(mins), at: Date.now() } ];
+      node.entries[jk] = [ mkEntry(range, mins) ];
       if (range) pushRange(node, jk, range);
       autoTick(node, jk);
     } else {
@@ -4400,6 +4588,7 @@ function debouncedRender(){
         '</div>'+
         '<div class="dur-rinfo dur-mode-range" style="display:none;"></div>'+
         '<div class="dur-q dur-mode-dur">'+[15,30,60,120].map(m=>'<button type="button" data-q="'+m+'">'+(m<60 ? toFa(m)+' دقیقه' : toFa(m/60)+' ساعت')+'</button>').join('')+'</div>'+
+        '<textarea id="dur-note" class="dur-note" rows="2" maxlength="500" placeholder="یادداشت (اختیاری) — مثلاً چه کاری انجام دادی؟"></textarea>'+
         '<div class="dur-b">'+
           '<button type="button" class="ok" data-d="ok">ثبت</button>'+
           (opts.deletable ? '<button type="button" class="del" data-d="del">حذف زمان</button>' : '')+
@@ -4443,17 +4632,20 @@ function debouncedRender(){
       if (q){ const m = +q.dataset.q; hEl.value = Math.floor(m/60); mEl.value = m % 60; return; }
       const b = e.target.closest('[data-d]'); if (!b) return;
       if (b.dataset.d === 'no'){ close(); return; }
-      if (b.dataset.d === 'del'){ close(); PENDING_RANGE = null; cb(0); return; }
+      if (b.dataset.d === 'del'){ close(); PENDING_RANGE = null; PENDING_NOTE = ''; cb(0); return; }
+      const noteEl = ov.querySelector('#dur-note');
+      const noteV = noteEl ? noteEl.value.trim() : '';
       if (mode === 'range'){
         const r = readRange();
         if (!r || r.mins <= 0){ if (typeof toast === 'function') toast('ساعت شروع و پایان را درست انتخاب کن'); return; }
-        close(); PENDING_RANGE = { s:r.s % 1440, e:r.e % 1440 };
-        try{ cb(r.mins); } finally { PENDING_RANGE = null; }
+        close(); PENDING_RANGE = { s:r.s % 1440, e:r.e % 1440 }; PENDING_NOTE = noteV;
+        try{ cb(r.mins); } finally { PENDING_RANGE = null; PENDING_NOTE = ''; }
         return;
       }
       const t = total();
       if (t <= 0 && !opts.allowZero){ if (typeof toast === 'function') toast('ساعت یا دقیقه رو وارد کن'); return; }
-      close(); PENDING_RANGE = null; cb(t);
+      close(); PENDING_RANGE = null; PENDING_NOTE = noteV;
+      try{ cb(t); } finally { PENDING_NOTE = ''; }
     });
     setTimeout(()=>{ try{ hEl.focus(); hEl.select(); }catch(e){} }, 60);
   }
@@ -4461,6 +4653,9 @@ function debouncedRender(){
     if (document.getElementById('tm-css')) return;
     const st = document.createElement('style'); st.id = 'tm-css';
     st.textContent =
+      '.dur-note{width:100%;box-sizing:border-box;margin:0 0 12px;min-height:54px;resize:vertical;border:1px solid var(--panel-border);border-radius:12px;background:transparent;color:var(--text-main);font-family:inherit;font-size:12.5px;padding:8px 10px;direction:rtl;text-align:right;}'+
+      '.tm-note{display:block;white-space:normal;font-size:10.5px;color:var(--text-dim);margin-top:2px;line-height:1.6;}'+
+      '.gs-tentry>span,.pc-tentry>span{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;}'+
       '.pc-time-btns{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}'+
       '.pc-time-btns .btn{flex:1;font-size:11.5px;padding:8px;}'+
       '.gs-tmr{font-size:11px;white-space:nowrap;}'+
