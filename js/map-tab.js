@@ -805,7 +805,7 @@
         if (found && holdArmed) {
           holdArmed = false;
           holdToggleBranch(g, found.node, goalId, e, sx, sy);
-        } else if (found && found.node.detached) {
+        } else if (found && found.node.detached && !dragLabel && (dragImgIdx === null || dragImgIdx === undefined)) {
           const ws = screenToWorld(sx, sy);
           mode = 'drag-node';
           dragTarget = { type:'action', goalId, id: actionId, detached: true };
